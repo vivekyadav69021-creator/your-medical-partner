@@ -10,11 +10,14 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Check, Trophy, Star, Sparkles, Bot, Zap } from 'lucide-react';
+import { Check, Trophy, Star, Sparkles, Bot, Zap, Activity, Smile } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { ChartContainer } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip, Legend } from 'recharts';
+
 
 const challenges = [
   {
@@ -72,6 +75,26 @@ const generatedChallenge = {
     total: 5,
 };
 
+const activityData = [
+  { day: 'Mon', minutes: 30 },
+  { day: 'Tue', minutes: 45 },
+  { day: 'Wed', minutes: 60 },
+  { day: 'Thu', minutes: 20 },
+  { day: 'Fri', minutes: 50 },
+  { day: 'Sat', minutes: 90 },
+  { day: 'Sun', minutes: 75 },
+];
+
+const moodData = [
+  { day: 'Mon', mood: 4 },
+  { day: 'Tue', mood: 3 },
+  { day: 'Wed', mood: 5 },
+  { day: 'Thu', mood: 4 },
+  { day: 'Fri', mood: 5 },
+  { day: 'Sat', mood: 4 },
+  { day: 'Sun', mood: 3 },
+];
+
 export default function ChallengesPage() {
   return (
     <div className="space-y-8">
@@ -81,15 +104,16 @@ export default function ChallengesPage() {
             Health Challenges
           </h1>
           <p className="text-muted-foreground">
-            Join community challenges or create your own with AI Sensi.
+            Join challenges, create your own with AI, and track your progress.
           </p>
         </div>
       </div>
 
       <Tabs defaultValue="community">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="community">Community Challenges</TabsTrigger>
           <TabsTrigger value="ai-sensi"><Sparkles className="mr-2 h-4 w-4"/>AI Sensi</TabsTrigger>
+          <TabsTrigger value="analysis">Health Analysis</TabsTrigger>
         </TabsList>
         
         <TabsContent value="community" className="mt-6">
@@ -226,6 +250,70 @@ export default function ChallengesPage() {
                   </CardContent>
                 </Card>
             </div>
+        </TabsContent>
+
+        <TabsContent value="analysis" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Weekly Activity
+                </CardTitle>
+                <CardDescription>
+                  Your total active minutes over the last 7 days.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={{}} className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={activityData}>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="day"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                      />
+                      <YAxis
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Bar
+                        dataKey="minutes"
+                        fill="hsl(var(--primary))"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Smile className="w-5 h-5" />
+                  Mood Tracker
+                </CardTitle>
+                <CardDescription>
+                  Your mood ratings (1-5) over the last 7 days.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={{}} className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={moodData}>
+                       <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis domain={[1, 5]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="mood" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
