@@ -44,19 +44,23 @@ function SubmitButton({ text = 'Analyze' }: { text?: string }) {
 export default function SymptomCheckerPage() {
   const [state, formAction] = useActionState(aiSymptomCheckAction, initialState);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('symptoms');
+
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasCameraPermission(false);
         return;
       }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
@@ -67,16 +71,18 @@ export default function SymptomCheckerPage() {
         setHasCameraPermission(false);
       }
     };
+    
+    if (activeTab === 'scan') {
+        getCameraPermission();
+    }
 
-    getCameraPermission();
 
     return () => {
-        const stream = videoRef.current?.srcObject as MediaStream;
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
     }
-  }, []);
+  }, [activeTab]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -121,7 +127,7 @@ export default function SymptomCheckerPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="symptoms" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="symptoms"><ScanSearch className="mr-2" />Symptom Check</TabsTrigger>
           <TabsTrigger value="report"><FileText className="mr-2" />Report Analysis</TabsTrigger>
@@ -215,11 +221,17 @@ export default function SymptomCheckerPage() {
                 <div className="w-full max-w-md aspect-video bg-muted rounded-lg overflow-hidden relative flex items-center justify-center">
                     <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
                     <canvas ref={canvasRef} className="hidden" />
-                     {!hasCameraPermission && (
+                     {hasCameraPermission === false && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-background/80">
                              <Camera className="w-12 h-12 text-muted-foreground mb-2" />
                              <p className="font-medium">Camera not available</p>
                              <p className="text-sm text-muted-foreground">Please allow camera access in your browser.</p>
+                        </div>
+                     )}
+                     {hasCameraPermission === null && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-background/80">
+                             <Sparkles className="w-12 h-12 text-muted-foreground mb-2 animate-pulse" />
+                             <p className="font-medium">Initializing Camera...</p>
                         </div>
                      )}
                 </div>
