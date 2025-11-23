@@ -6,6 +6,7 @@ import { z } from 'zod';
 const symptomSchema = z.object({
   symptoms: z.string().min(10, 'Please describe your symptoms in more detail.'),
   medicalHistory: z.string().optional(),
+  symptomImageDataUri: z.string().optional(),
 });
 
 export async function aiSymptomCheckAction(
@@ -15,6 +16,7 @@ export async function aiSymptomCheckAction(
   const validatedFields = symptomSchema.safeParse({
     symptoms: formData.get('symptoms'),
     medicalHistory: formData.get('medicalHistory'),
+    symptomImageDataUri: formData.get('symptomImageDataUri')
   });
 
   if (!validatedFields.success) {
@@ -23,6 +25,12 @@ export async function aiSymptomCheckAction(
       error: validatedFields.error.flatten().fieldErrors.symptoms?.[0] ?? 'Invalid input.',
     };
   }
+  
+  if (validatedFields.data.symptomImageDataUri && !validatedFields.data.symptomImageDataUri.startsWith('data:image')) {
+      // Clear out the value if it's not a valid data URI
+      validatedFields.data.symptomImageDataUri = '';
+  }
+
 
   try {
     const result = await aiSymptomChecker(validatedFields.data);
@@ -31,6 +39,7 @@ export async function aiSymptomCheckAction(
       error: null,
     };
   } catch (e) {
+    console.error(e);
     return {
       possibleCauses: null,
       error: 'The AI model could not be reached. Please try again later.',
