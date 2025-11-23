@@ -124,14 +124,14 @@ export default function HealthAssistantPage() {
                     </Avatar>
                   )}
                   <div
-                    className={`prose prose-sm max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
+                    className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     }`}
                   >
                     {message.role === 'assistant' ? (
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                        <article className="prose prose-sm"><ReactMarkdown>{message.content}</ReactMarkdown></article>
                     ) : (
                         <p>{message.content}</p>
                     )}
