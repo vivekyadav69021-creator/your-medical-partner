@@ -1,20 +1,188 @@
 'use client';
 
-import { BrainCircuit } from 'lucide-react';
+import React, { useActionState, useRef, useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Send, User, Sparkles, BrainCircuit } from 'lucide-react';
+import { aiPsychiatristAction } from './actions';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useUserProfile } from '@/context/user-profile-context';
+import ReactMarkdown from 'react-markdown';
+
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+const initialState = {
+  response: null,
+  error: null,
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" size="icon" disabled={pending}>
+      {pending ? (
+        <Sparkles className="h-5 w-5 animate-pulse" />
+      ) : (
+        <Send className="h-5 w-5" />
+      )}
+      <span className="sr-only">Send message</span>
+    </Button>
+  );
+}
 
 export default function AIPsychiatristPage() {
+  const { userName, userImage } = useUserProfile();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [state, formAction, isPending] = useActionState(aiPsychiatristAction, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const handleFormAction = (formData: FormData) => {
+    const query = formData.get('query') as string;
+    if (!query) return;
+
+    const newMessages: Message[] = [...messages, { role: 'user', content: query }];
+    setMessages(newMessages);
+
+    // Pass the current message history to the action
+    formData.set('history', JSON.stringify(messages));
+
+    formAction(formData);
+    formRef.current?.reset();
+  };
+  
+  useEffect(() => {
+    if (!isPending) {
+        if (state.response) {
+          setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
+        }
+        if (state.error) {
+          setMessages(prev => [...prev, { role: 'assistant', content: state.error! }]);
+        }
+    }
+  }, [state, isPending]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    }
+  }, [messages, isPending]);
+
+  const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
+
   return (
-    <div className="space-y-8">
-      <div>
+    <div className="flex flex-col h-[calc(100vh-5rem)]">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline">AI Psychiatrist</h1>
         <p className="text-muted-foreground">
-          A safe space to talk about your mental health. This feature is coming soon.
+          A safe space to talk about your mental health.
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-        <BrainCircuit className="w-16 h-16 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">Coming Soon</p>
-      </div>
+      <Card className="flex-1 flex flex-col">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BrainCircuit />
+            Chat with Your AI Psychiatrist
+          </CardTitle>
+          <CardDescription>
+            This is a safe and confidential space. Your privacy is respected.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col gap-4">
+          <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
+            <div className="space-y-4">
+              {messages.length === 0 && !isPending && (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
+                  <BrainCircuit className="w-16 h-16 mb-4" />
+                  <p className="text-lg font-medium">I am your AI Psychiatrist.</p>
+                  <p>How are you feeling today? You can share anything on your mind.</p>
+                </div>
+              )}
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-3 ${
+                    message.role === 'user' ? 'justify-end' : ''
+                  }`}
+                >
+                  {message.role === 'assistant' && (
+                    <Avatar className="h-9 w-9">
+                      {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint}/>}
+                      <AvatarFallback>AI</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                  </div>
+                  {message.role === 'user' && (
+                    <Avatar className="h-9 w-9">
+                       <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
+                      <AvatarFallback><User /></AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
+              ))}
+              {isPending && (
+                <div className="flex items-start gap-3">
+                   <Avatar className="h-9 w-9">
+                      {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
+                      <AvatarFallback>AI</AvatarFallback>
+                    </Avatar>
+                    <div className="max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 bg-muted flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <span className="text-sm italic">AI is thinking...</span>
+                    </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </CardContent>
+        <CardFooter>
+          <form
+            ref={formRef}
+            action={handleFormAction}
+            className="flex w-full items-center gap-2"
+          >
+            <Input
+              name="query"
+              placeholder="Share your feelings here..."
+              className="flex-1"
+              autoComplete="off"
+              disabled={isPending}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  formRef.current?.requestSubmit();
+                }
+              }}
+            />
+            <SubmitButton />
+          </form>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
