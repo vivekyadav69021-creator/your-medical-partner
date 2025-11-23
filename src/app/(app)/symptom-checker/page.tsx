@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import {
   Card,
   CardContent,
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Sparkles, Terminal } from 'lucide-react';
+import { Bot, Sparkles, Terminal } from 'lucide-react';
 import { aiSymptomCheckAction } from './actions';
 
 const initialState = {
@@ -32,7 +32,7 @@ function SubmitButton() {
 }
 
 export default function SymptomCheckerPage() {
-  const [state, formAction] = useFormState(aiSymptomCheckAction, initialState);
+  const [state, formAction] = useActionState(aiSymptomCheckAction, initialState);
 
   return (
     <div className="space-y-8">

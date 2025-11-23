@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Sparkles, Terminal } from 'lucide-react';
+import { HeartPulse, Sparkles, Terminal } from 'lucide-react';
 import { calculateHealthScoreAction } from './actions';
 import { HealthScoreDisplay } from '@/components/health-score-display';
 
@@ -34,7 +34,7 @@ function SubmitButton() {
 }
 
 export default function HealthScorePage() {
-  const [state, formAction] = useFormState(calculateHealthScoreAction, initialState);
+  const [state, formAction] = useActionState(calculateHealthScoreAction, initialState);
 
   return (
     <div className="space-y-8">
