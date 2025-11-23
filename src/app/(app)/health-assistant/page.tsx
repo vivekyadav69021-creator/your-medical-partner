@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import {
   Card,
   CardContent,
@@ -49,6 +49,9 @@ export default function HealthAssistantPage() {
   const handleFormAction = async (formData: FormData) => {
     const query = formData.get('query') as string;
     if (!query) return;
+
+    const form = (document.querySelector('form[action]') as HTMLFormElement);
+    form.reset();
 
     setMessages(prev => [...prev, { role: 'user', content: query }]);
 
