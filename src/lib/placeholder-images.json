@@ -71,6 +71,12 @@
       "description": "Vitamin D supplements",
       "imageUrl": "https://images.unsplash.com/photo-1701859080936-95637f75cb57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdXBwbGVtZW50JTIwYm90dGxlfGVufDB8fHx8MTc2Mzg3ODM3NHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "supplement bottle"
+    },
+    {
+      "id": "assistant-avatar",
+      "description": "AI assistant avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1599058882438-58c499afc640?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb2JvdCUyMGF2YXRhcnxlbnwwfHx8fDE3NjQ0NjQzMzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "robot avatar"
     }
   ]
 }

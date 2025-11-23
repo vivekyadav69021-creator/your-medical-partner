@@ -20,6 +20,7 @@ const navItems = [
   { href: '/store', label: 'Medical Store', icon: Store },
   { href: '/symptom-checker', label: 'Symptom Checker', icon: Bot },
   { href: '/health-score', label: 'Health Score', icon: HeartPulse },
+  { href: '/health-assistant', label: 'AI Assistant', icon: Bot },
 ];
 
 export function SidebarNav() {
