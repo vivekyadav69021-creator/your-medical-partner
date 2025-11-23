@@ -93,7 +93,7 @@ export default function DashboardPage() {
           <CardDescription>Your healthcare tools, just a click away.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
               {quickAccessItems.map((item) => (
                 <Card key={item.title} className="group hover:shadow-lg transition-shadow duration-300">
                   <Link href={item.href} className="flex flex-col h-full">
