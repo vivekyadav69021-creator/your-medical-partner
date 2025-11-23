@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BookHeart, AlertTriangle, Pill, UserMd, ArrowLeft } from 'lucide-react';
+import { BookHeart, AlertTriangle, Pill, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -80,7 +80,7 @@ export default function DiseaseDetailPage({ params }: { params: { diseaseId: str
         <InfoCard 
             title={lang === 'en' ? 'When to See a Doctor' : 'डॉक्टर से कब मिलें'}
             content={lang === 'en' ? disease.whenToSeeDoctorEn : disease.whenToSeeDoctorHi}
-            icon={UserMd}
+            icon={User}
         />
       </div>
 
