@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useEffect } from 'react';
+import { useActionState, useRef, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -43,7 +43,7 @@ function SubmitButton() {
 }
 
 export default function HealthAssistantPage() {
-  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [state, formAction] = useActionState(healthAssistantAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
