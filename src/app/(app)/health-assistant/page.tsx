@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useEffect, useState, use } from 'react';
+import React, { useActionState, useRef, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -18,6 +18,7 @@ import { healthAssistantAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUserProfile } from '@/context/user-profile-context';
+import ReactMarkdown from 'react-markdown';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -46,7 +47,7 @@ function SubmitButton() {
 export default function HealthAssistantPage() {
   const { userName, userImage } = useUserProfile();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [state, formAction] = useActionState(healthAssistantAction, initialState);
+  const [state, formAction, isPending] = useActionState(healthAssistantAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -60,13 +61,15 @@ export default function HealthAssistantPage() {
   };
   
   useEffect(() => {
-    if (state.response) {
-      setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
+    if (!isPending) {
+        if (state.response) {
+          setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
+        }
+        if (state.error) {
+          setMessages(prev => [...prev, { role: 'assistant', content: state.error! }]);
+        }
     }
-    if (state.error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: state.error! }]);
-    }
-  }, [state]);
+  }, [state, isPending]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -75,7 +78,7 @@ export default function HealthAssistantPage() {
         viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [messages]);
+  }, [messages, isPending]);
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
@@ -100,7 +103,7 @@ export default function HealthAssistantPage() {
         <CardContent className="flex-1 flex flex-col gap-4">
           <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-4">
-              {messages.length === 0 && (
+              {messages.length === 0 && !isPending && (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
                   <Bot className="w-16 h-16 mb-4" />
                   <p className="text-lg font-medium">I am your AI Health Assistant.</p>
@@ -121,13 +124,17 @@ export default function HealthAssistantPage() {
                     </Avatar>
                   )}
                   <div
-                    className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
+                    className={`prose prose-sm max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {message.role === 'assistant' ? (
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                    ) : (
+                        <p>{message.content}</p>
+                    )}
                   </div>
                   {message.role === 'user' && (
                     <Avatar className="h-9 w-9">
@@ -137,7 +144,7 @@ export default function HealthAssistantPage() {
                   )}
                 </div>
               ))}
-              {useFormStatus().pending && (
+              {isPending && (
                 <div className="flex items-start gap-3">
                    <Avatar className="h-9 w-9">
                       {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
@@ -163,6 +170,7 @@ export default function HealthAssistantPage() {
               placeholder="Type your message..."
               className="flex-1"
               autoComplete="off"
+              disabled={isPending}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
