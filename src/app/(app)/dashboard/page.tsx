@@ -9,11 +9,14 @@ import {
   CardDescription
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Bot, Stethoscope, Hospital, ScanLine, BookHeart, BrainCircuit } from 'lucide-react';
+import { ArrowRight, Bot, Stethoscope, Hospital, ScanLine, BookHeart, BrainCircuit, Calendar, Clock, Check } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Line, LineChart, Area, AreaChart } from "recharts"
 import { useUserProfile } from '@/context/user-profile-context';
 import { HealthScoreDisplay } from '@/components/health-score-display';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const quickAccessItems = [
   {
@@ -63,6 +66,31 @@ const sleepData = [
     { day: 'Sat', hours: 9.0 },
     { day: 'Sun', hours: 8.5 },
 ]
+
+const upcomingAppointments = [
+  {
+    doctorName: 'Dr. Priya Patel',
+    specialty: 'Pediatrician',
+    date: 'Dec 15, 2024',
+    time: '11:30 AM',
+    imageId: 'doctor-3',
+  },
+  {
+    doctorName: 'Dr. John Smith',
+    specialty: 'General Physician',
+    date: 'Dec 18, 2024',
+    time: '02:00 PM',
+    imageId: 'doctor-5',
+  }
+];
+
+const plannerTasks = [
+  { id: 'task-1', task: 'Take morning medication', completed: true },
+  { id: 'task-2', task: 'Go for a 30-minute walk', completed: false },
+  { id: 'task-3', task: 'Drink 8 glasses of water', completed: false },
+  { id: 'task-4', task: 'Evening meditation', completed: false },
+];
+
 
 export default function DashboardPage() {
   const { userName } = useUserProfile();
@@ -141,6 +169,63 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+       <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Appointments</CardTitle>
+            <CardDescription>Your scheduled consultations.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {upcomingAppointments.map((appt, index) => {
+               const image = PlaceHolderImages.find(img => img.id === appt.imageId);
+               return (
+                <div key={index} className="flex items-center gap-4 p-2 rounded-lg bg-secondary/50">
+                  {image && <Avatar>
+                    <AvatarImage src={image.imageUrl} alt={appt.doctorName} data-ai-hint={image.imageHint}/>
+                    <AvatarFallback>{appt.doctorName.charAt(0)}</AvatarFallback>
+                  </Avatar>}
+                  <div className="flex-1">
+                    <p className="font-semibold">{appt.doctorName}</p>
+                    <p className="text-sm text-muted-foreground">{appt.specialty}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>{appt.date}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm mt-1">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>{appt.time}</span>
+                    </div>
+                  </div>
+                </div>
+               )
+            })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Planner</CardTitle>
+            <CardDescription>Today's health tasks and reminders.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {plannerTasks.map(task => (
+              <div key={task.id} className="flex items-center gap-3">
+                <Checkbox id={task.id} checked={task.completed} />
+                <label
+                  htmlFor={task.id}
+                  className={`flex-1 text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                >
+                  {task.task}
+                </label>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }
