@@ -99,7 +99,7 @@ export default function AIPsychiatristPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BrainCircuit />
-            Chat with Your AI Psychiatrist
+            Chat with Your AI Companion
           </CardTitle>
           <CardDescription>
             This is a safe and confidential space. Your privacy is respected.
@@ -111,8 +111,8 @@ export default function AIPsychiatristPage() {
               {messages.length === 0 && !isPending && (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
                   <BrainCircuit className="w-16 h-16 mb-4" />
-                  <p className="text-lg font-medium">I am your AI Psychiatrist.</p>
-                  <p>How are you feeling today? You can share anything on your mind.</p>
+                  <p className="text-lg font-medium">Hello! I'm here to listen.</p>
+                  <p>How are you feeling today? You can talk to me in English or Hindi.</p>
                 </div>
               )}
               {messages.map((message, index) => (
@@ -168,7 +168,7 @@ export default function AIPsychiatristPage() {
           >
             <Input
               name="query"
-              placeholder="Share your feelings here..."
+              placeholder="Share your feelings here... (English or Hindi)"
               className="flex-1"
               autoComplete="off"
               disabled={isPending}
