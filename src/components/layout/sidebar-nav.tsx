@@ -16,12 +16,14 @@ import {
   ScanLine,
   BookHeart,
   BrainCircuit,
+  ListTodo,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/consultation', label: 'Consultations', icon: Stethoscope },
   { href: '/store', label: 'Medical Store', icon: Store },
+  { href: '/planner', label: 'My Planner', icon: ListTodo },
   { href: '/symptom-checker', label: 'Symptom Checker', icon: ScanLine },
   { href: '/health-score', label: 'Health Score', icon: HeartPulse },
   { href: '/health-assistant', label: 'AI Assistant', icon: Bot },

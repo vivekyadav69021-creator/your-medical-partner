@@ -9,7 +9,7 @@ import {
   CardDescription
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Bot, Stethoscope, Hospital, ScanLine, BookHeart, BrainCircuit, Calendar, Clock, Check } from 'lucide-react';
+import { ArrowRight, Bot, Stethoscope, Hospital, ScanLine, BookHeart, BrainCircuit, Calendar, Clock, Check, ListTodo } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Line, LineChart, Area, AreaChart } from "recharts"
 import { useUserProfile } from '@/context/user-profile-context';
@@ -206,16 +206,24 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Your Planner</CardTitle>
-            <CardDescription>Today's health tasks and reminders.</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Your Planner</CardTitle>
+                <CardDescription>Today's health tasks and reminders.</CardDescription>
+            </div>
+            <Button asChild variant="ghost" size="sm">
+                <Link href="/planner">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {plannerTasks.map(task => (
+            {plannerTasks.slice(0, 4).map(task => (
               <div key={task.id} className="flex items-center gap-3">
-                <Checkbox id={task.id} checked={task.completed} />
+                <Checkbox id={`dashboard-${task.id}`} checked={task.completed} />
                 <label
-                  htmlFor={task.id}
+                  htmlFor={`dashboard-${task.id}`}
                   className={`flex-1 text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}
                 >
                   {task.task}
