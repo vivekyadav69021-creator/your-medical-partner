@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState } from 'react';
+import { useActionState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Sparkles, AlertTriangle } from 'lucide-react';
+import { Send, User, Bot, Sparkles } from 'lucide-react';
 import { healthAssistantAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -43,28 +43,38 @@ function SubmitButton() {
 }
 
 export default function HealthAssistantPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [formState, formAction] = useActionState(healthAssistantAction, initialState);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [state, formAction] = useActionState(healthAssistantAction, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const handleFormAction = async (formData: FormData) => {
     const query = formData.get('query') as string;
     if (!query) return;
 
-    const form = (document.querySelector('form[action]') as HTMLFormElement);
-    form.reset();
-
     setMessages(prev => [...prev, { role: 'user', content: query }]);
-
-    const result = await healthAssistantAction(formState, formData);
-
-    if (result.response) {
-      setMessages(prev => [...prev, { role: 'assistant', content: result.response! }]);
-    }
-    if (result.error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: result.error! }]);
-    }
+    formAction(formData);
+    formRef.current?.reset();
   };
   
+  useEffect(() => {
+    if (state.response) {
+      setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
+    }
+    if (state.error) {
+      setMessages(prev => [...prev, { role: 'assistant', content: state.error! }]);
+    }
+  }, [state]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    }
+  }, [messages]);
+
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
   return (
@@ -86,8 +96,15 @@ export default function HealthAssistantPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col gap-4">
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-4">
+              {messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+                  <Bot className="w-16 h-16 mb-4" />
+                  <p className="text-lg font-medium">I am your AI Health Assistant.</p>
+                  <p>Ask me a question to get started!</p>
+                </div>
+              )}
               {messages.map((message, index) => (
                 <div
                   key={index}
@@ -135,6 +152,7 @@ export default function HealthAssistantPage() {
         </CardContent>
         <CardFooter>
           <form
+            ref={formRef}
             action={handleFormAction}
             className="flex w-full items-center gap-2"
           >
@@ -146,7 +164,7 @@ export default function HealthAssistantPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  (e.target as HTMLInputElement).form?.requestSubmit();
+                  formRef.current?.requestSubmit();
                 }
               }}
             />
