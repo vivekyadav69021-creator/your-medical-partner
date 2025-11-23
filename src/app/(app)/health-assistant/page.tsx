@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useEffect, useState } from 'react';
+import { useActionState, useRef, useEffect, useState, use } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -17,6 +17,7 @@ import { Send, User, Bot, Sparkles } from 'lucide-react';
 import { healthAssistantAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useUserProfile } from '@/context/user-profile-context';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -43,6 +44,7 @@ function SubmitButton() {
 }
 
 export default function HealthAssistantPage() {
+  const { userName, userImage } = useUserProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [state, formAction] = useActionState(healthAssistantAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -89,7 +91,7 @@ export default function HealthAssistantPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot />
-            Chat
+            Chat with {userName}
           </CardTitle>
           <CardDescription>
             This is an AI assistant. Information may be inaccurate.
@@ -129,7 +131,7 @@ export default function HealthAssistantPage() {
                   </div>
                   {message.role === 'user' && (
                     <Avatar className="h-9 w-9">
-                       <AvatarImage src="https://picsum.photos/seed/user/100/100" alt="@user" data-ai-hint="person face" />
+                       <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
                       <AvatarFallback><User /></AvatarFallback>
                     </Avatar>
                   )}

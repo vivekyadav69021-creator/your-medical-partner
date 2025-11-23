@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Bot, HeartPulse, Stethoscope, Activity, BedDouble, Droplets, Flame } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { useUserProfile } from '@/context/user-profile-context';
 
 const quickAccessItems = [
   {
@@ -52,11 +53,12 @@ const chartConfig = {
 }
 
 export default function DashboardPage() {
+  const { userName } = useUserProfile();
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Welcome back, User!
+          Welcome back, {userName}!
         </h1>
         <p className="text-muted-foreground">
           Here's a snapshot of your health and activities.
