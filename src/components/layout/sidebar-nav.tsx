@@ -17,6 +17,7 @@ import {
   BookHeart,
   BrainCircuit,
   ListTodo,
+  Trophy,
 } from 'lucide-react';
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/consultation', label: 'Consultations', icon: Stethoscope },
   { href: '/store', label: 'Medical Store', icon: Store },
   { href: '/planner', label: 'My Planner', icon: ListTodo },
+  { href: '/challenges', label: 'Challenges', icon: Trophy },
   { href: '/symptom-checker', label: 'Symptom Checker', icon: ScanLine },
   { href: '/health-score', label: 'Health Score', icon: HeartPulse },
   { href: '/health-assistant', label: 'AI Assistant', icon: Bot },
