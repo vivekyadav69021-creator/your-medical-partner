@@ -48,7 +48,7 @@ export default function HealthAssistantPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleFormAction = async (formData: FormData) => {
+  const handleFormAction = (formData: FormData) => {
     const query = formData.get('query') as string;
     if (!query) return;
 
