@@ -113,12 +113,13 @@ export default function SymptomCheckerPage() {
   };
   
   const handleFormAction = (formData: FormData) => {
-    let imageToSubmit = imagePreview;
+    let imageToSubmit : string | null = null;
+    const sourceTab = formData.get('source_tab');
 
-    // The form action could be triggered from 'report' or 'scan' tab
-    // If we have a captured image, it takes precedence when submitting from 'scan' tab
-    if (capturedImage && formData.get('source_tab') === 'scan') {
-      imageToSubmit = capturedImage;
+    if (sourceTab === 'report') {
+        imageToSubmit = imagePreview;
+    } else if (sourceTab === 'scan') {
+        imageToSubmit = capturedImage;
     }
     
     if (imageToSubmit) {
@@ -189,12 +190,13 @@ export default function SymptomCheckerPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                  <div className="space-y-2">
-                    <Label htmlFor="symptoms-report">Symptoms / Notes (Optional)</Label>
+                    <Label htmlFor="symptoms-report">Symptoms / Notes</Label>
                     <Textarea
                       id="symptoms-report"
                       name="symptoms"
                       placeholder="e.g., 'This rash appeared yesterday. It is itchy. Please analyze the attached image.'"
                       rows={3}
+                      required
                     />
                   </div>
                  <div className="space-y-2">
@@ -269,18 +271,22 @@ export default function SymptomCheckerPage() {
               <Card>
                 <form action={handleFormAction}>
                   <input type="hidden" name="source_tab" value="scan" />
+                  {capturedImage && (
+                    <input type="hidden" name="symptomImageDataUri" value={capturedImage} />
+                  )}
                   <CardHeader>
                     <CardTitle>Analyze Captured Image</CardTitle>
                     <CardDescription>Add any notes and submit for analysis.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                      <div className="space-y-2">
-                        <Label htmlFor="symptoms-scan">Symptoms / Notes (Optional)</Label>
+                        <Label htmlFor="symptoms-scan">Symptoms / Notes</Label>
                         <Textarea
                           id="symptoms-scan"
                           name="symptoms"
                           placeholder="e.g., 'This appeared on my arm this morning. It's slightly itchy.'"
                           rows={3}
+                          required
                         />
                       </div>
                       <div className="space-y-2">
