@@ -54,16 +54,6 @@ const quickAccessItems = [
   },
 ];
 
-const heartRateData = [
-  { time: "12:00", value: 72 },
-  { time: "13:00", value: 75 },
-  { time: "14:00", value: 78 },
-  { time: "15:00", value: 70 },
-  { time: "16:00", value: 82 },
-  { time: "17:00", value: 79 },
-  { time: "18:00", value: 85 },
-];
-
 const sleepData = [
     { day: 'Mon', hours: 7.5 },
     { day: 'Tue', hours: 6.8 },
@@ -130,38 +120,6 @@ export default function DashboardPage() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Heart Rate (Today)</CardTitle>
-            <CardDescription>Your heart rate throughout the day.</CardDescription>
-          </CardHeader>
-          <CardContent>
-             <ChartContainer config={{}} className="h-[200px] w-full">
-                <AreaChart
-                    data={heartRateData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
-                    <CartesianGrid vertical={false} strokeDasharray="3 3"/>
-                    <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <ChartTooltip 
-                        content={<ChartTooltipContent />}
-                        cursor={{ fill: 'hsl(var(--secondary))' }}
-                    />
-                    <defs>
-                        <linearGradient id="colorHeart" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                        </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorHeart)" />
-                </AreaChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
             <CardTitle>Weekly Sleep Pattern</CardTitle>
             <CardDescription>Your sleep duration over the last 7 days.</CardDescription>
           </CardHeader>
@@ -183,7 +141,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
