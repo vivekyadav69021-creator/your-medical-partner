@@ -20,7 +20,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
             <HeartPulse className="w-8 h-8 text-primary" />
-            <h1 className="text-xl font-bold font-headline text-primary">MediMate</h1>
+            <h1 className="text-xl font-bold font-headline text-primary">Your Medical Partner</h1>
           </div>
         </SidebarHeader>
         <SidebarContent>
