@@ -87,30 +87,35 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold tracking-tight">Quick Access</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {quickAccessItems.map((item) => (
-              <Card key={item.title} className="group hover:shadow-lg transition-shadow duration-300">
-                <Link href={item.href} className="flex flex-col h-full">
-                  <CardHeader className="flex-row items-center gap-4 space-y-0 pb-2">
-                      <item.icon className="w-8 h-8 text-primary" />
-                      <CardTitle className="text-lg font-semibold">{item.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      {item.description}
-                    </p>
-                    <div className="flex items-center text-sm font-medium text-primary mt-4">
-                        <span>Go to {item.title}</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transform transition-transform duration-300 group-hover:translate-x-1" />
-                    </div>
-                  </CardContent>
-                </Link>
-              </Card>
-            ))}
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Access</CardTitle>
+          <CardDescription>Your healthcare tools, just a click away.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {quickAccessItems.map((item) => (
+                <Card key={item.title} className="group hover:shadow-lg transition-shadow duration-300">
+                  <Link href={item.href} className="flex flex-col h-full">
+                    <CardHeader className="flex-row items-center gap-4 space-y-0 pb-2">
+                        <item.icon className="w-8 h-8 text-primary" />
+                        <CardTitle className="text-lg font-semibold">{item.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-between pt-2">
+                      <p className="text-sm text-muted-foreground">
+                        {item.description}
+                      </p>
+                      <div className="flex items-center text-sm font-medium text-primary mt-4">
+                          <span>Go to {item.title}</span>
+                          <ArrowRight className="ml-2 h-4 w-4 transform transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
+                    </CardContent>
+                  </Link>
+                </Card>
+              ))}
+          </div>
+        </CardContent>
+      </Card>
       
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
