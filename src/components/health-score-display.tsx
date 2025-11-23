@@ -13,6 +13,7 @@ export function HealthScoreDisplay({ score, className }: { score: number, classN
   return (
     <div className={cn("relative w-48 h-48", className)}>
       <svg className="w-full h-full" viewBox="0 0 100 100">
+        {/* Background circle */}
         <circle
           className="text-secondary"
           strokeWidth="10"
@@ -22,6 +23,7 @@ export function HealthScoreDisplay({ score, className }: { score: number, classN
           cx="50"
           cy="50"
         />
+        {/* Foreground circle (progress) */}
         <circle
           className={cn("transform -rotate-90 origin-center transition-all duration-1000 ease-out", colorClass)}
           strokeWidth="10"
@@ -33,6 +35,7 @@ export function HealthScoreDisplay({ score, className }: { score: number, classN
           r="45"
           cx="50"
           cy="50"
+          style={{ filter: `drop-shadow(0 0 5px currentColor)` }}
         />
       </svg>
       <div className="absolute top-0 left-0 flex flex-col items-center justify-center w-full h-full">
