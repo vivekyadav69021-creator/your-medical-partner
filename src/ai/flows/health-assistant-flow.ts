@@ -39,7 +39,7 @@ const prompt = ai.definePrompt({
 
   User query: {{{query}}}
 
-  Provide a clear and concise answer to the user's query. You MUST NOT provide medical advice, diagnosis, or treatment recommendations. Always include a disclaimer that the information is for informational purposes only and users should consult a healthcare professional for medical advice.
+  Provide a detailed and well-structured answer to the user's query. Use bullet points to break down complex information and make it easy to read. You MUST NOT provide medical advice, diagnosis, or treatment recommendations. Always include a disclaimer at the end that the information is for informational purposes only and users should consult a healthcare professional for medical advice.
   `,
 });
 
