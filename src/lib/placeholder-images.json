@@ -1,3 +1,76 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "doctor-1",
+      "description": "Portrait of Dr. Ananya Sharma",
+      "imageUrl": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-2",
+      "description": "Portrait of Dr. Vikram Singh",
+      "imageUrl": "https://images.unsplash.com/photo-1730597842283-943c7986ee2c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-3",
+      "description": "Portrait of Dr. Priya Patel",
+      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZG9jdG9yJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzODczMjE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-4",
+      "description": "Portrait of Dr. Arjun Gupta",
+      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-5",
+      "description": "Portrait of Dr. John Smith",
+      "imageUrl": "https://images.unsplash.com/photo-1642541724244-83d49288a86b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-6",
+      "description": "Portrait of Dr. Emily Williams",
+      "imageUrl": "https://images.unsplash.com/photo-1612349316228-5942a9b489c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "medicine-1",
+      "description": "Box of Paracetamol tablets",
+      "imageUrl": "https://images.unsplash.com/photo-1707555647487-6f06b1508ab8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medicine box"
+    },
+    {
+      "id": "medicine-2",
+      "description": "Bottle of Ibuprofen",
+      "imageUrl": "https://images.unsplash.com/photo-1655174041849-49ed985e9ffb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWVkaWNpbmUlMjBib3R0bGV8ZW58MHx8fHwxNzYzODIzOTEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medicine bottle"
+    },
+    {
+      "id": "medicine-3",
+      "description": "Box of Amoxicillin capsules",
+      "imageUrl": "https://images.unsplash.com/photo-1711985220388-17d1218ff01f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medicine box"
+    },
+    {
+      "id": "medicine-4",
+      "description": "Cough syrup bottle",
+      "imageUrl": "https://images.unsplash.com/photo-1655174041849-49ed985e9ffb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWVkaWNpbmUlMjBib3R0bGV8ZW58MHx8fHwxNzYzODIzOTEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medicine bottle"
+    },
+    {
+      "id": "medicine-5",
+      "description": "Allergy relief tablets",
+      "imageUrl": "https://images.unsplash.com/photo-1550572017-4fcdbb59cc32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medicine box"
+    },
+    {
+      "id": "medicine-6",
+      "description": "Vitamin D supplements",
+      "imageUrl": "https://images.unsplash.com/photo-1701859080936-95637f75cb57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdXBwbGVtZW50JTIwYm90dGxlfGVufDB8fHx8MTc2Mzg3ODM3NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "supplement bottle"
+    }
+  ]
 }
