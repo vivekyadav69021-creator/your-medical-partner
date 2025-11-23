@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Bot, Sparkles, Terminal, Camera, Upload, ScanSearch, FileText, Video } from 'lucide-react';
+import { Bot, Sparkles, Terminal, Camera, Upload, ScanSearch, FileText, Video, Trash2 } from 'lucide-react';
 import { aiSymptomCheckAction } from './actions';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +44,7 @@ function SubmitButton({ text = 'Analyze' }: { text?: string }) {
 export default function SymptomCheckerPage() {
   const [state, formAction] = useActionState(aiSymptomCheckAction, initialState);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -105,17 +106,36 @@ export default function SymptomCheckerPage() {
         canvasRef.current.height = video.videoHeight;
         context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
         const dataUri = canvasRef.current.toDataURL('image/jpeg');
-        setImagePreview(dataUri);
-        toast({ title: 'Image Captured', description: 'The image is ready for analysis. Switch to the Report Analysis tab to submit.' });
+        setCapturedImage(dataUri);
+        toast({ title: 'Image Captured', description: 'Your image is ready for analysis below.' });
       }
     }
   };
   
   const handleFormAction = (formData: FormData) => {
-    if (imagePreview) {
-      formData.set('symptomImageDataUri', imagePreview);
+    let imageToSubmit = imagePreview;
+
+    // The form action could be triggered from 'report' or 'scan' tab
+    // If we have a captured image, it takes precedence when submitting from 'scan' tab
+    if (capturedImage && formData.get('source_tab') === 'scan') {
+      imageToSubmit = capturedImage;
+    }
+    
+    if (imageToSubmit) {
+      formData.set('symptomImageDataUri', imageToSubmit);
     }
     formAction(formData);
+  }
+  
+  const resetCapturedImage = () => {
+    setCapturedImage(null);
+  }
+
+  const resetUploadedImage = () => {
+    setImagePreview(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   }
 
   return (
@@ -136,6 +156,7 @@ export default function SymptomCheckerPage() {
         <TabsContent value="symptoms" className="mt-6">
           <Card>
             <form action={handleFormAction}>
+              <input type="hidden" name="source_tab" value="symptoms" />
               <CardHeader>
                 <CardTitle>Symptom Check</CardTitle>
                 <CardDescription>Describe your symptoms for the AI to analyze.</CardDescription>
@@ -161,6 +182,7 @@ export default function SymptomCheckerPage() {
         <TabsContent value="report" className="mt-6">
            <Card>
             <form action={handleFormAction}>
+              <input type="hidden" name="source_tab" value="report" />
               <CardHeader>
                 <CardTitle>Report Analysis</CardTitle>
                 <CardDescription>Upload a medical report or photo of a symptom.</CardDescription>
@@ -190,8 +212,9 @@ export default function SymptomCheckerPage() {
                       {imagePreview ? (
                           <div className="relative group mx-auto max-w-[250px]">
                               <Image src={imagePreview} alt="Symptom preview" width={250} height={250} className="rounded-md object-contain max-h-[250px]" />
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>Change Image</Button>
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>Change</Button>
+                                  <Button type="button" variant="destructive" size="icon" onClick={resetUploadedImage}><Trash2 className="h-4 w-4"/></Button>
                               </div>
                           </div>
                       ) : (
@@ -212,35 +235,79 @@ export default function SymptomCheckerPage() {
           </Card>
         </TabsContent>
         <TabsContent value="scan" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Live Camera Scan</CardTitle>
-                <CardDescription>Use your camera to capture an image and then submit it for analysis in the 'Report Analysis' tab.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center gap-4">
-                <div className="w-full max-w-md aspect-video bg-muted rounded-lg overflow-hidden relative flex items-center justify-center">
-                    <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                    <canvas ref={canvasRef} className="hidden" />
-                     {hasCameraPermission === false && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-background/80">
-                             <Camera className="w-12 h-12 text-muted-foreground mb-2" />
-                             <p className="font-medium">Camera not available</p>
-                             <p className="text-sm text-muted-foreground">Please allow camera access in your browser.</p>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Live Camera</CardTitle>
+                  <CardDescription>Use your camera to capture an image for analysis.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center gap-4">
+                  <div className="w-full aspect-video bg-muted rounded-lg overflow-hidden relative flex items-center justify-center">
+                      <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                      <canvas ref={canvasRef} className="hidden" />
+                       {hasCameraPermission === false && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-background/80">
+                               <Camera className="w-12 h-12 text-muted-foreground mb-2" />
+                               <p className="font-medium">Camera not available</p>
+                               <p className="text-sm text-muted-foreground">Please allow camera access in your browser.</p>
+                          </div>
+                       )}
+                       {hasCameraPermission === null && !videoRef.current?.srcObject && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-background/80">
+                               <Sparkles className="w-12 h-12 text-muted-foreground mb-2 animate-pulse" />
+                               <p className="font-medium">Initializing Camera...</p>
+                          </div>
+                       )}
+                  </div>
+                  <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+                      <Camera className="mr-2 h-4 w-4" />
+                      Capture Image
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <form action={handleFormAction}>
+                  <input type="hidden" name="source_tab" value="scan" />
+                  <CardHeader>
+                    <CardTitle>Analyze Captured Image</CardTitle>
+                    <CardDescription>Add any notes and submit for analysis.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="symptoms-scan">Symptoms / Notes (Optional)</Label>
+                        <Textarea
+                          id="symptoms-scan"
+                          name="symptoms"
+                          placeholder="e.g., 'This appeared on my arm this morning. It's slightly itchy.'"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Captured Image</Label>
+                         <div className="p-4 border-2 border-dashed rounded-lg text-center">
+                          {capturedImage ? (
+                              <div className="relative group mx-auto max-w-[250px]">
+                                  <Image src={capturedImage} alt="Captured symptom" width={250} height={250} className="rounded-md object-contain max-h-[250px]" />
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button type="button" variant="destructive" size="icon" onClick={resetCapturedImage}><Trash2 className="h-4 w-4"/></Button>
+                                  </div>
+                              </div>
+                          ) : (
+                              <div className="flex flex-col items-center justify-center h-[150px]">
+                                  <Camera className="w-12 h-12 text-muted-foreground" />
+                                  <p className="text-sm text-muted-foreground mt-2">Your captured image will appear here.</p>
+                              </div>
+                          )}
                         </div>
-                     )}
-                     {hasCameraPermission === null && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-background/80">
-                             <Sparkles className="w-12 h-12 text-muted-foreground mb-2 animate-pulse" />
-                             <p className="font-medium">Initializing Camera...</p>
-                        </div>
-                     )}
-                </div>
-                <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full max-w-md">
-                    <Camera className="mr-2 h-4 w-4" />
-                    Capture Image
-                </Button>
-              </CardContent>
-            </Card>
+                      </div>
+                  </CardContent>
+                  <CardFooter>
+                    <SubmitButton text="Analyze Captured Image"/>
+                  </CardFooter>
+                </form>
+              </Card>
+            </div>
         </TabsContent>
       </Tabs>
 
