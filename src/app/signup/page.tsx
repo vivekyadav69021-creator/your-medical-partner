@@ -1,9 +1,11 @@
 
 'use client';
-import { useActionState } from 'react';
+import React, { useState } from 'react';
 import {
-  signUpWithEmail,
-} from '@/app/auth/actions';
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,7 +23,6 @@ import { HeartPulse, Terminal } from 'lucide-react';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 function GoogleIcon() {
   return (
@@ -35,18 +36,36 @@ function GoogleIcon() {
 }
 
 function SignUpForm() {
-  const [state, formAction] = useActionState(signUpWithEmail, { message: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const router = useRouter();
 
+  const handleEmailSignUp = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard');
+    } catch (e: any) {
+      setError(e.message);
+      setIsLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
       router.push('/dashboard');
     } catch (error: any) {
-      console.error(error);
-      // You might want to show an error to the user
+      setError(error.message);
+      setIsLoading(false);
     }
   };
 
@@ -59,30 +78,30 @@ function SignUpForm() {
           Create an account to get started.
         </CardDescription>
       </CardHeader>
-      <form action={formAction}>
+      <form onSubmit={handleEmailSignUp}>
         <CardContent className="grid gap-4">
-          {state?.message && (
+          {error && (
             <Alert variant="destructive">
               <Terminal className="h-4 w-4" />
               <AlertTitle>Heads up!</AlertTitle>
-              <AlertDescription>{state.message}</AlertDescription>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" name="email" placeholder="m@example.com" required />
+            <Input id="email" type="email" name="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} disabled={isLoading} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" name="password" required />
+            <Input id="password" type="password" name="password" required value={password} onChange={e => setPassword(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full">Create Account</Button>
+          <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? 'Creating Account...' : 'Create Account'}</Button>
         </CardFooter>
       </form>
        <CardFooter className="flex flex-col gap-4">
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
             <GoogleIcon />
             Sign up with Google
           </Button>
