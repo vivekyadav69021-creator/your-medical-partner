@@ -258,7 +258,7 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {
@@ -391,3 +391,4 @@
     "reasoning": "The Firestore data structure is designed to support the MediMate application's features, focusing on user profiles, doctor consultations, and medicine ordering. The structure emphasizes authorization independence and efficient data retrieval, following the core design principles. User-owned data is stored under `/users/{userId}` for simple, path-based ownership rules. Collaborative data patterns are implemented where applicable using membership maps or denormalization. Global roles (e.g. admin) can be implemented with existence checks against dedicated collections. This design ensures security rules are straightforward and debuggable.\n\n**Authorization Independence:** Data required for authorization, such as user roles or group memberships, is denormalized into subcollections where necessary. For instance, access to appointment data is directly controlled by the user's ID within the appointment document, avoiding costly and insecure `get()` calls in security rules.\n\n**QAPs (Rules Are Not Filters):** The structure segregates data based on access requirements. Private user data resides under `/users/{userId}`, while doctors and medicines are in top-level collections that can be queried without compromising security. This segregation prevents the need for complex filtering logic in security rules.\n\nThe design continues the path structure for nested data. For instance, the Appointments collection is stored under `/users/{userId}/appointments/{appointmentId}`.\n\n"
   }
 }
+    
