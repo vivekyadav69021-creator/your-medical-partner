@@ -17,7 +17,7 @@ import {
   BrainCircuit,
   ListTodo,
   Trophy,
-  Video,
+  Scan,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +29,7 @@ const navItems = [
   { href: '/health-score', label: 'Health Score', icon: HeartPulse },
   { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
   { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
+  { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
   { href: '/nearby-hospital', label: 'Nearby Hospitals', icon: Hospital },
   { href: '/disease-library', label: 'Disease Library', icon: BookHeart },
 ];
