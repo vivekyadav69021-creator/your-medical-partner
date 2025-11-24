@@ -13,12 +13,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Sparkles, BrainCircuit } from 'lucide-react';
-import { aiPsychiatristAction } from './actions';
+import { Send, User, Sparkles, BrainCircuit, Mic, MicOff } from 'lucide-react';
+import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUserProfile } from '@/context/user-profile-context';
 import ReactMarkdown from 'react-markdown';
+import { useToast } from '@/hooks/use-toast';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -27,6 +28,11 @@ type Message = {
 
 const initialState = {
   response: null,
+  error: null,
+};
+
+const initialSpeechState = {
+  transcript: null,
   error: null,
 };
 
@@ -46,10 +52,18 @@ function SubmitButton() {
 
 export default function AIPsychiatristPage() {
   const { userName, userImage } = useUserProfile();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [state, formAction, isPending] = useActionState(aiPsychiatristAction, initialState);
+  const [speechState, speechAction, isTranscribing] = useActionState(speechToTextAction, initialSpeechState);
+  
   const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const handleFormAction = (formData: FormData) => {
     const query = formData.get('query') as string;
@@ -58,9 +72,7 @@ export default function AIPsychiatristPage() {
     const newMessages: Message[] = [...messages, { role: 'user', content: query }];
     setMessages(newMessages);
 
-    // Pass the current message history to the action
     formData.set('history', JSON.stringify(messages));
-
     formAction(formData);
     formRef.current?.reset();
   };
@@ -71,12 +83,21 @@ export default function AIPsychiatristPage() {
           setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
         }
         if (state.error) {
-          // Displaying the error in the chat for user visibility
           const errorMessage = `Sorry, I encountered an error: ${state.error}`;
           setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
         }
     }
   }, [state, isPending]);
+
+  useEffect(() => {
+    if (speechState?.transcript && inputRef.current) {
+      inputRef.current.value = speechState.transcript;
+      toast({ title: 'Transcription complete', description: 'Your message is ready to send.' });
+    }
+    if (speechState?.error) {
+      toast({ variant: 'destructive', title: 'Transcription Failed', description: speechState.error });
+    }
+  }, [speechState, toast]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -86,6 +107,45 @@ export default function AIPsychiatristPage() {
       }
     }
   }, [messages, isPending]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string;
+          const formData = new FormData();
+          formData.append('audioDataUri', base64Audio);
+          speechAction(formData);
+        };
+        stream.getTracks().forEach(track => track.stop()); // Stop the microphone access
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      toast({ title: 'Recording started...', description: 'Speak your message now.' });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({ variant: 'destructive', title: 'Recording Error', description: 'Could not access microphone.' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
@@ -169,11 +229,12 @@ export default function AIPsychiatristPage() {
             className="flex w-full items-center gap-2"
           >
             <Input
+              ref={inputRef}
               name="query"
               placeholder="Share your feelings here... (English or Hindi)"
               className="flex-1"
               autoComplete="off"
-              disabled={isPending}
+              disabled={isPending || isTranscribing}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -181,6 +242,11 @@ export default function AIPsychiatristPage() {
                 }
               }}
             />
+             <Button type="button" size="icon" variant={isRecording ? 'destructive' : 'outline'} onClick={isRecording ? stopRecording : startRecording} disabled={isTranscribing || isPending}>
+              {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              {isTranscribing && <Sparkles className="h-5 w-5 animate-pulse" />}
+              <span className="sr-only">{isRecording ? 'Stop Recording' : 'Start Recording'}</span>
+            </Button>
             <SubmitButton />
           </form>
         </CardFooter>

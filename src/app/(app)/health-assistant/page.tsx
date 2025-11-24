@@ -13,22 +13,32 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Sparkles } from 'lucide-react';
-import { healthAssistantAction } from './actions';
+import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X } from 'lucide-react';
+import { healthAssistantAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUserProfile } from '@/context/user-profile-context';
 import ReactMarkdown from 'react-markdown';
+import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
+
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  image?: string;
 };
 
 const initialState = {
   response: null,
   error: null,
 };
+
+const initialSpeechState = {
+  transcript: null,
+  error: null,
+};
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -46,18 +56,35 @@ function SubmitButton() {
 
 export default function HealthAssistantPage() {
   const { userName, userImage } = useUserProfile();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [state, formAction, isPending] = useActionState(healthAssistantAction, initialState);
+  const [speechState, speechAction, isTranscribing] = useActionState(speechToTextAction, initialSpeechState);
+  
   const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const handleFormAction = (formData: FormData) => {
     const query = formData.get('query') as string;
-    if (!query) return;
+    if (!query && !attachedImage) return;
 
-    setMessages(prev => [...prev, { role: 'user', content: query }]);
+    let userMessage: Message = { role: 'user', content: query || 'Image analysis' };
+    if (attachedImage) {
+      userMessage.image = attachedImage;
+      formData.append('photoDataUri', attachedImage);
+    }
+    
+    setMessages(prev => [...prev, userMessage]);
     formAction(formData);
     formRef.current?.reset();
+    setAttachedImage(null);
   };
   
   useEffect(() => {
@@ -71,6 +98,16 @@ export default function HealthAssistantPage() {
     }
   }, [state, isPending]);
 
+   useEffect(() => {
+    if (speechState?.transcript && inputRef.current) {
+      inputRef.current.value = speechState.transcript;
+      toast({ title: 'Transcription complete', description: 'Your message is ready to send.' });
+    }
+    if (speechState?.error) {
+      toast({ variant: 'destructive', title: 'Transcription Failed', description: speechState.error });
+    }
+  }, [speechState, toast]);
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -79,6 +116,56 @@ export default function HealthAssistantPage() {
       }
     }
   }, [messages, isPending]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAttachedImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string;
+          const formData = new FormData();
+          formData.append('audioDataUri', base64Audio);
+          speechAction(formData);
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      toast({ title: 'Recording started...', description: 'Speak your query now.' });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({ variant: 'destructive', title: 'Recording Error', description: 'Could not access microphone.' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
@@ -94,7 +181,7 @@ export default function HealthAssistantPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot />
-            Chat with {userName}
+            Chat with Health Assistant
           </CardTitle>
           <CardDescription>
             This is an AI assistant. Information may be inaccurate.
@@ -130,8 +217,17 @@ export default function HealthAssistantPage() {
                         : 'bg-muted'
                     }`}
                   >
+                     {message.image && (
+                      <Image
+                        src={message.image}
+                        alt="User upload"
+                        width={200}
+                        height={200}
+                        className="rounded-md mb-2"
+                      />
+                    )}
                     {message.role === 'assistant' ? (
-                        <article className="prose prose-sm"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                        <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
                     ) : (
                         <p>{message.content}</p>
                     )}
@@ -159,18 +255,38 @@ export default function HealthAssistantPage() {
             </div>
           </ScrollArea>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex-col items-start gap-2">
+           {attachedImage && (
+            <div className="relative p-2 border rounded-md">
+              <Image
+                src={attachedImage}
+                alt="Preview"
+                width={80}
+                height={80}
+                className="rounded-md"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
+                onClick={() => setAttachedImage(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           <form
             ref={formRef}
             action={handleFormAction}
             className="flex w-full items-center gap-2"
           >
             <Input
+              ref={inputRef}
               name="query"
               placeholder="Type your message..."
               className="flex-1"
               autoComplete="off"
-              disabled={isPending}
+              disabled={isPending || isTranscribing}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -178,6 +294,22 @@ export default function HealthAssistantPage() {
                 }
               }}
             />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*"
+            />
+             <Button type="button" size="icon" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending || isTranscribing}>
+              <Paperclip className="h-5 w-5" />
+              <span className="sr-only">Attach file</span>
+            </Button>
+             <Button type="button" size="icon" variant={isRecording ? 'destructive' : 'outline'} onClick={isRecording ? stopRecording : startRecording} disabled={isTranscribing || isPending}>
+              {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              {isTranscribing && <Sparkles className="h-5 w-5 animate-pulse" />}
+              <span className="sr-only">{isRecording ? 'Stop Recording' : 'Start Recording'}</span>
+            </Button>
             <SubmitButton />
           </form>
         </CardFooter>

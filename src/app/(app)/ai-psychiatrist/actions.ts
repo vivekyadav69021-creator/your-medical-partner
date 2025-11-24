@@ -1,6 +1,7 @@
 'use server';
 
 import { aiPsychiatrist, AIPsychiatristInput } from '@/ai/flows/ai-psychiatrist-flow';
+import { speechToText } from '@/ai/flows/speech-to-text-flow';
 import { z } from 'zod';
 
 const psychiatristSchema = z.object({
@@ -43,6 +44,25 @@ export async function aiPsychiatristAction(
     return {
       response: null,
       error: e.message || 'The AI model could not be reached. Please try again later.',
+    };
+  }
+}
+
+export async function speechToTextAction(prevState: any, formData: FormData) {
+  const audioDataUri = formData.get('audioDataUri');
+
+  if (!audioDataUri) {
+    return { transcript: null, error: 'No audio data provided.' };
+  }
+
+  try {
+    const result = await speechToText({ audioDataUri: audioDataUri as string });
+    return { transcript: result.transcript, error: null };
+  } catch (e: any) {
+    console.error(e);
+    return {
+      transcript: null,
+      error: e.message || 'Could not transcribe audio.',
     };
   }
 }

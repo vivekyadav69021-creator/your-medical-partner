@@ -13,6 +13,9 @@ import {z} from 'genkit';
 
 const HealthAssistantInputSchema = z.object({
   query: z.string().describe('The user\'s question about health, medicine, or diseases.'),
+  photoDataUri: z.string().optional().describe(
+      "An optional photo of a health concern (e.g., rash, pill), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 
@@ -40,6 +43,10 @@ const prompt = ai.definePrompt({
   Your response MUST follow this 12-point structure exactly, using Markdown for formatting. Use relevant emojis to make the content engaging.
 
   User query: {{{query}}}
+  {{#if photoDataUri}}
+  User has provided a photo:
+  {{media url=photoDataUri}}
+  {{/if}}
 
   **1. Title / Short Headline (1 line)**
   Provide a concise topic name for the query.
