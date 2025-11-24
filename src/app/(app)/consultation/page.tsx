@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -20,13 +21,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Star, Video, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 const indianDoctors = [
   { name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1' },
@@ -46,7 +56,7 @@ const foreignDoctors = [
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"];
 
-const upcomingAppointments = [
+const initialAppointments = [
   {
     id: 'appt-1',
     doctorName: 'Dr. Priya Patel',
@@ -67,9 +77,47 @@ const upcomingAppointments = [
   },
 ];
 
+type Doctor = {
+  name: string;
+  specialty: string;
+  rating: number;
+  imageId: string;
+};
 
-const DoctorCard = ({ name, specialty, rating, imageId }: { name: string, specialty: string, rating: number, imageId: string }) => {
+type Appointment = {
+  id: string;
+  doctorName: string;
+  specialty: string;
+  date: string;
+  time: string;
+  type: string;
+  imageId: string;
+};
+
+const DoctorCard = ({
+  name,
+  specialty,
+  rating,
+  imageId,
+  onBook,
+}: Doctor & { onBook: (details: Omit<Appointment, 'id' | 'type'>) => void }) => {
   const image = PlaceHolderImages.find(img => img.id === imageId);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | undefined>();
+
+  const handleConfirmBooking = () => {
+    if (selectedDate && selectedTime) {
+      onBook({
+        doctorName: name,
+        specialty,
+        date: format(selectedDate, 'MMM dd, yyyy'),
+        time: selectedTime,
+        imageId,
+      });
+      setIsDialogOpen(false);
+    }
+  };
 
   return (
     <Card>
@@ -97,7 +145,7 @@ const DoctorCard = ({ name, specialty, rating, imageId }: { name: string, specia
         <p className="text-sm text-muted-foreground">Experienced {specialty} with over 10 years of practice. Fluent in English and Hindi.</p>
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>Book Appointment</Button>
           </DialogTrigger>
@@ -112,15 +160,17 @@ const DoctorCard = ({ name, specialty, rating, imageId }: { name: string, specia
               <div className="flex justify-center">
                  <Calendar
                     mode="single"
-                    selected={new Date()}
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
                     className="rounded-md border"
+                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                   />
               </div>
               <div>
                 <Label htmlFor="time-slot" className="text-right mb-2 block">
                   Time Slot
                 </Label>
-                <Select>
+                <Select onValueChange={setSelectedTime} value={selectedTime}>
                   <SelectTrigger id="time-slot">
                     <SelectValue placeholder="Select a time" />
                   </SelectTrigger>
@@ -133,7 +183,9 @@ const DoctorCard = ({ name, specialty, rating, imageId }: { name: string, specia
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" className="w-full">Confirm Booking</Button>
+              <Button onClick={handleConfirmBooking} disabled={!selectedDate || !selectedTime} className="w-full">
+                Confirm Booking
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -144,6 +196,22 @@ const DoctorCard = ({ name, specialty, rating, imageId }: { name: string, specia
 
 
 export default function ConsultationPage() {
+  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const { toast } = useToast();
+
+  const handleBookAppointment = (details: Omit<Appointment, 'id' | 'type'>) => {
+    const newAppointment: Appointment = {
+      ...details,
+      id: `appt-${Date.now()}`,
+      type: 'Video Call',
+    };
+    setAppointments(prev => [newAppointment, ...prev]);
+    toast({
+      title: 'Appointment Booked!',
+      description: `Your appointment with ${details.doctorName} on ${details.date} at ${details.time} has been confirmed.`,
+    });
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -167,20 +235,20 @@ export default function ConsultationPage() {
             </TabsList>
             <TabsContent value="indian" className="mt-6">
               <div className="grid gap-6 md:grid-cols-2">
-                {indianDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} />)}
+                {indianDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} onBook={handleBookAppointment} />)}
               </div>
             </TabsContent>
             <TabsContent value="foreign" className="mt-6">
               <div className="grid gap-6 md:grid-cols-2">
-                {foreignDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} />)}
+                {foreignDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} onBook={handleBookAppointment} />)}
               </div>
             </TabsContent>
           </Tabs>
         </TabsContent>
         <TabsContent value="appointments" className="mt-6">
             <div className="space-y-6">
-                {upcomingAppointments.length > 0 ? (
-                    upcomingAppointments.map((appt) => {
+                {appointments.length > 0 ? (
+                    appointments.map((appt) => {
                         const image = PlaceHolderImages.find(img => img.id === appt.imageId);
                         return (
                             <Card key={appt.id}>
