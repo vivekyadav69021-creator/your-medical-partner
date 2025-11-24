@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, Upload, X, Bot, Terminal, Camera, CameraOff, SwitchCamera, Image as ImageIcon } from 'lucide-react';
+import { Scan, Sparkles, Upload, X, Bot, Terminal, Camera, CameraOff, SwitchCamera, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { diseaseScannerAction } from './actions';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
@@ -54,6 +54,7 @@ export default function DiseaseScannerPage() {
   const { toast } = useToast();
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -77,8 +78,10 @@ export default function DiseaseScannerPage() {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
+          setHasCameraPermission(true);
         } catch (err) {
           console.error("Camera error:", err);
+          setHasCameraPermission(false);
           toast({
             variant: "destructive",
             title: "Camera Access Denied",
@@ -115,7 +118,6 @@ export default function DiseaseScannerPage() {
       }
     }
   };
-
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -162,41 +164,55 @@ export default function DiseaseScannerPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="symptom-image">Symptom Image</Label>
-                {isCameraOpen ? (
-                  <div className="relative">
-                    <video ref={videoRef} autoPlay playsInline className="w-full h-auto rounded-md border aspect-video object-cover" />
+                <div className="relative">
+                   <video ref={videoRef} autoPlay playsInline muted className={cn("w-full h-auto rounded-md border aspect-video object-cover", { "hidden": !isCameraOpen })} />
+                   
+                   {isCameraOpen && (
                      <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
                         <Button type="button" onClick={takePicture}>Take Picture</Button>
                         <Button type="button" variant="outline" onClick={switchCamera}><SwitchCamera /></Button>
                         <Button type="button" variant="destructive" onClick={stopCamera}><CameraOff /></Button>
                      </div>
-                  </div>
-                ) : preview ? (
-                   <div className="relative">
-                     <Image src={preview} alt="Symptom preview" width={200} height={200} className="rounded-md border aspect-square object-cover w-full" />
-                     <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}>
-                       <X className="h-4 w-4"/>
-                       <span className="sr-only">Remove image</span>
-                     </Button>
-                   </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    <div 
-                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
-                        <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag & drop</p>
-                        <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
+                   )}
+                </div>
+
+                {!isCameraOpen && (
+                  preview ? (
+                     <div className="relative">
+                       <Image src={preview} alt="Symptom preview" width={200} height={200} className="rounded-md border aspect-square object-cover w-full" />
+                       <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}>
+                         <X className="h-4 w-4"/>
+                         <span className="sr-only">Remove image</span>
+                       </Button>
+                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div 
+                        className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
+                          <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag & drop</p>
+                          <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
+                        </div>
+                         <input ref={fileInputRef} id="symptom-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
                       </div>
-                       <input ref={fileInputRef} id="symptom-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
-                    </div>
-                     <Button type="button" variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)}>
-                        <Camera className="mr-2 h-4 w-4" />
-                        Open Camera
-                     </Button>
-                   </div>
+                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)}>
+                          <Camera className="mr-2 h-4 w-4" />
+                          Open Camera
+                       </Button>
+                     </div>
+                  )
+                )}
+                {hasCameraPermission === false && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Camera Access Denied</AlertTitle>
+                      <AlertDescription>
+                        Please enable camera permissions in your browser settings to use this feature.
+                      </AlertDescription>
+                    </Alert>
                 )}
               </div>
               <div className="space-y-2">
