@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
@@ -23,21 +25,48 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Star } from 'lucide-react';
+import { Star, Video, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 const indianDoctors = [
   { name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1' },
   { name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2' },
   { name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3' },
   { name: 'Dr. Arjun Gupta', specialty: 'Neurologist', rating: 4.7, imageId: 'doctor-4' },
+  { name: 'Dr. Sameer Khan', specialty: 'Oncologist', rating: 4.9, imageId: 'doctor-7'},
+  { name: 'Dr. Meera Iyer', specialty: 'Gynecologist', rating: 4.8, imageId: 'doctor-8'},
 ];
 
 const foreignDoctors = [
   { name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5' },
   { name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6' },
+  { name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9'},
+  { name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10'},
 ];
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"];
+
+const upcomingAppointments = [
+  {
+    id: 'appt-1',
+    doctorName: 'Dr. Priya Patel',
+    specialty: 'Pediatrician',
+    date: 'Dec 15, 2024',
+    time: '11:30 AM',
+    type: 'Video Call',
+    imageId: 'doctor-3',
+  },
+  {
+    id: 'appt-2',
+    doctorName: 'Dr. John Smith',
+    specialty: 'General Physician',
+    date: 'Dec 18, 2024',
+    time: '02:00 PM',
+    type: 'In-Person',
+    imageId: 'doctor-5',
+  },
+];
+
 
 const DoctorCard = ({ name, specialty, rating, imageId }: { name: string, specialty: string, rating: number, imageId: string }) => {
   const image = PlaceHolderImages.find(img => img.id === imageId);
@@ -124,20 +153,80 @@ export default function ConsultationPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="indian">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="indian">Indian Doctors</TabsTrigger>
-          <TabsTrigger value="foreign">Foreign Doctors</TabsTrigger>
+      <Tabs defaultValue="find-doctor">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="find-doctor">Find a Doctor</TabsTrigger>
+          <TabsTrigger value="appointments">Upcoming Appointments</TabsTrigger>
+          <TabsTrigger value="history">Consultation History</TabsTrigger>
         </TabsList>
-        <TabsContent value="indian" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {indianDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} />)}
-          </div>
+        <TabsContent value="find-doctor" className="mt-6">
+           <Tabs defaultValue="indian">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="indian">Indian Doctors</TabsTrigger>
+              <TabsTrigger value="foreign">Foreign Doctors</TabsTrigger>
+            </TabsList>
+            <TabsContent value="indian" className="mt-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {indianDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} />)}
+              </div>
+            </TabsContent>
+            <TabsContent value="foreign" className="mt-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {foreignDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} />)}
+              </div>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
-        <TabsContent value="foreign" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {foreignDoctors.map(doctor => <DoctorCard key={doctor.name} {...doctor} />)}
-          </div>
+        <TabsContent value="appointments" className="mt-6">
+            <div className="space-y-6">
+                {upcomingAppointments.length > 0 ? (
+                    upcomingAppointments.map((appt) => {
+                        const image = PlaceHolderImages.find(img => img.id === appt.imageId);
+                        return (
+                            <Card key={appt.id}>
+                                <CardHeader className="flex-row gap-4 items-center">
+                                    {image && <Image src={image.imageUrl} alt={image.description} width={64} height={64} className="rounded-full border" data-ai-hint={image.imageHint}/>}
+                                    <div className="flex-1">
+                                        <CardTitle>{appt.doctorName}</CardTitle>
+                                        <CardDescription>{appt.specialty}</CardDescription>
+                                    </div>
+                                    <Badge variant={appt.type === 'Video Call' ? 'default' : 'secondary'}>{appt.type}</Badge>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-2 gap-4">
+                                     <div className="flex items-center gap-2">
+                                        <CalendarIcon className="w-5 h-5 text-muted-foreground"/>
+                                        <p className="font-medium">{appt.date}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-5 h-5 text-muted-foreground"/>
+                                        <p className="font-medium">{appt.time}</p>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="flex justify-end gap-2">
+                                    <Button variant="outline">Reschedule</Button>
+                                    {appt.type === 'Video Call' && (
+                                         <Button asChild>
+                                            <Link href={`/video-call/${appt.id}?doctor=${encodeURIComponent(appt.doctorName)}`}>
+                                                <Video className="mr-2 h-4 w-4"/>
+                                                Join Video Call
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </CardFooter>
+                            </Card>
+                        );
+                    })
+                ) : (
+                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">You have no upcoming appointments.</p>
+                    </div>
+                )}
+            </div>
+        </TabsContent>
+        <TabsContent value="history" className="mt-6">
+             <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">Your consultation history will appear here.</p>
+            </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -17,6 +17,7 @@ import {
   BrainCircuit,
   ListTodo,
   Trophy,
+  Video,
 } from 'lucide-react';
 
 const navItems = [
