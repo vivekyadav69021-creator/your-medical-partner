@@ -71,7 +71,9 @@ export default function AIPsychiatristPage() {
           setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
         }
         if (state.error) {
-          setMessages(prev => [...prev, { role: 'assistant', content: state.error! }]);
+          // Displaying the error in the chat for user visibility
+          const errorMessage = `Sorry, I encountered an error: ${state.error}`;
+          setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
         }
     }
   }, [state, isPending]);
@@ -135,7 +137,7 @@ export default function AIPsychiatristPage() {
                         : 'bg-muted'
                     }`}
                   >
-                    <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                     <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
                   </div>
                   {message.role === 'user' && (
                     <Avatar className="h-9 w-9">

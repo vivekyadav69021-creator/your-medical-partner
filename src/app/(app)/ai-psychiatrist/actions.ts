@@ -38,11 +38,11 @@ export async function aiPsychiatristAction(
       response: result.response,
       error: null,
     };
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
     return {
       response: null,
-      error: 'The AI model could not be reached. Please try again later.',
+      error: e.message || 'The AI model could not be reached. Please try again later.',
     };
   }
 }
