@@ -39,7 +39,7 @@ type Hospital = {
 };
 
 const NearbyHospitalPage: React.FC = () => {
-  const [status, setStatus] = useState<string>('Requesting location...');
+  const [status, setStatus] = useState<string>('Initializing...');
   const [nearestHospital, setNearestHospital] = useState<Hospital | null>(null);
   const [locationError, setLocationError] = useState(false);
 
@@ -121,12 +121,13 @@ const NearbyHospitalPage: React.FC = () => {
         })
         .filter((e: any) => e.lat && e.lon && e.tags.name);
 
+      if (markersLayerRef.current) {
+        markersLayerRef.current.clearLayers();
+        markersLayerRef.current.addLayer(L.circleMarker([userLocationRef.current.lat, userLocationRef.current.lng], { radius: 7, color: '#0b84ff', fillColor: '#0b84ff', fillOpacity: 0.9 }).bindPopup('You are here'));
+      }
+
       if (elements.length === 0) {
         setStatus(`No hospitals found within ${radius / 1000} km.`);
-        if (markersLayerRef.current) {
-            markersLayerRef.current.clearLayers();
-            markersLayerRef.current.addLayer(L.circleMarker([userLocationRef.current.lat, userLocationRef.current.lng], { radius: 7, color: '#0b84ff', fillColor: '#0b84ff', fillOpacity: 0.9 }).bindPopup('You are here'));
-        }
         return;
       }
 
@@ -134,8 +135,6 @@ const NearbyHospitalPage: React.FC = () => {
         .sort((a: Hospital, b: Hospital) => a.distance - b.distance);
       
       if (markersLayerRef.current) {
-        markersLayerRef.current.clearLayers();
-        markersLayerRef.current.addLayer(L.circleMarker([userLocationRef.current.lat, userLocationRef.current.lng], { radius: 7, color: '#0b84ff', fillColor: '#0b84ff', fillOpacity: 0.9 }).bindPopup('You are here'));
         processed.forEach((p, idx) => {
           const name = p.tags.name || `Hospital ${idx + 1}`;
           const marker = L.marker([p.lat, p.lon]).bindPopup(`<strong>${name}</strong><br/>${p.distance} m`);
@@ -162,37 +161,29 @@ const NearbyHospitalPage: React.FC = () => {
   
   useEffect(() => {
     // Only run on client
-    if (typeof window === 'undefined') return;
-    
-    // Dynamically load Leaflet script
-    const script = document.createElement('script');
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.crossOrigin = "";
-    script.onload = () => {
-        setStatus('Requesting location permission...');
-        if (!navigator.geolocation) {
-          setStatus('Geolocation not supported in this browser.');
-          setLocationError(true);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            userLocationRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            initMap(pos.coords.latitude, pos.coords.longitude);
-            searchNearby();
-          },
-          (err) => {
-            setStatus('Location permission denied. Please enable location services in your browser settings.');
-            setLocationError(true);
-          },
-          { timeout: 10000, maximumAge: 60000 }
-        );
-    };
-    document.head.appendChild(script);
-
-    return () => {
-        document.head.removeChild(script);
+    if (typeof window === 'undefined' || !(window as any).L) {
+        setStatus('Map library not loaded yet.');
+        return;
     }
+    
+    setStatus('Requesting location permission...');
+    if (!navigator.geolocation) {
+      setStatus('Geolocation not supported in this browser.');
+      setLocationError(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLocationRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        initMap(pos.coords.latitude, pos.coords.longitude);
+        searchNearby();
+      },
+      (err) => {
+        setStatus('Location permission denied. Please enable location services in your browser settings.');
+        setLocationError(true);
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
   }, [initMap, searchNearby]);
 
   const handleCallEmergency = () => {
@@ -214,9 +205,6 @@ const NearbyHospitalPage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossOrigin=""/>
-      </Head>
       <div className="space-y-8">
         <h1 className="text-3xl font-bold tracking-tight font-headline">Nearby Hospitals</h1>
         
