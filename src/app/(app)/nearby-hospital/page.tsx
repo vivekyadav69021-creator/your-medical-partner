@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Head from 'next/head';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,16 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LocateFixed, Siren, Map, Navigation, AlertTriangle } from 'lucide-react';
-
-// Helper to prevent XSS
-function escapeHtml(s: string | null | undefined): string {
-  if (!s) return '';
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
+import { Input } from '@/components/ui/input';
+import { LocateFixed, Siren, Map, Navigation, AlertTriangle, Hospital as HospitalIcon, Search } from 'lucide-react';
 
 type Hospital = {
   id: number;
@@ -40,7 +31,8 @@ type Hospital = {
 
 const NearbyHospitalPage: React.FC = () => {
   const [status, setStatus] = useState<string>('Initializing...');
-  const [nearestHospital, setNearestHospital] = useState<Hospital | null>(null);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [locationError, setLocationError] = useState(false);
 
   const mapRef = useRef<any>(null); // For Leaflet map instance
@@ -108,7 +100,7 @@ const NearbyHospitalPage: React.FC = () => {
     }
 
     setStatus('Searching nearby hospitals...');
-    setNearestHospital(null);
+    setHospitals([]);
 
     try {
       const q = overpassQuery(userLocationRef.current.lat, userLocationRef.current.lng, radius);
@@ -149,9 +141,8 @@ const NearbyHospitalPage: React.FC = () => {
           } catch(e) { console.error("FitBounds error", e); }
       }
 
-      const nearest = processed[0];
-      setNearestHospital(nearest);
-      setStatus(`Found ${processed.length} hospital(s). Nearest: ${nearest.tags.name} • ${nearest.distance}m`);
+      setHospitals(processed);
+      setStatus(`Found ${processed.length} hospital(s) nearby.`);
 
     } catch (err) {
       console.error(err);
@@ -160,7 +151,6 @@ const NearbyHospitalPage: React.FC = () => {
   }, []);
   
   useEffect(() => {
-    // Only run on client
     if (typeof window === 'undefined' || !(window as any).L) {
         setStatus('Map library not loaded yet.');
         return;
@@ -196,95 +186,123 @@ const NearbyHospitalPage: React.FC = () => {
      window.open(`https://www.google.com/maps/dir/?api=1&destination=${hospital.lat},${hospital.lon}`, '_blank');
   }
 
-  const handleCenterMap = (hospital: Hospital) => {
-      if(mapRef.current) {
+  const handleShowOnMap = (hospital: Hospital) => {
+      if(mapRef.current && markersLayerRef.current) {
         mapRef.current.setView([hospital.lat, hospital.lon], 16);
+        markersLayerRef.current.eachLayer((layer: any) => {
+            if (layer.getLatLng && layer.getLatLng().lat === hospital.lat && layer.getLatLng().lng === hospital.lon) {
+                layer.openPopup();
+            }
+        });
       }
   }
-
+  
+  const filteredHospitals = hospitals.filter(h =>
+    h.tags.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <>
-      <div className="space-y-8">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Nearby Hospitals</h1>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>Hospital Finder</CardTitle>
-                <CardDescription>Your location and the nearest hospital found via OpenStreetMap.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex items-center gap-2">
-                        <label htmlFor="radiusSelect" className="text-sm font-medium">Search Radius:</label>
-                        <Select defaultValue={radiusRef.current} onValueChange={(val) => { radiusRef.current = val; }}>
-                            <SelectTrigger id="radiusSelect" className="w-[120px]">
-                                <SelectValue placeholder="Select radius" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="1000">1 km</SelectItem>
-                                <SelectItem value="2000">2 km</SelectItem>
-                                <SelectItem value="5000">5 km</SelectItem>
-                                <SelectItem value="10000">10 km</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="flex-1 flex items-center gap-2">
-                         <Button onClick={searchNearby} className="w-full md:w-auto" disabled={locationError}>
-                            <LocateFixed className="mr-2 h-4 w-4"/>
-                            Refresh Nearby
-                         </Button>
-                         <Button onClick={handleCallEmergency} variant="destructive" className="w-full md:w-auto">
-                            <Siren className="mr-2 h-4 w-4"/>
-                            Call Emergency
-                         </Button>
-                    </div>
-                 </div>
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold tracking-tight font-headline">Nearby Hospitals</h1>
+      
+      <Card>
+        <CardHeader>
+            <CardTitle>Hospital Finder</CardTitle>
+            <CardDescription>Find hospitals near your location using OpenStreetMap.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+             <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex items-center gap-2">
+                    <label htmlFor="radiusSelect" className="text-sm font-medium">Radius:</label>
+                    <Select defaultValue={radiusRef.current} onValueChange={(val) => { radiusRef.current = val; }}>
+                        <SelectTrigger id="radiusSelect" className="w-[120px]">
+                            <SelectValue placeholder="Select radius" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="1000">1 km</SelectItem>
+                            <SelectItem value="2000">2 km</SelectItem>
+                            <SelectItem value="5000">5 km</SelectItem>
+                            <SelectItem value="10000">10 km</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <Button onClick={searchNearby} disabled={locationError}>
+                    <LocateFixed className="mr-2 h-4 w-4"/>
+                    Refresh
+                 </Button>
+                 <div className="md:ml-auto">
+                    <Button onClick={handleCallEmergency} variant="destructive">
+                        <Siren className="mr-2 h-4 w-4"/>
+                        Call Emergency
+                    </Button>
+                </div>
+             </div>
 
-                <div id="map" className="h-[420px] w-full rounded-lg border bg-secondary"></div>
+            <div id="map" className="h-[420px] w-full rounded-lg border bg-secondary"></div>
 
-                <div className="mt-4">
-                    <p className="text-sm font-semibold text-muted-foreground">{status}</p>
-                    {locationError && (
-                      <Alert variant="destructive" className="mt-4">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertTitle>Location Error</AlertTitle>
-                          <AlertDescription>
-                            Could not access your location. Please ensure location services are enabled in your browser and system settings.
-                          </AlertDescription>
-                      </Alert>
-                    )}
-                    {nearestHospital && (
-                         <Card className="mt-2">
-                            <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="mt-4">
+                <p className="text-sm font-semibold text-muted-foreground">{status}</p>
+                {locationError && (
+                  <Alert variant="destructive" className="mt-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Location Error</AlertTitle>
+                      <AlertDescription>
+                        Could not access your location. Please enable location services and refresh the page.
+                      </AlertDescription>
+                  </Alert>
+                )}
+            </div>
+            
+            {hospitals.length > 0 && (
+                <div className="space-y-4">
+                     <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          placeholder="Search found hospitals..."
+                          className="pl-10"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+
+                    <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                        {filteredHospitals.map(hospital => (
+                            <Card key={hospital.id}>
+                               <CardContent className="p-3 flex flex-col md:flex-row items-center justify-between gap-3">
                                 <div className="flex-1">
-                                    <p className="font-bold text-lg">{escapeHtml(nearestHospital.tags.name)}</p>
-                                    <p className="text-sm text-muted-foreground mt-1">{escapeHtml(nearestHospital.tags['addr:full'] || nearestHospital.tags.vicinity || 'Address not available')}</p>
-                                    <p className="text-sm font-semibold mt-2">Distance: {nearestHospital.distance} m</p>
+                                    <p className="font-bold text-base flex items-center gap-2"><HospitalIcon className="w-5 h-5 text-primary" />{hospital.tags.name}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">{hospital.tags['addr:full'] || hospital.tags.vicinity || 'Address not available'}</p>
+                                    <p className="text-sm font-semibold mt-1">Distance: {hospital.distance} m</p>
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                                    <Button onClick={() => handleNavigate(nearestHospital)}>
+                                <div className="flex flex-shrink-0 gap-2 w-full md:w-auto">
+                                    <Button onClick={() => handleNavigate(hospital)} className="flex-1">
                                         <Navigation className="mr-2 h-4 w-4"/>
                                         Navigate
                                     </Button>
-                                    <Button variant="outline" onClick={() => handleCenterMap(nearestHospital)}>
+                                    <Button variant="outline" onClick={() => handleShowOnMap(hospital)} className="flex-1">
                                         <Map className="mr-2 h-4 w-4"/>
-                                        Center on Map
+                                        Map
                                     </Button>
                                 </div>
                             </CardContent>
-                         </Card>
-                    )}
+                            </Card>
+                        ))}
+                         {filteredHospitals.length === 0 && (
+                            <p className="text-center text-muted-foreground py-4">No hospitals match your search.</p>
+                        )}
+                    </div>
                 </div>
-                
-                 <p className="text-xs text-muted-foreground text-center pt-4">
-                    Map data &copy; OpenStreetMap contributors. For informational use only.
-                </p>
-            </CardContent>
-        </Card>
-      </div>
-    </>
+            )}
+            
+             <p className="text-xs text-muted-foreground text-center pt-4">
+                Map data &copy; OpenStreetMap contributors. For informational use only.
+            </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
 export default NearbyHospitalPage;
+
+    
