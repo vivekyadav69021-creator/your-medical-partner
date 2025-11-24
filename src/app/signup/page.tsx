@@ -36,13 +36,13 @@ function SignUpForm() {
 
   return (
     <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl">Sign Up</CardTitle>
+        <CardDescription>
+          Create an account to get started.
+        </CardDescription>
+      </CardHeader>
       <form action={formAction}>
-        <CardHeader>
-          <CardTitle className="text-2xl">Sign Up</CardTitle>
-          <CardDescription>
-            Create an account to get started.
-          </CardDescription>
-        </CardHeader>
         <CardContent className="grid gap-4">
           {state?.message && (
             <Alert variant="destructive">
@@ -62,14 +62,16 @@ function SignUpForm() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full">Create Account</Button>
-          <form action={signInWithGoogle} className="w-full">
-            <Button variant="outline" className="w-full" type="submit">
-              <GoogleIcon />
-              Sign up with Google
-            </Button>
-          </form>
         </CardFooter>
       </form>
+       <CardFooter className="flex flex-col gap-4">
+        <form action={signInWithGoogle} className="w-full">
+          <Button variant="outline" className="w-full" type="submit">
+            <GoogleIcon />
+            Sign up with Google
+          </Button>
+        </form>
+      </CardFooter>
       <p className="text-center text-sm text-muted-foreground mb-4">
         Already have an account?{' '}
         <Link href="/login" className="font-semibold text-primary hover:underline">
@@ -93,5 +95,3 @@ export default function SignUpPage() {
     </FirebaseClientProvider>
   );
 }
-
-    
