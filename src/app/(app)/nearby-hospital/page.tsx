@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Search, MapPin, Phone, Hospital, Siren, LocateFixed } from 'lucide-react';
+import { Search, LocateFixed, Siren, Phone } from 'lucide-react';
 
 
 // Helper function to escape HTML, useful for preventing XSS
@@ -108,8 +107,6 @@ const NearbyHospitalPage: React.FC = () => {
       return;
     }
     
-    setStatus({ msg: `${elements.length} hospitals found.`, isError: false });
-
     const processed = elements
       .map((e) => {
         const center = e.center || { lat: e.lat, lon: e.lon };
@@ -123,6 +120,8 @@ const NearbyHospitalPage: React.FC = () => {
       })
       .filter(p => p !== null && p.tags && p.tags.name)
       .sort((a, b) => a.distance - b.distance);
+
+    setStatus({ msg: `${processed.length} hospitals found.`, isError: false });
 
     processed.forEach((p) => {
       if (!p) return;
@@ -294,7 +293,7 @@ const NearbyHospitalPage: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Hospital Finder</CardTitle>
-            <CardDescription>Use the controls below to find hospitals near your location.</CardDescription>
+            <CardDescription>Use the controls below to find hospitals near your location using OpenStreetMap.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
@@ -339,7 +338,7 @@ const NearbyHospitalPage: React.FC = () => {
           <CardContent>
              <div className="flex flex-col gap-2 mt-4 max-h-96 overflow-y-auto">
               {filteredResults.length === 0 ? (
-                <p className="text-muted-foreground text-center">No results to display.</p>
+                <p className="text-muted-foreground text-center py-4">{status.isError ? 'Could not load data.' : 'No results to display.'}</p>
               ) : (
                 filteredResults.map((p, idx) => {
                   const name = p.tags.name || `Hospital ${idx + 1}`;
@@ -374,3 +373,5 @@ const NearbyHospitalPage: React.FC = () => {
 };
 
 export default NearbyHospitalPage;
+
+    
