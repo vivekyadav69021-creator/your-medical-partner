@@ -1,8 +1,9 @@
 export const firebaseConfig = {
-  "projectId": "studio-6776438707-835e3",
-  "appId": "1:708791738298:web:631338b399245b6d3b8783",
-  "apiKey": "AIzaSyDLE_q4_EiJpkE8YEB8s4mzdDoChBw-yk8",
-  "authDomain": "studio-6776438707-835e3.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "708791738298"
+  apiKey: 'AIzaSyA6F9OucjQN_h3B3QBckszT1PYztz4Bklc',
+  authDomain: 'your-medical-partner-e9420.firebaseapp.com',
+  projectId: 'your-medical-partner-e9420',
+  storageBucket: 'your-medical-partner-e9420.appspot.com',
+  messagingSenderId: '876832389694',
+  appId: '1:876832389694:web:1f30fd659b448bed4eaf6f',
+  measurementId: 'G-NBVDWQL3V3',
 };
