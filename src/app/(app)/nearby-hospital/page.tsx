@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -17,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LocateFixed, Siren, Map, Navigation } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { LocateFixed, Siren, Map, Navigation, AlertTriangle } from 'lucide-react';
 
 // Helper to prevent XSS
 function escapeHtml(s: string | null | undefined): string {
@@ -39,6 +41,7 @@ type Hospital = {
 const NearbyHospitalPage: React.FC = () => {
   const [status, setStatus] = useState<string>('Requesting location...');
   const [nearestHospital, setNearestHospital] = useState<Hospital | null>(null);
+  const [locationError, setLocationError] = useState(false);
 
   const mapRef = useRef<any>(null); // For Leaflet map instance
   const markersLayerRef = useRef<any>(null); // For Leaflet layer group
@@ -78,20 +81,15 @@ const NearbyHospitalPage: React.FC = () => {
   
   const initMap = useCallback((lat: number, lng: number) => {
     const L = (window as any).L;
-    if (!L) return;
+    if (!L || mapRef.current) return;
 
-    if (!mapRef.current) {
-      const map = L.map('map', { zoomControl: true }).setView([lat, lng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors',
-      }).addTo(map);
-      mapRef.current = map;
-      markersLayerRef.current = L.layerGroup().addTo(map);
-    } else {
-      mapRef.current.setView([lat, lng], 13);
-      if (markersLayerRef.current) markersLayerRef.current.clearLayers();
-    }
+    const map = L.map('map', { zoomControl: true }).setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map);
+    mapRef.current = map;
+    markersLayerRef.current = L.layerGroup().addTo(map);
     
     if (markersLayerRef.current) {
         const userMarker = L.circleMarker([lat, lng], { radius: 7, color: '#0b84ff', fillColor: '#0b84ff', fillOpacity: 0.9 }).bindPopup('You are here');
@@ -125,6 +123,10 @@ const NearbyHospitalPage: React.FC = () => {
 
       if (elements.length === 0) {
         setStatus(`No hospitals found within ${radius / 1000} km.`);
+        if (markersLayerRef.current) {
+            markersLayerRef.current.clearLayers();
+            markersLayerRef.current.addLayer(L.circleMarker([userLocationRef.current.lat, userLocationRef.current.lng], { radius: 7, color: '#0b84ff', fillColor: '#0b84ff', fillOpacity: 0.9 }).bindPopup('You are here'));
+        }
         return;
       }
 
@@ -156,29 +158,41 @@ const NearbyHospitalPage: React.FC = () => {
       console.error(err);
       setStatus('Error fetching nearby hospitals. Try again later.');
     }
-  }, [initMap]);
+  }, []);
   
   useEffect(() => {
     // Only run on client
     if (typeof window === 'undefined') return;
-      
-    setStatus('Requesting location permission...');
-    if (!navigator.geolocation) {
-      setStatus('Geolocation not supported in this browser.');
-      return;
+    
+    // Dynamically load Leaflet script
+    const script = document.createElement('script');
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.crossOrigin = "";
+    script.onload = () => {
+        setStatus('Requesting location permission...');
+        if (!navigator.geolocation) {
+          setStatus('Geolocation not supported in this browser.');
+          setLocationError(true);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLocationRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            initMap(pos.coords.latitude, pos.coords.longitude);
+            searchNearby();
+          },
+          (err) => {
+            setStatus('Location permission denied. Please enable location services in your browser settings.');
+            setLocationError(true);
+          },
+          { timeout: 10000, maximumAge: 60000 }
+        );
+    };
+    document.head.appendChild(script);
+
+    return () => {
+        document.head.removeChild(script);
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLocationRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        initMap(pos.coords.latitude, pos.coords.longitude);
-        searchNearby();
-      },
-      (err) => {
-        console.error(err);
-        setStatus('Location permission denied or unavailable.');
-      },
-      { timeout: 10000, maximumAge: 60000 }
-    );
   }, [initMap, searchNearby]);
 
   const handleCallEmergency = () => {
@@ -202,7 +216,6 @@ const NearbyHospitalPage: React.FC = () => {
     <>
       <Head>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossOrigin=""/>
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin=""></script>
       </Head>
       <div className="space-y-8">
         <h1 className="text-3xl font-bold tracking-tight font-headline">Nearby Hospitals</h1>
@@ -229,7 +242,7 @@ const NearbyHospitalPage: React.FC = () => {
                         </Select>
                     </div>
                      <div className="flex-1 flex items-center gap-2">
-                         <Button onClick={searchNearby} className="w-full md:w-auto">
+                         <Button onClick={searchNearby} className="w-full md:w-auto" disabled={locationError}>
                             <LocateFixed className="mr-2 h-4 w-4"/>
                             Refresh Nearby
                          </Button>
@@ -240,10 +253,19 @@ const NearbyHospitalPage: React.FC = () => {
                     </div>
                  </div>
 
-                <div id="map" className="h-[420px] w-full rounded-lg border"></div>
+                <div id="map" className="h-[420px] w-full rounded-lg border bg-secondary"></div>
 
                 <div className="mt-4">
                     <p className="text-sm font-semibold text-muted-foreground">{status}</p>
+                    {locationError && (
+                      <Alert variant="destructive" className="mt-4">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Location Error</AlertTitle>
+                          <AlertDescription>
+                            Could not access your location. Please ensure location services are enabled in your browser and system settings.
+                          </AlertDescription>
+                      </Alert>
+                    )}
                     {nearestHospital && (
                          <Card className="mt-2">
                             <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -278,5 +300,3 @@ const NearbyHospitalPage: React.FC = () => {
 };
 
 export default NearbyHospitalPage;
-
-    
