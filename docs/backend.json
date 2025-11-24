@@ -1,0 +1,393 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile in the MediMate application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "profilePicture": {
+          "type": "string",
+          "description": "URL of the user's profile picture."
+        },
+        "themePreference": {
+          "type": "string",
+          "description": "User's preferred theme (e.g., light, dark)."
+        },
+        "smartwatchId": {
+          "type": "string",
+          "description": "Reference to Smartwatch data if connected. (Relationship: UserProfile 1:1 Smartwatch)"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "Doctor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Doctor",
+      "type": "object",
+      "description": "Represents a doctor available for consultation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Doctor entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The doctor's full name."
+        },
+        "specialization": {
+          "type": "string",
+          "description": "The doctor's area of specialization."
+        },
+        "location": {
+          "type": "string",
+          "description": "The doctor's location (e.g., city, country)."
+        },
+        "isIndianDoctor": {
+          "type": "boolean",
+          "description": "Indicates whether the doctor is an Indian Doctor or not."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "specialization"
+      ]
+    },
+    "Appointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Appointment",
+      "type": "object",
+      "description": "Represents a scheduled appointment with a doctor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Appointment entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Appointment)"
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to Doctor. (Relationship: Doctor 1:N Appointment)"
+        },
+        "dateTime": {
+          "type": "string",
+          "description": "The date and time of the appointment.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Notes for the appointment."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "doctorId",
+        "dateTime"
+      ]
+    },
+    "Medicine": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Medicine",
+      "type": "object",
+      "description": "Represents a medicine available in the medical store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Medicine entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the medicine."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the medicine."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the medicine."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the medicine."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "category",
+        "price"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents an order placed for medicines.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Order entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Order)"
+        },
+        "medicineIds": {
+          "type": "array",
+          "description": "References to Medicines. (Relationship: Order 1:N Medicine)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "The date the order was placed.",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total amount of the order."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "medicineIds",
+        "orderDate",
+        "totalAmount"
+      ]
+    },
+    "HealthScore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HealthScore",
+      "type": "object",
+      "description": "Represents a personalized health score for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HealthScore entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 HealthScore)"
+        },
+        "score": {
+          "type": "number",
+          "description": "The calculated health score for the user."
+        },
+        "dateCalculated": {
+          "type": "string",
+          "description": "The date the health score was calculated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "score",
+        "dateCalculated"
+      ]
+    },
+    "Smartwatch": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Smartwatch",
+      "type": "object",
+      "description": "Represents data gathered from a connected smartwatch.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Smartwatch data."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 Smartwatch)"
+        },
+        "heartRate": {
+          "type": "number",
+          "description": "The user's heart rate."
+        },
+        "steps": {
+          "type": "number",
+          "description": "The number of steps taken."
+        },
+        "sleepHours": {
+          "type": "number",
+          "description": "The number of hours slept."
+        },
+        "dateCollected": {
+          "type": "string",
+          "description": "The date the data was collected.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "dateCollected"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. Uses path-based ownership for data privacy. The user with {userId} owns their profile document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/doctors/{doctorId}",
+        "definition": {
+          "entityName": "Doctor",
+          "schema": {
+            "$ref": "#/backend/entities/Doctor"
+          },
+          "description": "Stores information about doctors available for consultation. Accessible to all users for browsing.",
+          "params": [
+            {
+              "name": "doctorId",
+              "description": "The unique identifier for the doctor."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Stores appointment data for each user. Path-based ownership, only the user with {userId} and doctors can read and write this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "appointmentId",
+              "description": "The unique identifier for the appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/medicines/{medicineId}",
+        "definition": {
+          "entityName": "Medicine",
+          "schema": {
+            "$ref": "#/backend/entities/Medicine"
+          },
+          "description": "Stores information about medicines available in the medical store. Accessible to all users.",
+          "params": [
+            {
+              "name": "medicineId",
+              "description": "The unique identifier for the medicine."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores order information for medicines placed by each user. Path-based ownership; only the user with {userId} can access their order data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "orderId",
+              "description": "The unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/healthScore",
+        "definition": {
+          "entityName": "HealthScore",
+          "schema": {
+            "$ref": "#/backend/entities/HealthScore"
+          },
+          "description": "Stores the personalized health score for a user. Path-based ownership, only the user with {userId} can access their health score.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/smartwatchData/{smartwatchId}",
+        "definition": {
+          "entityName": "Smartwatch",
+          "schema": {
+            "$ref": "#/backend/entities/Smartwatch"
+          },
+          "description": "Stores smartwatch data for each user. Path-based ownership, only the user with {userId} can access their smartwatch data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "smartwatchId",
+              "description": "The unique identifier for the smartwatch data entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the MediMate application's features, focusing on user profiles, doctor consultations, and medicine ordering. The structure emphasizes authorization independence and efficient data retrieval, following the core design principles. User-owned data is stored under `/users/{userId}` for simple, path-based ownership rules. Collaborative data patterns are implemented where applicable using membership maps or denormalization. Global roles (e.g. admin) can be implemented with existence checks against dedicated collections. This design ensures security rules are straightforward and debuggable.\n\n**Authorization Independence:** Data required for authorization, such as user roles or group memberships, is denormalized into subcollections where necessary. For instance, access to appointment data is directly controlled by the user's ID within the appointment document, avoiding costly and insecure `get()` calls in security rules.\n\n**QAPs (Rules Are Not Filters):** The structure segregates data based on access requirements. Private user data resides under `/users/{userId}`, while doctors and medicines are in top-level collections that can be queried without compromising security. This segregation prevents the need for complex filtering logic in security rules.\n\nThe design continues the path structure for nested data. For instance, the Appointments collection is stored under `/users/{userId}/appointments/{appointmentId}`.\n\n"
+  }
+}
