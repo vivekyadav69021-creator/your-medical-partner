@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
@@ -20,23 +22,27 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
 
   return (
     <Link href={`/store/${id}`}>
-      <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
-        <CardHeader>
-          {image && (
+      <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col">
+        <CardHeader className="p-0">
+          {image ? (
             <Image
               src={image.imageUrl}
               alt={image.description}
               width={400}
               height={400}
-              className="rounded-md aspect-square object-cover"
+              className="rounded-t-lg aspect-square object-cover"
               data-ai-hint={image.imageHint}
             />
+          ) : (
+             <div className="rounded-t-lg aspect-square object-cover bg-secondary flex items-center justify-center">
+                <p className="text-sm text-muted-foreground">No Image</p>
+             </div>
           )}
         </CardHeader>
-        <CardContent>
-          <CardTitle className="text-lg">{name}</CardTitle>
-          <CardDescription>{category}</CardDescription>
-          <p className="text-lg font-bold mt-2">{price}</p>
+        <CardContent className="p-4 flex-1 flex flex-col">
+          <CardTitle className="text-base font-semibold line-clamp-2">{name}</CardTitle>
+          <CardDescription className="text-xs mt-1">{category}</CardDescription>
+          <p className="text-base font-bold mt-auto pt-2">{price}</p>
         </CardContent>
       </Card>
     </Link>
@@ -45,6 +51,13 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
 
 
 export default function StorePage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const filteredMedicines = medicines
+    .filter(med => selectedCategory === 'All' || med.category === selectedCategory)
+    .filter(med => med.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
   return (
     <div className="space-y-8">
       <div>
@@ -57,25 +70,36 @@ export default function StorePage() {
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input placeholder="Search for medicines..." className="pl-10" />
+          <Input 
+            placeholder="Search for medicines..." 
+            className="pl-10" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <Select>
-          <SelectTrigger className="w-full md:w-[200px]">
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-full md:w-[240px]">
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
             {categories.map(cat => (
-              <SelectItem key={cat} value={cat.toLowerCase()}>{cat}</SelectItem>
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {medicines.map(med => (
-          <MedicineCard key={med.id} {...med} />
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {filteredMedicines.length > 0 ? (
+          filteredMedicines.map(med => (
+            <MedicineCard key={med.id} {...med} />
+          ))
+        ) : (
+          <p className="col-span-full text-center text-muted-foreground">No medicines found.</p>
+        )}
       </div>
     </div>
   );
 }
+
+    

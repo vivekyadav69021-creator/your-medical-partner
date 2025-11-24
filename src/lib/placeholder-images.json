@@ -61,37 +61,37 @@
       "imageHint": "doctor portrait"
     },
     {
-      "id": "medicine-1",
+      "id": "med01",
       "description": "Box of Paracetamol tablets",
       "imageUrl": "https://images.unsplash.com/photo-1707555647487-6f06b1508ab8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "medicine box"
     },
     {
-      "id": "medicine-2",
+      "id": "med02",
       "description": "Dolo 650 tablets",
       "imageUrl": "https://cdn.pixabay.com/photo/2017/08/24/18/50/pill-2671913_1280.jpg",
       "imageHint": "medicine pills"
     },
     {
-      "id": "medicine-3",
+      "id": "med03",
       "description": "ORS Electrolyte sachet",
       "imageUrl": "https://cdn.pixabay.com/photo/2017/03/20/20/55/water-2165792_1280.jpg",
       "imageHint": "water glass"
     },
     {
-      "id": "medicine-4",
+      "id": "med04",
       "description": "Cetirizine 10mg tablets",
       "imageUrl": "https://cdn.pixabay.com/photo/2016/11/23/16/54/medicine-1851172_1280.jpg",
       "imageHint": "medicine pills"
     },
     {
-      "id": "medicine-5",
+      "id": "med05",
       "description": "Ibuprofen 200mg tablets",
       "imageUrl": "https://cdn.pixabay.com/photo/2018/04/08/17/30/health-3303164_1280.jpg",
       "imageHint": "medicine pills"
     },
     {
-      "id": "medicine-6",
+      "id": "med06",
       "description": "Digene chewable tablets",
       "imageUrl": "https://cdn.pixabay.com/photo/2017/08/24/18/50/pill-2671913_1280.jpg",
       "imageHint": "medicine pills"
@@ -179,6 +179,66 @@
       "description": "Fruit flavored ORS",
       "imageUrl": "https://cdn.pixabay.com/photo/2016/03/27/20/13/water-bottle-1280.jpg",
       "imageHint": "water bottle"
+    },
+    {
+      "id": "med21",
+      "description": "Amoxicillin antibiotic capsules",
+      "imageUrl": "https://images.unsplash.com/photo-1550756708-4659b02b2b8c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbnRpYmlvdGljJTIwcGlsbHN8ZW58MHx8fHwxNzY0NTI0Nzk2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "antibiotic pills"
+    },
+    {
+      "id": "med22",
+      "description": "Azithromycin antibiotic tablets",
+      "imageUrl": "https://images.unsplash.com/photo-1616896288219-459f056157a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhbnRpYmlvdGljJTIwcGlsbHN8ZW58MHx8fHwxNzY0NTI0Nzk2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "antibiotic pills"
+    },
+    {
+      "id": "med23",
+      "description": "Loratadine allergy relief tablets",
+      "imageUrl": "https://images.unsplash.com/photo-1627542493343-4f05f773634d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhbGxlcmd5JTIwcGlsbHN8ZW58MHx8fHwxNzY0NTI0ODg4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "allergy pills"
+    },
+    {
+      "id": "med24",
+      "description": "Omeprazole capsules for acidity",
+      "imageUrl": "https://images.unsplash.com/photo-1584308666744-8480404b65ae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXBzdWxlc3xlbnwwfHx8fDE3NjQ1MjQ5MTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "capsules medicine"
+    },
+    {
+      "id": "med25",
+      "description": "Bottle of multivitamin tablets",
+      "imageUrl": "https://images.unsplash.com/photo-1607620843249-5f333c106a7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtdWx0aXZpdGFtaW5zfGVufDB8fHx8MTc2NDUyNDk0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "multivitamins bottle"
+    },
+    {
+      "id": "med26",
+      "description": "Calcium and Vitamin D3 tablets",
+      "imageUrl": "https://images.unsplash.com/photo-1599859185412-2a713b1945c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYWxjaXVtJTIwcGlsbHN8ZW58MHx8fHwxNzY0NTI0OTcwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "calcium pills"
+    },
+    {
+      "id": "med27",
+      "description": "Cough drops for sore throat",
+      "imageUrl": "https://images.unsplash.com/photo-1596253928131-41f23528b1b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb3VnaCUyMGRyb3B8ZW58MHx8fHwxNzY0NTI1MDAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cough drops"
+    },
+    {
+      "id": "med28",
+      "description": "Nasal decongestant spray bottle",
+      "imageUrl": "https://images.unsplash.com/photo-1627993099905-9e67f0174092?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxuYXNhbCUyMHNwcmF5fGVufDB8fHx8MTc2NDUyNTAyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "nasal spray"
+    },
+    {
+      "id": "med29",
+      "description": "Tube of sunscreen SPF 50",
+      "imageUrl": "https://images.unsplash.com/photo-1521223632292-3531a89474a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdW5zY3JlZW58ZW58MHx8fHwxNzY0NTI1MDU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sunscreen tube"
+    },
+    {
+      "id": "med30",
+      "description": "Bottle of hand sanitizer",
+      "imageUrl": "https://images.unsplash.com/photo-1584821619696-2f0474b7c25e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxoYW5kJTIwc2FuaXRpemVyfGVufDB8fHx8MTc2NDUyNTA3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hand sanitizer"
     },
     {
       "id": "assistant-avatar",
