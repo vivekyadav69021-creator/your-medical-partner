@@ -164,19 +164,17 @@ export default function DiseaseScannerPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="symptom-image">Symptom Image</Label>
-                <div className="relative">
-                   <video ref={videoRef} autoPlay playsInline muted className={cn("w-full h-auto rounded-md border aspect-video object-cover", { "hidden": !isCameraOpen })} />
-                   
-                   {isCameraOpen && (
-                     <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                
+                {isCameraOpen ? (
+                  <div className="relative">
+                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
+                    <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
                         <Button type="button" onClick={takePicture}>Take Picture</Button>
                         <Button type="button" variant="outline" onClick={switchCamera}><SwitchCamera /></Button>
                         <Button type="button" variant="destructive" onClick={stopCamera}><CameraOff /></Button>
-                     </div>
-                   )}
-                </div>
-
-                {!isCameraOpen && (
+                    </div>
+                  </div>
+                ) : (
                   preview ? (
                      <div className="relative">
                        <Image src={preview} alt="Symptom preview" width={200} height={200} className="rounded-md border aspect-square object-cover w-full" />
@@ -205,6 +203,7 @@ export default function DiseaseScannerPage() {
                      </div>
                   )
                 )}
+
                 {hasCameraPermission === false && (
                     <Alert variant="destructive">
                       <AlertTriangle className="h-4 w-4" />
