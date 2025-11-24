@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Head from 'next/head';
 
 // Helper function to escape HTML, useful for preventing XSS
-function escapeHtml(s: string | null | undefined) {
+function escapeHtml(s: string | null | undefined): string {
   if (!s) return '';
   return s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
+
 
 const NearbyHospitalPage: React.FC = () => {
   const [status, setStatus] = useState<{ msg: string; isError: boolean }>({
@@ -74,19 +75,22 @@ const NearbyHospitalPage: React.FC = () => {
     return `osm_nearby_${latr}_${lngr}_${radius}`;
   };
 
-  const renderResults = (elements: any[], radius: number, L: any) => {
+ const renderResults = useCallback((elements: any[], radius: number, L: any) => {
     if (!mapRef.current || !userLocationRef.current) return;
 
-    markersLayerRef.current.clearLayers();
-    // Re-add user marker
-    markersLayerRef.current.addLayer(
-      L.circleMarker([userLocationRef.current.lat, userLocationRef.current.lng], {
-        radius: 7,
-        color: '#2b9edb',
-        fillColor: '#2b9edb',
-        fillOpacity: 0.9,
-      }).bindPopup('You are here')
-    );
+    if (markersLayerRef.current) {
+        markersLayerRef.current.clearLayers();
+        // Re-add user marker
+        markersLayerRef.current.addLayer(
+        L.circleMarker([userLocationRef.current.lat, userLocationRef.current.lng], {
+            radius: 7,
+            color: '#2b9edb',
+            fillColor: '#2b9edb',
+            fillOpacity: 0.9,
+        }).bindPopup('You are here')
+        );
+    }
+
 
     if (!elements || elements.length === 0) {
       setStatus({ msg: `No hospitals found within ${radius} meters.`, isError: false });
@@ -98,29 +102,42 @@ const NearbyHospitalPage: React.FC = () => {
 
     const processed = elements
       .map((e) => {
+        const center = e.center || { lat: e.lat, lon: e.lon };
+        if (!center || typeof center.lat === 'undefined' || typeof center.lon === 'undefined') {
+          return null;
+        }
         const distance = Math.round(
-          haversineDist(userLocationRef.current!.lat, userLocationRef.current!.lng, e.lat, e.lon)
+          haversineDist(userLocationRef.current!.lat, userLocationRef.current!.lng, center.lat, center.lon)
         );
-        return { ...e, distance };
+        return { ...e, lat: center.lat, lon: center.lon, distance };
       })
+      .filter(p => p !== null)
       .sort((a, b) => a.distance - b.distance);
 
     processed.forEach((p, idx) => {
+      if (!p) return;
       const name = p.tags.name || `Hospital ${idx + 1}`;
       const marker = L.marker([p.lat, p.lon]).bindPopup(`<strong>${escapeHtml(name)}</strong><br/>${p.distance} m`);
-      markersLayerRef.current.addLayer(marker);
+      if (markersLayerRef.current) {
+        markersLayerRef.current.addLayer(marker);
+      }
     });
     
-    setResults(processed);
+    setResults(processed as any[]);
 
-    const group = new L.featureGroup(markersLayerRef.current.getLayers());
-    try {
-      mapRef.current.fitBounds(group.getBounds().pad(0.2));
-    } catch (e) {}
-  };
+    if (markersLayerRef.current) {
+        const group = new L.featureGroup(markersLayerRef.current.getLayers());
+        try {
+          if (group.getLayers().length > 1) { // only fit if more than just the user marker
+            mapRef.current.fitBounds(group.getBounds().pad(0.2));
+          }
+        } catch (e) {
+          console.error("FitBounds error:", e);
+        }
+    }
+  }, []);
 
-
-  const loadNearby = async (forceRefresh = false) => {
+  const loadNearby = useCallback(async (forceRefresh = false) => {
     const L = (window as any).L;
     if (!L || !userLocationRef.current) {
         setStatus({ msg: 'Waiting for location…', isError: false });
@@ -143,7 +160,9 @@ const NearbyHospitalPage: React.FC = () => {
                 console.error("Cache parse error:", e);
             }
         }
-    } else {
+    }
+    
+    if (forceRefresh) {
          sessionStorage.removeItem(key);
     }
     
@@ -152,13 +171,7 @@ const NearbyHospitalPage: React.FC = () => {
 
     try {
         const json = await fetchOverpass(q);
-        const elements = (json.elements || [])
-            .map((el: any) => {
-                const lat = el.lat ?? (el.center && el.center.lat);
-                const lon = el.lon ?? (el.center && el.center.lon);
-                return { id: el.id, lat, lon, tags: el.tags || {} };
-            })
-            .filter((e: any) => e.lat && e.lon);
+        const elements = json.elements || [];
         
         sessionStorage.setItem(key, JSON.stringify({ _ts: Date.now(), data: elements }));
         renderResults(elements, radius, L);
@@ -166,9 +179,9 @@ const NearbyHospitalPage: React.FC = () => {
         console.error(err);
         setStatus({ msg: `Error fetching nearby data: ${err.message}. Try again later.`, isError: true });
     }
-  };
+  }, [renderResults, CACHE_TTL_MS]);
 
-  const initMap = (lat: number, lng: number) => {
+  const initMap = useCallback((lat: number, lng: number) => {
     const L = (window as any).L;
     if (!L) return;
 
@@ -182,16 +195,20 @@ const NearbyHospitalPage: React.FC = () => {
       markersLayerRef.current = L.layerGroup().addTo(map);
     } else {
       mapRef.current.setView([lat, lng], 13);
-      markersLayerRef.current.clearLayers();
+      if (markersLayerRef.current) {
+        markersLayerRef.current.clearLayers();
+      }
     }
-    const userMarker = L.circleMarker([lat, lng], {
-      radius: 7,
-      color: '#2b9edb',
-      fillColor: '#2b9edb',
-      fillOpacity: 0.9,
-    }).bindPopup('You are here');
-    markersLayerRef.current.addLayer(userMarker);
-  };
+    if (markersLayerRef.current) {
+      const userMarker = L.circleMarker([lat, lng], {
+        radius: 7,
+        color: '#2b9edb',
+        fillColor: '#2b9edb',
+        fillOpacity: 0.9,
+      }).bindPopup('You are here');
+      markersLayerRef.current.addLayer(userMarker);
+    }
+  }, []);
   
   // Effect to initialize map and get location
   useEffect(() => {
@@ -219,8 +236,7 @@ const NearbyHospitalPage: React.FC = () => {
       },
       { timeout: 10000, maximumAge: 60000 }
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initMap, loadNearby]);
 
   const handleCallEmergency = () => {
     if (confirm('Call emergency number 112?')) {
@@ -233,7 +249,7 @@ const NearbyHospitalPage: React.FC = () => {
   };
 
   const handleOpenOnMap = (lat: number, lng: number) => {
-      if (!mapRef.current) return;
+      if (!mapRef.current || !markersLayerRef.current) return;
       mapRef.current.setView([lat,lng], 16);
       markersLayerRef.current.eachLayer((mk: any) => {
         if (mk.getLatLng && Math.abs(mk.getLatLng().lat - lat) < 1e-6 && Math.abs(mk.getLatLng().lng - lng) < 1e-6) {
