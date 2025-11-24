@@ -30,9 +30,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  devIndicators: {
-    buildActivity: false,
-  },
   experimental: {
     allowedDevOrigins: [
       "https://*.cloudworkstations.dev",
