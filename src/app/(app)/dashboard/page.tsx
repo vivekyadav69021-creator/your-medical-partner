@@ -14,7 +14,6 @@ import {
   Bot,
   Stethoscope,
   Hospital,
-  ScanLine,
   BookHeart,
   BrainCircuit,
   Calendar,
@@ -55,12 +54,6 @@ const quickAccessItems = [
     description: 'Find hospitals and clinics near you.',
     href: '/nearby-hospital',
     icon: Hospital,
-  },
-  {
-    title: 'Disease Scanner',
-    description: 'Scan your symptoms to find causes.',
-    href: '/symptom-checker',
-    icon: ScanLine,
   },
   {
     title: 'Disease Library',
