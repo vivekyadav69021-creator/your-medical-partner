@@ -68,38 +68,122 @@
     },
     {
       "id": "medicine-2",
-      "description": "Bottle of Ibuprofen",
-      "imageUrl": "https://images.unsplash.com/photo-1655174041849-49ed985e9ffb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWVkaWNpbmUlMjBib3R0bGV8ZW58MHx8fHwxNzYzODIzOTEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "medicine bottle"
+      "description": "Dolo 650 tablets",
+      "imageUrl": "https://cdn.pixabay.com/photo/2017/08/24/18/50/pill-2671913_1280.jpg",
+      "imageHint": "medicine pills"
     },
     {
       "id": "medicine-3",
-      "description": "Box of Amoxicillin capsules",
-      "imageUrl": "https://images.unsplash.com/photo-1711985220388-17d1218ff01f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "medicine box"
+      "description": "ORS Electrolyte sachet",
+      "imageUrl": "https://cdn.pixabay.com/photo/2017/03/20/20/55/water-2165792_1280.jpg",
+      "imageHint": "water glass"
     },
     {
       "id": "medicine-4",
-      "description": "Cough syrup bottle",
-      "imageUrl": "https://images.unsplash.com/photo-1655174041849-49ed985e9ffb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWVkaWNpbmUlMjBib3R0bGV8ZW58MHx8fHwxNzYzODIzOTEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "medicine bottle"
+      "description": "Cetirizine 10mg tablets",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/23/16/54/medicine-1851172_1280.jpg",
+      "imageHint": "medicine pills"
     },
     {
       "id": "medicine-5",
-      "description": "Allergy relief tablets",
-      "imageUrl": "https://images.unsplash.com/photo-1550572017-4fcdbb59cc32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "medicine box"
+      "description": "Ibuprofen 200mg tablets",
+      "imageUrl": "https://cdn.pixabay.com/photo/2018/04/08/17/30/health-3303164_1280.jpg",
+      "imageHint": "medicine pills"
     },
     {
       "id": "medicine-6",
-      "description": "Vitamin D supplements",
-      "imageUrl": "https://images.unsplash.com/photo-1701859080936-95637f75cb57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdXBwbGVtZW50JTIwYm90dGxlfGVufDB8fHx8MTc2Mzg3ODM3NHww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "supplement bottle"
+      "description": "Digene chewable tablets",
+      "imageUrl": "https://cdn.pixabay.com/photo/2017/08/24/18/50/pill-2671913_1280.jpg",
+      "imageHint": "medicine pills"
+    },
+    {
+      "id": "med07",
+      "description": "Zinc supplement tablets",
+      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/12/22/53/vitamins-3146985_1280.jpg",
+      "imageHint": "vitamin bottle"
+    },
+    {
+      "id": "med08",
+      "description": "Vitamin C chewable tablets",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/18/16/50/vitamin-1838654_1280.jpg",
+      "imageHint": "vitamin pills"
+    },
+    {
+      "id": "med09",
+      "description": "Volini pain relief gel",
+      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/01/18/57/tube-3120471_1280.jpg",
+      "imageHint": "ointment tube"
+    },
+    {
+      "id": "med10",
+      "description": "Betadine antiseptic solution",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/12/06/18/27/bottle-1888029_1280.jpg",
+      "imageHint": "medicine bottle"
+    },
+    {
+      "id": "med11",
+      "description": "Electrolyte sports drink",
+      "imageUrl": "https://cdn.pixabay.com/photo/2014/09/26/20/12/water-463651_1280.jpg",
+      "imageHint": "water bottle"
+    },
+    {
+      "id": "med12",
+      "description": "Herbal cough syrup",
+      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/01/18/46/medicine-3120433_1280.jpg",
+      "imageHint": "syrup bottle"
+    },
+    {
+      "id": "med13",
+      "description": "Antacid liquid suspension",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/03/27/19/46/bottle-1280.jpg",
+      "imageHint": "medicine bottle"
+    },
+    {
+      "id": "med14",
+      "description": "Skin moisturizing cream",
+      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/01/18/58/cream-3120490_1280.jpg",
+      "imageHint": "cream jar"
+    },
+    {
+      "id": "med15",
+      "description": "Adhesive bandages",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/29/09/08/patch-1869679_1280.png",
+      "imageHint": "bandage strip"
+    },
+    {
+      "id": "med16",
+      "description": "Antiseptic sanitizing wipes",
+      "imageUrl": "https://cdn.pixabay.com/photo/2020/02/24/06/53/sanitizer-4874302_1280.jpg",
+      "imageHint": "sanitizer bottle"
+    },
+    {
+      "id": "med17",
+      "description": "ORS formula for kids",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/02/19/10/00/water-1209331_1280.jpg",
+      "imageHint": "water glass"
+    },
+    {
+      "id": "med18",
+      "description": "Glucose energy powder",
+      "imageUrl": "https://cdn.pixabay.com/photo/2017/03/12/20/06/sugar-2135274_1280.jpg",
+      "imageHint": "sugar powder"
+    },
+    {
+      "id": "med19",
+      "description": "Pain relief spray",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/29/04/17/spray-1869491_1280.jpg",
+      "imageHint": "spray bottle"
+    },
+    {
+      "id": "med20",
+      "description": "Fruit flavored ORS",
+      "imageUrl": "https://cdn.pixabay.com/photo/2016/03/27/20/13/water-bottle-1280.jpg",
+      "imageHint": "water bottle"
     },
     {
       "id": "assistant-avatar",
       "description": "AI assistant avatar",
-      "imageUrl": "https://images.unsplash.com/photo-1599058882438-58c499afc640?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb2JvdCUyMGF2YXRhcnxlbnwwfHx8fDE3NjQ0NjQzMzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1599058882438-58c8b964273f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb2JvdCUyMGF2YXRhcnxlbnwwfHx8fDE3NjQ0NjQzMzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "robot avatar"
     }
   ]
