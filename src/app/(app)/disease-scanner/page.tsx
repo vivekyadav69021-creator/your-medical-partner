@@ -90,7 +90,7 @@ export default function DiseaseScannerPage() {
             <CardHeader>
               <CardTitle>Scan a Symptom</CardTitle>
               <CardDescription>
-                Upload a clear image and describe the issue.
+                Upload a clear image and optionally describe the issue.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -119,13 +119,12 @@ export default function DiseaseScannerPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Describe Your Symptoms</Label>
+                <Label htmlFor="description">Describe Your Symptoms (Optional)</Label>
                 <Textarea
                   id="description"
                   name="description"
-                  placeholder="e.g., 'This rash appeared on my arm 2 days ago. It's red, itchy, and has small bumps. It hasn't spread.'"
-                  rows={5}
-                  required
+                  placeholder="e.g., 'This rash appeared on my arm 2 days ago. It's red, itchy, and has small bumps.' (The AI will analyze the image if you leave this blank)"
+                  rows={4}
                 />
               </div>
             </CardContent>
