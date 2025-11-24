@@ -1,8 +1,8 @@
+
 'use client';
 import { useActionState } from 'react';
 import {
   signUpWithEmail,
-  signInWithGoogle,
 } from '@/app/auth/actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { HeartPulse, Terminal } from 'lucide-react';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { useAuth } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 function GoogleIcon() {
   return (
@@ -33,6 +36,20 @@ function GoogleIcon() {
 
 function SignUpForm() {
   const [state, formAction] = useActionState(signUpWithEmail, { message: '' });
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error(error);
+      // You might want to show an error to the user
+    }
+  };
+
 
   return (
     <Card className="w-full max-w-sm">
@@ -65,13 +82,11 @@ function SignUpForm() {
         </CardFooter>
       </form>
        <CardFooter className="flex flex-col gap-4">
-        <form action={signInWithGoogle} className="w-full">
-          <Button variant="outline" className="w-full" type="submit">
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
             <GoogleIcon />
             Sign up with Google
           </Button>
-        </form>
-      </CardFooter>
+        </CardFooter>
       <p className="text-center text-sm text-muted-foreground mb-4">
         Already have an account?{' '}
         <Link href="/login" className="font-semibold text-primary hover:underline">
