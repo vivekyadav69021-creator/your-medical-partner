@@ -49,6 +49,7 @@ export default function SymptomCheckerPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const liveScanFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('symptoms');
 
@@ -85,12 +86,17 @@ export default function SymptomCheckerPage() {
     }
   }, [activeTab]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, source: 'report' | 'scan') => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        const result = reader.result as string;
+        if (source === 'report') {
+          setImagePreview(result);
+        } else {
+          setCapturedImage(result);
+        }
         toast({ title: 'Image selected', description: 'The image is ready to be analyzed with your symptoms.' });
       };
       reader.readAsDataURL(file);
@@ -130,6 +136,9 @@ export default function SymptomCheckerPage() {
   
   const resetCapturedImage = () => {
     setCapturedImage(null);
+    if(liveScanFileInputRef.current) {
+        liveScanFileInputRef.current.value = '';
+    }
   }
 
   const resetUploadedImage = () => {
@@ -207,7 +216,7 @@ export default function SymptomCheckerPage() {
                       type="file" 
                       accept="image/*"
                       ref={fileInputRef}
-                      onChange={handleFileChange}
+                      onChange={(e) => handleFileChange(e, 'report')}
                       className="hidden"
                   />
                   <div className="p-4 border-2 border-dashed rounded-lg text-center">
@@ -290,7 +299,16 @@ export default function SymptomCheckerPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Captured Image</Label>
+                        <Label>Image for Analysis</Label>
+                        <Input 
+                            id="live-scan-image" 
+                            name="liveScanImage"
+                            type="file" 
+                            accept="image/*"
+                            ref={liveScanFileInputRef}
+                            onChange={(e) => handleFileChange(e, 'scan')}
+                            className="hidden"
+                        />
                          <div className="p-4 border-2 border-dashed rounded-lg text-center">
                           {capturedImage ? (
                               <div className="relative group mx-auto max-w-[250px]">
@@ -300,9 +318,12 @@ export default function SymptomCheckerPage() {
                                   </div>
                               </div>
                           ) : (
-                              <div className="flex flex-col items-center justify-center h-[150px]">
+                              <div className="flex flex-col items-center justify-center h-[150px] space-y-2">
                                   <Camera className="w-12 h-12 text-muted-foreground" />
-                                  <p className="text-sm text-muted-foreground mt-2">Your captured image will appear here.</p>
+                                  <p className="text-sm text-muted-foreground">Capture an image or</p>
+                                  <Button type="button" variant="outline" onClick={() => liveScanFileInputRef.current?.click()}>
+                                      <Upload className="mr-2 h-4 w-4" /> Upload File
+                                  </Button>
                               </div>
                           )}
                         </div>
