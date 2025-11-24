@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -9,10 +10,11 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Info, User, Clock, Calendar, ShieldCheck } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { medicines } from '@/lib/medicine-data';
 import { notFound } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
 
 const MedicineCard = ({ id, name, price, category }: { id: string, name: string, price: string, category: string }) => {
   const image = PlaceHolderImages.find(img => img.id === id);
@@ -41,6 +43,17 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
     </Link>
   );
 }
+
+const InfoRow = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+    <div className="flex items-start gap-3">
+        <div className="text-primary mt-1">{icon}</div>
+        <div>
+            <p className="font-semibold">{label}</p>
+            <p className="text-sm text-muted-foreground">{value}</p>
+        </div>
+    </div>
+);
+
 
 export default function MedicineDetailPage({ params }: { params: { medicineId: string } }) {
   const medicine = medicines.find(m => m.id === params.medicineId);
@@ -80,10 +93,24 @@ export default function MedicineDetailPage({ params }: { params: { medicineId: s
           </div>
           <div className="space-y-6">
             <div>
-              <p className="text-sm text-muted-foreground font-medium">{medicine.category}</p>
-              <h1 className="text-4xl font-bold tracking-tight font-headline">{medicine.name}</h1>
+              <Badge>{medicine.category}</Badge>
+              <h1 className="text-4xl font-bold tracking-tight font-headline mt-2">{medicine.name}</h1>
             </div>
             <p className="text-muted-foreground">{medicine.description}</p>
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Product Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <InfoRow icon={<Info className="w-5 h-5"/>} label="Use For" value={medicine.use_for} />
+                    <InfoRow icon={<User className="w-5 h-5"/>} label="Who Can Use" value={medicine.who_can_use} />
+                    <InfoRow icon={<Clock className="w-5 h-5"/>} label="General Dose" value={medicine.general_dose} />
+                    <InfoRow icon={<Calendar className="w-5 h-5"/>} label="Expiry" value={medicine.expiry} />
+                    <InfoRow icon={<ShieldCheck className="w-5 h-5"/>} label="Official" value={medicine.official} />
+                </CardContent>
+             </Card>
+
             <div>
               <p className="text-3xl font-bold">{medicine.price}</p>
             </div>
