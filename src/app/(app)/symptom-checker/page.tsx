@@ -289,13 +289,12 @@ export default function SymptomCheckerPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                      <div className="space-y-2">
-                        <Label htmlFor="symptoms-scan">Symptoms / Notes</Label>
+                        <Label htmlFor="symptoms-scan">Symptoms / Notes (Optional)</Label>
                         <Textarea
                           id="symptoms-scan"
                           name="symptoms"
                           placeholder="e.g., 'This appeared on my arm this morning. It's slightly itchy.'"
                           rows={3}
-                          required
                         />
                       </div>
                       <div className="space-y-2">

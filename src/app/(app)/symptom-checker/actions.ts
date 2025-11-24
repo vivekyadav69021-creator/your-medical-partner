@@ -4,7 +4,7 @@ import { aiSymptomChecker } from '@/ai/flows/ai-symptom-checker';
 import { z } from 'zod';
 
 const symptomSchema = z.object({
-  symptoms: z.string().min(10, 'Please describe your symptoms in more detail.'),
+  symptoms: z.string().min(1, { message: 'Please describe your symptoms or provide notes.' }).optional().or(z.literal('')),
   medicalHistory: z.string().optional(),
   symptomImageDataUri: z.string().optional(),
 });
@@ -13,7 +13,19 @@ export async function aiSymptomCheckAction(
   prevState: any,
   formData: FormData
 ) {
-  const validatedFields = symptomSchema.safeParse({
+  const sourceTab = formData.get('source_tab');
+  
+  const validationSchema = (sourceTab === 'scan' || sourceTab === 'report') 
+    ? symptomSchema.refine(data => data.symptoms || data.symptomImageDataUri, {
+        message: 'Please either describe symptoms or provide an image.',
+        path: ['symptoms'],
+      })
+    : symptomSchema.extend({
+      symptoms: z.string().min(10, 'Please describe your symptoms in more detail.'),
+    });
+
+
+  const validatedFields = validationSchema.safeParse({
     symptoms: formData.get('symptoms'),
     medicalHistory: formData.get('medicalHistory'),
     symptomImageDataUri: formData.get('symptomImageDataUri')
