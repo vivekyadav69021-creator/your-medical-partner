@@ -320,8 +320,8 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                   },
                   {
                     "verse_ref": "1.47",
-                    "en": "Sanjaya said: Having spoken thus, Arjuna, cast aside his bow and arrow and sat down on the seat of the chariot, his mind overwhelmed with grief.",
-                    "hi": "संजय ने कहा: ऐसा कहकर, अर्जुन ने अपना धनुष और बाण अलग रख दिया और रथ की सीट पर बैठ गया, उसका मन दुःख से भर गया।",
+                    "en": "If you think that fighting is not proper and you will not perform your duty, then you should withdraw from this action and live in peace.",
+                    "hi": "यदि आप सोचते हैं कि यह संग्राम उचित नहीं है और आप अपना धर्म नहीं निभाएँगे, तो आप इस कार्य से निवृत्त हो कर शांतिपूर्ण जीवन व्यतीत कर सकते हैं।",
                     "explanation": {
                       "en": "Arjuna considers abandoning the fight—this moment creates the opening for Krishna's teaching about duty and the nature of action.",
                       "hi": "अर्जुन युद्ध छोड़ने का विचार करता है—यह क्षण कृष्ण के धर्म और कर्म के उपदेश के लिए रास्ता खोलता है।"
