@@ -119,35 +119,66 @@ export default function HealthLessonsPage() {
     if (!quizLesson || !user) return;
 
     const { score, total } = getQuizResult();
+    const percentage = Math.round((score / total) * 100);
     const date = new Date().toLocaleDateString();
     const userName = user.displayName || user.email || 'Learner';
 
-    const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: 'a4'
-    });
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
 
-    doc.setFillColor(245, 245, 245);
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight(), 'F');
-    
-    doc.setFontSize(28);
-    doc.setTextColor(34, 34, 34);
-    doc.text("Certificate of Completion", doc.internal.pageSize.getWidth() / 2, 120, { align: 'center' });
+    // Ornate Border
+    doc.setDrawColor(180, 140, 60); // Gold color
+    doc.setLineWidth(1);
+    doc.rect(20, 20, W - 40, H - 40); // Outer rect
+    doc.setLineWidth(0.5);
+    doc.rect(25, 25, W - 50, H - 50); // Inner rect
 
+    // Title
+    doc.setFont('times', 'bold');
+    doc.setFontSize(34);
+    doc.setTextColor(10, 40, 80); // Dark Blue
+    doc.text('Certificate of Completion', W / 2, 120, { align: 'center' });
+
+    // Subtitle
+    doc.setFont('times', 'normal');
     doc.setFontSize(16);
-    doc.text("This certifies that", doc.internal.pageSize.getWidth() / 2, 160, { align: 'center' });
+    doc.setTextColor(60, 60, 60);
+    doc.text('This is to certify that', W / 2, 180, { align: 'center' });
 
-    doc.setFontSize(22);
-    doc.text(userName, doc.internal.pageSize.getWidth() / 2, 200, { align: 'center' });
+    // Recipient Name
+    doc.setFont('times', 'bolditalic');
+    doc.setFontSize(32);
+    doc.setTextColor(0, 0, 0);
+    doc.text(userName, W / 2, 230, { align: 'center' });
 
+    // Lesson Info
+    doc.setFont('times', 'normal');
+    doc.setFontSize(16);
+    doc.setTextColor(40, 40, 40);
+    doc.text('has successfully completed the lesson:', W / 2, 280, { align: 'center' });
+
+    doc.setFont('times', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(10, 40, 80);
+    doc.text(`"${quizLesson.title[lang]}"`, W / 2, 310, { align: 'center' });
+
+    // Score and Date
+    doc.setFont('times', 'normal');
     doc.setFontSize(14);
-    doc.text(`has successfully completed the lesson: "${quizLesson.title[lang]}"`, doc.internal.pageSize.getWidth() / 2, 240, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    doc.text(`With a score of ${percentage}% on ${date}`, W / 2, 350, { align: 'center' });
 
-    doc.text(`Score: ${score} out of ${total}`, doc.internal.pageSize.getWidth() / 2, 270, { align: 'center' });
-
+    // Signature Area
+    const signatureX = W / 2;
+    const signatureY = H - 120;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(1);
+    doc.line(signatureX - 100, signatureY, signatureX + 100, signatureY);
+    doc.setFont('times', 'italic');
     doc.setFontSize(12);
-    doc.text(`Issued: ${date}`, doc.internal.pageSize.getWidth() / 2, 300, { align: 'center' });
+    doc.text('Authorized Signature', signatureX, signatureY + 15, { align: 'center' });
+    doc.text('Your Medical Partner', signatureX, signatureY + 30, { align: 'center' });
 
     doc.save(`Certificate-${quizLesson.id}.pdf`);
   }
