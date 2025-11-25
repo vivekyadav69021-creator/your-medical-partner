@@ -70,10 +70,10 @@ const guidedMeditations = [
   },
   {
     id: 'gm3',
-    title: { en: 'Mantra Meditation (Om / Gayatri)', hi: 'मंत्र ध्यान (ॐ / गायत्री)' },
+    title: { en: 'Mantra Meditation (Om)', hi: 'मंत्र ध्यान (ॐ)' },
     description: {
       en: 'Use a short mantra (ॐ) or a protective chant. Repeat gently with breath.',
-      hi: 'संक्षिप्त मंत्र (ॐ) या गायत्री का उपयोग करें। श्वास के साथ धीरे-धीरे दोहराएँ।',
+      hi: 'संक्षिप्त मंत्र (ॐ) का उपयोग करें। श्वास के साथ धीरे-धीरे दोहराएँ।',
     },
     tags: ['mantra', 'ancient'],
   },
@@ -151,7 +151,6 @@ export default function MeditationHubPage() {
 
   return (
     <div className="space-y-8">
-      {/* Language Toggle */}
       <div className="flex items-center justify-end space-x-2">
         <Label htmlFor="langToggle" className={lang === 'en' ? 'font-bold' : ''}>English</Label>
         <Switch
@@ -163,7 +162,6 @@ export default function MeditationHubPage() {
         <Label htmlFor="langToggle" className={lang === 'hi' ? 'font-bold' : ''}>हिंदी</Label>
       </div>
 
-      {/* Hero Section */}
       <Card className="overflow-hidden">
         <div className="grid md:grid-cols-2">
           <div className="p-6 md:p-8">
@@ -192,7 +190,6 @@ export default function MeditationHubPage() {
       
       <Separator />
 
-      {/* Main Content Tabs */}
       <Tabs defaultValue="guided">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
           <TabsTrigger value="guided">{lang === 'en' ? 'Guided Meditations' : 'गाइडेड मेडिटेशन'}</TabsTrigger>
@@ -207,14 +204,14 @@ export default function MeditationHubPage() {
         <TabsContent value="guided" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {guidedMeditations.map(med => (
-              <Card key={med.id}>
+              <Card key={med.id} className="flex flex-col">
                 <CardHeader>
                   <CardTitle>{med.title[lang]}</CardTitle>
                   <div className="flex gap-2 pt-1">
                     {med.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1">
                   <p className="text-muted-foreground text-sm">{med.description[lang]}</p>
                 </CardContent>
                 <CardFooter className="flex justify-between">
@@ -232,7 +229,7 @@ export default function MeditationHubPage() {
                 {ancientTechniques.map(tech => (
                     <Card key={tech.heading.en}>
                         <CardHeader>
-                            <CardTitle>{tech.heading[lang]}</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Leaf className="w-5 h-5 text-primary"/>{tech.heading[lang]}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="text-muted-foreground">{tech.body[lang]}</p>
@@ -245,9 +242,9 @@ export default function MeditationHubPage() {
         <TabsContent value="benefits" className="mt-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>{lang === 'en' ? 'Key Benefits of Regular Practice' : 'नियमित अभ्यास के मुख्य लाभ'}</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Heart className="w-6 h-6 text-red-500"/>{lang === 'en' ? 'Key Benefits of Regular Practice' : 'नियमित अभ्यास के मुख्य लाभ'}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     {benefits[lang].map((benefit, i) => (
                         <div key={i} className="flex items-center gap-3">
                             <ShieldCheck className="w-5 h-5 text-primary"/>
@@ -261,16 +258,16 @@ export default function MeditationHubPage() {
         <TabsContent value="patanjali" className="mt-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>{lang === 'en' ? "Patanjali's Yoga-Sutras" : "पतंजलि योगसूत्र"}</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BookOpen className="w-6 h-6 text-primary"/>{lang === 'en' ? "Patanjali's Yoga-Sutras" : "पतंजलि योगसूत्र"}</CardTitle>
                     <CardDescription>{lang === 'en' ? 'Core principles of classical yoga philosophy.' : 'शास्त्रीय योग दर्शन के मूल सिद्धांत।'}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Accordion type="single" collapsible>
+                    <Accordion type="single" collapsible className="w-full">
                         {patanjaliSutras.map(sutra => (
                             <AccordionItem value={sutra.id} key={sutra.id}>
                                 <AccordionTrigger>{sutra.heading[lang]}</AccordionTrigger>
                                 <AccordionContent>
-                                    <p className="prose prose-sm dark:prose-invert">{sutra.body[lang]}</p>
+                                    <p className="prose prose-sm dark:prose-invert max-w-none">{sutra.body[lang]}</p>
                                 </AccordionContent>
                             </AccordionItem>
                         ))}
@@ -282,10 +279,10 @@ export default function MeditationHubPage() {
         <TabsContent value="bhagavad" className="mt-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>{lang === 'en' ? 'Insights from the Bhagavad Gita' : 'भगवद गीता के विचार'}</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BookOpen className="w-6 h-6 text-amber-600"/>{lang === 'en' ? 'Insights from the Bhagavad Gita' : 'भगवद गीता के विचार'}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">{bhagavadGita[lang]}</p>
+                    <p className="text-muted-foreground leading-relaxed">{bhagavadGita[lang]}</p>
                 </CardContent>
             </Card>
         </TabsContent>
@@ -293,11 +290,11 @@ export default function MeditationHubPage() {
         <TabsContent value="practicePlans" className="mt-6">
             <div className="grid gap-6 md:grid-cols-2">
                 {practicePlans.map(plan => (
-                    <Card key={plan.id}>
+                    <Card key={plan.id} className="flex flex-col">
                         <CardHeader>
                             <CardTitle>{plan.title[lang]}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
+                        <CardContent className="flex-1 space-y-2">
                             {plan.features[lang].map((feature, i) => (
                                 <div key={i} className="flex items-center gap-2 text-sm">
                                     <Zap className="w-4 h-4 text-primary"/>
@@ -316,9 +313,9 @@ export default function MeditationHubPage() {
         <TabsContent value="analysis" className="mt-6">
              <Card className="text-center">
                  <CardHeader>
-                     <CardTitle>{lang === 'en' ? 'Practice Analytics' : 'अभ्यास विश्लेषण'}</CardTitle>
+                     <CardTitle className="flex items-center justify-center gap-2"><BarChart2 className="w-6 h-6"/>{lang === 'en' ? 'Practice Analytics' : 'अभ्यास विश्लेषण'}</CardTitle>
                  </CardHeader>
-                 <CardContent className="flex flex-col items-center gap-4">
+                 <CardContent className="flex flex-col items-center gap-4 py-8">
                      <BarChart2 className="w-12 h-12 text-muted-foreground"/>
                     <p className="text-muted-foreground">{lang === 'en' ? 'Coming Soon: Track streaks, session duration, and mood.' : 'जल्द आ रहा है: अपनी स्ट्रीक्स, सत्र की अवधि और मूड को ट्रैक करें।'}</p>
                  </CardContent>
@@ -328,7 +325,6 @@ export default function MeditationHubPage() {
       
       <Separator />
 
-      {/* Controls Section */}
       <Card>
         <CardHeader>
             <CardTitle>{lang === 'en' ? 'Controls & Utilities' : 'नियंत्रण और सुविधाएँ'}</CardTitle>
@@ -341,7 +337,6 @@ export default function MeditationHubPage() {
             <p className="text-xs text-muted-foreground pt-4">{lang === 'en' ? 'Disclaimer: This Hub provides educational and spiritual material. It is not a substitute for medical or psychiatric care.' : 'यह हब शैक्षिक और आध्यात्मिक सामग्री देता है। यह चिकित्सा या मनोरोगीय देखभाल का विकल्प नहीं है।'}</p>
         </CardContent>
       </Card>
-
     </div>
   );
 }
