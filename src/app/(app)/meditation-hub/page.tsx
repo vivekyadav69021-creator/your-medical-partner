@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -23,7 +24,7 @@ import { guidedMeditations, learnCollections } from '@/lib/meditation-data';
 
 const quickActions = [
     { label: "Start 10-min Breath", action: "/practice/body_10" },
-    { label: "View Patanjali Chapters", action: "/learn/patanjali" },
+    { label: "View Patanjali Chapters", action: "/learn/patanjali_overview" },
     { label: "Open Analysis", action: "/analysis" },
 ];
 
