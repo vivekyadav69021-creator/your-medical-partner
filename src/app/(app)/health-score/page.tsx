@@ -14,34 +14,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { HeartPulse, Sparkles, Terminal } from 'lucide-react';
-import { calculateHealthScoreAction } from './actions';
-import { HealthScoreDisplay } from '@/components/health-score-display';
+import { HeartPulse, Sparkles, Terminal, BookOpen, Utensils, Zap, Brain } from 'lucide-react';
+import { createHealthPlanAction } from './actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 const initialState = {
-  healthScore: null,
-  insights: null,
+  plan: null,
   error: null,
 };
 
 function SubmitButton() {
   return (
-    <Button type="submit" className="w-full">
-      <Sparkles className="mr-2 h-4 w-4" />
-      Calculate My Health Score
+    <Button type="submit" className="w-full" size="lg">
+      <Sparkles className="mr-2 h-5 w-5" />
+      Generate My Health Plan
     </Button>
   );
 }
 
-export default function HealthScorePage() {
-  const [state, formAction] = useActionState(calculateHealthScoreAction, initialState);
+export default function HealthPlannerPage() {
+  const [state, formAction] = useActionState(createHealthPlanAction, initialState);
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Personalized Health Score</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">AI Health Planner</h1>
         <p className="text-muted-foreground">
-          Fill in your details to get an AI-generated health score and insights.
+          Get a personalized 7-day wellness plan crafted by AI.
         </p>
       </div>
       <div className="grid gap-8 md:grid-cols-2">
@@ -50,47 +50,61 @@ export default function HealthScorePage() {
             <CardHeader>
               <CardTitle>Your Health Profile</CardTitle>
               <CardDescription>
-                The more information you provide, the more accurate your score will be.
+                Provide your details to generate a personalized plan.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input id="age" name="age" type="number" placeholder="e.g., 35" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Select name="gender" required>
+                        <SelectTrigger id="gender">
+                            <SelectValue placeholder="Select Gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                    </Select>
+                  </div>
+               </div>
               <div className="space-y-2">
-                <Label htmlFor="personalInformation">Personal Information</Label>
+                <Label htmlFor="healthGoals">Primary Health Goal</Label>
                 <Textarea
-                  id="personalInformation"
-                  name="personalInformation"
-                  placeholder="e.g., 35-year-old male, non-smoker, exercises 3 times a week."
-                  rows={3}
+                  id="healthGoals"
+                  name="healthGoals"
+                  placeholder="e.g., Lose weight, gain muscle, reduce stress, improve sleep..."
+                  rows={2}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="diagnoses">Diagnoses</Label>
+                <Label htmlFor="dietaryPreferences">Dietary Preferences</Label>
                 <Input
-                  id="diagnoses"
-                  name="diagnoses"
-                  placeholder="e.g., Hypertension, Type 2 Diabetes"
-                  required
-                />
-              </div>
-               <div className="space-y-2">
-                <Label htmlFor="prescriptions">Prescriptions</Label>
-                <Input
-                  id="prescriptions"
-                  name="prescriptions"
-                  placeholder="e.g., Metformin, Lisinopril"
+                  id="dietaryPreferences"
+                  name="dietaryPreferences"
+                  placeholder="e.g., Vegetarian, low-carb, no dairy"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fitnessTrackerData">Fitness Tracker Data</Label>
-                <Textarea
-                  id="fitnessTrackerData"
-                  name="fitnessTrackerData"
-                  placeholder="e.g., Avg 8000 steps/day, 7 hours sleep, resting heart rate 65bpm."
-                  rows={3}
-                  required
-                />
+                <Label htmlFor="activityLevel">Weekly Activity Level</Label>
+                <Select name="activityLevel" required>
+                    <SelectTrigger id="activityLevel">
+                        <SelectValue placeholder="Select Activity Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="sedentary">Sedentary (little to no exercise)</SelectItem>
+                        <SelectItem value="lightly_active">Lightly Active (1-2 days/week)</SelectItem>
+                        <SelectItem value="moderately_active">Moderately Active (3-5 days/week)</SelectItem>
+                        <SelectItem value="very_active">Very Active (6-7 days/week)</SelectItem>
+                    </SelectContent>
+                </Select>
               </div>
             </CardContent>
             <CardFooter>
@@ -101,30 +115,47 @@ export default function HealthScorePage() {
 
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Your Health Score & Insights</CardTitle>
+            <CardTitle>Your AI-Generated Plan</CardTitle>
             <CardDescription>
-              An estimation of your general health based on your data.
+              Your 7-day personalized wellness plan will appear here.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col items-center justify-center gap-4">
-            {!state.healthScore && !state.error && (
-              <div className="text-center text-muted-foreground">
-                <HeartPulse className="mx-auto h-12 w-12" />
-                <p>Your score and insights will appear here.</p>
+            {!state.plan && !state.error && (
+              <div className="text-center text-muted-foreground p-8">
+                <BookOpen className="mx-auto h-12 w-12" />
+                <p className="mt-4">Fill out your profile to create your plan!</p>
               </div>
             )}
-            {state.healthScore && <HealthScoreDisplay score={state.healthScore} />}
-            {state.insights && (
-              <Alert>
-                <Sparkles className="h-4 w-4" />
-                <AlertTitle>AI Insights</AlertTitle>
-                <AlertDescription>
-                  <p className="whitespace-pre-wrap">{state.insights}</p>
-                </AlertDescription>
-              </Alert>
+            
+            {state.plan && (
+                <div className="w-full space-y-4">
+                    <Alert>
+                        <Sparkles className="h-4 w-4" />
+                        <AlertTitle>{state.plan.planTitle}</AlertTitle>
+                        <AlertDescription>
+                          {state.plan.summary}
+                        </AlertDescription>
+                    </Alert>
+                    <div className="space-y-3">
+                    {state.plan.daily_plans.map((dayPlan: any) => (
+                        <Card key={dayPlan.day} className="bg-secondary/50">
+                            <CardHeader className="p-3">
+                                <CardTitle className="text-base">{dayPlan.day}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-3 pt-0 space-y-2 text-sm">
+                                <div className="flex items-start gap-2"><Utensils className="w-4 h-4 mt-0.5 text-primary"/><span><strong>Diet:</strong> {dayPlan.diet}</span></div>
+                                <div className="flex items-start gap-2"><Zap className="w-4 h-4 mt-0.5 text-primary"/><span><strong>Exercise:</strong> {dayPlan.exercise}</span></div>
+                                <div className="flex items-start gap-2"><Brain className="w-4 h-4 mt-0.5 text-primary"/><span><strong>Wellness:</strong> {dayPlan.wellness_tip}</span></div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                </div>
             )}
+
              {state.error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="h-full">
                 <Terminal className="h-4 w-4" />
                 <AlertTitle>An Error Occurred</AlertTitle>
                 <AlertDescription>{state.error}</AlertDescription>

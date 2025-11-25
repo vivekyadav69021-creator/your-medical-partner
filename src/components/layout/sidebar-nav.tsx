@@ -26,7 +26,7 @@ const navItems = [
   { href: '/store', label: 'Medical Store', icon: Store },
   { href: '/planner', label: 'My Planner', icon: ListTodo },
   { href: '/challenges', label: 'Challenges', icon: Trophy },
-  { href: '/health-score', label: 'Health Score', icon: HeartPulse },
+  { href: '/health-score', label: 'AI Health Planner', icon: HeartPulse },
   { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
   { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
   { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },

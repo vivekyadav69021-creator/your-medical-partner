@@ -1,47 +1,47 @@
 'use server';
 
-import { calculateHealthScore } from '@/ai/flows/personalized-health-score';
+import { createHealthPlan } from '@/ai/flows/personalized-health-score';
 import { z } from 'zod';
 
-const healthScoreSchema = z.object({
-  personalInformation: z.string().min(10, 'Please provide more personal information.'),
-  diagnoses: z.string().min(1, 'Please provide your diagnoses.'),
-  prescriptions: z.string().min(1, 'Please provide your prescriptions.'),
-  fitnessTrackerData: z.string().min(10, 'Please provide more fitness tracker data.'),
+const healthPlanSchema = z.object({
+  age: z.string().min(1, 'Age is required.'),
+  gender: z.enum(['male', 'female', 'other'], { required_error: 'Gender is required.' }),
+  healthGoals: z.string().min(3, 'Please describe your health goals.'),
+  dietaryPreferences: z.string().min(2, 'Please state your dietary preferences.'),
+  activityLevel: z.enum(['sedentary', 'lightly_active', 'moderately_active', 'very_active'], { required_error: 'Activity level is required.' }),
 });
 
-export async function calculateHealthScoreAction(
+export async function createHealthPlanAction(
   prevState: any,
   formData: FormData
 ) {
-  const validatedFields = healthScoreSchema.safeParse({
-    personalInformation: formData.get('personalInformation'),
-    diagnoses: formData.get('diagnoses'),
-    prescriptions: formData.get('prescriptions'),
-    fitnessTrackerData: formData.get('fitnessTrackerData'),
+  const validatedFields = healthPlanSchema.safeParse({
+    age: formData.get('age'),
+    gender: formData.get('gender'),
+    healthGoals: formData.get('healthGoals'),
+    dietaryPreferences: formData.get('dietaryPreferences'),
+    activityLevel: formData.get('activityLevel'),
   });
 
   if (!validatedFields.success) {
     const firstError = Object.values(validatedFields.error.flatten().fieldErrors)[0]?.[0];
     return {
-      healthScore: null,
-      insights: null,
+      plan: null,
       error: firstError ?? 'Invalid input.',
     };
   }
 
   try {
-    const result = await calculateHealthScore(validatedFields.data);
+    const result = await createHealthPlan(validatedFields.data);
     return {
-      healthScore: result.healthScore,
-      insights: result.insights,
+      plan: result,
       error: null,
     };
-  } catch (e) {
+  } catch (e: any) {
+     console.error("AI Health Plan Error:", e);
     return {
-      healthScore: null,
-      insights: null,
-      error: 'The AI model could not be reached. Please try again later.',
+      plan: null,
+      error: 'The AI model could not be reached to create your plan. Please try again later.',
     };
   }
 }
