@@ -39,7 +39,7 @@ export type Chapter = {
         en: string[];
         hi: string[];
     };
-    image: string;
+    image?: string;
     full_text?: string;
     notes?: {
         en: string;
@@ -493,6 +493,85 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "किसी भी काम से पहले मन में कहें: ‘मैं यह ईमानदारी से करूँगा, फल की आसक्ति नहीं रखूँगा।’",
                     "दैनिक कार्यों को बोझ नहीं, सेवा समझकर करें।",
                     "पूछें: ‘क्या यह कर्म मुझे या समाज को बेहतर बना रहा है?’"
+                  ]
+                }
+            },
+            {
+                "id": "gita_ch_4",
+                "title": {
+                  "en": "Chapter 4 — Jnana-Karma-Sannyasa Yoga (Path of Knowledge & Selfless Action)",
+                  "hi": "अध्याय 4 — ज्ञान-कर्म-संन्यास योग (ज्ञान और निष्काम कर्म का मार्ग)"
+                },
+                "summary": {
+                  "en": "Krishna reveals the ancient origins of yoga and explains how divine wisdom was passed through generations. He teaches the difference between action, inaction, and wrong action. True renunciation is performing one’s duty with wisdom and without attachment. Knowledge burns past karma and frees the seeker.",
+                  "hi": "कृष्ण बताते हैं कि योग का विज्ञान बहुत प्राचीन है और दिव्य ज्ञान परम्परा से चलता आया है। वे कर्म, अकर्म और विकर्म का अंतर समझाते हैं। सच्चा संन्यास कर्म का त्याग नहीं बल्कि विवेक और निष्काम भाव से कर्तव्य करना है। ज्ञान पुराने कर्मों को जलाकर साधक को मुक्त करता है।"
+                },
+                "key_verses": [
+                  {
+                    "verse_ref": "4.7–4.8",
+                    "en": "Whenever righteousness declines and unrighteousness rises, I manifest Myself to protect the good and restore dharma.",
+                    "hi": "जब-जब धर्म की हानि और अधर्म की वृद्धि होती है, तब-तब मैं स्वयं प्रकट होता हूँ—साधुओं की रक्षा और धर्म की स्थापना हेतु।",
+                    "explanation": {
+                      "en": "Explains divine intervention and the moral purpose of incarnation.",
+                      "hi": "अवतार का नैतिक उद्देश्य बताता है—धर्म की रक्षा।"
+                    }
+                  },
+                  {
+                    "verse_ref": "4.18",
+                    "en": "One who sees action in inaction and inaction in action is truly wise.",
+                    "hi": "जो अकर्म में कर्म और कर्म में अकर्म देखता है, वही सत्य ज्ञानी है।",
+                    "explanation": {
+                      "en": "Wisdom allows understanding subtle inner intentions behind actions.",
+                      "hi": "विवेक से कर्म के पीछे के सूक्ष्म इरादे समझ आते हैं।"
+                    }
+                  },
+                  {
+                    "verse_ref": "4.24",
+                    "en": "For the realized one, every act becomes a sacred offering; the knower, the act, and the object become one.",
+                    "hi": "ज्ञानी के लिए प्रत्येक कर्म यज्ञ हो जाता है—कर्ता, कर्म और फल तीनों एकरूप हो जाते हैं।",
+                    "explanation": {
+                      "en": "Spiritual unity transforms every action into meditation.",
+                      "hi": "आध्यात्मिक एकता से हर कर्म ध्यान बन जाता है।"
+                    }
+                  },
+                  {
+                    "verse_ref": "4.38",
+                    "en": "There is nothing more purifying than knowledge. In due time, one who is mature in yoga realizes this truth.",
+                    "hi": "ज्ञान से बड़ा पवित्र करने वाला कुछ नहीं; समय आने पर योगयुक्त व्यक्ति इसे प्राप्त करता है।",
+                    "explanation": {
+                      "en": "Knowledge dissolves ignorance and leads to freedom.",
+                      "hi": "ज्ञान अज्ञान को मिटाकर मुक्ति देता है।"
+                    }
+                  }
+                ],
+                "main_points": {
+                  "en": [
+                    "Yoga is ancient and timeless; divine wisdom is eternal.",
+                    "Difference between action, inaction, wrong action must be understood.",
+                    "True renunciation is performing duty without ego.",
+                    "Knowledge purifies and destroys old karmic impressions.",
+                    "Selfless action + wisdom = liberation."
+                  ],
+                  "hi": [
+                    "योग अत्यंत प्राचीन विज्ञान है।",
+                    "कर्म, अकर्म और विकर्म का सही ज्ञान आवश्यक है।",
+                    "सच्चा संन्यास कर्म त्याग नहीं, अहंकार त्याग है।",
+                    "ज्ञान पुराने कर्मों को नष्ट कर मन को शुद्ध करता है।",
+                    "निष्काम कर्म + सही ज्ञान = मुक्ति।"
+                  ]
+                },
+                "practice_tips": {
+                  "en": [
+                    "Act with clarity: ask ‘Why am I doing this?’ before acting.",
+                    "Dedicate each task mentally: ‘Let this be my offering.’",
+                    "Study a few verses weekly to build deeper understanding.",
+                    "Reflect daily: ‘Was my action wise or driven by ego?’"
+                  ],
+                  "hi": [
+                    "स्पष्टता से कर्म करें: ‘मैं यह क्यों कर रहा हूँ?’ यह प्रश्न स्वयं से पूछें।",
+                    "हर कार्य को मन में अर्पण करें: ‘यह मेरा यज्ञ है।’",
+                    "सप्ताह में कुछ श्लोक पढ़ें—ज्ञान गहराई बढ़ेगी।",
+                    "प्रतिदिन विचार करें: ‘क्या मेरा कर्म विवेकपूर्ण था या अहंकार से?’"
                   ]
                 }
             }
