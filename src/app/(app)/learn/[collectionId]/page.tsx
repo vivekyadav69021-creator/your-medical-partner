@@ -2,12 +2,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { learnCollectionsData, LearnCollectionItem } from '@/lib/learn-data';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { learnCollectionsData, LearnCollectionItem, Chapter } from '@/lib/learn-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/accordion";
 import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Badge } from '@/components/ui/badge';
 
 export default function LearnPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { collectionId } = params;
   const router = useRouter();
@@ -28,6 +30,16 @@ export default function LearnPage() {
   const { user } = useUser();
 
   const [collection, setCollection] = useState<LearnCollectionItem | null>(null);
+  const [lang, setLang] = useState<'en' | 'hi'>('en');
+
+  useEffect(() => {
+    const langParam = searchParams.get('lang');
+    if (langParam === 'hi') {
+        setLang('hi');
+    } else {
+        setLang('en');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const foundCollection = learnCollectionsData.find(c => c.id === collectionId);
@@ -71,6 +83,73 @@ export default function LearnPage() {
     );
   }
 
+  const ChapterCard = ({ chapter }: { chapter: Chapter }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{lang === 'en' ? chapter.title.en : chapter.title.hi}</CardTitle>
+        <CardDescription>{lang === 'en' ? chapter.summary.en : chapter.summary.hi}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Key Sutras */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><Star className="text-yellow-500" /> Key Sutras</CardTitle>
+            </CardHeader>
+            <CardContent>
+                 <Accordion type="single" collapsible className="w-full">
+                    {chapter.key_sutras.map(sutra => (
+                        <AccordionItem value={sutra.sutra} key={sutra.sutra}>
+                            <AccordionTrigger className="text-left">
+                                {lang === 'en' ? sutra.en : sutra.hi}
+                            </AccordionTrigger>
+                            <AccordionContent className="space-y-2">
+                                <p className="font-mono text-sm text-muted-foreground">{sutra.sutra}</p>
+                                <p className="italic">"{lang === 'en' ? sutra.explanation.en : sutra.explanation.hi}"</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </CardContent>
+        </Card>
+
+        {/* Main Points */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><BookOpen /> Main Points</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ul className="list-disc space-y-2 pl-5">
+                    {(lang === 'en' ? chapter.main_points.en : chapter.main_points.hi).map((point, i) => (
+                        <li key={i}>{point}</li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+
+        {/* Practice Tips */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><Brain /> Practice Tips</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ul className="list-disc space-y-2 pl-5">
+                    {(lang === 'en' ? chapter.practice_tips.en : chapter.practice_tips.hi).map((tip, i) => (
+                        <li key={i}>{tip}</li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+        
+        <div className="mt-4 pt-4 border-t">
+            <Button onClick={() => handleMarkComplete(chapter.id, lang === 'en' ? chapter.title.en : chapter.title.hi)}>
+                <CheckCircle className="mr-2 h-4 w-4"/>
+                Mark as Complete
+            </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
         <Button variant="ghost" asChild>
@@ -87,31 +166,13 @@ export default function LearnPage() {
         </CardHeader>
       </Card>
       
-      <Card>
-        <CardHeader>
-            <CardTitle>Chapters</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              {collection.chapters.map(chapter => (
-                <AccordionItem value={chapter.id} key={chapter.id}>
-                  <AccordionTrigger>{chapter.title}</AccordionTrigger>
-                  <AccordionContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">{chapter.summary}</p>
-                    <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: chapter.full_text || '' }} />
-                    <div className="mt-4">
-                        <Button onClick={() => handleMarkComplete(chapter.id, chapter.title)}>
-                            <CheckCircle className="mr-2 h-4 w-4"/>
-                            Mark as Complete
-                        </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {collection.chapters.map(chapter => (
+          <ChapterCard key={chapter.id} chapter={chapter} />
+        ))}
+      </div>
 
     </div>
   );
 }
+
