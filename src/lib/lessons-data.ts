@@ -240,35 +240,35 @@ export const quizzes: Quiz[] = [
       id: "quiz_nutrition",
       lessonId: "nutrition_basics",
       questions: [
-        { q:"Which food group gives quickest energy?", q_hi:"कौन सा खाद्य समूह सबसे तेज़ ऊर्जा देता है?", options:["Carbohydrates","Proteins","Fats","Vitamins"], options_hi:["कार्बोहाइड्रेट","प्रोटीन","वसा","विटामिन"], answer:0 },
-        { q:"Best drink to stay hydrated?", q_hi:"हाइड्रेट रहने के लिए सबसे अच्छा पेय क्या है?", options:["Water","Soda","Coffee","Energy drink"], options_hi:["पानी","सोडा","कॉफ़ी","एनर्जी ड्रिंक"], answer:0 },
-        { q:"Which is a source of healthy fats?", q_hi:"निम्न में से स्वस्थ वसा का स्रोत कौन सा है?", options:["Avocado","Candy","White bread","Soft drink"], options_hi:["एवोकाडो","कैंडी","सफ़ेद ब्रेड","सॉफ्ट ड्रिंक"], answer:0 }
+        { q:"Which food group gives the quickest energy?", q_hi:"कौन सा खाद्य समूह सबसे तेज़ ऊर्जा देता है?", options:["Carbohydrates","Proteins","Fats","Vitamins"], options_hi:["कार्बोहाइड्रेट","प्रोटीन","वसा","विटामिन"], answer:0 },
+        { q:"What is the best drink to stay hydrated?", q_hi:"हाइड्रेटेड रहने के लिए सबसे अच्छा पेय क्या है?", options:["Water","Soda","Coffee","Energy drink"], options_hi:["पानी","सोडा","कॉफ़ी","एनर्जी ड्रिंक"], answer:0 },
+        { q:"Which of these is a good source of healthy fats?", q_hi:"इनमें से स्वस्थ वसा का एक अच्छा स्रोत कौन सा है?", options:["Avocado","Candy","White bread","Soft drink"], options_hi:["एवोकाडो","कैंडी","सफ़ेद ब्रेड","सॉफ्ट ड्रिंक"], answer:0 }
       ]
     },
     {
       id: "quiz_hygiene",
       lessonId: "handhygiene",
       questions: [
-        { q:"How long should you wash hands with soap?", q_hi:"साबुन से कितनी देर हाथ धोना चाहिए?", options:["20 seconds","5 seconds","1 minute","10 minutes"], options_hi:["20 सेकंड","5 सेकंड","1 मिनट","10 मिनट"], answer:0 },
-        { q:"When should you use sanitizer?", q_hi:"कब सैनीटाइज़र का उपयोग करना चाहिए?", options:["When hands are not visibly dirty","Always instead of washing","Never","Only after meals"], options_hi:["जब हाथ गंदे न दिखें","हमेशा धोने की बजाय","कभी नहीं","सिर्फ खाने के बाद"], answer:0 }
+        { q:"What is the minimum time you should wash your hands with soap?", q_hi:"आपको साबुन से कम से कम कितनी देर तक हाथ धोना चाहिए?", options:["20 seconds","5 seconds","1 minute","10 minutes"], options_hi:["20 सेकंड","5 सेकंड","1 मिनट","10 मिनट"], answer:0 },
+        { q:"When is it appropriate to use hand sanitizer?", q_hi:"हैंड सैनिटाइज़र का उपयोग करना कब उचित है?", options:["When soap and water are not available","Always, instead of washing","Only after eating","Never"], options_hi:["जब साबुन और पानी उपलब्ध न हो","हमेशा, धोने के बजाय","केवल खाने के बाद","कभी नहीं"], answer:0 }
       ]
     },
     {
       id: "quiz_firstaid",
       lessonId: "basic_first_aid",
       questions: [
-        { q:"If someone is choking and can't breathe, you should:", q_hi:"अगर कोई घुट रहा है और साँस नहीं ले पा रहा है, तो आपको:", options:["Perform abdominal thrusts/back blows","Give water to drink","Lay them down and wait","Put something in mouth"], options_hi:["पेट दबाव / पीठ पर वार करें","पानी पिला दें","उनको लिटा कर प्रतीक्षा करें","कुछ मुंह में डालें"], answer:0 },
-        { q:"For a heavy bleed, first step is:", q_hi:"भारी रक्तस्राव के लिए पहला कदम क्या है?", options:["Apply direct pressure","Apply iodine","Wash with water","Give them food"], options_hi:["सीधा दबाव डालें","आयोडीन लगाएँ","पानी से धोएं","खाना पिलाएँ"], answer:0 }
+        { q:"If an adult is choking and cannot cough, what is the first thing you should do?", q_hi:"यदि कोई वयस्क घुट रहा है और खांस नहीं सकता है, तो आपको सबसे पहले क्या करना चाहिए?", options:["Give 5 sharp back blows","Give them water to drink","Lay them down and wait","Put something in their mouth"], options_hi:["5 तेज पीठ पर वार दें","उन्हें पीने के लिए पानी दें","उन्हें लिटा दें और प्रतीक्षा करें","उनके मुंह में कुछ डालें"], answer:0 },
+        { q:"What is the first step for controlling severe bleeding?", q_hi:"गंभीर रक्तस्राव को नियंत्रित करने के लिए पहला कदम क्या है?", options:["Apply direct pressure with a clean cloth","Wash the wound with water","Apply a tourniquet immediately","Give them food to eat"], options_hi:["एक साफ कपड़े से सीधा दबाव डालें","घाव को पानी से धोएं","तुरंत एक टूर्निकेट लगाएं","उन्हें खाने के लिए भोजन दें"], answer:0 }
       ]
     },
     {
       id: "quiz_mental",
       lessonId: "mental_wellbeing",
       questions: [
-        { q:"A quick technique to calm anxiety is:", q_hi:"चिंता शांत करने के लिए एक त्वरित तकनीक है:", options:["Deep belly breathing","Running immediately","Eating sugar","Watching TV"], options_hi:["गहरी पेट की श्वास","तुरंत दौड़ना","चीनी खाना","टीवी देखना"], answer:0 },
-        { q:"If someone mentions harmful thoughts, you should:", q_hi:"अगर कोई हानिकारक विचारों का ज़िक्र करता है, तो आपको:", options:["Encourage seeking professional help","Ignore them","Joke about it","Tell them to 'toughen up'"], options_hi:["पेशेवर मदद लेने के लिए प्रेरित करें","अनदेखा करें","मज़ाक बनाएं","कहे कि कठोर बनो"], answer:0 }
+        { q:"Which technique is recommended for calming anxiety quickly?", q_hi:"चिंता को जल्दी शांत करने के लिए कौन सी तकनीक अनुशंसित है?", options:["Box Breathing","Running immediately","Eating sugar","Watching TV"], options_hi:["बॉक्स ब्रीदिंग","तुरंत दौड़ना","चीनी खाना","टीवी देखना"], answer:0 },
+        { q:"If a friend seems persistently sad and has lost interest in their hobbies, what should you do?", q_hi:"यदि कोई दोस्त लगातार दुखी लगता है और अपने शौक में रुचि खो चुका है, तो आपको क्या करना चाहिए?", options:["Encourage them to seek professional help","Ignore them","Tell them to 'toughen up'","Joke about it"], options_hi:["उन्हें पेशेवर मदद लेने के लिए प्रोत्साहित करें","उन्हें अनदेखा करें","उन्हें 'कठोर बनने' के लिए कहें","इस पर मजाक करें"], answer:0 }
       ]
     }
 ];
 
-export const topics = [ "All", "Nutrition", "Hygiene", "First Aid", "Mental Health", "Fitness", "Chronic Conditions" ];
+export const topics = [ "All", "Nutrition", "Hygiene", "First Aid", "Mental Health" ];

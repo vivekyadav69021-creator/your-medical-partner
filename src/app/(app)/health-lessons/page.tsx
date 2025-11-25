@@ -42,7 +42,7 @@ export default function HealthLessonsPage() {
   const [selectedTopic, setSelectedTopic] = useState('All');
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [quizLesson, setQuizLesson] = useState<Lesson | null>(null);
-  const [userAnswers, setUserAnswers] = useState<number[]>([]);
+  const [userAnswers, setUserAnswers] = useState<(number | null)[]>([]);
   const [showResult, setShowResult] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
@@ -62,7 +62,7 @@ export default function HealthLessonsPage() {
       setQuizLesson(lesson);
       setActiveQuiz(quiz);
       setShowResult(false);
-      setUserAnswers(Array(quiz.questions.length).fill(-1));
+      setUserAnswers(Array(quiz.questions.length).fill(null));
     } else {
         toast({variant: "destructive", title: "Quiz not found", description: "This lesson does not have a quiz yet."});
     }
@@ -76,34 +76,6 @@ export default function HealthLessonsPage() {
     });
   };
 
-  const submitQuiz = async () => {
-    if (userAnswers.includes(-1)) {
-        toast({variant: "destructive", title: "Incomplete Quiz", description: "Please answer all questions."});
-        return;
-    }
-    if (!activeQuiz || !user || !firestore) return;
-
-    const { score, total } = getQuizResult();
-    const percentage = Math.round((score / total) * 100);
-    
-    try {
-        const progressRef = doc(firestore, 'users', user.uid, 'progress', activeQuiz.lessonId);
-        await setDoc(progressRef, {
-            lessonId: activeQuiz.lessonId,
-            quizId: activeQuiz.id,
-            score,
-            total,
-            percentage,
-            completedAt: serverTimestamp(),
-        }, { merge: true });
-    } catch(e) {
-        console.error("Failed to save progress", e);
-        toast({variant: "destructive", title: "Error", description: "Could not save your progress."});
-    }
-
-    setShowResult(true);
-  };
-  
   const getQuizResult = () => {
     if (!activeQuiz) return { score: 0, total: 0 };
     let correct = 0;
@@ -183,6 +155,47 @@ export default function HealthLessonsPage() {
     doc.save(`Certificate-${quizLesson.id}.pdf`);
   }
 
+  const submitQuiz = async () => {
+    if (userAnswers.some(a => a === null)) {
+      toast({variant: "destructive", title: "Incomplete Quiz", description: "Please answer all questions."});
+      return;
+    }
+    if (!activeQuiz || !quizLesson || !user || !firestore) return;
+
+    const { score, total } = getQuizResult();
+    const percentage = Math.round((score / total) * 100);
+    
+    try {
+        const progressRef = doc(firestore, 'users', user.uid, 'progress', quizLesson.id);
+        await setDoc(progressRef, {
+            lessonId: quizLesson.id,
+            quizId: activeQuiz.id,
+            score,
+            total,
+            percentage,
+            completedAt: serverTimestamp(),
+        }, { merge: true });
+    } catch(e) {
+        console.error("Failed to save progress", e);
+        toast({variant: "destructive", title: "Error", description: "Could not save your progress."});
+    }
+
+    setShowResult(true);
+
+    if (percentage >= 80) {
+      toast({
+        title: "Congratulations! You passed.",
+        description: "You can now download your certificate.",
+      });
+    } else {
+        toast({
+          variant: "destructive",
+          title: "Keep Trying!",
+          description: `Your score is ${percentage}%. You need 80% to pass.`,
+        });
+    }
+  };
+
 
   const resetQuiz = () => {
     setActiveQuiz(null);
@@ -260,6 +273,9 @@ export default function HealthLessonsPage() {
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>{lang === 'en' ? 'Quiz' : 'क्विज़'}: {quizLesson?.title[lang]}</DialogTitle>
+               <DialogDescription>
+                {lang === 'en' ? 'Answer all questions to see your result.' : 'अपना परिणाम देखने के लिए सभी प्रश्नों के उत्तर दें।'}
+              </DialogDescription>
             </DialogHeader>
              <div className="space-y-6 max-h-[70vh] overflow-y-auto p-4">
                 {!showResult ? (
@@ -267,7 +283,7 @@ export default function HealthLessonsPage() {
                         <div key={qIndex} className="space-y-2">
                             <p className="font-semibold">{qIndex + 1}. {q[lang === 'en' ? 'q' : 'q_hi']}</p>
                             <div className="space-y-2">
-                                {q[lang === 'en' ? 'options' : 'options_hi'].map((opt, oIndex) => (
+                                {(lang === 'en' ? q.options : q.options_hi).map((opt, oIndex) => (
                                     <div 
                                         key={oIndex} 
                                         className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors ${userAnswers[qIndex] === oIndex ? 'bg-primary/20 border-primary' : 'hover:bg-muted'}`}
@@ -291,7 +307,7 @@ export default function HealthLessonsPage() {
                                 <Button className="mt-4" onClick={downloadCertificate}><Download className="mr-2 h-4 w-4"/>{lang === 'en' ? 'Download Certificate' : 'प्रमाणपत्र डाउनलोड करें'}</Button>
                             </>
                         ) : (
-                            <p className="text-red-600 font-semibold mt-2">{lang === 'en' ? 'Keep trying! You can retake the quiz.' : 'कोशिश करते रहें! आप फिर से क्विज़ दे सकते हैं।'}</p>
+                            <p className="text-red-600 font-semibold mt-2">{lang === 'en' ? 'Keep trying! You need 80% to pass.' : 'कोशिश करते रहें! पास होने के लिए आपको 80% चाहिए।'}</p>
                         )}
                     </div>
                 )}
