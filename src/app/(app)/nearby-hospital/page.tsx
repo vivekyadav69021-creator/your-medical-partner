@@ -238,7 +238,7 @@ const NearbyHospitalPage: React.FC = () => {
                 </div>
              </div>
 
-            <div id="map" className="h-[420px] w-full rounded-lg border bg-secondary relative"></div>
+            <div id="map" className="h-[420px] w-full rounded-lg border bg-secondary relative isolate"></div>
 
             <div className="mt-4">
                 <p className="text-sm font-semibold text-muted-foreground">{status}</p>
@@ -304,3 +304,5 @@ const NearbyHospitalPage: React.FC = () => {
 };
 
 export default NearbyHospitalPage;
+
+    
