@@ -350,7 +350,6 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "निर्णय लेने से पहले भरोसेमंद गुरु या मार्गदर्शक से चर्चा कर लो।"
                   ]
                 },
-                "image": "https://picsum.photos/seed/gita1/1200/600",
                 "notes": {
                   "en": "Contextual note: Chapter 1 is diagnostic—identifies the human crisis that requires teaching. Use it in-app as 'When you feel stuck' module.",
                   "hi": "संदर्भ: अध्याय 1 निदानात्मक है—यह मानव संकट बताता है जो उपदेश की आवश्यकता दर्शाता है। ऐप में इसे 'जब आप अटकें' मॉड्यूल के रूप में उपयोग करें।"
@@ -429,8 +428,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "परिणाम की चिंता हो तो 2.47 को मन में दोहराएँ, मन स्थिर होगा।",
                     "प्रतिदिन 2 मिनट अपने कर्मों का निरीक्षण करें—बिना आलोचना के।"
                     ]
-                },
-                "image": "https://picsum.photos/seed/gita2/1200/600"
+                }
             },
             {
                 "id": "gita_ch_3",
@@ -496,9 +494,8 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "दैनिक कार्यों को बोझ नहीं, सेवा समझकर करें।",
                     "पूछें: ‘क्या यह कर्म मुझे या समाज को बेहतर बना रहा है?’"
                   ]
-                },
-                "image": "https://picsum.photos/seed/gita3/1200/600"
-              }
+                }
+            }
         ]
     }
 ];
