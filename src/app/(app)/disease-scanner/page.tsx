@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState, useRef, useState, useEffect } from 'react';
+import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -55,69 +55,137 @@ export default function DiseaseScannerPage() {
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const availableVideoInputsRef = useRef<MediaDeviceInfo[]>([]);
+  const currentDeviceIdRef = useRef<string | null>(null);
+  const usingFrontRef = useRef(false);
 
-  const stopCamera = () => {
+  const stopStream = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
-    setIsCameraOpen(false);
-  };
-  
-  useEffect(() => {
-    const startCamera = async () => {
-      if (isCameraOpen) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: facingMode }
-          });
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-          setHasCameraPermission(true);
-        } catch (err) {
-          console.error("Camera error:", err);
-          setHasCameraPermission(false);
-          toast({
-            variant: "destructive",
-            title: "Camera Access Denied",
-            description: "Please enable camera permissions in your browser settings.",
-          });
-          setIsCameraOpen(false);
-        }
-      } else {
-        stopCamera();
-      }
-    };
-    startCamera();
+  }, []);
 
-    return () => {
-      stopCamera();
-    };
-  }, [isCameraOpen, facingMode, toast]);
-
-  const switchCamera = () => {
-    setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
-  };
-
-  const takePicture = () => {
+  const attachStream = useCallback((stream: MediaStream) => {
     if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const context = canvas.getContext('2d');
-      if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUri = canvas.toDataURL('image/jpeg');
-        setPreview(dataUri);
-        stopCamera();
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.warn('video.play() error', e));
+    }
+    streamRef.current = stream;
+  }, []);
+
+  const startCamera = useCallback(async ({ deviceId, facingMode }: { deviceId?: string | null; facingMode?: 'user' | 'environment' } = {}) => {
+    stopStream();
+    setHasCameraPermission(null);
+
+    const constraints = {
+      video: deviceId 
+        ? { deviceId: { exact: deviceId } }
+        : { facingMode: { exact: facingMode || 'environment' } }
+    };
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      attachStream(stream);
+      setHasCameraPermission(true);
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+          currentDeviceIdRef.current = track.getSettings().deviceId || null;
+      }
+    } catch (err) {
+      console.error("Failed to start camera with constraints:", constraints, err);
+      // Fallback to any video device
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        attachStream(stream);
+        setHasCameraPermission(true);
+      } catch (finalErr) {
+        console.error("Final camera fallback failed:", finalErr);
+        setHasCameraPermission(false);
+        setIsCameraOpen(false);
+        toast({
+          variant: "destructive",
+          title: "Camera Error",
+          description: "Could not access camera. Please check permissions.",
+        });
       }
     }
-  };
+  }, [attachStream, stopStream, toast]);
+  
+  const openCamera = useCallback(async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast({ variant: 'destructive', title: 'Camera not supported' });
+        return;
+    }
+    setIsCameraOpen(true);
+    setPreview(null);
+    try {
+        // This initial call helps populate device labels
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        tempStream.getTracks().forEach(t => t.stop());
+        
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        availableVideoInputsRef.current = devices.filter(d => d.kind === 'videoinput');
+
+        let preferredDeviceId: string | null = null;
+        if(availableVideoInputsRef.current.length > 1) {
+            const backCamera = availableVideoInputsRef.current.find(d => d.label.toLowerCase().includes('back'));
+            preferredDeviceId = backCamera?.deviceId || availableVideoInputsRef.current[1]?.deviceId || null;
+        }
+
+        await startCamera({ deviceId: preferredDeviceId, facingMode: 'environment' });
+        usingFrontRef.current = false;
+    } catch (err) {
+       await startCamera({ facingMode: 'environment' });
+    }
+  }, [startCamera, toast]);
+
+
+  const closeCamera = useCallback(() => {
+    stopStream();
+    setIsCameraOpen(false);
+  }, [stopStream]);
+
+  const switchCamera = useCallback(async () => {
+    if (availableVideoInputsRef.current.length < 2) {
+      toast({ title: "No other camera found." });
+      return;
+    }
+    usingFrontRef.current = !usingFrontRef.current;
+    
+    // Find the other device
+    const otherDevice = availableVideoInputsRef.current.find(d => d.deviceId !== currentDeviceIdRef.current);
+    const newDeviceId = otherDevice?.deviceId || null;
+    
+    await startCamera({ deviceId: newDeviceId });
+  }, [startCamera, toast]);
+
+  const takePicture = useCallback(() => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUri = canvas.toDataURL('image/jpeg');
+        setPreview(dataUri);
+        closeCamera();
+      }
+    }
+  }, [closeCamera]);
+
+
+  useEffect(() => {
+    return () => {
+      // Cleanup stream when component unmounts
+      stopStream();
+    };
+  }, [stopStream]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -146,6 +214,7 @@ export default function DiseaseScannerPage() {
 
   return (
     <div className="space-y-8">
+       <canvas ref={canvasRef} className="hidden"></canvas>
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">AI Disease Scanner</h1>
         <p className="text-muted-foreground">
@@ -168,11 +237,21 @@ export default function DiseaseScannerPage() {
                 {isCameraOpen ? (
                   <div className="relative">
                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
-                    <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
-                        <Button type="button" onClick={takePicture}>Take Picture</Button>
-                        <Button type="button" variant="outline" onClick={switchCamera}><SwitchCamera /></Button>
-                        <Button type="button" variant="destructive" onClick={stopCamera}><CameraOff /></Button>
-                    </div>
+                    {hasCameraPermission === false ? (
+                       <Alert variant="destructive" className="absolute top-2 left-2 right-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Camera Access Denied</AlertTitle>
+                          <AlertDescription>
+                            Please enable camera permissions to use this feature.
+                          </AlertDescription>
+                        </Alert>
+                    ) : (
+                      <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                          <Button type="button" onClick={takePicture}>Take Picture</Button>
+                          <Button type="button" variant="outline" onClick={switchCamera} disabled={availableVideoInputsRef.current.length < 2}><SwitchCamera /></Button>
+                          <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   preview ? (
@@ -196,7 +275,7 @@ export default function DiseaseScannerPage() {
                         </div>
                          <input ref={fileInputRef} id="symptom-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
                       </div>
-                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)}>
+                       <Button type="button" variant="outline" className="w-full" onClick={openCamera}>
                           <Camera className="mr-2 h-4 w-4" />
                           Open Camera
                        </Button>
@@ -204,15 +283,6 @@ export default function DiseaseScannerPage() {
                   )
                 )}
 
-                {hasCameraPermission === false && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Camera Access Denied</AlertTitle>
-                      <AlertDescription>
-                        Please enable camera permissions in your browser settings to use this feature.
-                      </AlertDescription>
-                    </Alert>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Describe Your Symptoms (Optional)</Label>
