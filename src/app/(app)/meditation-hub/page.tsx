@@ -20,7 +20,8 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { guidedMeditations, learnCollections } from '@/lib/meditation-data';
+import { guidedMeditations } from '@/lib/meditation-data';
+import { learnCollectionsData } from '@/lib/learn-data';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, getDocs, query, orderBy, Timestamp, limit } from 'firebase/firestore';
 import { useEffect, useState }from 'react';
@@ -204,12 +205,19 @@ export default function MeditationHubPage() {
                         <CardDescription>Click to open full chapter pages.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                         {learnCollections.map(item => (
-                            <Link href={`/learn/${item.id}?chapter=${item.chapters[0]?.id}&lang=en`} key={item.id} className="block p-3 rounded-lg hover:bg-muted">
-                                <p className="font-semibold">{item.title}</p>
-                                <p className="text-sm text-muted-foreground">{item.summary}</p>
-                            </Link>
-                         ))}
+                         {learnCollectionsData.map(item => {
+                            const firstChapterId = (item.chapters && item.chapters.length > 0) ? item.chapters[0]?.id : undefined;
+                            const href = firstChapterId
+                              ? `/learn/${item.id}?chapter=${firstChapterId}&lang=en`
+                              : `/learn/${item.id}?lang=en`;
+                            
+                            return (
+                                <Link href={href} key={item.id} className="block p-3 rounded-lg hover:bg-muted">
+                                    <p className="font-semibold">{item.title}</p>
+                                    <p className="text-sm text-muted-foreground">{item.summary}</p>
+                                </Link>
+                            );
+                         })}
                     </CardContent>
                 </Card>
             </div>
