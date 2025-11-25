@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -19,17 +19,25 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { lessons, quizzes, topics, Lesson, Quiz } from '@/lib/lessons-data';
+import { lessons, quizzes, topics, type Lesson, type Quiz } from '@/lib/lessons-data';
 import { GraduationCap, BookOpen, Download, Trophy, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 type Language = 'en' | 'hi';
 
 export default function HealthLessonsPage() {
   const [lang, setLang] = useState<Language>('en');
   const [selectedTopic, setSelectedTopic] = useState('All');
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
+  const [quizLesson, setQuizLesson] = useState<Lesson | null>(null);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [showResult, setShowResult] = useState(false);
   const { toast } = useToast();
@@ -37,18 +45,11 @@ export default function HealthLessonsPage() {
   const filteredLessons = lessons.filter(
     (lesson) => selectedTopic === 'All' || lesson.topic === selectedTopic
   );
-
-  const openLesson = (lesson: Lesson) => {
-    setSelectedLesson(lesson);
-    setActiveQuiz(null);
-    setShowResult(false);
-    setUserAnswers([]);
-  };
   
   const startQuiz = (lesson: Lesson) => {
     const quiz = quizzes.find(q => q.id === lesson.quizId);
     if (quiz) {
-      setSelectedLesson(lesson);
+      setQuizLesson(lesson);
       setActiveQuiz(quiz);
       setShowResult(false);
       setUserAnswers(Array(quiz.questions.length).fill(-1));
@@ -82,6 +83,51 @@ export default function HealthLessonsPage() {
     return { score: correct, total: activeQuiz.questions.length };
   };
 
+  const downloadCertificate = () => {
+    if (!quizLesson) return;
+
+    const { score, total } = getQuizResult();
+    const date = new Date().toLocaleDateString();
+
+    let content = `
+      ****************************************
+            CERTIFICATE OF COMPLETION
+      ****************************************
+
+      This certifies that:
+
+      A dedicated user of Your Medical Partner
+
+      has successfully completed the lesson:
+
+      "${quizLesson.title[lang]}"
+
+      Score: ${score} out of ${total}
+      Date: ${date}
+
+      Keep learning and stay healthy!
+
+      Issued by: Your Medical Partner
+    `;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Certificate-${quizLesson.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const resetQuiz = () => {
+    setActiveQuiz(null);
+    setQuizLesson(null);
+    setUserAnswers([]);
+    setShowResult(false);
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -94,136 +140,108 @@ export default function HealthLessonsPage() {
             : 'सीखें, क्विज़ दें, और प्रमाणपत्र अर्जित करें।'}
         </p>
       </div>
+      
+       <Card>
+        <CardHeader>
+            <CardTitle>{lang === 'en' ? 'Filters & Language' : 'फ़िल्टर और भाषा'}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col md:flex-row items-center justify-between gap-4">
+             <div className="flex items-center gap-2">
+                <Label htmlFor="filter-topic">{lang === 'en' ? 'Topic' : 'विषय'}</Label>
+                <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                    <SelectTrigger id="filter-topic" className="w-[180px]">
+                        <SelectValue placeholder="Select topic" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {topics.map(topic => (
+                            <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+             </div>
+             <div className="flex items-center space-x-2">
+                <Label htmlFor="lang-toggle">English</Label>
+                <Switch id="lang-toggle" checked={lang === 'hi'} onCheckedChange={(checked) => setLang(checked ? 'hi' : 'en')} />
+                <Label htmlFor="lang-toggle">हिंदी</Label>
+            </div>
+        </CardContent>
+       </Card>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Left Column */}
-        <div className="space-y-6">
-           <Card>
-            <CardHeader>
-                <CardTitle>{lang === 'en' ? 'Filters & Language' : 'फ़िल्टर और भाषा'}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-                 <div className="flex items-center gap-2">
-                    <Label htmlFor="filter-topic">{lang === 'en' ? 'Topic' : 'विषय'}</Label>
-                    <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                        <SelectTrigger id="filter-topic" className="w-[180px]">
-                            <SelectValue placeholder="Select topic" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {topics.map(topic => (
-                                <SelectItem key={topic} value={topic}>{topic}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                 </div>
-                 <div className="flex items-center space-x-2">
-                    <Label htmlFor="lang-toggle">English</Label>
-                    <Switch id="lang-toggle" checked={lang === 'hi'} onCheckedChange={(checked) => setLang(checked ? 'hi' : 'en')} />
-                    <Label htmlFor="lang-toggle">हिंदी</Label>
-                </div>
-            </CardContent>
-           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {lang === 'en' ? 'Lessons' : 'पाठ'}
-              </CardTitle>
-              <CardDescription>{lang === 'en' ? 'Select a topic to start learning' : 'सीखना शुरू करने के लिए एक विषय चुनें'}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {filteredLessons.map((lesson) => (
-                <Card key={lesson.id} className="p-4 flex flex-col sm:flex-row gap-4">
-                   <Image 
-                      src={lesson.image} 
-                      alt={lesson.title[lang]} 
-                      width={150} height={100} 
-                      className="rounded-md object-cover"
-                      data-ai-hint="lesson illustration"
-                    />
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{lesson.title[lang]}</h3>
-                    <p className="text-sm text-muted-foreground">{lesson.summary[lang]}</p>
-                     <div className="flex gap-2 mt-2">
-                        <Button size="sm" onClick={() => openLesson(lesson)}><BookOpen className="mr-2 h-4 w-4"/>{lang === 'en' ? 'Open Lesson' : 'पाठ खोलें'}</Button>
-                        <Button size="sm" variant="outline" onClick={() => startQuiz(lesson)}><HelpCircle className="mr-2 h-4 w-4"/>{lang === 'en' ? 'Take Quiz' : 'क्विज़ दें'}</Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedLesson ? selectedLesson.title[lang] : (lang === 'en' ? 'Lesson Viewer' : 'पाठ दर्शक')}</CardTitle>
-              <CardDescription>{selectedLesson ? selectedLesson.summary[lang] : (lang === 'en' ? 'Lesson details will appear here.' : 'पाठ का विवरण यहाँ दिखाई देगा।')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {!selectedLesson && (
-                    <div className="text-center text-muted-foreground p-8">
-                        <GraduationCap className="mx-auto h-12 w-12" />
-                        <p className="mt-4">{lang === 'en' ? 'Select a lesson to view its content.' : 'सामग्री देखने के लिए एक पाठ चुनें।'}</p>
-                    </div>
-                )}
-                {selectedLesson && !activeQuiz && (
-                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: selectedLesson.content[lang] }}></div>
-                )}
-                {activeQuiz && (
-                    <div className="space-y-6">
-                        {!showResult ? (
-                            activeQuiz.questions.map((q, qIndex) => (
-                                <div key={qIndex} className="space-y-2">
-                                    <p className="font-semibold">{qIndex + 1}. {q[lang === 'en' ? 'q' : 'q_hi']}</p>
-                                    <div className="space-y-1">
-                                        {q[lang === 'en' ? 'options' : 'options_hi'].map((opt, oIndex) => (
-                                            <div 
-                                                key={oIndex} 
-                                                className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${userAnswers[qIndex] === oIndex ? 'bg-primary/20 border-primary' : 'hover:bg-muted'}`}
-                                                onClick={() => handleAnswerSelect(qIndex, oIndex)}
-                                            >
-                                                <input type="radio" name={`q-${qIndex}`} checked={userAnswers[qIndex] === oIndex} readOnly className="h-4 w-4"/>
-                                                <Label className="flex-1 cursor-pointer">{opt}</Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                             <div className="text-center p-4 rounded-lg bg-secondary">
-                                <Trophy className={`mx-auto h-12 w-12 ${getQuizResult().score / getQuizResult().total >= 0.8 ? 'text-yellow-500' : 'text-muted-foreground'}`}/>
-                                <h3 className="text-xl font-bold mt-2">{lang === 'en' ? 'Quiz Result' : 'क्विज़ परिणाम'}</h3>
-                                <p className="text-2xl font-bold">{getQuizResult().score} / {getQuizResult().total}</p>
-                                {getQuizResult().score / getQuizResult().total >= 0.8 ? (
-                                    <>
-                                        <p className="text-green-600 font-semibold">{lang === 'en' ? 'Congratulations! You passed.' : 'बधाई हो! आप पास हो गए।'}</p>
-                                        <Button className="mt-4"><Download className="mr-2 h-4 w-4"/>{lang === 'en' ? 'Download Certificate' : 'प्रमाणपत्र डाउनलोड करें'}</Button>
-                                    </>
-                                ) : (
-                                    <p className="text-red-600 font-semibold">{lang === 'en' ? 'Keep trying! You can retake the quiz.' : 'कोशिश करते रहें! आप फिर से क्विज़ दे सकते हैं।'}</p>
-                                )}
-                            </div>
-                        )}
-
-                        {!showResult && <Button onClick={submitQuiz} className="w-full">{lang === 'en' ? 'Submit Quiz' : 'क्विज़ जमा करें'}</Button>}
-                    </div>
-                )}
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader>
-                <CardTitle>{lang === 'en' ? 'Your Progress' : 'आपकी प्रगति'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground">Progress summary will be available soon.</p>
-                 <Button disabled className="mt-2"><Download className="mr-2 h-4 w-4"/>{lang === 'en' ? 'Download Certificates' : 'प्रमाणपत्र डाउनलोड करें'}</Button>
-            </CardContent>
-           </Card>
-        </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredLessons.map((lesson) => (
+            <Card key={lesson.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle>{lesson.title[lang]}</CardTitle>
+                <CardDescription>{lesson.summary[lang]}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                 <p className="text-sm text-muted-foreground">Topic: {lesson.topic}</p>
+              </CardContent>
+              <CardContent className="flex gap-2">
+                <Button size="sm" asChild>
+                    <Link href={`/health-lessons/${lesson.id}?lang=${lang}`}>
+                        <BookOpen className="mr-2 h-4 w-4"/>
+                        {lang === 'en' ? 'Open Lesson' : 'पाठ खोलें'}
+                    </Link>
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => startQuiz(lesson)}>
+                    <HelpCircle className="mr-2 h-4 w-4"/>
+                    {lang === 'en' ? 'Take Quiz' : 'क्विज़ दें'}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
       </div>
+
+       <Dialog open={!!activeQuiz} onOpenChange={(isOpen) => !isOpen && resetQuiz()}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>{lang === 'en' ? 'Quiz' : 'क्विज़'}: {quizLesson?.title[lang]}</DialogTitle>
+            </DialogHeader>
+             <div className="space-y-6 max-h-[70vh] overflow-y-auto p-4">
+                {!showResult ? (
+                    activeQuiz?.questions.map((q, qIndex) => (
+                        <div key={qIndex} className="space-y-2">
+                            <p className="font-semibold">{qIndex + 1}. {q[lang === 'en' ? 'q' : 'q_hi']}</p>
+                            <div className="space-y-2">
+                                {q[lang === 'en' ? 'options' : 'options_hi'].map((opt, oIndex) => (
+                                    <div 
+                                        key={oIndex} 
+                                        className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors ${userAnswers[qIndex] === oIndex ? 'bg-primary/20 border-primary' : 'hover:bg-muted'}`}
+                                        onClick={() => handleAnswerSelect(qIndex, oIndex)}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full border-2 ${userAnswers[qIndex] === oIndex ? 'border-primary bg-primary' : 'border-muted-foreground'}`} />
+                                        <Label className="flex-1 cursor-pointer">{opt}</Label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                     <div className="text-center p-4 rounded-lg bg-secondary">
+                        <Trophy className={`mx-auto h-12 w-12 ${getQuizResult().score / getQuizResult().total >= 0.8 ? 'text-yellow-500' : 'text-muted-foreground'}`}/>
+                        <h3 className="text-xl font-bold mt-2">{lang === 'en' ? 'Quiz Result' : 'क्विज़ परिणाम'}</h3>
+                        <p className="text-2xl font-bold">{getQuizResult().score} / {getQuizResult().total}</p>
+                        {getQuizResult().score / getQuizResult().total >= 0.8 ? (
+                            <>
+                                <p className="text-green-600 font-semibold mt-2">{lang === 'en' ? 'Congratulations! You passed.' : 'बधाई हो! आप पास हो गए।'}</p>
+                                <Button className="mt-4" onClick={downloadCertificate}><Download className="mr-2 h-4 w-4"/>{lang === 'en' ? 'Download Certificate' : 'प्रमाणपत्र डाउनलोड करें'}</Button>
+                            </>
+                        ) : (
+                            <p className="text-red-600 font-semibold mt-2">{lang === 'en' ? 'Keep trying! You can retake the quiz.' : 'कोशिश करते रहें! आप फिर से क्विज़ दे सकते हैं।'}</p>
+                        )}
+                    </div>
+                )}
+            </div>
+            <DialogFooter>
+                {!showResult ? (
+                    <Button onClick={submitQuiz} className="w-full">{lang === 'en' ? 'Submit Quiz' : 'क्विज़ जमा करें'}</Button>
+                ) : (
+                    <Button onClick={resetQuiz} variant="outline" className="w-full">{lang === 'en' ? 'Close' : 'बंद करें'}</Button>
+                )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }
