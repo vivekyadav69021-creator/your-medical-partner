@@ -358,69 +358,79 @@ export const learnCollectionsData: LearnCollectionItem[] = [
             },
             {
                 "id": "gita_ch_2",
-                "title": { "en": "Chapter 2 — Sankhya Yoga (Transcendental Knowledge)", "hi": "अध्याय 2 — सांख्ययोग (परम ज्ञान)" },
+                "title": {
+                    "en": "Chapter 2 — Sankhya Yoga (Path of Transcendental Knowledge)",
+                    "hi": "अध्याय 2 — सांख्ययोग (परम ज्ञान का मार्ग)"
+                },
                 "summary": {
-                  "en": "Chapter 2 is Krishna’s first major reply. He teaches the immortality of the soul (ātman), the impermanence of the body, and introduces key teachings: equanimity, detached action (karma-yoga), and wise discrimination (buddhi). Famous verses include teachings on duty without attachment (2.47) and the steady mind (2.54–2.58).",
-                  "hi": "दूसरा अध्याय कृष्ण का पहला मुख्य उत्तर है। वह आत्मा के अमरत्व, शरीर की नश्वरता और मुख्य शिक्षाएँ—समत्व, निष्काम कर्म (कर्मयोग), और बुद्धि/विवेक का परिचय देते हैं। प्रसिद्ध श्लोकों में निष्काम कर्म (2.47) और स्थिर मन (2.54–2.58) शामिल हैं।"
+                    "en": "Chapter 2 begins Krishna’s profound teachings to Arjuna. Krishna explains that the soul (Atman) is eternal and never dies, while the body is temporary. He introduces the principles of Karma Yoga (selfless action), equanimity, and the balanced, stable intellect (Buddhi-Yoga). This chapter lays the foundation for the entire Gita.",
+                    "hi": "अध्याय 2 में कृष्ण अर्जुन को गहरा उपदेश देना शुरू करते हैं। वे बताते हैं कि आत्मा शाश्वत है और कभी नहीं मरती, जबकि शरीर नश्वर है। इस अध्याय में निष्काम कर्म, समत्व और स्थिर बुद्धि (बुद्धियोग) का परिचय मिलता है। यही पूरे गीता का आधार अध्याय है।"
                 },
                 "key_verses": [
-                  {
+                    {
                     "verse_ref": "2.11",
-                    "en": "Krishna: You grieve for those that should not be grieved for, and yet speak words of wisdom—reason, Arjuna.",
-                    "hi": "कृष्ण: तुम उन लोगों के लिए शोक कर रहे हो जिनके लिए शोक नहीं करना चाहिए—विचार करो अर्जुन।",
+                    "en": "Krishna said: You grieve for those who should not be grieved for, yet you speak words of wisdom.",
+                    "hi": "कृष्ण बोले: तुम उन लोगों के लिए शोक कर रहे हो जिनके लिए शोक नहीं करना चाहिए, और फिर भी ज्ञान की बातें कर रहे हो।",
                     "explanation": {
-                      "en": "Krishna points out that grief arises from ignorance about the soul’s nature.",
-                      "hi": "कृष्ण बताते हैं कि शोक आत्मा के स्वभाव के अज्ञान से आता है।"
+                        "en": "Krishna points out that Arjuna’s sorrow arises from ignorance about the eternal nature of the soul.",
+                        "hi": "कृष्ण बताते हैं कि अर्जुन का शोक आत्मा के शाश्वत स्वरूप के अज्ञान से उत्पन्न होता है।"
                     }
-                  },
-                  {
+                    },
+                    {
+                    "verse_ref": "2.20",
+                    "en": "The soul is never born, nor does it ever die. It is eternal, everlasting, and primeval.",
+                    "hi": "आत्मा न कभी जन्म लेती है, न कभी मरती है। वह शाश्वत, अविनाशी और आदि स्वरूप है।",
+                    "explanation": {
+                        "en": "This verse defines the soul’s immortality — removing the basis of Arjuna’s fear.",
+                        "hi": "यह श्लोक आत्मा की अमरता बताता है—जिससे अर्जुन का भय मिटता है।"
+                    }
+                    },
+                    {
                     "verse_ref": "2.47",
-                    "en": "You have the right to work only, but never to its fruit. Let not the fruit be your motive, nor attachment your motive in action.",
-                    "hi": "कर्म करने का अधिकार मात्र है, फल पर अधिकार नहीं है। फल को कर्म का कारण ना बनाओ, न लगाव को।",
+                    "en": "You have the right to perform your duty, but not to the fruits of action.",
+                    "hi": "कर्म करने का अधिकार तुम्हारा है, पर उसके फल पर कभी अधिकार नहीं।",
                     "explanation": {
-                      "en": "Core teaching of karma-yoga: do your duty without attachment to outcomes—this reduces anxiety and keeps focus on right action.",
-                      "hi": "कर्मयोग का मूल: परिणाम के आसक्ति के बिना अपना कर्तव्य करो—यह चिंता घटाता है और सही कर्म पर ध्यान बनाए रखता है।"
+                        "en": "Core teaching of Karma Yoga: focus on effort, not results.",
+                        "hi": "कर्मयोग का मूल सिद्धांत: परिणाम नहीं, प्रयास पर ध्यान।"
                     }
-                  },
-                  {
-                    "verse_ref": "2.54-2.58",
-                    "en": "A person of steady wisdom, who has controlled the senses, attains tranquility and is established in the Self.",
-                    "hi": "संशय रहित जो वाणी-क्रिया और इन्द्रियों को संयम में रखे, शांति को प्राप्त कर आत्मा में स्थित होता है।",
+                    },
+                    {
+                    "verse_ref": "2.54–2.58",
+                    "en": "A person of steady wisdom controls the senses, remains calm, and stays centered even in difficulties.",
+                    "hi": "स्थिरबुद्धि व्यक्ति इन्द्रियों को संयमित रखता है, शांत रहता है और कठिनाइयों में भी केंद्रित रहता है।",
                     "explanation": {
-                      "en": "Krishna explains that sense-control and equanimity stabilize the mind—this is the practical path to inner peace.",
-                      "hi": "कृष्ण कहते हैं कि इन्द्रिय-नियंत्रण और समत्व मन को स्थिर करते हैं—यह आंतरिक शांति का व्यावहारिक मार्ग है।"
+                        "en": "Krishna describes the qualities of a spiritually stable person.",
+                        "hi": "कृष्ण एक आध्यात्मिक, स्थिर व्यक्ति के गुण बताते हैं।"
                     }
-                  }
+                    }
                 ],
                 "main_points": {
-                  "en": [
-                    "Distinguishes the impermanent body from the eternal self (ātman).",
-                    "Introduces karma-yoga: perform duty without attachment to results.",
-                    "Teaches sense-control, steady intellect (buddhi), and equanimity as keys to freedom."
-                  ],
-                  "hi": [
-                    "नश्वर शरीर और शाश्वत आत्मा के बीच भेद बताता है।",
-                    "कर्मयोग: परिणाम की आसक्ति के बिना कर्तव्य का पालन करना।",
-                    "इन्द्रिय-नियंत्रण, स्थिर बुद्धि और समत्व स्वतंत्रता के मुख्य साधन हैं।"
-                  ]
+                    "en": [
+                    "The soul is eternal; the body is temporary.",
+                    "Wise action is performed without attachment to results (Karma Yoga).",
+                    "Equanimity and sense control lead to inner peace.",
+                    "A stable intellect (Buddhi-Yoga) is the base for liberation."
+                    ],
+                    "hi": [
+                    "आत्मा शाश्वत है; शरीर नश्वर है।",
+                    "निष्काम कर्म करना ही कर्मयोग है।",
+                    "समत्व और इन्द्रिय-नियंत्रण से शांति मिलती है।",
+                    "स्थिर बुद्धि (बुद्धियोग) मुक्ति का मार्ग है।"
+                    ]
                 },
                 "practice_tips": {
-                  "en": [
-                    "Practice short daily reflection: after any action note ‘I did my best—outcome is not mine’ to build detached attitude.",
-                    "Use breath-awareness (5–10 min) before work to center and reduce reactivity.",
-                    "When anxious about results, recall 2.47: focus on action, not fruit—this reduces stress and improves clarity."
-                  ],
-                  "hi": [
-                    "किसी भी क्रिया के बाद संक्षेप चिंतन: 'मैंने किया—परिणाम मेरा नहीं' — इससे निष्काम भाव बढ़ता है।",
-                    "काम से पहले 5–10 मिनट श्वास-सचेतना करें ताकि केन्द्र बने और प्रतिक्रियाशीलता घटे।",
-                    "परिणाम की चिंता होने पर 2.47 याद करो: कर्म पर ध्यान, फल पर नहीं—यह तनाव घटाता है।"
-                  ]
+                    "en": [
+                    "Before any important action, take 3 calm breaths and remind yourself: ‘I will act sincerely, without attachment.’",
+                    "If anxious about outcomes, repeat verse 2.47 mentally to steady the mind.",
+                    "Spend 2 minutes daily reflecting on your actions without judging yourself."
+                    ],
+                    "hi": [
+                    "किसी भी महत्वपूर्ण काम से पहले 3 शांत श्वास लें और स्मरण करें: ‘मैं ईमानदारी से कर्म करूँगा, फल की आसक्ति नहीं रखूँगा।’",
+                    "परिणाम की चिंता हो तो 2.47 को मन में दोहराएँ, मन स्थिर होगा।",
+                    "प्रतिदिन 2 मिनट अपने कर्मों का निरीक्षण करें—बिना आलोचना के।"
+                    ]
                 },
-                "image": "https://picsum.photos/seed/gita2/1200/600",
-                "notes": {
-                  "en": "Use Chapter 2 as the app’s 'Foundations' module: show 2.47 as a daily reminder card and include a short 3-step practice: breathe → act → reflect.",
-                  "hi": "अध्याय 2 को ऐप में 'बुनियादी सिद्धांत' मॉड्यूल बनाओ: 2.47 को दैनिक याद दिलाने वाला कार्ड बनाओ और 3-स्टेप अभ्यास जोड़ो: श्वास → कर्म → चिंतन।"
-                }
+                "image": "https://picsum.photos/seed/gita2/1200/600"
             }
         ]
     }
