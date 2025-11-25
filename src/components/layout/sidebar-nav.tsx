@@ -30,6 +30,7 @@ const navItems = [
   { href: '/planner', label: 'My Planner', icon: ListTodo },
   { href: '/challenges', label: 'Challenges', icon: Trophy },
   { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
+  { href: '/yoga-library', label: 'Yoga Library', icon: Wind },
   { href: '/video-tutorials', label: 'Video Tutorials', icon: Video },
   { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
   { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },

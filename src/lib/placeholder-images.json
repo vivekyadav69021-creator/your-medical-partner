@@ -251,6 +251,60 @@
       "description": "AI assistant avatar",
       "imageUrl": "https://images.unsplash.com/photo-1599058882438-58c8b964273f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb2JvdCUyMGF2YXRhcnxlbnwwfHx8fDE3NjQ0NjQzMzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "robot avatar"
+    },
+    {
+      "id": "yoga-tadasana",
+      "description": "Mountain Pose (Tadasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b",
+      "imageHint": "yoga mountain pose"
+    },
+    {
+      "id": "yoga-vrikshasana",
+      "description": "Tree Pose (Vrikshasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1591291621239-41f1855c43a7",
+      "imageHint": "yoga tree pose"
+    },
+    {
+      "id": "yoga-adhomukha",
+      "description": "Downward-Facing Dog (Adho Mukha Svanasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b",
+      "imageHint": "yoga downward dog"
+    },
+    {
+      "id": "yoga-trikonasana",
+      "description": "Triangle Pose (Trikonasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0",
+      "imageHint": "yoga triangle pose"
+    },
+    {
+      "id": "yoga-virabhadrasana1",
+      "description": "Warrior I (Virabhadrasana I)",
+      "imageUrl": "https://images.unsplash.com/photo-1593811167563-a2a8a8163f53",
+      "imageHint": "yoga warrior one"
+    },
+    {
+      "id": "yoga-virabhadrasana2",
+      "description": "Warrior II (Virabhadrasana II)",
+      "imageUrl": "https://images.unsplash.com/photo-1591291621239-41f1855c43a7",
+      "imageHint": "yoga warrior two"
+    },
+    {
+      "id": "yoga-bhujangasana",
+      "description": "Cobra Pose (Bhujangasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b",
+      "imageHint": "yoga cobra pose"
+    },
+    {
+      "id": "yoga-balasana",
+      "description": "Child's Pose (Balasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1591291621239-41f1855c43a7",
+      "imageHint": "yoga childs pose"
+    },
+    {
+      "id": "yoga-savasana",
+      "description": "Corpse Pose (Savasana)",
+      "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b",
+      "imageHint": "yoga savasana"
     }
   ]
 }
