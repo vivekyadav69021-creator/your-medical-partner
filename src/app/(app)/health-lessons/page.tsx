@@ -69,9 +69,11 @@ export default function HealthLessonsPage() {
   };
 
   const handleAnswerSelect = (questionIndex: number, optionIndex: number) => {
-    const newAnswers = [...userAnswers];
-    newAnswers[questionIndex] = optionIndex;
-    setUserAnswers(newAnswers);
+    setUserAnswers(prevAnswers => {
+      const newAnswers = [...prevAnswers];
+      newAnswers[questionIndex] = optionIndex;
+      return newAnswers;
+    });
   };
 
   const submitQuiz = async () => {
