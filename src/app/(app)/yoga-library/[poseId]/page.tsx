@@ -51,9 +51,10 @@ const BenefitsSection = ({ title, items }: { title: string, items: string[] }) =
 
 export default function YogaPoseDetailPage({ params }: { params: { poseId: string } }) {
   const searchParams = useSearchParams();
+  const { poseId } = params;
   const lang = searchParams.get('lang') === 'hi' ? 'hi' : 'en';
   
-  const pose = yogaLibrary.find(p => p.id === params.poseId);
+  const pose = yogaLibrary.find(p => p.id === poseId);
 
   if (!pose) {
     notFound();
