@@ -18,6 +18,7 @@ import {
   ListTodo,
   Trophy,
   Scan,
+  Wind,
 } from 'lucide-react';
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/planner', label: 'My Planner', icon: ListTodo },
   { href: '/challenges', label: 'Challenges', icon: Trophy },
   { href: '/health-score', label: 'AI Health Planner', icon: HeartPulse },
+  { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
   { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
   { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
   { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
