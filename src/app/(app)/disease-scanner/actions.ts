@@ -13,14 +13,10 @@ export async function diseaseScannerAction(
   prevState: any,
   formData: FormData
 ) {
-
-  const descriptionValue = formData.get('description');
-  const languageValue = formData.get('language');
-
   const validatedFields = diseaseScannerSchema.safeParse({
-    description: descriptionValue || 'Analyze the attached image.',
+    description: formData.get('description') || 'Analyze the attached image.',
     photoDataUri: formData.get('photoDataUri') || undefined,
-    language: languageValue || 'en',
+    language: formData.get('language') || 'en',
   });
 
   if (!validatedFields.success) {

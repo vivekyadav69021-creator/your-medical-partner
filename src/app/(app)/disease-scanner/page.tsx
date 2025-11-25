@@ -276,6 +276,7 @@ export default function DiseaseScannerPage() {
   const handleFormAction = (formData: FormData) => {
     if (preview) {
       formData.append('photoDataUri', preview);
+      formData.append('language', language);
     } else {
         toast({ variant: 'destructive', title: t.scanFailed, description: t.errorNoImage });
         return;
@@ -307,7 +308,6 @@ export default function DiseaseScannerPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <form ref={formRef} action={handleFormAction}>
-             <input type="hidden" name="language" value={language} />
             <CardHeader>
               <CardTitle>{t.scanTitle}</CardTitle>
               <CardDescription>{t.scanDescription}</CardDescription>
