@@ -17,17 +17,23 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { videoTutorialsData, VideoTutorial, VideoCategory } from '@/lib/video-data';
+import { videoTutorialsData, VideoTutorial } from '@/lib/video-data';
 import { PlayCircle, Video, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function getYouTubeThumbnail(url: string) {
-    const videoId = url.split('embed/')[1];
-    if (videoId) {
-        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    try {
+        const urlObject = new URL(url);
+        const videoId = urlObject.pathname.split('embed/')[1];
+        if (videoId) {
+            return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }
+        return '';
+    } catch (e) {
+        console.error('Invalid YouTube URL for thumbnail:', url);
+        return '';
     }
-    return ''; // Fallback for invalid URLs
 }
 
 
