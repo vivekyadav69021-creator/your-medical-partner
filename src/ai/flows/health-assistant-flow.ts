@@ -16,6 +16,7 @@ const HealthAssistantInputSchema = z.object({
   photoDataUri: z.string().optional().describe(
       "An optional photo of a health concern (e.g., rash, pill), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+   language: z.enum(['en', 'hi']).optional().default('en').describe("The language for the response, 'en' for English, 'hi' for Hindi."),
 });
 export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 
@@ -39,6 +40,8 @@ const prompt = ai.definePrompt({
   input: {schema: HealthAssistantInputSchema},
   output: {schema: HealthAssistantOutputSchema},
   prompt: `You are a sophisticated AI Health Assistant. Your role is to provide detailed, structured, and helpful information in response to user queries about health, diseases, and medicines.
+
+  **IMPORTANT: You must respond in the language specified by the 'language' parameter. If language is 'hi', respond entirely in Hindi. Otherwise, respond in English.**
 
   Your response MUST follow this 12-point structure exactly, using Markdown for formatting. Use relevant emojis to make the content engaging.
 
@@ -93,8 +96,9 @@ const prompt = ai.definePrompt({
   - Examples: "Show me nearby doctors", "Translate to Hindi", "What are the risk factors?"
 
   **12. Disclaimer**
-  - You MUST include this exact mandatory disclaimer at the end of every response:
-  "🩺 **Disclaimer:** This information is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or another qualified health provider with any questions you may have regarding a medical condition."
+  - You MUST include the mandatory disclaimer at the end of every response, in the same language as the rest of your response.
+  - English: "🩺 **Disclaimer:** This information is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or another qualified health provider with any questions you may have regarding a medical condition."
+  - Hindi: "🩺 **अस्वीकरण:** यह जानकारी केवल शैक्षिक उद्देश्यों के लिए है और यह पेशेवर चिकित्सा सलाह, निदान या उपचार का विकल्प नहीं है। किसी भी चिकित्सीय स्थिति के संबंध में आपके किसी भी प्रश्न के लिए हमेशा अपने चिकित्सक या किसी अन्य योग्य स्वास्थ्य प्रदाता की सलाह लें।"
   `,
 });
 

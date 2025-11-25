@@ -6,6 +6,7 @@ import { z } from 'zod';
 const diseaseScannerSchema = z.object({
   description: z.string().optional(),
   photoDataUri: z.string().optional(),
+  language: z.enum(['en', 'hi']).optional().default('en'),
 });
 
 export async function diseaseScannerAction(
@@ -18,6 +19,7 @@ export async function diseaseScannerAction(
   const validatedFields = diseaseScannerSchema.safeParse({
     description: descriptionValue || 'Analyze the attached image.',
     photoDataUri: formData.get('photoDataUri') || undefined,
+    language: formData.get('language') || 'en',
   });
 
   if (!validatedFields.success) {
@@ -42,7 +44,8 @@ export async function diseaseScannerAction(
   try {
     const result = await healthAssistant({
         query: query,
-        photoDataUri: validatedFields.data.photoDataUri
+        photoDataUri: validatedFields.data.photoDataUri,
+        language: validatedFields.data.language,
     });
     return {
       response: result.response,
