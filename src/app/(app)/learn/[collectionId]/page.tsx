@@ -63,12 +63,12 @@ export default function LearnPage() {
             title: chapterTitle,
         });
         toast({
-            title: 'Chapter Marked as Complete!',
-            description: `You've completed "${chapterTitle}".`,
+            title: lang === 'en' ? 'Chapter Marked as Complete!' : 'अध्याय पूर्ण के रूप में चिह्नित!',
+            description: `${lang === 'en' ? "You've completed" : "आपने पूरा कर लिया है"} "${chapterTitle}".`,
         });
     } catch (error) {
         console.error("Error marking as complete:", error);
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your progress.'});
+        toast({ variant: 'destructive', title: lang === 'en' ? 'Save Failed' : 'सहेजें विफल', description: lang === 'en' ? 'Could not save your progress.' : 'आपकी प्रगति सहेजी नहीं जा सकी।'});
     }
   }
 
@@ -93,7 +93,7 @@ export default function LearnPage() {
         {/* Key Sutras */}
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><Star className="text-yellow-500" /> Key Sutras</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2"><Star className="text-yellow-500" /> {lang === 'en' ? 'Key Sutras' : 'प्रमुख सूत्र'}</CardTitle>
             </CardHeader>
             <CardContent>
                  <Accordion type="single" collapsible className="w-full">
@@ -115,7 +115,7 @@ export default function LearnPage() {
         {/* Main Points */}
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><BookOpen /> Main Points</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2"><BookOpen /> {lang === 'en' ? 'Main Points' : 'मुख्य बिंदु'}</CardTitle>
             </CardHeader>
             <CardContent>
                 <ul className="list-disc space-y-2 pl-5">
@@ -129,7 +129,7 @@ export default function LearnPage() {
         {/* Practice Tips */}
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><Brain /> Practice Tips</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2"><Brain /> {lang === 'en' ? 'Practice Tips' : 'अभ्यास के लिए सुझाव'}</CardTitle>
             </CardHeader>
             <CardContent>
                 <ul className="list-disc space-y-2 pl-5">
@@ -143,7 +143,7 @@ export default function LearnPage() {
         <div className="mt-4 pt-4 border-t">
             <Button onClick={() => handleMarkComplete(chapter.id, lang === 'en' ? chapter.title.en : chapter.title.hi)}>
                 <CheckCircle className="mr-2 h-4 w-4"/>
-                Mark as Complete
+                {lang === 'en' ? 'Mark as Complete' : 'पूर्ण के रूप में चिह्नित करें'}
             </Button>
         </div>
       </CardContent>
@@ -155,7 +155,7 @@ export default function LearnPage() {
         <Button variant="ghost" asChild>
             <Link href="/meditation-hub">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Meditation Hub
+                {lang === 'en' ? 'Back to Meditation Hub' : 'ध्यान हब पर वापस जाएं'}
             </Link>
         </Button>
 
@@ -175,4 +175,3 @@ export default function LearnPage() {
     </div>
   );
 }
-
