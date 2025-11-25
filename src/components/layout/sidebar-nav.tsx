@@ -29,7 +29,6 @@ const navItems = [
   { href: '/store', label: 'Medical Store', icon: Store },
   { href: '/planner', label: 'My Planner', icon: ListTodo },
   { href: '/challenges', label: 'Challenges', icon: Trophy },
-  { href: '/health-score', label: 'AI Health Planner', icon: HeartPulse },
   { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
   { href: '/video-tutorials', label: 'Video Tutorials', icon: Video },
   { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
