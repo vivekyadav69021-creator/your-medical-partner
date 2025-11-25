@@ -20,6 +20,7 @@ import {
   Scan,
   Wind,
   Video,
+  GraduationCap,
 } from 'lucide-react';
 
 const navItems = [
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/health-score', label: 'AI Health Planner', icon: HeartPulse },
   { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
   { href: '/video-tutorials', label: 'Video Tutorials', icon: Video },
+  { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
   { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
   { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
   { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
