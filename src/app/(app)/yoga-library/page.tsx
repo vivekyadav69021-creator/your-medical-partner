@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   Card,
@@ -13,44 +12,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Search, Wind } from 'lucide-react';
 import { yogaLibrary, YogaPose } from '@/lib/yoga-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 const YogaCard = ({ pose, lang }: { pose: YogaPose, lang: 'en' | 'hi' }) => {
-  const image = PlaceHolderImages.find(img => img.id === pose.imageId);
   const name = lang === 'en' ? pose.name.en : pose.name.hi;
   const description = lang === 'en' ? pose.description.en : pose.description.hi;
 
   return (
     <Link href={`/yoga-library/${pose.id}?lang=${lang}`}>
       <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col">
-        <CardHeader className="p-0">
-          {image ? (
-            <Image
-              src={image.imageUrl}
-              alt={image.description}
-              width={400}
-              height={300}
-              className="rounded-t-lg aspect-[4/3] object-cover"
-              data-ai-hint={image.imageHint}
-            />
-          ) : (
-             <div className="rounded-t-lg aspect-[4/3] object-cover bg-secondary flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">No Image</p>
-             </div>
-          )}
+        <CardHeader>
+           <p className="text-xs font-semibold uppercase text-primary">{pose.category}</p>
+          <CardTitle className="text-lg font-semibold line-clamp-2">{name}</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 flex-1 flex flex-col">
-          <p className="text-xs font-semibold uppercase text-primary">{pose.category}</p>
-          <CardTitle className="text-lg font-semibold line-clamp-2 mt-1">{name}</CardTitle>
+        <CardContent className="flex-1 flex flex-col">
           <CardDescription className="text-sm mt-1 line-clamp-3">
             {description}
           </CardDescription>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useSearchParams, notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   Card,
@@ -12,12 +11,11 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, CheckCircle, Info } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { yogaLibrary } from '@/lib/yoga-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
 
-const InfoSection = ({ title, items, lang }: { title: string, items: string[], lang: 'en' | 'hi' }) => (
+const InfoSection = ({ title, items }: { title: string, items: string[] }) => (
     <Card>
         <CardHeader>
             <CardTitle className="text-lg">{title}</CardTitle>
@@ -66,8 +64,6 @@ export default function YogaPoseDetailPage({ params }: { params: { poseId: strin
   const instructions = lang === 'en' ? pose.instructions.en : pose.instructions.hi;
   const benefits = lang === 'en' ? pose.benefits.en : pose.benefits.hi;
 
-  const image = PlaceHolderImages.find(img => img.id === pose.imageId);
-
   return (
     <div className="space-y-8">
       <div>
@@ -78,22 +74,6 @@ export default function YogaPoseDetailPage({ params }: { params: { poseId: strin
           </Link>
         </Button>
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          <div>
-            {image && (
-              <Card>
-                <CardContent className="p-0">
-                  <Image
-                    src={image.imageUrl}
-                    alt={image.description}
-                    width={600}
-                    height={600}
-                    className="rounded-lg object-cover w-full aspect-square"
-                    data-ai-hint={image.imageHint}
-                  />
-                </CardContent>
-              </Card>
-            )}
-          </div>
           <div className="space-y-6">
             <div>
               <Badge>{pose.category}</Badge>
@@ -109,8 +89,7 @@ export default function YogaPoseDetailPage({ params }: { params: { poseId: strin
       <div className="grid md:grid-cols-2 gap-8">
         <InfoSection 
             title={lang === 'en' ? 'Instructions' : 'निर्देश'} 
-            items={instructions} 
-            lang={lang}
+            items={instructions}
         />
          <BenefitsSection 
             title={lang === 'en' ? 'Benefits' : 'लाभ'} 
