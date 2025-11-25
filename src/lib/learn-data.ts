@@ -425,13 +425,80 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "Spend 2 minutes daily reflecting on your actions without judging yourself."
                     ],
                     "hi": [
-                    "किसी भी महत्वपूर्ण काम से पहले 3 शांत श्वास लें और स्मरण करें: ‘मैं ईमानदारी से कर्म करूँगा, फल की आसक्ति नहीं रखूँगा।’",
+                    "किसी भी महत्वपूर्ण काम से पहले 3 शांत श्वास लें और स्मरण करें: ‘मैं यह ईमानदारी से करूँगा, फल की आसक्ति नहीं रखूँगा।’",
                     "परिणाम की चिंता हो तो 2.47 को मन में दोहराएँ, मन स्थिर होगा।",
                     "प्रतिदिन 2 मिनट अपने कर्मों का निरीक्षण करें—बिना आलोचना के।"
                     ]
                 },
                 "image": "https://picsum.photos/seed/gita2/1200/600"
-            }
+            },
+            {
+                "id": "gita_ch_3",
+                "title": {
+                  "en": "Chapter 3 — Karma Yoga (The Yoga of Selfless Action)",
+                  "hi": "अध्याय 3 — कर्मयोग (निष्काम कर्म का मार्ग)"
+                },
+                "summary": {
+                  "en": "Krishna explains that one cannot avoid action. Even avoiding action becomes an action. Therefore, it is better to perform one's duty without attachment. This is Karma Yoga — acting selflessly for the welfare of the world while keeping the mind free from desire for results.",
+                  "hi": "कृष्ण समझाते हैं कि कोई भी कर्म से बच नहीं सकता। कर्म न करना भी एक कर्म है। इसलिए बेहतर है कि मनुष्य अपने कर्तव्य को बिना किसी आसक्ति के पूरा करे। यही कर्मयोग है—निष्काम भाव से, लोककल्याण के लिए कर्म करना।"
+                },
+                "key_verses": [
+                  {
+                    "verse_ref": "3.5",
+                    "en": "No one can remain without action even for a moment; everyone is driven to act by nature.",
+                    "hi": "कोई भी एक क्षण भी बिना कर्म के नहीं रह सकता; प्रकृति सभी को कर्म करने के लिए प्रेरित करती है।",
+                    "explanation": {
+                      "en": "Action is natural and unavoidable. The question is how to act wisely.",
+                      "hi": "कर्म स्वाभाविक और अनिवार्य है। प्रश्न यह है कि बुद्धिमानी से कैसे कर्म करें।"
+                    }
+                  },
+                  {
+                    "verse_ref": "3.19",
+                    "en": "Therefore, perform your duty without attachment, for by working without desire, one attains the supreme.",
+                    "hi": "इसलिए आसक्ति त्यागकर अपना कर्तव्य करो, क्योंकि निष्काम कर्म से मनुष्य परम पद को प्राप्त करता है।",
+                    "explanation": {
+                      "en": "Detached action purifies the mind and leads toward freedom.",
+                      "hi": "निष्काम कर्म मन को शुद्ध करता है और मुक्ति की ओर ले जाता है।"
+                    }
+                  },
+                  {
+                    "verse_ref": "3.30",
+                    "en": "Offer all your actions to Me, free from ego and anxiety, and fight without inner conflict.",
+                    "hi": "सभी कर्म मुझे अर्पण करो, अहंकार और चिंता से मुक्त होकर, और बिना मानसिक संघर्ष के कर्म करो।",
+                    "explanation": {
+                      "en": "Selfless offering reduces ego and mental tension.",
+                      "hi": "कर्मार्पण अहंकार तथा तनाव को कम करता है।"
+                    }
+                  }
+                ],
+                "main_points": {
+                  "en": [
+                    "Action is unavoidable — one must act.",
+                    "Selfless action without desire purifies the mind.",
+                    "Ego-less work is more important than renouncing work.",
+                    "Leaders must act responsibly because others follow them."
+                  ],
+                  "hi": [
+                    "कर्म अनिवार्य है — मनुष्य को कर्म करना ही होगा।",
+                    "निष्काम भाव से कर्म करने से मन शुद्ध होता है।",
+                    "कर्म का त्याग नहीं बल्कि अहंकार का त्याग महत्वपूर्ण है।",
+                    "श्रेष्ठ लोग जैसे कर्म करते हैं, समाज भी वैसा ही अनुसरण करता है।"
+                  ]
+                },
+                "practice_tips": {
+                  "en": [
+                    "Before any task, say mentally: ‘I will do this sincerely, without attachment.’",
+                    "Do daily duties as service, not burden.",
+                    "Ask: ‘Is this action helping me grow or helping others?’"
+                  ],
+                  "hi": [
+                    "किसी भी काम से पहले मन में कहें: ‘मैं यह ईमानदारी से करूँगा, फल की आसक्ति नहीं रखूँगा।’",
+                    "दैनिक कार्यों को बोझ नहीं, सेवा समझकर करें।",
+                    "पूछें: ‘क्या यह कर्म मुझे या समाज को बेहतर बना रहा है?’"
+                  ]
+                },
+                "image": "https://picsum.photos/seed/gita3/1200/600"
+              }
         ]
     }
 ];
