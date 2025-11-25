@@ -185,9 +185,8 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                   ]
                 },
                 "image": "https://picsum.photos/seed/patanjali2/1200/600"
-              },
-        
-              {
+            },
+            {
                 "id": "vibhuti_pada",
                 "title": { "en": "Vibhuti Pada", "hi": "विभूति पाद" },
                 "summary": {
@@ -239,9 +238,8 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                   ]
                 },
                 "image": "https://picsum.photos/seed/patanjali3/1200/600"
-              },
-        
-              {
+            },
+            {
                 "id": "kaivalya_pada",
                 "title": { "en": "Kaivalya Pada", "hi": "कैवल्य पाद" },
                 "summary": {
@@ -293,7 +291,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                   ]
                 },
                 "image": "https://picsum.photos/seed/patanjali4/1200/600"
-              }
+            }
         ]
     },
     {
@@ -303,7 +301,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
         chapters: [
             {
                 "id": "gita_ch_1",
-                "title": { "en": "Chapter 1 — Arjuna Vishāda Yoga", "hi": "अध्याय 1 — अर्जुन विषाद योग" },
+                "title": { "en": "Chapter 1 — Arjuna Vishāda Yoga (The Yoga of Arjuna's Dejection)", "hi": "अध्याय 1 — अर्जुन विषाद योग (अर्जुन का विषाद)" },
                 "summary": {
                   "en": "Chapter 1 sets the scene on the battlefield of Kurukshetra. Arjuna, the warrior, sees relatives and teachers on both sides and is overcome with sorrow and moral confusion about fighting. He feels powerless and questions duty (dharma), leading to inner crisis—this sets the need for spiritual teaching.",
                   "hi": "पहला अध्याय कुरुक्षेत्र के रणभूमि का दृश्य पेश करता है। अर्जुन अपने परिजनों और गुरुओं को दोनों पक्षों में देखकर व्याकुल हो जाता है। उसे युद्ध करने में नैतिक संदेह होता है और वह कर्तव्य (धर्म) के बारे में भ्रमित हो उठता है—यही स्थिति आगे के उपदेश की आवश्यकता दिखाती है।"
@@ -360,7 +358,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
             },
             {
                 "id": "gita_ch_2",
-                "title": { "en": "Chapter 2 — Sankhya Yoga", "hi": "अध्याय 2 — सांख्ययोग" },
+                "title": { "en": "Chapter 2 — Sankhya Yoga (Transcendental Knowledge)", "hi": "अध्याय 2 — सांख्ययोग (परम ज्ञान)" },
                 "summary": {
                   "en": "Chapter 2 is Krishna’s first major reply. He teaches the immortality of the soul (ātman), the impermanence of the body, and introduces key teachings: equanimity, detached action (karma-yoga), and wise discrimination (buddhi). Famous verses include teachings on duty without attachment (2.47) and the steady mind (2.54–2.58).",
                   "hi": "दूसरा अध्याय कृष्ण का पहला मुख्य उत्तर है। वह आत्मा के अमरत्व, शरीर की नश्वरता और मुख्य शिक्षाएँ—समत्व, निष्काम कर्म (कर्मयोग), और बुद्धि/विवेक का परिचय देते हैं। प्रसिद्ध श्लोकों में निष्काम कर्म (2.47) और स्थिर मन (2.54–2.58) शामिल हैं।"
@@ -368,8 +366,8 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                 "key_verses": [
                   {
                     "verse_ref": "2.11",
-                    "en": "The Blessed Lord said: You grieve for those that should not be grieved for, and yet you speak words of wisdom. The wise grieve neither for the living nor for the dead.",
-                    "hi": "श्री भगवानुवाच: तुम उनके लिए शोक करते हो जिनके लिए शोक नहीं करना चाहिए, और फिर भी ज्ञान की बातें करते हो। बुद्धिमान लोग न तो जीवितों के लिए शोक करते हैं और न ही मृतकों के लिए।",
+                    "en": "Krishna: You grieve for those that should not be grieved for, and yet speak words of wisdom—reason, Arjuna.",
+                    "hi": "कृष्ण: तुम उन लोगों के लिए शोक कर रहे हो जिनके लिए शोक नहीं करना चाहिए—विचार करो अर्जुन।",
                     "explanation": {
                       "en": "Krishna points out that grief arises from ignorance about the soul’s nature.",
                       "hi": "कृष्ण बताते हैं कि शोक आत्मा के स्वभाव के अज्ञान से आता है।"
@@ -377,11 +375,20 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                   },
                   {
                     "verse_ref": "2.47",
-                    "en": "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. Never consider yourself to be the cause of the results of your activities, and never be attached to not doing your duty.",
-                    "hi": "तुम्हें अपने निर्धारित कर्तव्यों का पालन करने का अधिकार है, लेकिन तुम अपने कर्मों के फलों के हकदार नहीं हो। कभी भी अपने आप को अपनी गतिविधियों के परिणामों का कारण न समझें, और कभी भी अपना कर्तव्य न करने में आसक्त न हों।",
+                    "en": "You have the right to work only, but never to its fruit. Let not the fruit be your motive, nor attachment your motive in action.",
+                    "hi": "कर्म करने का अधिकार मात्र है, फल पर अधिकार नहीं है। फल को कर्म का कारण ना बनाओ, न लगाव को।",
                     "explanation": {
                       "en": "Core teaching of karma-yoga: do your duty without attachment to outcomes—this reduces anxiety and keeps focus on right action.",
                       "hi": "कर्मयोग का मूल: परिणाम के आसक्ति के बिना अपना कर्तव्य करो—यह चिंता घटाता है और सही कर्म पर ध्यान बनाए रखता है।"
+                    }
+                  },
+                  {
+                    "verse_ref": "2.54-2.58",
+                    "en": "A person of steady wisdom, who has controlled the senses, attains tranquility and is established in the Self.",
+                    "hi": "संशय रहित जो वाणी-क्रिया और इन्द्रियों को संयम में रखे, शांति को प्राप्त कर आत्मा में स्थित होता है।",
+                    "explanation": {
+                      "en": "Krishna explains that sense-control and equanimity stabilize the mind—this is the practical path to inner peace.",
+                      "hi": "कृष्ण कहते हैं कि इन्द्रिय-नियंत्रण और समत्व मन को स्थिर करते हैं—यह आंतरिक शांति का व्यावहारिक मार्ग है।"
                     }
                   }
                 ],
