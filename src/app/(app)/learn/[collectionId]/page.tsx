@@ -3,11 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { learnCollectionsData, LearnCollectionItem, Chapter } from '@/lib/learn-data';
+import { learnCollectionsData, LearnCollectionItem, Chapter, Sutra, Verse } from '@/lib/learn-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star, Languages } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star, Languages, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -18,18 +18,23 @@ import {
 import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LearnPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { collectionId } = params;
   const router = useRouter();
+  
+  const collectionId = Array.isArray(params.collectionId) ? params.collectionId[0] : params.collectionId;
+  const chapterId = searchParams.get('chapter');
   
   const firestore = useFirestore();
   const { user } = useUser();
 
   const [collection, setCollection] = useState<LearnCollectionItem | null>(null);
+  const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
   const [lang, setLang] = useState<'en' | 'hi'>('en');
 
   useEffect(() => {
@@ -45,15 +50,25 @@ export default function LearnPage() {
     const foundCollection = learnCollectionsData.find(c => c.id === collectionId);
     if (foundCollection) {
       setCollection(foundCollection);
+      if (chapterId) {
+        const foundChapter = foundCollection.chapters.find(ch => ch.id === chapterId);
+        setActiveChapter(foundChapter || null);
+      } else {
+        // If no chapterId is specified, default to the first chapter in the collection
+        setActiveChapter(foundCollection.chapters[0] || null);
+      }
     } else {
         router.push('/meditation-hub');
     }
-  }, [collectionId, router]);
+  }, [collectionId, chapterId, router]);
   
   const toggleLanguage = () => {
     const newLang = lang === 'en' ? 'hi' : 'en';
     setLang(newLang);
-    router.push(`/learn/${collectionId}?lang=${newLang}`, { scroll: false });
+    const newUrl = chapterId 
+        ? `/learn/${collectionId}?chapter=${chapterId}&lang=${newLang}`
+        : `/learn/${collectionId}?lang=${newLang}`;
+    router.push(newUrl, { scroll: false });
   };
 
   const handleMarkComplete = async (chapterId: string, chapterTitle: string) => {
@@ -66,6 +81,7 @@ export default function LearnPage() {
         await setDoc(progressRef, {
             completedAt: serverTimestamp(),
             chapterId: chapterId,
+            collectionId: collection?.id,
             title: chapterTitle,
         });
         toast({
@@ -78,7 +94,7 @@ export default function LearnPage() {
     }
   }
 
-  if (!collection) {
+  if (!collection || !activeChapter) {
     return (
       <div className="text-center">
         <h1 className="text-2xl font-bold">Content not found</h1>
@@ -89,72 +105,37 @@ export default function LearnPage() {
     );
   }
 
-  const ChapterCard = ({ chapter }: { chapter: Chapter }) => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{lang === 'en' ? chapter.title.en : chapter.title.hi}</CardTitle>
-        <CardDescription>{lang === 'en' ? chapter.summary.en : chapter.summary.hi}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Key Sutras */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><Star className="text-yellow-500" /> {lang === 'en' ? 'Key Sutras' : 'प्रमुख सूत्र'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                 <Accordion type="single" collapsible className="w-full">
-                    {chapter.key_sutras.map(sutra => (
-                        <AccordionItem value={sutra.sutra} key={sutra.sutra}>
+  const renderKeyItems = (items: Sutra[] | Verse[] | undefined, type: 'sutra' | 'verse') => {
+    if (!items || items.length === 0) return null;
+    return (
+      <Card>
+        <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+                <Star className="text-yellow-500" /> 
+                {type === 'sutra' ? (lang === 'en' ? 'Key Sutras' : 'प्रमुख सूत्र') : (lang === 'en' ? 'Key Verses' : 'प्रमुख श्लोक')}
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+             <Accordion type="single" collapsible className="w-full">
+                {items.map((item, index) => {
+                    const ref = type === 'sutra' ? (item as Sutra).sutra : (item as Verse).verse_ref;
+                    return (
+                        <AccordionItem value={ref} key={index}>
                             <AccordionTrigger className="text-left">
-                                {lang === 'en' ? sutra.en : sutra.hi}
+                                {lang === 'en' ? item.en : item.hi}
                             </AccordionTrigger>
                             <AccordionContent className="space-y-2">
-                                <p className="font-mono text-sm text-muted-foreground">{sutra.sutra}</p>
-                                <p className="italic">"{lang === 'en' ? sutra.explanation.en : sutra.explanation.hi}"</p>
+                                <p className="font-mono text-sm text-muted-foreground">{ref}</p>
+                                <p className="italic">"{lang === 'en' ? item.explanation.en : item.explanation.hi}"</p>
                             </AccordionContent>
                         </AccordionItem>
-                    ))}
-                </Accordion>
-            </CardContent>
-        </Card>
-
-        {/* Main Points */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><BookOpen /> {lang === 'en' ? 'Main Points' : 'मुख्य बिंदु'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ul className="list-disc space-y-2 pl-5">
-                    {(lang === 'en' ? chapter.main_points.en : chapter.main_points.hi).map((point, i) => (
-                        <li key={i}>{point}</li>
-                    ))}
-                </ul>
-            </CardContent>
-        </Card>
-
-        {/* Practice Tips */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><Brain /> {lang === 'en' ? 'Practice Tips' : 'अभ्यास के लिए सुझाव'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ul className="list-disc space-y-2 pl-5">
-                    {(lang === 'en' ? chapter.practice_tips.en : chapter.practice_tips.hi).map((tip, i) => (
-                        <li key={i}>{tip}</li>
-                    ))}
-                </ul>
-            </CardContent>
-        </Card>
-        
-        <div className="mt-4 pt-4 border-t">
-            <Button onClick={() => handleMarkComplete(chapter.id, lang === 'en' ? chapter.title.en : chapter.title.hi)}>
-                <CheckCircle className="mr-2 h-4 w-4"/>
-                {lang === 'en' ? 'Mark as Complete' : 'पूर्ण के रूप में चिह्नित करें'}
-            </Button>
-        </div>
-      </CardContent>
+                    )
+                })}
+            </Accordion>
+        </CardContent>
     </Card>
-  );
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -171,19 +152,70 @@ export default function LearnPage() {
             </Button>
         </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <Image 
+            src={activeChapter.image} 
+            alt={lang === 'en' ? activeChapter.title.en : activeChapter.title.hi}
+            width={1200}
+            height={400}
+            className="w-full h-48 object-cover"
+            data-ai-hint="meditation spiritual"
+        />
         <CardHeader>
-          <CardTitle className="text-3xl flex items-center gap-3"><BookOpen /> {collection.title}</CardTitle>
-          <CardDescription>{collection.summary}</CardDescription>
+          <CardTitle className="text-3xl flex items-center gap-3"><BookOpen /> {lang === 'en' ? activeChapter.title.en : activeChapter.title.hi}</CardTitle>
+          <CardDescription>{lang === 'en' ? activeChapter.summary.en : activeChapter.summary.hi}</CardDescription>
         </CardHeader>
       </Card>
       
       <div className="space-y-4">
-        {collection.chapters.map(chapter => (
-          <ChapterCard key={chapter.id} chapter={chapter} />
-        ))}
-      </div>
+        {renderKeyItems(activeChapter.key_sutras, 'sutra')}
+        {renderKeyItems(activeChapter.key_verses, 'verse')}
 
+        {/* Main Points */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><Sparkles className="text-primary"/> {lang === 'en' ? 'Main Points' : 'मुख्य बिंदु'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ul className="list-disc space-y-2 pl-5">
+                    {(lang === 'en' ? activeChapter.main_points.en : activeChapter.main_points.hi).map((point, i) => (
+                        <li key={i}>{point}</li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+
+        {/* Practice Tips */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><Brain className="text-primary"/> {lang === 'en' ? 'Practice Tips' : 'अभ्यास के लिए सुझाव'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ul className="list-disc space-y-2 pl-5">
+                    {(lang === 'en' ? activeChapter.practice_tips.en : activeChapter.practice_tips.hi).map((tip, i) => (
+                        <li key={i}>{tip}</li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+
+        {activeChapter.notes && (
+            <Alert>
+                <MessageCircle className="h-4 w-4" />
+                <AlertTitle>{lang === 'en' ? 'Note' : 'टिप्पणी'}</AlertTitle>
+                <AlertDescription>
+                    {lang === 'en' ? activeChapter.notes.en : activeChapter.notes.hi}
+                </AlertDescription>
+            </Alert>
+        )}
+        
+        <div className="mt-4 pt-4 border-t">
+            <Button onClick={() => handleMarkComplete(activeChapter.id, lang === 'en' ? activeChapter.title.en : activeChapter.title.hi)}>
+                <CheckCircle className="mr-2 h-4 w-4"/>
+                {lang === 'en' ? 'Mark as Complete' : 'पूर्ण के रूप में चिह्नित करें'}
+            </Button>
+        </div>
+      </div>
     </div>
   );
 }

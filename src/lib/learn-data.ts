@@ -9,6 +9,16 @@ export type Sutra = {
     };
 };
 
+export type Verse = {
+    verse_ref: string;
+    en: string;
+    hi: string;
+    explanation: {
+        en: string;
+        hi: string;
+    };
+};
+
 export type Chapter = {
     id: string;
     title: {
@@ -19,7 +29,8 @@ export type Chapter = {
         en: string;
         hi: string;
     };
-    key_sutras: Sutra[];
+    key_sutras?: Sutra[];
+    key_verses?: Verse[];
     main_points: {
         en: string[];
         hi: string[];
@@ -30,6 +41,10 @@ export type Chapter = {
     };
     image: string;
     full_text?: string;
+    notes?: {
+        en: string;
+        hi: string;
+    };
 };
 
 
@@ -107,7 +122,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "आंतरिक विचारों को विचार समझ कर उससे अलग रहें।"
                   ]
                 },
-                "image": "/mnt/data/A_colorful_informational_poster_with_a_yellow_circ.png"
+                "image": "https://picsum.photos/seed/patanjali1/1200/600"
             },
             {
                 "id": "sadhana_pada",
@@ -169,7 +184,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "ध्यान से पहले नाड़ी-शोधन जैसे प्राणायाम से तंत्रिका तंत्र संतुलित करें।"
                   ]
                 },
-                "image": "/mnt/data/A_colorful_informational_poster_with_a_yellow_circ.png"
+                "image": "https://picsum.photos/seed/patanjali2/1200/600"
               },
         
               {
@@ -223,7 +238,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "असामान्य अनुभव होने पर योग्य गुरु से मार्गदर्शन लें।"
                   ]
                 },
-                "image": "/mnt/data/A_colorful_informational_poster_with_a_yellow_circ.png"
+                "image": "https://picsum.photos/seed/patanjali3/1200/600"
               },
         
               {
@@ -277,7 +292,7 @@ export const learnCollectionsData: LearnCollectionItem[] = [
                     "परिवर्तन की क्रमिकता अपनाएँ और धैर्य रखें।"
                   ]
                 },
-                "image": "/mnt/data/A_colorful_informational_poster_with_a_yellow_circ.png"
+                "image": "https://picsum.photos/seed/patanjali4/1200/600"
               }
         ]
     },
@@ -285,6 +300,121 @@ export const learnCollectionsData: LearnCollectionItem[] = [
         id: 'gita_overview',
         title: 'Bhagavad Gita',
         summary: 'The Bhagavad Gita emphasizes action with detachment (karma-yoga), devotion (bhakti) and knowledge (jnana). Its teachings complement meditation by providing ethical and motivational context.',
-        chapters: []
+        chapters: [
+            {
+                "id": "gita_ch_1",
+                "title": { "en": "Chapter 1 — Arjuna Vishāda Yoga", "hi": "अध्याय 1 — अर्जुन विषाद योग" },
+                "summary": {
+                  "en": "Chapter 1 sets the scene on the battlefield of Kurukshetra. Arjuna, the warrior, sees relatives and teachers on both sides and is overcome with sorrow and moral confusion about fighting. He feels powerless and questions duty (dharma), leading to inner crisis—this sets the need for spiritual teaching.",
+                  "hi": "पहला अध्याय कुरुक्षेत्र के रणभूमि का दृश्य पेश करता है। अर्जुन अपने परिजनों और गुरुओं को दोनों पक्षों में देखकर व्याकुल हो जाता है। उसे युद्ध करने में नैतिक संदेह होता है और वह कर्तव्य (धर्म) के बारे में भ्रमित हो उठता है—यही स्थिति आगे के उपदेश की आवश्यकता दिखाती है।"
+                },
+                "key_verses": [
+                  {
+                    "verse_ref": "1.28-1.30",
+                    "en": "Arjuna said: O Krishna, seeing my kinsmen present here eager to fight, my limbs fail and my mouth is parched; my body trembles and my hair stands on end.",
+                    "hi": "अर्जुन बोले: हे कृष्ण! यहाँ अपने परिवार के युद्ध में उतरने को तत्पर देखकर मेरी भुजाएँ नाहक कम्पित हो रही हैं, मुख सूखा और शरीर काँप रहा है, बाल खड़े हो रहे हैं।",
+                    "explanation": {
+                      "en": "Describes the physical and emotional collapse of Arjuna—shows how moral conflict can produce intense physical distress and indecision.",
+                      "hi": "अर्जुन के मानसिक संघर्ष का शारीरिक और भावात्मक प्रभाव दिखता है—बताता है कि नैतिक द्वंद्व किस प्रकार तीव्र संकट पैदा कर सकता है।"
+                    }
+                  },
+                  {
+                    "verse_ref": "1.47",
+                    "en": "Sanjaya said: Having spoken thus, Arjuna, cast aside his bow and arrow and sat down on the seat of the chariot, his mind overwhelmed with grief.",
+                    "hi": "संजय ने कहा: ऐसा कहकर, अर्जुन ने अपना धनुष और बाण अलग रख दिया और रथ की सीट पर बैठ गया, उसका मन दुःख से भर गया।",
+                    "explanation": {
+                      "en": "Arjuna considers abandoning the fight—this moment creates the opening for Krishna's teaching about duty and the nature of action.",
+                      "hi": "अर्जुन युद्ध छोड़ने का विचार करता है—यह क्षण कृष्ण के धर्म और कर्म के उपदेश के लिए रास्ता खोलता है।"
+                    }
+                  }
+                ],
+                "main_points": {
+                  "en": [
+                    "Introduces Arjuna's moral crisis and psychological state.",
+                    "Shows how attachment, aversion, and compassion can cloud duty.",
+                    "Prepares the ground for the Gita’s core teachings on action, knowledge and devotion."
+                  ],
+                  "hi": [
+                    "अर्जुन के नैतिक संकट और मानसिक स्थिति का परिचय।",
+                    "आसक्ति, द्वेष और करुणा किस प्रकार धर्म को अस्फुट कर सकती है।",
+                    "कर्म, ज्ञान और भक्ति पर गीता के मुख्य उपदेशों के लिए आधार तैयार करना।"
+                  ]
+                },
+                "practice_tips": {
+                  "en": [
+                    "When confused about a decision, pause and list values (dharma) and responsibilities before acting.",
+                    "Short mindfulness breathing (2–3 min) helps calm the body-mind in crisis moments.",
+                    "Discuss dilemmas with a trusted mentor (teacher) to gain perspective before choosing action."
+                  ],
+                  "hi": [
+                    "किसी निर्णय में उलझन हो तो पहले अपने मूल्य (धर्म) और जिम्मेदारियाँ सूचीबद्ध करो।",
+                    "संक्षिप्त माइंडफुल श्वास (2–3 मिनट) संकट के क्षण में शरीर-मन शांत करने में मदद करता है।",
+                    "निर्णय लेने से पहले भरोसेमंद गुरु या मार्गदर्शक से चर्चा कर लो।"
+                  ]
+                },
+                "image": "https://picsum.photos/seed/gita1/1200/600",
+                "notes": {
+                  "en": "Contextual note: Chapter 1 is diagnostic—identifies the human crisis that requires teaching. Use it in-app as 'When you feel stuck' module.",
+                  "hi": "संदर्भ: अध्याय 1 निदानात्मक है—यह मानव संकट बताता है जो उपदेश की आवश्यकता दर्शाता है। ऐप में इसे 'जब आप अटकें' मॉड्यूल के रूप में उपयोग करें।"
+                }
+            },
+            {
+                "id": "gita_ch_2",
+                "title": { "en": "Chapter 2 — Sankhya Yoga", "hi": "अध्याय 2 — सांख्ययोग" },
+                "summary": {
+                  "en": "Chapter 2 is Krishna’s first major reply. He teaches the immortality of the soul (ātman), the impermanence of the body, and introduces key teachings: equanimity, detached action (karma-yoga), and wise discrimination (buddhi). Famous verses include teachings on duty without attachment (2.47) and the steady mind (2.54–2.58).",
+                  "hi": "दूसरा अध्याय कृष्ण का पहला मुख्य उत्तर है। वह आत्मा के अमरत्व, शरीर की नश्वरता और मुख्य शिक्षाएँ—समत्व, निष्काम कर्म (कर्मयोग), और बुद्धि/विवेक का परिचय देते हैं। प्रसिद्ध श्लोकों में निष्काम कर्म (2.47) और स्थिर मन (2.54–2.58) शामिल हैं।"
+                },
+                "key_verses": [
+                  {
+                    "verse_ref": "2.11",
+                    "en": "The Blessed Lord said: You grieve for those that should not be grieved for, and yet you speak words of wisdom. The wise grieve neither for the living nor for the dead.",
+                    "hi": "श्री भगवानुवाच: तुम उनके लिए शोक करते हो जिनके लिए शोक नहीं करना चाहिए, और फिर भी ज्ञान की बातें करते हो। बुद्धिमान लोग न तो जीवितों के लिए शोक करते हैं और न ही मृतकों के लिए।",
+                    "explanation": {
+                      "en": "Krishna points out that grief arises from ignorance about the soul’s nature.",
+                      "hi": "कृष्ण बताते हैं कि शोक आत्मा के स्वभाव के अज्ञान से आता है।"
+                    }
+                  },
+                  {
+                    "verse_ref": "2.47",
+                    "en": "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. Never consider yourself to be the cause of the results of your activities, and never be attached to not doing your duty.",
+                    "hi": "तुम्हें अपने निर्धारित कर्तव्यों का पालन करने का अधिकार है, लेकिन तुम अपने कर्मों के फलों के हकदार नहीं हो। कभी भी अपने आप को अपनी गतिविधियों के परिणामों का कारण न समझें, और कभी भी अपना कर्तव्य न करने में आसक्त न हों।",
+                    "explanation": {
+                      "en": "Core teaching of karma-yoga: do your duty without attachment to outcomes—this reduces anxiety and keeps focus on right action.",
+                      "hi": "कर्मयोग का मूल: परिणाम के आसक्ति के बिना अपना कर्तव्य करो—यह चिंता घटाता है और सही कर्म पर ध्यान बनाए रखता है।"
+                    }
+                  }
+                ],
+                "main_points": {
+                  "en": [
+                    "Distinguishes the impermanent body from the eternal self (ātman).",
+                    "Introduces karma-yoga: perform duty without attachment to results.",
+                    "Teaches sense-control, steady intellect (buddhi), and equanimity as keys to freedom."
+                  ],
+                  "hi": [
+                    "नश्वर शरीर और शाश्वत आत्मा के बीच भेद बताता है।",
+                    "कर्मयोग: परिणाम की आसक्ति के बिना कर्तव्य का पालन करना।",
+                    "इन्द्रिय-नियंत्रण, स्थिर बुद्धि और समत्व स्वतंत्रता के मुख्य साधन हैं।"
+                  ]
+                },
+                "practice_tips": {
+                  "en": [
+                    "Practice short daily reflection: after any action note ‘I did my best—outcome is not mine’ to build detached attitude.",
+                    "Use breath-awareness (5–10 min) before work to center and reduce reactivity.",
+                    "When anxious about results, recall 2.47: focus on action, not fruit—this reduces stress and improves clarity."
+                  ],
+                  "hi": [
+                    "किसी भी क्रिया के बाद संक्षेप चिंतन: 'मैंने किया—परिणाम मेरा नहीं' — इससे निष्काम भाव बढ़ता है।",
+                    "काम से पहले 5–10 मिनट श्वास-सचेतना करें ताकि केन्द्र बने और प्रतिक्रियाशीलता घटे।",
+                    "परिणाम की चिंता होने पर 2.47 याद करो: कर्म पर ध्यान, फल पर नहीं—यह तनाव घटाता है।"
+                  ]
+                },
+                "image": "https://picsum.photos/seed/gita2/1200/600",
+                "notes": {
+                  "en": "Use Chapter 2 as the app’s 'Foundations' module: show 2.47 as a daily reminder card and include a short 3-step practice: breathe → act → reflect.",
+                  "hi": "अध्याय 2 को ऐप में 'बुनियादी सिद्धांत' मॉड्यूल बनाओ: 2.47 को दैनिक याद दिलाने वाला कार्ड बनाओ और 3-स्टेप अभ्यास जोड़ो: श्वास → कर्म → चिंतन।"
+                }
+            }
+        ]
     }
-]
+];

@@ -22,13 +22,13 @@ import {
 import Link from 'next/link';
 import { guidedMeditations, learnCollections } from '@/lib/meditation-data';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, where, Timestamp, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp, limit } from 'firebase/firestore';
 import { useEffect, useState }from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const quickActions = [
     { label: "Start 10-min Breath", action: "/practice/body_10" },
-    { label: "View Patanjali Chapters", action: "/learn/patanjali_overview?lang=hi" },
+    { label: "View Patanjali Chapters", action: "/learn/patanjali_overview?lang=en" },
     { label: "Open Analysis", action: "/analysis" },
 ];
 
@@ -46,44 +46,56 @@ function PracticeSummary() {
             try {
                 // Fetch sessions
                 const sessionsCol = collection(firestore, 'users', user.uid, 'sessions');
-                const sessionsSnap = await getDocs(sessionsCol);
+                const q = query(sessionsCol, orderBy('createdAt', 'desc'));
+                const sessionsSnap = await getDocs(q);
+
                 let totalMin = 0;
                 let sessions = 0;
+                const uniqueDays = new Set<string>();
+
                 sessionsSnap.forEach(doc => {
                     const s = doc.data();
                     if (s.duration_min) totalMin += s.duration_min;
                     sessions++;
+                    if (s.createdAt) {
+                        const date = s.createdAt.toDate();
+                        uniqueDays.add(date.toDateString());
+                    }
                 });
 
                 // Compute streak
                 let streak = 0;
                 if (sessions > 0) {
-                    const sortedSessions = sessionsSnap.docs
+                     const sortedDates = sessionsSnap.docs
                         .map(doc => doc.data().createdAt.toDate())
                         .sort((a, b) => b.getTime() - a.getTime());
+                    
+                    const uniqueSortedDays = [...new Set(sortedDates.map(d => d.toDateString()))]
+                        .map(ds => new Date(ds))
+                        .sort((a, b) => b.getTime() - a.getTime());
 
-                    if (sortedSessions.length > 0) {
-                        streak = 1;
-                        let lastDate = new Date(sortedSessions[0].getFullYear(), sortedSessions[0].getMonth(), sortedSessions[0].getDate());
+                    if (uniqueSortedDays.length > 0) {
+                        const today = new Date();
+                        const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-                        for (let i = 1; i < sortedSessions.length; i++) {
-                            const currentDate = new Date(sortedSessions[i].getFullYear(), sortedSessions[i].getMonth(), sortedSessions[i].getDate());
-                            const diffTime = lastDate.getTime() - currentDate.getTime();
-                            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                        const lastSessionDate = uniqueSortedDays[0];
+                         const lastSessionDateOnly = new Date(lastSessionDate.getFullYear(), lastSessionDate.getMonth(), lastSessionDate.getDate());
 
-                            if (diffDays === 1) {
-                                streak++;
-                                lastDate = currentDate;
-                            } else if (diffDays > 1) {
-                                break; 
+                        const diffWithToday = (todayDateOnly.getTime() - lastSessionDateOnly.getTime()) / (1000 * 60 * 60 * 24);
+
+                        if (diffWithToday <= 1) {
+                            streak = 1;
+                            for (let i = 0; i < uniqueSortedDays.length - 1; i++) {
+                                const currentDate = uniqueSortedDays[i];
+                                const nextDate = uniqueSortedDays[i+1];
+                                const diff = (currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24);
+                                if (diff === 1) {
+                                    streak++;
+                                } else {
+                                    break;
+                                }
                             }
                         }
-                        const today = new Date();
-                        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                        const lastSessionDate = new Date(sortedSessions[0].getFullYear(), sortedSessions[0].getMonth(), sortedSessions[0].getDate());
-                        const diffWithToday = (todayDate.getTime() - lastSessionDate.getTime()) / (1000*60*60*24);
-
-                        if(diffWithToday > 1) streak = 0;
                     }
                 }
                 
@@ -193,9 +205,9 @@ export default function MeditationHubPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                          {learnCollections.map(item => (
-                            <Link href={`/learn/${item.id}`} key={item.id} className="block p-3 rounded-lg hover:bg-muted">
+                            <Link href={`/learn/${item.id}?chapter=${item.chapters[0]?.id}&lang=en`} key={item.id} className="block p-3 rounded-lg hover:bg-muted">
                                 <p className="font-semibold">{item.title}</p>
-                                <p className="text-sm text-muted-foreground">{item.desc}</p>
+                                <p className="text-sm text-muted-foreground">{item.summary}</p>
                             </Link>
                          ))}
                     </CardContent>
