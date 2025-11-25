@@ -1,7 +1,5 @@
-
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
@@ -13,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import {
   PlayCircle,
   BookOpen,
@@ -22,20 +19,10 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-
-const guidedMeditations = [
-  { id: 'breath_5', title: 'Breath Awareness (5 min)', duration_min: 5, icon: 'wind' },
-  { id: 'body_10', title: 'Body Scan (10 min)', duration_min: 10, icon: 'scan' },
-  { id: 'mantra_8', title: 'Mantra (8 min)', duration_min: 8, icon: 'repeat' },
-];
-
-const learnCollections = [
-  { id: 'patanjali_overview', title: 'Patanjali Yoga-Sutras', desc: '4 chapters: Samadhi, Sadhana, Vibhuti, Kaivalya' },
-  { id: 'gita_overview', title: 'Bhagavad Gita', desc: '18 chapters: Core teachings of karma, bhakti, jnana' },
-];
+import { guidedMeditations, learnCollections } from '@/lib/meditation-data';
 
 const quickActions = [
-    { label: "Start 10-min Breath", action: "/practice/breath_10" },
+    { label: "Start 10-min Breath", action: "/practice/body_10" },
     { label: "View Patanjali Chapters", action: "/learn/patanjali" },
     { label: "Open Analysis", action: "/analysis" },
 ];
@@ -52,7 +39,7 @@ export default function MeditationHubPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column */}
-            <div className="space-y-6">
+            <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Start Practice</CardTitle>
@@ -64,7 +51,7 @@ export default function MeditationHubPage() {
                                 <CardContent className="p-3 flex items-center justify-between">
                                     <div>
                                         <p className="font-semibold">{med.title}</p>
-                                        <p className="text-sm text-muted-foreground">{med.duration_min} minutes</p>
+                                        <p className="text-sm text-muted-foreground">{med.description}</p>
                                     </div>
                                     <div className="flex gap-2">
                                          <Button variant="ghost" size="icon" asChild>
@@ -80,14 +67,14 @@ export default function MeditationHubPage() {
             </div>
 
             {/* Center Column */}
-            <div className="space-y-6">
+            <div className="lg:col-span-1 space-y-6">
                  <Card className="overflow-hidden">
                     {heroImage && (
                       <div className="relative h-48 w-full">
                         <Image
                             src={heroImage.imageUrl}
                             alt={heroImage.description}
-                            layout="fill"
+                            fill
                             className="object-cover"
                             data-ai-hint={heroImage.imageHint}
                         />
@@ -119,7 +106,7 @@ export default function MeditationHubPage() {
             </div>
             
             {/* Right Column */}
-            <div className="space-y-6">
+            <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><BarChart2 />Your Practice Summary</CardTitle>
