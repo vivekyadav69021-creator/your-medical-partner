@@ -28,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const quickActions = [
     { label: "Start 10-min Breath", action: "/practice/body_10" },
-    { label: "View Patanjali Chapters", action: "/learn/patanjali_overview" },
+    { label: "View Patanjali Chapters", action: "/learn/patanjali_overview?lang=hi" },
     { label: "Open Analysis", action: "/analysis" },
 ];
 
@@ -57,25 +57,38 @@ function PracticeSummary() {
 
                 // Compute streak
                 let streak = 0;
-                const today = new Date();
-                for (let i = 0; i < 30; i++) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() - i);
-                    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-                    
-                    const q = query(
-                        collection(firestore, 'users', user.uid, 'sessions'),
-                        where('createdAt', '>=', Timestamp.fromDate(dayStart)),
-                        where('createdAt', '<', Timestamp.fromDate(dayEnd)),
-                        limit(1)
-                    );
-                    const streakSnap = await getDocs(q);
-                    if (streakSnap.empty) break;
-                    streak++;
-                }
+                if (sessions > 0) {
+                    const sortedSessions = sessionsSnap.docs
+                        .map(doc => doc.data().createdAt.toDate())
+                        .sort((a, b) => b.getTime() - a.getTime());
 
+                    if (sortedSessions.length > 0) {
+                        streak = 1;
+                        let lastDate = new Date(sortedSessions[0].getFullYear(), sortedSessions[0].getMonth(), sortedSessions[0].getDate());
+
+                        for (let i = 1; i < sortedSessions.length; i++) {
+                            const currentDate = new Date(sortedSessions[i].getFullYear(), sortedSessions[i].getMonth(), sortedSessions[i].getDate());
+                            const diffTime = lastDate.getTime() - currentDate.getTime();
+                            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+                            if (diffDays === 1) {
+                                streak++;
+                                lastDate = currentDate;
+                            } else if (diffDays > 1) {
+                                break; 
+                            }
+                        }
+                        const today = new Date();
+                        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                        const lastSessionDate = new Date(sortedSessions[0].getFullYear(), sortedSessions[0].getMonth(), sortedSessions[0].getDate());
+                        const diffWithToday = (todayDate.getTime() - lastSessionDate.getTime()) / (1000*60*60*24);
+
+                        if(diffWithToday > 1) streak = 0;
+                    }
+                }
+                
                 setSummary({ sessions, totalMin, streak });
+
             } catch (error) {
                 console.error("Error fetching practice summary:", error);
                 setSummary({ sessions: 0, totalMin: 0, streak: 0 }); // Show zeros on error

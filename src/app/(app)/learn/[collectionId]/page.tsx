@@ -7,7 +7,7 @@ import { learnCollectionsData, LearnCollectionItem, Chapter } from '@/lib/learn-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star, Languages } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -49,6 +49,12 @@ export default function LearnPage() {
         router.push('/meditation-hub');
     }
   }, [collectionId, router]);
+  
+  const toggleLanguage = () => {
+    const newLang = lang === 'en' ? 'hi' : 'en';
+    setLang(newLang);
+    router.push(`/learn/${collectionId}?lang=${newLang}`, { scroll: false });
+  };
 
   const handleMarkComplete = async (chapterId: string, chapterTitle: string) => {
     if (!user || !firestore) {
@@ -152,12 +158,18 @@ export default function LearnPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-        <Button variant="ghost" asChild>
-            <Link href="/meditation-hub">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {lang === 'en' ? 'Back to Meditation Hub' : 'ध्यान हब पर वापस जाएं'}
-            </Link>
-        </Button>
+        <div className="flex justify-between items-center">
+            <Button variant="ghost" asChild>
+                <Link href="/meditation-hub">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {lang === 'en' ? 'Back to Meditation Hub' : 'ध्यान हब पर वापस जाएं'}
+                </Link>
+            </Button>
+            <Button variant="outline" onClick={toggleLanguage}>
+                <Languages className="mr-2 h-4 w-4" />
+                {lang === 'en' ? 'हिंदी में पढ़ें' : 'Read in English'}
+            </Button>
+        </div>
 
       <Card>
         <CardHeader>
