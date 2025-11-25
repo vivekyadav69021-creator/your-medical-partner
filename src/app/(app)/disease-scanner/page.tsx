@@ -57,6 +57,7 @@ const translations = {
         cameraNotSupported: 'Camera not supported',
         cameraAccessDenied: 'Camera Access Denied',
         cameraAccessDescription: 'Please enable camera permissions to use this feature.',
+        cameraStartFailed: 'Could not start camera. It might be in use by another application.',
         takePicture: 'Take Picture',
         removeImage: 'Remove image',
         errorNoImage: 'Please upload an image to be scanned.',
@@ -84,6 +85,7 @@ const translations = {
         cameraNotSupported: 'कैमरा समर्थित नहीं है',
         cameraAccessDenied: 'कैमरा एक्सेस अस्वीकृत',
         cameraAccessDescription: 'इस सुविधा का उपयोग करने के लिए कृपया कैमरा अनुमतियों को सक्षम करें।',
+        cameraStartFailed: 'कैमरा शुरू नहीं हो सका। यह किसी अन्य एप्लिकेशन द्वारा उपयोग में हो सकता है।',
         takePicture: 'तस्वीर खींचें',
         removeImage: 'छवि हटाएं',
         errorNoImage: 'कृपया स्कैन करने के लिए एक छवि अपलोड करें।',
@@ -177,7 +179,7 @@ export default function DiseaseScannerPage() {
         toast({
           variant: "destructive",
           title: t.cameraError,
-          description: t.cameraAccessDescription,
+          description: t.cameraStartFailed,
         });
       }
     }
@@ -191,17 +193,13 @@ export default function DiseaseScannerPage() {
     setIsCameraOpen(true);
     setPreview(null);
     try {
-        // This initial call helps populate device labels
-        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        tempStream.getTracks().forEach(t => t.stop());
-        
         const devices = await navigator.mediaDevices.enumerateDevices();
         availableVideoInputsRef.current = devices.filter(d => d.kind === 'videoinput');
 
         let preferredDeviceId: string | null = null;
-        if(availableVideoInputsRef.current.length > 1) {
+        if(availableVideoInputsRef.current.length > 0) {
             const backCamera = availableVideoInputsRef.current.find(d => d.label.toLowerCase().includes('back'));
-            preferredDeviceId = backCamera?.deviceId || availableVideoInputsRef.current[1]?.deviceId || null;
+            preferredDeviceId = backCamera?.deviceId || availableVideoInputsRef.current[0]?.deviceId || null;
         }
 
         await startCamera({ deviceId: preferredDeviceId, facingMode: 'environment' });
@@ -330,7 +328,7 @@ export default function DiseaseScannerPage() {
                     ) : (
                       <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
                           <Button type="button" onClick={takePicture}>{t.takePicture}</Button>
-                          <Button type="button" variant="outline" onClick={switchCamera} disabled={availableVideoInputsRef.current.length < 2}><SwitchCamera /></Button>
+                          <Button type="button" variant="outline" onClick={switchCamera} disabled={(availableVideoInputsRef.current?.length ?? 0) < 2}><SwitchCamera /></Button>
                           <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
                       </div>
                     )}
