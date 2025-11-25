@@ -1,3 +1,4 @@
+
 /**
  * Core Philosophy: This ruleset enforces a strict user-ownership security model. All private user data,
  * including profiles, appointments, and orders, is nested under a path specific to that user's ID
@@ -167,6 +168,29 @@ service cloud.firestore {
 
         // Owner can delete an existing entry.
         allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description User's meditation session data.
+       * @path        /users/{userId}/sessions/{sessionId}
+       * @principle   Users can create, read, and list their own meditation sessions.
+       */
+      match /sessions/{sessionId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        // Do not allow updates or deletes from the client for data integrity.
+        allow update, delete: if false;
+      }
+
+      /**
+       * @description User's learning progress data.
+       * @path        /users/{userId}/progress/{progressId}
+       * @principle   Users can create and update their own learning progress.
+       */
+      match /progress/{progressId} {
+        allow read, list: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+        allow delete: if false;
       }
     }
 

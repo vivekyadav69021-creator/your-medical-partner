@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { learnCollectionsData, LearnCollectionItem } from '@/lib/learn-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useUser, useFirestore } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LearnPage() {
   const params = useParams();
   const { toast } = useToast();
   const { collectionId } = params;
+  const router = useRouter();
+  
+  const firestore = useFirestore();
+  const { user } = useUser();
 
   const [collection, setCollection] = useState<LearnCollectionItem | null>(null);
 
@@ -27,14 +33,31 @@ export default function LearnPage() {
     const foundCollection = learnCollectionsData.find(c => c.id === collectionId);
     if (foundCollection) {
       setCollection(foundCollection);
+    } else {
+        router.push('/meditation-hub');
     }
-  }, [collectionId]);
+  }, [collectionId, router]);
 
-  const handleMarkComplete = (chapterTitle: string) => {
-    toast({
-        title: 'Chapter Marked as Complete!',
-        description: `You've completed "${chapterTitle}".`,
-    });
+  const handleMarkComplete = async (chapterId: string, chapterTitle: string) => {
+    if (!user || !firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save progress.'});
+        return;
+    }
+    try {
+        const progressRef = doc(firestore, 'users', user.uid, 'progress', chapterId);
+        await setDoc(progressRef, {
+            completedAt: serverTimestamp(),
+            chapterId: chapterId,
+            title: chapterTitle,
+        });
+        toast({
+            title: 'Chapter Marked as Complete!',
+            description: `You've completed "${chapterTitle}".`,
+        });
+    } catch (error) {
+        console.error("Error marking as complete:", error);
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your progress.'});
+    }
   }
 
   if (!collection) {
@@ -77,7 +100,7 @@ export default function LearnPage() {
                     <p className="text-sm text-muted-foreground">{chapter.summary}</p>
                     <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: chapter.full_text || '' }} />
                     <div className="mt-4">
-                        <Button onClick={() => handleMarkComplete(chapter.title)}>
+                        <Button onClick={() => handleMarkComplete(chapter.id, chapter.title)}>
                             <CheckCircle className="mr-2 h-4 w-4"/>
                             Mark as Complete
                         </Button>
