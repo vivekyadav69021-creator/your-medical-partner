@@ -19,6 +19,7 @@ import {
   Trophy,
   Scan,
   Wind,
+  BarChart2,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/challenges', label: 'Challenges', icon: Trophy },
   { href: '/health-score', label: 'AI Health Planner', icon: HeartPulse },
   { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
+  { href: '/analysis', label: 'Practice Analysis', icon: BarChart2 },
   { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
   { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
   { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
