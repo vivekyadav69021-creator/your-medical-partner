@@ -7,7 +7,7 @@ import { learnCollectionsData, LearnCollectionItem, Chapter, Sutra, Verse } from
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star, Languages, MessageCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Sparkles, Brain, Star, Languages, MessageCircle, ChevronsRight } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -20,6 +20,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 export default function LearnPage() {
   const params = useParams();
@@ -138,7 +139,28 @@ export default function LearnPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="grid md:grid-cols-4 gap-8">
+      <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>{collection.title}</CardTitle>
+              <CardDescription>Chapters</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {collection.chapters.map(ch => (
+                <Link href={`/learn/${collectionId}?chapter=${ch.id}&lang=${lang}`} key={ch.id}>
+                   <div className={cn(
+                      "p-3 rounded-md text-sm",
+                      activeChapter.id === ch.id ? "bg-primary/20 text-primary-foreground font-semibold" : "hover:bg-muted"
+                   )}>
+                     {lang === 'en' ? ch.title.en : ch.title.hi}
+                   </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+      </div>
+      <div className="md:col-span-3 space-y-6">
         <div className="flex justify-between items-center">
             <Button variant="ghost" asChild>
                 <Link href="/meditation-hub">
@@ -216,6 +238,7 @@ export default function LearnPage() {
             </Button>
         </div>
       </div>
+    </div>
     </div>
   );
 }
