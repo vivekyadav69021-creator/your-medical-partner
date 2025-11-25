@@ -175,14 +175,16 @@ export default function LearnPage() {
         </div>
 
       <Card className="overflow-hidden">
-        <Image 
-            src={activeChapter.image} 
-            alt={lang === 'en' ? activeChapter.title.en : activeChapter.title.hi}
-            width={1200}
-            height={400}
-            className="w-full h-48 object-cover"
-            data-ai-hint="meditation spiritual"
-        />
+        {activeChapter.image && (
+            <Image 
+                src={activeChapter.image} 
+                alt={lang === 'en' ? activeChapter.title.en : activeChapter.title.hi}
+                width={1200}
+                height={400}
+                className="w-full h-48 object-cover"
+                data-ai-hint="meditation spiritual"
+            />
+        )}
         <CardHeader>
           <CardTitle className="text-3xl flex items-center gap-3"><BookOpen /> {lang === 'en' ? activeChapter.title.en : activeChapter.title.hi}</CardTitle>
           <CardDescription>{lang === 'en' ? activeChapter.summary.en : activeChapter.summary.hi}</CardDescription>
