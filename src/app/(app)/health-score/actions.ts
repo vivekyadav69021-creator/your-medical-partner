@@ -13,10 +13,6 @@ const healthPlanSchema = z.object({
   activityLevel: z.enum(['sedentary', 'lightly_active', 'moderately_active', 'very_active'], { required_error: 'Activity level is required.' }),
 });
 
-// A temporary, in-memory store for the plan data.
-// In a real app, this should be a database or a more persistent cache.
-let temporaryPlanStore: { [key: string]: any } = {};
-
 export async function createHealthPlanAction(
   prevState: any,
   formData: FormData
@@ -40,18 +36,10 @@ export async function createHealthPlanAction(
   try {
     const result = await createHealthPlan(validatedFields.data);
     
-    // Generate a unique ID for the plan
     planId = `plan_${Date.now()}`;
 
-    // Store the plan result temporarily.
-    // NOTE: This is a simple in-memory solution. In a production app,
-    // you would use a database (like Firestore) or a caching service (like Redis/Vercel KV).
-    temporaryPlanStore[planId] = result;
-
-    // Clear old entries from the store to prevent memory leaks
-    setTimeout(() => {
-        delete temporaryPlanStore[planId];
-    }, 1000 * 60 * 5); // Clear after 5 minutes
+    // Store the plan in Vercel KV with a 5-minute expiration
+    await kv.set(planId, JSON.stringify(result), { ex: 300 });
 
   } catch (e: any) {
      console.error("AI Health Plan Error:", e);
@@ -66,12 +54,11 @@ export async function createHealthPlanAction(
 
 
 export async function getHealthPlan(planId: string) {
-    // Retrieve the plan from our temporary store.
-    const plan = temporaryPlanStore[planId];
-    if (!plan) {
+    const planJson = await kv.get(planId);
+    if (!planJson) {
         return null;
     }
     // The plan is retrieved, so we can remove it from the store.
-    delete temporaryPlanStore[planId];
-    return plan;
+    await kv.del(planId);
+    return JSON.parse(planJson as string);
 }

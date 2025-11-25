@@ -32,6 +32,7 @@ export default function ViewHealthPlanPage() {
     async function fetchPlan() {
       if (!planId) return;
       try {
+        setLoading(true);
         const fetchedPlan = await getHealthPlan(planId);
         if (fetchedPlan) {
           setPlan(fetchedPlan);
