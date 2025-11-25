@@ -6,6 +6,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Utensils, Zap, Brain, Download, ArrowLeft, Terminal } from 'lucide-react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 function PlanSkeleton() {
     return (
@@ -20,15 +21,18 @@ function PlanSkeleton() {
     );
 }
 
-export default function ViewHealthPlanPage({ params }: { params: { planId: string } }) {
+export default function ViewHealthPlanPage() {
+  const params = useParams();
+  const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const [plan, setPlan] = useState<HealthPlanOutput | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPlan() {
+      if (!planId) return;
       try {
-        const fetchedPlan = await getHealthPlan(params.planId);
+        const fetchedPlan = await getHealthPlan(planId);
         if (fetchedPlan) {
           setPlan(fetchedPlan);
         } else {
@@ -42,7 +46,7 @@ export default function ViewHealthPlanPage({ params }: { params: { planId: strin
       }
     }
     fetchPlan();
-  }, [params.planId]);
+  }, [planId]);
 
   const downloadPlan = () => {
     if (!plan) return;
