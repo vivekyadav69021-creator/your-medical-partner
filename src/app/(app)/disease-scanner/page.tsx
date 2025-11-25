@@ -280,7 +280,6 @@ export default function DiseaseScannerPage() {
         toast({ variant: 'destructive', title: t.scanFailed, description: t.errorNoImage });
         return;
     }
-    formData.append('language', language);
     formAction(formData);
   };
 
@@ -308,6 +307,7 @@ export default function DiseaseScannerPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <form ref={formRef} action={handleFormAction}>
+             <input type="hidden" name="language" value={language} />
             <CardHeader>
               <CardTitle>{t.scanTitle}</CardTitle>
               <CardDescription>{t.scanDescription}</CardDescription>
