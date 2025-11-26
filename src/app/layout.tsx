@@ -71,8 +71,8 @@ export default function RootLayout({
               </div>
             </div>
             <div id="assistantBody" aria-live="polite"></div>
-            <div id="assistantFooter" style={{ padding: '10px', borderTop: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch' }}>
-                <div className="voiceWidget" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div id="assistantFooter">
+                <div className="voiceWidget">
                     <button id="speakBtn" className="assistBtn" title="Speak assistant's reply">🔊</button>
                     <button id="stopSpeechBtn" className="assistBtn" title="Stop speaking">■</button>
                      <select id="voiceLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
@@ -82,7 +82,7 @@ export default function RootLayout({
                     <button id="micBtn" className="assistBtn" title="Start microphone">🎤</button>
                     <span id="micStatus" style={{ fontSize: '12px', color: '#555', flex: 1 }}></span>
                 </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display:'flex', gap: '8px' }}>
                 <input id="assistantInput" className="assistInput" placeholder="Ask about any feature..." />
                 <button id="assistantSend" className="assistBtn">Ask</button>
               </div>
