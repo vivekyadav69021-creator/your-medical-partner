@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 const xrayScannerSchema = z.object({
   photoDataUri: z.string().min(1, 'Please upload an image to be scanned.'),
+  contentType: z.string().min(1, 'Content type is required.'),
 });
 
 export async function analyzeXrayAction(
@@ -14,6 +15,7 @@ export async function analyzeXrayAction(
 ) {
   const validatedFields = xrayScannerSchema.safeParse({
     photoDataUri: formData.get('photoDataUri'),
+    contentType: formData.get('contentType'),
   });
 
   if (!validatedFields.success) {
@@ -26,7 +28,12 @@ export async function analyzeXrayAction(
   }
   
   try {
-    const result = await analyzeXray(validatedFields.data);
+    const result = await analyzeXray({ 
+      image: {
+        url: validatedFields.data.photoDataUri,
+        contentType: validatedFields.data.contentType,
+      }
+    });
     if (result.status === 'error') {
         return { result: null, error: result.error || 'Analysis failed.' };
     }
@@ -73,10 +80,10 @@ export async function healthAssistantAction(
       response: result.response,
       error: null,
     };
-  } catch (e) {
+  } catch (e: any) {
     return {
       response: null,
-      error: 'The AI model could not be reached. Please try again later.',
+      error: e.message || 'The AI model could not be reached. Please try again later.',
     };
   }
 }

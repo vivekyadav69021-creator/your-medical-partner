@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, Save, FileText, Image as ImageIcon } from 'lucide-react';
 import { analyzeXrayAction } from './actions';
-import { healthAssistantAction } from '../health-assistant/actions';
+import { healthAssistantAction } from './actions';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
@@ -37,7 +37,7 @@ function escapeHtml(s: string | undefined | null){ return String(s||'').replace(
 
 // Column 1: Disease Image Scanner
 function DiseaseImageScanner() {
-    const [state, formAction] = useActionState(healthAssistantAction, initialDiseaseState);
+    const [state, formAction, isAnalyzing] = useActionState(healthAssistantAction, initialDiseaseState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
@@ -80,18 +80,26 @@ function DiseaseImageScanner() {
                         </div>
                     )}
                     <div className="flex gap-2 mt-2">
-                        <Button type="submit" disabled={!preview}>Analyze Image</Button>
+                        <Button type="submit" disabled={!preview || isAnalyzing}>
+                            {isAnalyzing ? 'Analyzing...' : 'Analyze Image'}
+                        </Button>
                         <Button type="button" variant="secondary" onClick={handleClear}>Clear</Button>
                     </div>
                 </form>
             </CardContent>
              <CardFooter className="flex-col items-start gap-2">
-                {state.response && (
+                {isAnalyzing && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <span>AI is analyzing the image...</span>
+                    </div>
+                )}
+                {state.response && !isAnalyzing && (
                     <div className="resultBox prose prose-sm dark:prose-invert max-w-full">
                         <ReactMarkdown>{state.response}</ReactMarkdown>
                     </div>
                 )}
-                 {state.error && (
+                 {state.error && !isAnalyzing && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Analysis Failed</AlertTitle>
@@ -106,7 +114,7 @@ function DiseaseImageScanner() {
 
 // Column 2: X-Ray Scanner
 function XRayScanner() {
-  const [state, formAction] = useActionState(analyzeXrayAction, initialXrayState);
+  const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -188,8 +196,9 @@ function XRayScanner() {
   };
   
   const handleFormAction = async (formData: FormData) => {
-    if (preview) {
+    if (preview && selectedFile) {
       formData.append('photoDataUri', preview);
+      formData.append('contentType', selectedFile.type);
     } else {
         toast({ variant: 'destructive', title: "Analysis Failed", description: "Please upload an image to be scanned." });
         return;
@@ -227,7 +236,18 @@ function XRayScanner() {
           <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*"/>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={openCamera}><Camera className="mr-2"/>Open Camera</Button>
-            <Button type="submit"><Scan className="mr-2"/>Analyze Image</Button>
+            <Button type="submit" disabled={isAnalyzing || !selectedFile}>
+              {isAnalyzing ? (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4 animate-pulse" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Scan className="mr-2"/>Analyze Image
+                </>
+              )}
+            </Button>
           </div>
           {isCameraOpen ? (
               <div className="relative">
@@ -245,7 +265,13 @@ function XRayScanner() {
         </form>
       </CardContent>
        <CardFooter className="flex-col items-start gap-2">
-          {state.result && (
+          {isAnalyzing && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+                <span>AI is analyzing the X-ray...</span>
+            </div>
+          )}
+          {state.result && !isAnalyzing && (
               <div className="resultBox w-full">
                   <h5 className="font-bold">Findings</h5>
                   <ul className="list-disc pl-5 mt-2 space-y-2 text-sm">
@@ -260,7 +286,7 @@ function XRayScanner() {
                     <p className="text-sm">{escapeHtml(state.result.recommendationText || 'Consult a qualified doctor for confirmation.')}</p>
               </div>
           )}
-            {state.error && (
+            {state.error && !isAnalyzing && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Analysis Failed</AlertTitle>

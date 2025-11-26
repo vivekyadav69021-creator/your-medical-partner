@@ -17,11 +17,14 @@ const FindingSchema = z.object({
 });
 
 const AnalyzeXrayInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "The X-ray image to analyze, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
+  image: z.object({
+    url: z
+      .string()
+      .describe(
+        "The X-ray image to analyze, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      ),
+    contentType: z.string().describe('The MIME type of the image (e.g., "image/jpeg").'),
+  })
 });
 export type AnalyzeXrayInput = z.infer<typeof AnalyzeXrayInputSchema>;
 
@@ -46,7 +49,7 @@ const prompt = ai.definePrompt({
   prompt: `You are a specialized AI assistant for analyzing medical images, specifically X-rays. Your task is to identify potential abnormalities in the provided image and give a concise recommendation.
 
   Analyze the following X-ray image:
-  {{media url=photoDataUri}}
+  {{media url=image.url}}
 
   1.  **Identify Findings:** Carefully examine the image for any potential abnormalities (e.g., cardiomegaly, lung opacities, fractures, pleural effusion). For each potential finding, provide a clear label, a confidence score (0.0 to 1.0), and a brief note.
   2.  **Generate Recommendation:** Based on the most significant findings, provide a short, actionable recommendation (e.g., "Consult a radiologist for definitive interpretation," "Possible signs of pneumonia, refer to pulmonologist," "No significant abnormalities detected.").
