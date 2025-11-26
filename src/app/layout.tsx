@@ -3,6 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
 import Script from 'next/script';
+import { featureAssistant } from '@/ai/flows/feature-assistant-flow';
 
 export const metadata: Metadata = {
   title: 'Your Medical Partner',
@@ -31,7 +32,7 @@ export default function RootLayout({
           #assistantHeader { background:linear-gradient(90deg,#1aa3d7,#1280b0); color:#fff; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; }
           #assistantHeader h4{ margin:0; font-size:15px; }
           #assistantBody { padding:12px; max-height:360px; overflow:auto; }
-          #assistantFooter { padding:10px; border-top:1px solid #eee; display:flex; gap:8px; align-items:center; }
+          #assistantFooter { padding:10px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:8px; align-items:stretch; }
           .assistInput{ flex:1; padding:10px;border-radius:8px;border:1px solid #ddd; }
           .assistBtn{ padding:8px 10px;border-radius:8px;border:0;background:#1398d8;color:#fff; cursor:pointer; }
           .msg{ margin:8px 0; display:block; }
@@ -40,6 +41,7 @@ export default function RootLayout({
           .msg.assist .bubble{ display:inline-block; background:#f6f8fb; padding:8px 10px; border-radius:10px; }
           .msg .meta{ font-size:11px;color:#777;margin-top:4px; }
           .sendToPageBtn{ margin-top:6px; display:inline-block; background:#e9f7ff; color:#0b6b87; padding:6px 8px; border-radius:8px; cursor:pointer; font-size:13px; border:1px solid #cceef9; }
+          .voiceWidget{display:flex;gap:8px;align-items:center}
         `}} />
       </head>
       <body className="font-body antialiased">
@@ -60,179 +62,158 @@ export default function RootLayout({
             <div id="assistantHeader">
               <h4>Your Medical Partner — Assistant</h4>
               <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-                <select id="assistantLang" style={{borderRadius:'8px',padding:'6px',border:'0', color: '#333'}}>
-                  <option value="en">EN</option>
-                  <option value="hi">हिंदी</option>
-                </select>
                 <button id="assistantClose" style={{background:'transparent',border:'0',color:'#fff',fontSize:'18px',cursor:'pointer'}}>✕</button>
               </div>
             </div>
             <div id="assistantBody" aria-live="polite"></div>
             <div id="assistantFooter">
-              <input id="assistantInput" className="assistInput" placeholder="Ask about any feature..." />
-              <button id="assistantSend" className="assistBtn">Ask</button>
+                <div class="voiceWidget">
+                    <button id="speakBtn" class="assistBtn" title="Speak assistant's reply">🔊</button>
+                    <button id="stopSpeechBtn" class="assistBtn" title="Stop speaking">■</button>
+                     <select id="assistantLang" style="border-radius:8px;padding:6px;border:0; color:#333; background: #f0f0f0;">
+                      <option value="en">EN</option>
+                      <option value="hi">HI</option>
+                    </select>
+                    <button id="micBtn" class="assistBtn" title="Start microphone">🎤</button>
+                    <span id="micStatus" style="font-size:12px; color: #555; flex: 1;"></span>
+                </div>
+              <div style="display:flex; gap: 8px;">
+                <input id="assistantInput" className="assistInput" placeholder="Ask about any feature..." />
+                <button id="assistantSend" className="assistBtn">Ask</button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Firebase Bridge and Assistant Widget Script */}
-        <Script id="firebase-assistant-widget" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            // This function creates a bridge between modern Firebase SDK and the legacy global object the script expects.
-            function initializeFirebaseBridge() {
-              const checkInterval = setInterval(() => {
-                if (window.firebase?.app) {
-                  // Firebase seems to be initialized by the main app
-                  // Make firestore and auth available on the global object for the assistant script
-                  window.firebase.firestore = window.firebase.firestore || window.firebase.app.firestore;
-                  window.firebase.auth = window.firebase.auth || window.firebase.app.auth;
+        <script
+          id="feature-assistant-widget-script"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (async function() {
+                // --- DOM References ---
+                const bubble = document.getElementById('assistantBubble');
+                const panel = document.getElementById('assistantPanel');
+                const closeBtn = document.getElementById('assistantClose');
+                const bodyEl = document.getElementById('assistantBody');
+                const inputEl = document.getElementById('assistantInput');
+                const sendBtn = document.getElementById('assistantSend');
+                const langSel = document.getElementById('assistantLang');
+                const speakBtn = document.getElementById('speakBtn');
+                const stopSpeechBtn = document.getElementById('stopSpeechBtn');
+                const micBtn = document.getElementById('micBtn');
+                const micStatus = document.getElementById('micStatus');
 
-                  // Now that Firebase is ready, initialize the assistant
-                  initAssistant();
-                  clearInterval(checkInterval);
+                // --- State ---
+                let chatHistory = JSON.parse(sessionStorage.getItem('amp_feature_chat_v1') || '[]');
+                const synth = window.speechSynthesis;
+                let recognition;
+
+                // --- Helper Functions ---
+                function navigateTo(path) {
+                  if (path) window.location.href = path;
                 }
-              }, 100);
-            }
+                function sanitize(s) { return String(s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-            /* Assistant Widget — Client-side Logic */
-            const AI_ENDPOINT = null;
-            const FIRESTORE_COLLECTION = 'featureDocs';
-            const ENABLE_REMOTE_AI = !!AI_ENDPOINT;
-
-            function navigateTo(path) {
-              if (path) window.location.href = path.startsWith('/') ? path : '/' + path;
-            }
-
-            const bubble = document.getElementById('assistantBubble');
-            const panel = document.getElementById('assistantPanel');
-            const closeBtn = document.getElementById('assistantClose');
-            const bodyEl = document.getElementById('assistantBody');
-            const inputEl = document.getElementById('assistantInput');
-            const sendBtn = document.getElementById('assistantSend');
-            const langSel = document.getElementById('assistantLang');
-
-            let chatHistory = JSON.parse(sessionStorage.getItem('amp_chat_history_v1') || '[]');
-
-            function renderHistory() {
-              if (!bodyEl) return;
-              bodyEl.innerHTML = '';
-              chatHistory.slice(-30).forEach(msg => {
-                const wrap = document.createElement('div');
-                wrap.className = 'msg ' + (msg.role === 'user' ? 'user' : 'assist');
-                const bubble = document.createElement('div');
-                bubble.className = 'bubble';
-                bubble.innerHTML = sanitize(msg.text);
-                wrap.appendChild(bubble);
-                if (msg.meta && msg.meta.path) {
-                  const btn = document.createElement('div');
-                  btn.className = 'sendToPageBtn';
-                  btn.textContent = (langSel.value === 'hi') ? 'पेज खोलें' : 'Open page';
-                  btn.onclick = () => navigateTo(msg.meta.path);
-                  wrap.appendChild(btn);
+                // --- Chat Rendering ---
+                function renderHistory() {
+                  if (!bodyEl) return;
+                  bodyEl.innerHTML = '';
+                  chatHistory.slice(-30).forEach(msg => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'msg ' + msg.role;
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.innerHTML = sanitize(msg.text).replace(/\\n/g, '<br>');
+                    wrap.appendChild(bubble);
+                    if (msg.meta?.path) {
+                      const btn = document.createElement('div');
+                      btn.className = 'sendToPageBtn';
+                      btn.textContent = (langSel.value === 'hi') ? 'पेज खोलें' : 'Open Page';
+                      btn.onclick = () => navigateTo(msg.meta.path);
+                      wrap.appendChild(btn);
+                    }
+                    bodyEl.appendChild(wrap);
+                  });
+                  bodyEl.scrollTop = bodyEl.scrollHeight;
                 }
-                bodyEl.appendChild(wrap);
-              });
-              bodyEl.scrollTop = bodyEl.scrollHeight;
-            }
-
-            function sanitize(s) { return String(s || '').replace(/<|>/g, (c) => (c === '<' ? '&lt;' : '&gt;')).replace(/\\n/g, '<br>'); }
-
-            if (bubble) bubble.addEventListener('click', () => { if (panel) panel.style.display = 'flex'; if (inputEl) inputEl.focus(); renderHistory(); });
-            if (closeBtn) closeBtn.addEventListener('click', () => { if (panel) panel.style.display = 'none'; });
-
-            async function onAsk() {
-              if (!inputEl.value.trim()) return;
-              const q = inputEl.value.trim();
-              const lang = langSel.value || 'en';
-              appendUserMessage(q);
-              inputEl.value = '';
-              renderHistory();
-
-              const localResp = await findLocalFeature(q, lang);
-              if (localResp && localResp.found) {
-                appendAssistantMessage(localResp.answer, localResp.meta);
-              } else if (ENABLE_REMOTE_AI) {
-                // Remote AI logic (currently disabled)
-              } else {
-                appendAssistantMessage((lang === 'hi') ? 'क्षमा करें, इस विषय पर जानकारी उपलब्ध नहीं है।' : 'Sorry, I do not have information on that feature right now.');
-              }
-              renderHistory();
-              saveSession();
-            }
-            
-            if (sendBtn) sendBtn.addEventListener('click', onAsk);
-            if (inputEl) inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') onAsk(); });
-
-            function appendUserMessage(text) { chatHistory.push({ role: 'user', text, ts: Date.now() }); saveSession(); }
-            function appendAssistantMessage(text, meta = null) { chatHistory.push({ role: 'assistant', text, meta, ts: Date.now() }); saveSession(); }
-            function saveSession() { sessionStorage.setItem('amp_chat_history_v1', JSON.stringify(chatHistory)); }
-
-            async function findLocalFeature(query, lang) {
-              try {
-                if (!window.firebase || !window.firebase.firestore) return null;
-                const db = window.firebase.firestore();
-                const col = db.collection(FIRESTORE_COLLECTION);
-                const qLower = query.trim().toLowerCase();
-                const snapshot = await col.limit(50).get();
-                const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
-                const results = docs.map(doc => {
-                  let score = 0;
-                  const title = (doc.title || '').toLowerCase();
-                  if (title.includes(qLower)) score += 50;
-                  if ((doc.slug || '').toLowerCase().includes(qLower)) score += 40;
-                  if ((doc.content_en || '').toLowerCase().includes(qLower) || (doc.content_hi || '').toLowerCase().includes(qLower)) score += 20;
-                  return { doc, score };
-                }).filter(r => r.score > 0).sort((a, b) => b.score - a.score);
-
-                if (results.length) {
-                  const best = results[0].doc;
-                  const answer = (lang === 'hi') ? (best.content_hi || best.content_en) : (best.content_en || best.content_hi);
-                  return { found: true, answer, meta: { id: best.id, path: best.path || null, title: best.title || null } };
+                
+                function appendMessage(role, text, meta) {
+                    chatHistory.push({ role, text, meta, ts: Date.now() });
+                    sessionStorage.setItem('amp_feature_chat_v1', JSON.stringify(chatHistory));
+                    renderHistory();
                 }
-                return null;
-              } catch (e) {
-                console.warn('local lookup error', e);
-                return null;
-              }
-            }
-            
-            async function seedSampleDocs() {
-              try {
-                if (!window.firebase || !window.firebase.firestore) return;
-                const db = window.firebase.firestore();
-                const col = db.collection(FIRESTORE_COLLECTION);
-                const snap = await col.limit(1).get();
-                if (!snap.empty) return;
-                const sample = [
-                  { id: 'how_to_book_doctor', title: 'Doctor Consultation', slug: 'doctor-consult', content_en: 'To book a doctor: open Consultations -> choose a doctor -> select date/time -> confirm.', content_hi: 'Doctor book karne ke liye: Consultations kholen -> doctor chunen -> date/time select karein -> confirm karein.', path: '/consultation' },
-                  { id: 'disease_scanner', title: 'Disease Scanner', slug: 'disease-scanner', content_en: 'Use the Disease Scanner to analyze X-rays, lab reports, or images of physical symptoms.', content_hi: 'Disease Scanner ka istemal karke X-ray, lab report, ya sharirik lakshano ki tasveer ka vishleshan karein.', path: '/disease-scanner' },
-                  { id: 'med_store', title: 'Medical Store', slug: 'medical-store', content_en: 'In the Medical Store, you can search for medicines or upload a prescription to find available products.', content_hi: 'Medical Store me aap dawai search kar sakte hain, ya prescription upload karke uplabdh dawai khoj sakte hain.', path: '/store' }
-                ];
-                const batch = db.batch();
-                sample.forEach(d => {
-                  const docRef = col.doc(d.id);
-                  batch.set(docRef, d);
-                });
-                await batch.commit();
-                console.log('Seeded sample featureDocs');
-              } catch (e) { console.warn('Seed sample failed', e); }
-            }
 
-            async function initAssistant() {
-              await seedSampleDocs();
-              renderHistory();
-            }
+                // --- Core Logic ---
+                async function onAsk() {
+                  const query = inputEl.value.trim();
+                  if (!query) return;
 
-            initializeFirebaseBridge();
+                  appendMessage('user', query);
+                  inputEl.value = '';
 
-            window.amps_openAndAsk = async function(question) {
-              if(panel) panel.style.display = 'flex';
-              if(inputEl) inputEl.value = question;
-              await onAsk();
-            };
-          })();
-        `}} />
+                  const lang = langSel.value;
+                  const response = await window.featureAssistant({ query, language: lang });
+
+                  appendMessage('assistant', response.answer, response);
+                }
+
+                // --- Text-to-Speech (TTS) ---
+                function getBestVoice(lang) {
+                    const voices = synth.getVoices();
+                    return voices.find(v => v.lang.startsWith(lang)) || voices.find(v => v.lang.startsWith('en'));
+                }
+
+                speakBtn.onclick = () => {
+                    const lastAssistMsg = [...chatHistory].reverse().find(m => m.role === 'assistant');
+                    if (!lastAssistMsg || !lastAssistMsg.text) return;
+                    synth.cancel();
+                    const utter = new SpeechSynthesisUtterance(lastAssistMsg.text);
+                    utter.lang = langSel.value === 'hi' ? 'hi-IN' : 'en-IN';
+                    utter.voice = getBestVoice(utter.lang);
+                    synth.speak(utter);
+                };
+
+                stopSpeechBtn.onclick = () => synth.cancel();
+
+
+                // --- Speech-to-Text (STT) ---
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    micBtn.onclick = () => {
+                        if (recognition && recognition.isStarted) {
+                            recognition.stop();
+                            return;
+                        }
+                        recognition = new SpeechRecognition();
+                        recognition.lang = langSel.value === 'hi' ? 'hi-IN' : 'en-IN';
+                        recognition.onstart = () => { micStatus.textContent = 'Listening...'; micBtn.style.background = '#ff6b6b'; };
+                        recognition.onend = () => { micStatus.textContent = ''; micBtn.style.background = '#2b9edb'; recognition.isStarted = false; };
+                        recognition.onresult = (event) => {
+                            inputEl.value = event.results[0][0].transcript;
+                            onAsk();
+                        };
+                        recognition.start();
+                        recognition.isStarted = true;
+                    };
+                } else {
+                    micBtn.disabled = true;
+                    micStatus.textContent = 'Not supported';
+                }
+
+                // --- Event Listeners ---
+                bubble.onclick = () => { panel.style.display = 'flex'; inputEl.focus(); renderHistory(); };
+                closeBtn.onclick = () => { panel.style.display = 'none'; };
+                sendBtn.onclick = onAsk;
+                inputEl.onkeydown = (e) => { if (e.key === 'Enter') onAsk(); };
+                
+                // --- Global function ---
+                window.featureAssistant = ${featureAssistant.toString()};
+
+                renderHistory();
+              })();
+            `,
+          }}
+        />
       </body>
     </html>
   );
