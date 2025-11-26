@@ -14,14 +14,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, Save, FileText, Image as ImageIcon } from 'lucide-react';
+import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, Save, FileText, Image as ImageIcon, SwitchCamera } from 'lucide-react';
 import { analyzeXrayAction, healthAssistantAction } from './actions';
 import Image from 'next/image';
-import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReactMarkdown from 'react-markdown';
+
 
 const initialXrayState = {
   result: null,
@@ -41,12 +42,81 @@ function DiseaseImageScanner() {
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
+    const { toast } = useToast();
+
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+
+    const stopStream = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+    }, []);
+
+    const openCamera = useCallback(async (mode: 'user' | 'environment') => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            toast({ variant: 'destructive', title: "Camera Not Supported" });
+            return;
+        }
+        stopStream();
+        setIsCameraOpen(true);
+        setPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+            streamRef.current = stream;
+        } catch (err) {
+           toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access camera. Please check permissions.' });
+           setIsCameraOpen(false);
+        }
+    }, [toast, stopStream]);
+
+    useEffect(() => {
+        if (isCameraOpen) {
+            openCamera(facingMode);
+        } else {
+            stopStream();
+        }
+    }, [isCameraOpen, facingMode, openCamera, stopStream]);
+
+
+    const closeCamera = useCallback(() => {
+        setIsCameraOpen(false);
+    }, []);
+
+    const takePicture = useCallback(() => {
+        if (videoRef.current && canvasRef.current) {
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const context = canvas.getContext('2d');
+          if (context) {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            setPreview(dataUrl);
+            closeCamera();
+          }
+        }
+    }, [closeCamera]);
+
     
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => setPreview(e.target?.result as string);
+            reader.onload = (e) => {
+                setPreview(e.target?.result as string);
+                setIsCameraOpen(false);
+            }
             reader.readAsDataURL(file);
         }
     };
@@ -55,6 +125,7 @@ function DiseaseImageScanner() {
         setPreview(null);
         if(fileInputRef.current) fileInputRef.current.value = '';
         formRef.current?.reset();
+        setIsCameraOpen(false);
     };
 
     const handleFormAction = (formData: FormData) => {
@@ -67,6 +138,7 @@ function DiseaseImageScanner() {
 
     return (
         <Card>
+            <canvas ref={canvasRef} className="hidden"></canvas>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ImageIcon/>Disease Image Scanner</CardTitle>
                 <CardDescription>Upload a photo of a visible symptom (like a skin rash) for a preliminary analysis by the Health Assistant AI.</CardDescription>
@@ -74,17 +146,30 @@ function DiseaseImageScanner() {
             <CardContent>
                 <form ref={formRef} action={handleFormAction} className="space-y-4">
                     <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
-                    {preview && (
+                     <div className="flex gap-2 mt-2">
+                        <Button type="button" variant="secondary" onClick={() => setIsCameraOpen(true)}><Camera className="mr-2"/>Open Camera</Button>
+                        <Button type="submit" disabled={!preview || isAnalyzing}>
+                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Analyzing...</>) : 'Analyze Image'}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleClear}>Clear</Button>
+                    </div>
+
+                    {isCameraOpen ? (
+                        <div className="relative mt-2">
+                            <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
+                            <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                                <Button type="button" onClick={takePicture}>Take Picture</Button>
+                                <Button type="button" variant="outline" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')}>
+                                    <SwitchCamera />
+                                </Button>
+                                <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
+                            </div>
+                        </div>
+                    ) : preview && (
                         <div className="relative mt-2">
                             <Image src={preview} alt="Disease preview" width={300} height={300} className="rounded-md border aspect-square object-cover w-full" />
                         </div>
                     )}
-                    <div className="flex gap-2 mt-2">
-                        <Button type="submit" disabled={!preview || isAnalyzing}>
-                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Analyzing...</>) : 'Analyze Image'}
-                        </Button>
-                        <Button type="button" variant="secondary" onClick={handleClear}>Clear</Button>
-                    </div>
                 </form>
             </CardContent>
              <CardFooter className="flex-col items-start gap-2">
@@ -143,6 +228,8 @@ function XRayScanner() {
     stopStream();
     setIsCameraOpen(true);
     setPreview(null);
+    if(fileInputRef.current) fileInputRef.current.value = '';
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         if (videoRef.current) {
@@ -192,6 +279,7 @@ function XRayScanner() {
     if (file) {
       setSelectedFile(file);
       setPreview(URL.createObjectURL(file));
+      setIsCameraOpen(false);
     }
   };
   
@@ -460,3 +548,5 @@ export default function DiseaseScannerPage() {
     </div>
   );
 }
+
+    
