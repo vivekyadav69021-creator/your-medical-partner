@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -18,20 +17,32 @@ import {
   BarChart2,
   PlusCircle,
   Zap,
+  Sparkles,
+  Heart,
 } from 'lucide-react';
 import Link from 'next/link';
 import { guidedMeditations } from '@/lib/meditation-data';
 import { learnCollectionsData } from '@/lib/learn-data';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, getDocs, query, orderBy, Timestamp, limit } from 'firebase/firestore';
-import { useEffect, useState }from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { getMoodSuggestionAction } from './actions';
+import { useToast } from '@/hooks/use-toast';
 
 const quickActions = [
     { label: "Start 10-min Breath", action: "/practice/body_10" },
     { label: "View Patanjali Chapters", action: "/learn/patanjali_overview?lang=en" },
     { label: "Open Analysis", action: "/analysis" },
 ];
+
+const initialSuggestionState = {
+  suggestion: null,
+  error: null,
+};
+
 
 function PracticeSummary() {
     const { user } = useUser();
@@ -136,6 +147,77 @@ function PracticeSummary() {
     );
 }
 
+function SuggestionButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending ? <Sparkles className="mr-2 h-4 w-4 animate-pulse" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            Get Suggestion
+        </Button>
+    );
+}
+
+
+function AiMoodTracker() {
+    const [state, formAction] = useActionState(getMoodSuggestionAction, initialSuggestionState);
+    const formRef = useRef<HTMLFormElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if(state.error) {
+            toast({
+                variant: 'destructive',
+                title: 'AI Suggestion Failed',
+                description: state.error,
+            });
+        }
+    }, [state, toast]);
+
+    const suggestedMeditation = state.suggestion 
+        ? guidedMeditations.find(m => m.id === state.suggestion?.meditationId)
+        : null;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Heart/> AI Mood Tracker</CardTitle>
+                <CardDescription>Tell me how you feel, and I'll suggest a meditation.</CardDescription>
+            </CardHeader>
+            <form action={(formData) => {
+                formAction(formData);
+                formRef.current?.reset();
+            }} ref={formRef}>
+                <CardContent className="space-y-4">
+                    <Input name="mood" placeholder="e.g., stressed, tired, anxious..." required />
+                    {state.suggestion && suggestedMeditation && (
+                        <Card className="bg-secondary">
+                            <CardHeader>
+                                <CardTitle className="text-lg">My Suggestion For You</CardTitle>
+                                <CardDescription>{state.suggestion.reasoning}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                 <p className="font-semibold">{suggestedMeditation.title}</p>
+                                 <p className="text-sm text-muted-foreground">{suggestedMeditation.description}</p>
+                            </CardContent>
+                            <CardFooter>
+                                <Button asChild size="sm">
+                                    <Link href={`/practice/${suggestedMeditation.id}`}>
+                                        <PlayCircle className="mr-2 h-4 w-4" />
+                                        Start Practice
+                                    </Link>
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <SuggestionButton />
+                </CardFooter>
+            </form>
+        </Card>
+    );
+}
+
 
 export default function MeditationHubPage() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'meditation-hero');
@@ -224,6 +306,7 @@ export default function MeditationHubPage() {
             
             {/* Right Column */}
             <div className="lg:col-span-1 space-y-6">
+                <AiMoodTracker />
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><BarChart2 />Your Practice Summary</CardTitle>
