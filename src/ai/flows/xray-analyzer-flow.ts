@@ -30,7 +30,10 @@ export type AnalyzeXrayInput = z.infer<typeof AnalyzeXrayInputSchema>;
 
 const AnalyzeXrayOutputSchema = z.object({
   status: z.enum(['ok', 'error']).describe('The status of the analysis.'),
-  findings: z.array(FindingSchema).describe('A list of potential findings identified in the image.'),
+  report: z.object({
+    findings: z.array(FindingSchema).describe('A list of potential findings identified in the image.'),
+    impression: z.string().describe('A summary of the most important findings, formatted as a radiology report impression.'),
+  }),
   recommendationText: z.string().describe('A summary recommendation based on the findings (e.g., "Refer to pulmonologist").'),
   error: z.string().optional().describe('An error message if the status is "error".'),
 });
@@ -46,16 +49,24 @@ const prompt = ai.definePrompt({
   name: 'analyzeXrayPrompt',
   input: { schema: AnalyzeXrayInputSchema },
   output: { schema: AnalyzeXrayOutputSchema },
-  prompt: `You are a specialized AI assistant for analyzing medical images, specifically X-rays. Your task is to identify potential abnormalities in the provided image and give a concise recommendation.
+  prompt: `You are a specialized AI Radiology Assistant. Your primary function is to analyze medical images, specifically X-rays, and generate a structured preliminary report. Your analysis is for informational purposes and is NOT a medical diagnosis.
 
   Analyze the following X-ray image:
   {{media url=image.url}}
 
-  1.  **Identify Findings:** Carefully examine the image for any potential abnormalities (e.g., cardiomegaly, lung opacities, fractures, pleural effusion). For each potential finding, provide a clear label, a confidence score (0.0 to 1.0), and a brief note.
-  2.  **Generate Recommendation:** Based on the most significant findings, provide a short, actionable recommendation (e.g., "Consult a radiologist for definitive interpretation," "Possible signs of pneumonia, refer to pulmonologist," "No significant abnormalities detected.").
-  3.  **Format Output:** Return the analysis in the specified JSON format with a status of "ok". If the image is not a valid X-ray or is unanalyzable, return a status of "error" with an appropriate message.
+  **Instructions:**
 
-  **Crucial Disclaimer:** Your analysis is for informational purposes only and is NOT a medical diagnosis. Always state that a qualified medical professional should be consulted.
+  1.  **Examine the Image:** Carefully examine the image for any potential abnormalities. Consider areas such as the heart shadow, lungs, bones, and soft tissues. Look for findings like cardiomegaly, lung opacities, nodules, fractures, pleural effusion, pneumothorax, or signs of arthritis.
+
+  2.  **Generate Findings:** For each potential finding, provide a clear label, a confidence score (from 0.0 to 1.0), and brief, objective notes. If no abnormalities are found, state that in the findings.
+
+  3.  **Formulate Impression:** Synthesize the most critical findings into a concise summary paragraph. This should read like a radiologist's impression. Example: "Lungs are clear. Heart size is upper limits of normal. No acute osseous abnormalities."
+
+  4.  **Generate Recommendation:** Based on the impression, provide a short, actionable recommendation (e.g., "Consult a radiologist for definitive interpretation," "Possible signs of pneumonia, refer to pulmonologist," "No significant acute abnormalities detected, routine follow-up suggested.").
+
+  5.  **Format Output:** Return the analysis in the specified JSON format with a status of "ok". If the image is not a valid X-ray or is unanalyzable, return a status of "error" with an appropriate message.
+
+  **Crucial Disclaimer:** Your analysis is for informational purposes only and is NOT a medical diagnosis. Always state that a qualified medical professional should be consulted. The final recommendation text must reinforce this.
   `,
 });
 
@@ -68,10 +79,10 @@ const analyzeXrayFlow = ai.defineFlow(
   async input => {
     try {
         const { output } = await prompt(input);
-        return output || { status: 'error', findings: [], recommendationText: '', error: 'Analysis failed to produce output.' };
+        return output || { status: 'error', report: { findings: [], impression: '' }, recommendationText: '', error: 'Analysis failed to produce output.' };
     } catch(e: any) {
         console.error("X-ray analysis flow error:", e);
-        return { status: 'error', findings: [], recommendationText: '', error: e.message || 'An unexpected error occurred during analysis.' };
+        return { status: 'error', report: { findings: [], impression: '' }, recommendationText: '', error: e.message || 'An unexpected error occurred during analysis.' };
     }
   }
 );

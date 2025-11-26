@@ -66,6 +66,7 @@ const labels = {
         takePicture: 'Take Picture',
         xrayStatusAnalyzing: 'AI is analyzing the X-ray...',
         findings: 'Findings',
+        impression: 'Impression',
         recommendation: 'Recommendation',
         consultDoctor: 'Consult a qualified doctor for confirmation.',
         labTitle: 'Lab Report Analyzer',
@@ -111,6 +112,7 @@ const labels = {
         takePicture: 'तस्वीर लो',
         xrayStatusAnalyzing: 'एआई एक्स-रे का विश्लेषण कर रहा है...',
         findings: 'निष्कर्ष',
+        impression: 'प्रभाव',
         recommendation: 'सिफारिश',
         consultDoctor: 'पुष्टि के लिए एक योग्य चिकित्सक से परामर्श करें।',
         labTitle: 'लैब रिपोर्ट विश्लेषक',
@@ -423,7 +425,7 @@ function XRayScanner({t}: {t: typeof labels.en}) {
       try {
         const doc = {
           createdAt: serverTimestamp(),
-          findings: state.result.findings || [],
+          report: state.result.report || {},
           recommendationText: state.result.recommendationText || '',
           fileName: selectedFile?.name || 'camera.jpg',
         };
@@ -485,7 +487,7 @@ function XRayScanner({t}: {t: typeof labels.en}) {
           )}
         </form>
       </CardContent>
-       <CardFooter className="flex-col items-start gap-2">
+       <CardFooter className="flex-col items-start gap-4">
           {isAnalyzing && (
             <div className="flex items-center gap-2 text-muted-foreground">
                 <Sparkles className="h-4 w-4 animate-pulse" />
@@ -493,18 +495,29 @@ function XRayScanner({t}: {t: typeof labels.en}) {
             </div>
           )}
           {state.result && !isAnalyzing && (
-              <div className="resultBox w-full">
-                  <h5 className="font-bold">{t.findings}</h5>
-                  <ul className="list-disc pl-5 mt-2 space-y-2 text-sm">
-                    {(state.result.findings || []).map((f: any, i: number) => (
-                      <li key={i}>
-                          <b>{escapeHtml(f.label)}</b> — Confidence: {Math.round((f.confidence||0)*100)}%
-                          <p className="text-xs text-muted-foreground">{escapeHtml(f.notes)}</p>
-                      </li>
-                    ))}
-                  </ul>
-                    <h5 className="font-bold mt-4">{t.recommendation}</h5>
+              <div className="resultBox w-full space-y-4">
+                  <div>
+                    <h5 className="font-bold text-lg border-b pb-1 mb-2">{t.findings}</h5>
+                    <ul className="list-disc pl-5 space-y-2 text-sm">
+                      {(state.result.report?.findings || []).map((f: any, i: number) => (
+                        <li key={i}>
+                            <b>{escapeHtml(f.label)}</b> — Confidence: {Math.round((f.confidence||0)*100)}%
+                            <p className="text-xs text-muted-foreground">{escapeHtml(f.notes)}</p>
+                        </li>
+                      ))}
+                      {state.result.report?.findings.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No specific abnormalities identified.</p>
+                      )}
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-lg border-b pb-1 mb-2">{t.impression}</h5>
+                    <p className="text-sm">{escapeHtml(state.result.report?.impression)}</p>
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-lg border-b pb-1 mb-2">{t.recommendation}</h5>
                     <p className="text-sm">{escapeHtml(state.result.recommendationText || t.consultDoctor)}</p>
+                  </div>
               </div>
           )}
             {state.error && !isAnalyzing && (
