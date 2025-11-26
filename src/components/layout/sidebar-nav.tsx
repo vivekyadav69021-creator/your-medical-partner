@@ -39,7 +39,6 @@ const navItems = [
   { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
   { href: '/nearby-hospital', label: 'Nearby Hospitals', icon: Hospital },
   { href: '/disease-library', label: 'Disease Library', icon: BookHeart },
-  { href: '/certificate-generator', label: 'Certificate Generator', icon: FileText },
 ];
 
 export function SidebarNav() {
