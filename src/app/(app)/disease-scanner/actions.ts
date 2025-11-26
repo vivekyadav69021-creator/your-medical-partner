@@ -1,57 +1,42 @@
 'use server';
 
-import { healthAssistant } from '@/ai/flows/health-assistant-flow';
+import { analyzeXray } from '@/ai/flows/xray-analyzer-flow';
 import { z } from 'zod';
 
-const diseaseScannerSchema = z.object({
-  description: z.string().optional(),
-  photoDataUri: z.string().optional(),
-  language: z.enum(['en', 'hi']).optional().default('en'),
+const xrayScannerSchema = z.object({
+  photoDataUri: z.string().min(1, 'Please upload an image to be scanned.'),
 });
 
-export async function diseaseScannerAction(
+export async function analyzeXrayAction(
   prevState: any,
   formData: FormData
 ) {
-  const validatedFields = diseaseScannerSchema.safeParse({
-    description: formData.get('description') || 'Analyze the attached image.',
-    photoDataUri: formData.get('photoDataUri') || undefined,
-    language: formData.get('language') || 'en',
+  const validatedFields = xrayScannerSchema.safeParse({
+    photoDataUri: formData.get('photoDataUri'),
   });
 
   if (!validatedFields.success) {
     return {
-      response: null,
+      result: null,
       error:
-        validatedFields.error.flatten().fieldErrors.description?.[0] ??
+        validatedFields.error.flatten().fieldErrors.photoDataUri?.[0] ??
         'Invalid input.',
     };
   }
   
-  if (!validatedFields.data.photoDataUri) {
-    return {
-      response: null,
-      error: 'Please upload an image to be scanned.',
-    };
-  }
-
-  // Use a default query if the description is empty
-  const query = validatedFields.data.description || 'Analyze the attached image.';
-
   try {
-    const result = await healthAssistant({
-        query: query,
-        photoDataUri: validatedFields.data.photoDataUri,
-        language: validatedFields.data.language,
-    });
+    const result = await analyzeXray(validatedFields.data);
+    if (result.status === 'error') {
+        return { result: null, error: result.error || 'Analysis failed.' };
+    }
     return {
-      response: result.response,
+      result: result,
       error: null,
     };
   } catch (e: any) {
     console.error(e);
     return {
-      response: null,
+      result: null,
       error: e.message || 'The AI model could not be reached. Please try again later.',
     };
   }
