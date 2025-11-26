@@ -39,6 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 const indianDoctors = [
+  { name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-1' },
   { name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1' },
   { name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2' },
   { name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3' },
