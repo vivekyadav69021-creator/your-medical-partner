@@ -39,7 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 const indianDoctors = [
-  { name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-1' },
+  { name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2' },
   { name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1' },
   { name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2' },
   { name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3' },
@@ -251,6 +251,9 @@ export default function ConsultationPage() {
                 {appointments.length > 0 ? (
                     appointments.map((appt) => {
                         const image = PlaceHolderImages.find(img => img.id === appt.imageId);
+                        const isDrShivam = appt.doctorName === 'Dr. Shivam Yadav';
+                        const videoCallLink = isDrShivam ? "https://meet.jit.si/DrShivamConsultRoom" : `/video-call/${appt.id}?doctor=${encodeURIComponent(appt.doctorName)}`;
+                        
                         return (
                             <Card key={appt.id}>
                                 <CardHeader className="flex-row gap-4 items-center">
@@ -275,7 +278,7 @@ export default function ConsultationPage() {
                                     <Button variant="outline">Reschedule</Button>
                                     {appt.type === 'Video Call' && (
                                          <Button asChild>
-                                            <Link href={`/video-call/${appt.id}?doctor=${encodeURIComponent(appt.doctorName)}`}>
+                                            <Link href={videoCallLink} target={isDrShivam ? "_blank" : "_self"} rel={isDrShivam ? "noopener noreferrer" : ""}>
                                                 <Video className="mr-2 h-4 w-4"/>
                                                 Join Video Call
                                             </Link>
