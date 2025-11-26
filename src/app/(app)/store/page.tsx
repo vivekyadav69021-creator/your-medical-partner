@@ -144,14 +144,17 @@ const PrescriptionAnalyzer = () => {
                         <h3 className="font-semibold text-lg mb-2">Suggested Kit from Your Prescription:</h3>
                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {matchedMedicines.map(med => (
-                                <Card key={med.id}>
-                                    <CardContent className="p-3 text-center space-y-2">
-                                        <Image src={PlaceHolderImages.find(p => p.id === med.id)?.imageUrl || ''} alt={med.name} width={100} height={100} className="mx-auto rounded-md" data-ai-hint={PlaceHolderImages.find(p => p.id === med.id)?.imageHint || ''} />
-                                        <p className="font-semibold text-sm line-clamp-2">{med.name}</p>
-                                        <p className="font-bold text-sm">{med.price}</p>
-                                        <Button size="sm" asChild className="w-full">
-                                            <Link href={`/store/${med.id}`}>View</Link>
-                                        </Button>
+                                <Card key={med.id} className="flex flex-col">
+                                    <CardContent className="p-3 flex-1 flex flex-col">
+                                        <Image src={PlaceHolderImages.find(p => p.id === med.id)?.imageUrl || ''} alt={med.name} width={150} height={150} className="w-full rounded-md aspect-square object-cover" data-ai-hint={PlaceHolderImages.find(p => p.id === med.id)?.imageHint || ''} />
+                                        <p className="font-semibold text-sm line-clamp-2 mt-2">{med.name}</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-2">{med.description}</p>
+                                        <div className="mt-auto pt-2 flex items-center justify-between">
+                                            <p className="font-bold text-sm">{med.price}</p>
+                                            <Button size="sm" asChild variant="secondary">
+                                                <Link href={`/store/${med.id}`}>View</Link>
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             ))}
