@@ -18,6 +18,7 @@ import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, 
 import { analyzeXrayAction } from './actions';
 import { healthAssistantAction } from '../health-assistant/actions';
 import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
