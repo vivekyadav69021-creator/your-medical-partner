@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -24,7 +23,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReactMarkdown from 'react-markdown';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const initialXrayState = {
   result: null,
@@ -36,10 +35,99 @@ const initialDiseaseState = {
     error: null,
 }
 
+const labels = {
+    en: {
+        title: 'Disease Scanner',
+        description: 'AI-powered analysis for images and lab reports.',
+        disclaimerTitle: 'Disclaimer',
+        disclaimerText: 'The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.',
+        tabImage: 'Disease Image Scanner',
+        tabXray: 'X-ray Scanner',
+        tabLab: 'Lab Report Analyzer',
+        imageTitle: 'Disease Image Scanner',
+        imageDesc: 'Upload a photo of a visible symptom (like a skin rash) for a preliminary analysis by the Health Assistant AI.',
+        uploadLabel: 'Upload Image',
+        openCamera: 'Open Camera',
+        analyzeImage: 'Analyze Image',
+        analyzing: 'Analyzing...',
+        clear: 'Clear',
+        analysisFailed: 'Analysis Failed',
+        diseaseQuery: 'Analyze this image of a health concern.',
+        xrayTitle: 'X-ray / Radiology Scanner',
+        xrayDesc: 'Upload chest/limb X-ray for analysis by an AI model. This tool is specialized for radiology images.',
+        uploadXray: 'Upload X-Ray Image',
+        analyzeXray: 'Analyze X-ray',
+        takePicture: 'Take Picture',
+        xrayStatusAnalyzing: 'AI is analyzing the X-ray...',
+        findings: 'Findings',
+        recommendation: 'Recommendation',
+        consultDoctor: 'Consult a qualified doctor for confirmation.',
+        labTitle: 'Lab Report Analyzer',
+        labDesc: 'Get a quick interpretation of common lab test values. This is for educational purposes only.',
+        labAnalyzeBtn: 'Analyze Labs',
+        labSaveBtn: 'Save Report',
+        labSaving: 'Saving...',
+        labSaved: 'Saved ✓',
+        labFailed: 'Save failed.',
+        labNoAuth: 'Please sign in to save the report.',
+        labNoReport: 'Please analyze the lab values first.',
+        interpretation: 'Interpretation',
+        fbs: 'Fasting Glucose (mg/dL)',
+        hba1c: 'HbA1c (%)',
+        chol: 'Total Cholesterol (mg/dL)',
+        ldl: 'LDL (mg/dL)',
+        hdl: 'HDL (mg/dL)',
+        tg: 'Triglycerides (mg/dL)',
+    },
+    hi: {
+        title: 'रोग स्कैनर',
+        description: 'छवियों और लैब रिपोर्ट के लिए एआई-संचालित विश्लेषण।',
+        disclaimerTitle: 'अस्वीकरण',
+        disclaimerText: 'यह विश्लेषण केवल जानकारी के लिए है और यह चिकित्सा निदान नहीं है। निश्चित व्याख्या के लिए हमेशा एक योग्य डॉक्टर/रेडियोलॉजिस्ट से परामर्श करें।',
+        tabImage: 'रोग छवि स्कैनर',
+        tabXray: 'एक्स-रे स्कैनर',
+        tabLab: 'लैब रिपोर्ट विश्लेषक',
+        imageTitle: 'रोग छवि स्कैनर',
+        imageDesc: 'स्वास्थ्य सहायक एआई द्वारा प्रारंभिक विश्लेषण के लिए एक दृश्य लक्षण (जैसे त्वचा पर लाल चकत्ते) की एक तस्वीर अपलोड करें।',
+        uploadLabel: 'छवि अपलोड करें',
+        openCamera: 'कैमरा खोलें',
+        analyzeImage: 'छवि का विश्लेषण करें',
+        analyzing: 'विश्लेषण हो रहा है...',
+        clear: 'साफ़ करें',
+        analysisFailed: 'विश्लेषण विफल',
+        diseaseQuery: 'स्वास्थ्य संबंधी चिंता की इस छवि का विश्लेषण करें।',
+        xrayTitle: 'एक्स-रे / रेडियोलॉजी स्कैनर',
+        xrayDesc: 'एक एआई मॉडल द्वारा विश्लेषण के लिए छाती/अंग एक्स-रे अपलोड करें। यह उपकरण रेडियोलॉजी छवियों के लिए विशिष्ट है।',
+        uploadXray: 'एक्स-रे छवि अपलोड करें',
+        analyzeXray: 'एक्स-रे का विश्लेषण करें',
+        takePicture: 'तस्वीर लो',
+        xrayStatusAnalyzing: 'एआई एक्स-रे का विश्लेषण कर रहा है...',
+        findings: 'निष्कर्ष',
+        recommendation: 'सिफारिश',
+        consultDoctor: 'पुष्टि के लिए एक योग्य चिकित्सक से परामर्श करें।',
+        labTitle: 'लैब रिपोर्ट विश्लेषक',
+        labDesc: 'सामान्य लैब परीक्षण मूल्यों की त्वरित व्याख्या प्राप्त करें। यह केवल शैक्षिक उद्देश्यों के लिए है।',
+        labAnalyzeBtn: 'लैब का विश्लेषण करें',
+        labSaveBtn: 'रिपोर्ट सहेजें',
+        labSaving: 'सहेज रहा है...',
+        labSaved: 'सहेजा गया ✓',
+        labFailed: 'सहेजने में विफल।',
+        labNoAuth: 'रिपोर्ट सहेजने के लिए कृपया साइन इन करें।',
+        labNoReport: 'कृपया पहले लैब मानों का विश्लेषण करें।',
+        interpretation: 'व्याख्या',
+        fbs: 'उपवास ग्लूकोज (mg/dL)',
+        hba1c: 'एचबीए1सी (%)',
+        chol: 'कुल कोलेस्ट्रॉल (mg/dL)',
+        ldl: 'एलडीएल (mg/dL)',
+        hdl: 'एचडीएल (mg/dL)',
+        tg: 'ट्राइग्लिसराइड्स (mg/dL)',
+    }
+};
+
 function escapeHtml(s: string | undefined | null){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[String(c)] as string)); }
 
 // Column 1: Disease Image Scanner
-function DiseaseImageScanner() {
+function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en}) {
     const [state, formAction, isAnalyzing] = useActionState(healthAssistantAction, initialDiseaseState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,7 +220,8 @@ function DiseaseImageScanner() {
     const handleFormAction = (formData: FormData) => {
         if (preview) {
             formData.set('photoDataUri', preview);
-            formData.set('query', 'Analyze this image of a health concern.');
+            formData.set('query', t.diseaseQuery);
+            formData.set('language', lang);
             formAction(formData);
         }
     }
@@ -141,28 +230,28 @@ function DiseaseImageScanner() {
         <Card>
             <canvas ref={canvasRef} className="hidden"></canvas>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><ImageIcon/>Disease Image Scanner</CardTitle>
-                <CardDescription>Upload a photo of a visible symptom (like a skin rash) for a preliminary analysis by the Health Assistant AI.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><ImageIcon/>{t.imageTitle}</CardTitle>
+                <CardDescription>{t.imageDesc}</CardDescription>
             </CardHeader>
             <CardContent>
                 <form ref={formRef} action={handleFormAction} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="disease-file-input">Upload Image</Label>
+                        <Label htmlFor="disease-file-input">{t.uploadLabel}</Label>
                         <Input id="disease-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
                     </div>
                      <div className="flex gap-2 mt-2">
-                        <Button type="button" variant="secondary" onClick={() => openCamera(facingMode)}><Camera className="mr-2"/>Open Camera</Button>
+                        <Button type="button" variant="secondary" onClick={() => openCamera(facingMode)}><Camera className="mr-2"/>{t.openCamera}</Button>
                         <Button type="submit" disabled={!preview || isAnalyzing}>
-                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Analyzing...</>) : 'Analyze Image'}
+                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>) : t.analyzeImage}
                         </Button>
-                        <Button type="button" variant="outline" onClick={handleClear}>Clear</Button>
+                        <Button type="button" variant="outline" onClick={handleClear}>{t.clear}</Button>
                     </div>
 
                     {isCameraOpen && (
                         <div className="relative mt-2">
                             <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
                             <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
-                                <Button type="button" onClick={takePicture}>Take Picture</Button>
+                                <Button type="button" onClick={takePicture}>{t.takePicture}</Button>
                                 <Button type="button" variant="outline" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')}>
                                     <SwitchCamera />
                                 </Button>
@@ -182,7 +271,7 @@ function DiseaseImageScanner() {
                 {isAnalyzing && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Sparkles className="h-4 w-4 animate-pulse" />
-                        <span>AI is analyzing the image...</span>
+                        <span>{t.analyzing}</span>
                     </div>
                 )}
                 {state.response && (
@@ -193,7 +282,7 @@ function DiseaseImageScanner() {
                  {state.error && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Analysis Failed</AlertTitle>
+                        <AlertTitle>{t.analysisFailed}</AlertTitle>
                         <AlertDescription>{state.error}</AlertDescription>
                     </Alert>
                 )}
@@ -204,7 +293,7 @@ function DiseaseImageScanner() {
 
 
 // Column 2: X-Ray Scanner
-function XRayScanner() {
+function XRayScanner({t}: {t: typeof labels.en}) {
   const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -314,7 +403,7 @@ function XRayScanner() {
         formData.append('contentType', selectedFile.type);
         formAction(formData);
     } else {
-        toast({ variant: 'destructive', title: "Analysis Failed", description: "Please upload an image to be scanned." });
+        toast({ variant: 'destructive', title: t.analysisFailed, description: t.uploadLabel });
         return;
     }
   };
@@ -341,36 +430,36 @@ function XRayScanner() {
     <Card>
       <canvas ref={canvasRef} className="hidden"></canvas>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Hospital />X-ray / Radiology Scanner</CardTitle>
-        <CardDescription>Upload chest/limb X-ray for analysis by an AI model. This tool is specialized for radiology images.</CardDescription>
+        <CardTitle className="flex items-center gap-2"><Hospital />{t.xrayTitle}</CardTitle>
+        <CardDescription>{t.xrayDesc}</CardDescription>
       </CardHeader>
       <CardContent>
         <form ref={formRef} action={handleFormAction} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="xray-file-input">Upload X-Ray Image</Label>
+            <Label htmlFor="xray-file-input">{t.uploadXray}</Label>
             <Input id="xray-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*"/>
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={() => openCamera()}><Camera className="mr-2"/>Open Camera</Button>
+            <Button type="button" variant="secondary" onClick={() => openCamera()}><Camera className="mr-2"/>{t.openCamera}</Button>
             <Button type="submit" disabled={isAnalyzing || !selectedFile}>
               {isAnalyzing ? (
                 <>
                   <Sparkles className="mr-2 h-4 w-4 animate-pulse" />
-                  Analyzing...
+                  {t.analyzing}
                 </>
               ) : (
                 <>
-                  <Scan className="mr-2"/>Analyze X-ray
+                  <Scan className="mr-2"/>{t.analyzeXray}
                 </>
               )}
             </Button>
-             <Button type="button" variant="outline" onClick={handleClear}>Clear</Button>
+             <Button type="button" variant="outline" onClick={handleClear}>{t.clear}</Button>
           </div>
             {isCameraOpen && (
               <div className="relative mt-2">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
                 <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
-                    <Button type="button" onClick={takePicture}>Take Picture</Button>
+                    <Button type="button" onClick={takePicture}>{t.takePicture}</Button>
                     <Button type="button" variant="outline" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')}>
                         <SwitchCamera />
                     </Button>
@@ -390,12 +479,12 @@ function XRayScanner() {
           {isAnalyzing && (
             <div className="flex items-center gap-2 text-muted-foreground">
                 <Sparkles className="h-4 w-4 animate-pulse" />
-                <span>AI is analyzing the X-ray...</span>
+                <span>{t.xrayStatusAnalyzing}</span>
             </div>
           )}
           {state.result && !isAnalyzing && (
               <div className="resultBox w-full">
-                  <h5 className="font-bold">Findings</h5>
+                  <h5 className="font-bold">{t.findings}</h5>
                   <ul className="list-disc pl-5 mt-2 space-y-2 text-sm">
                     {(state.result.findings || []).map((f: any, i: number) => (
                       <li key={i}>
@@ -404,14 +493,14 @@ function XRayScanner() {
                       </li>
                     ))}
                   </ul>
-                    <h5 className="font-bold mt-4">Recommendation</h5>
-                    <p className="text-sm">{escapeHtml(state.result.recommendationText || 'Consult a qualified doctor for confirmation.')}</p>
+                    <h5 className="font-bold mt-4">{t.recommendation}</h5>
+                    <p className="text-sm">{escapeHtml(state.result.recommendationText || t.consultDoctor)}</p>
               </div>
           )}
             {state.error && !isAnalyzing && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Analysis Failed</AlertTitle>
+                <AlertTitle>{t.analysisFailed}</AlertTitle>
                 <AlertDescription>{state.error}</AlertDescription>
               </Alert>
             )}
@@ -421,7 +510,7 @@ function XRayScanner() {
 }
 
 // Column 3: Lab Report Analyzer
-function LabReportAnalyzer() {
+function LabReportAnalyzer({t}: {t: typeof labels.en}) {
     const [labResult, setLabResult] = useState<any>(null);
     const [labStatus, setLabStatus] = useState('');
     const { user } = useUser();
@@ -484,22 +573,22 @@ function LabReportAnalyzer() {
     
     const saveReport = async () => {
         if (!labResult) {
-            toast({ variant: 'destructive', title: 'No Report', description: 'Please analyze the lab values first.'});
+            toast({ variant: 'destructive', title: 'No Report', description: t.labNoReport});
             return;
         }
         if (!user || !firestore) {
-            toast({ variant: 'destructive', title: 'Authentication Error', description: 'Please sign in to save the report.'});
+            toast({ variant: 'destructive', title: 'Authentication Error', description: t.labNoAuth });
             return;
         }
-        setLabStatus('Saving...');
+        setLabStatus(t.labSaving);
         try {
             const reportsCol = collection(firestore, 'users', user.uid, 'labReports');
             await addDoc(reportsCol, { ...labResult, savedAt: serverTimestamp() });
-            setLabStatus('Saved ✓');
+            setLabStatus(t.labSaved);
             toast({ title: 'Report Saved', description: 'Your lab report interpretation has been saved.'});
         } catch (error) {
             console.error(error);
-            setLabStatus('Save failed.');
+            setLabStatus(t.labFailed);
             toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your report.'});
         }
     }
@@ -507,33 +596,33 @@ function LabReportAnalyzer() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><FileText />Lab Report Analyzer</CardTitle>
-                <CardDescription>Get a quick interpretation of common lab test values. This is for educational purposes only.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><FileText />{t.labTitle}</CardTitle>
+                <CardDescription>{t.labDesc}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label htmlFor="fbs">Fasting Glucose (mg/dL)</Label><Input id="fbs" type="number" ref={inputs.fbs} /></div>
-                    <div className="space-y-1"><Label htmlFor="hbA1c">HbA1c (%)</Label><Input id="hbA1c" type="number" step="0.1" ref={inputs.hbA1c} /></div>
-                    <div className="space-y-1"><Label htmlFor="chol">Total Cholesterol (mg/dL)</Label><Input id="chol" type="number" ref={inputs.chol} /></div>
-                    <div className="space-y-1"><Label htmlFor="ldl">LDL (mg/dL)</Label><Input id="ldl" type="number" ref={inputs.ldl} /></div>
-                    <div className="space-y-1"><Label htmlFor="hdl">HDL (mg/dL)</Label><Input id="hdl" type="number" ref={inputs.hdl} /></div>
-                    <div className="space-y-1"><Label htmlFor="tg">Triglycerides (mg/dL)</Label><Input id="tg" type="number" ref={inputs.tg} /></div>
+                    <div className="space-y-1"><Label htmlFor="fbs">{t.fbs}</Label><Input id="fbs" type="number" ref={inputs.fbs} /></div>
+                    <div className="space-y-1"><Label htmlFor="hbA1c">{t.hba1c}</Label><Input id="hbA1c" type="number" step="0.1" ref={inputs.hbA1c} /></div>
+                    <div className="space-y-1"><Label htmlFor="chol">{t.chol}</Label><Input id="chol" type="number" ref={inputs.chol} /></div>
+                    <div className="space-y-1"><Label htmlFor="ldl">{t.ldl}</Label><Input id="ldl" type="number" ref={inputs.ldl} /></div>
+                    <div className="space-y-1"><Label htmlFor="hdl">{t.hdl}</Label><Input id="hdl" type="number" ref={inputs.hdl} /></div>
+                    <div className="space-y-1"><Label htmlFor="tg">{t.tg}</Label><Input id="tg" type="number" ref={inputs.tg} /></div>
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
                  <div className="flex items-center gap-4">
-                    <Button onClick={analyzeLabs}>Analyze Labs</Button>
-                    <Button onClick={saveReport} variant="secondary"><Sparkles className="mr-2 h-4 w-4" />Save Report</Button>
+                    <Button onClick={analyzeLabs}>{t.labAnalyzeBtn}</Button>
+                    <Button onClick={saveReport} variant="secondary"><Sparkles className="mr-2 h-4 w-4" />{t.labSaveBtn}</Button>
                  </div>
                  {labResult && (
                     <div className="resultBox w-full">
-                        <h4 className="font-semibold">Interpretation — {new Date(labResult.timestamp).toLocaleString()}</h4>
+                        <h4 className="font-semibold">{t.interpretation} — {new Date(labResult.timestamp).toLocaleString()}</h4>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
                             {labResult.interpretations.map((i: any, idx: number) => (
                                 <li key={idx}><b>{i.test}</b>: {i.value} — <i>{i.note}</i></li>
                             ))}
                         </ul>
-                        <p className="font-semibold mt-4">Recommendation:</p>
+                        <p className="font-semibold mt-4">{t.recommendation}:</p>
                         <p className="text-sm">{labResult.recommendation}</p>
                     </div>
                 )}
@@ -544,41 +633,52 @@ function LabReportAnalyzer() {
 }
 
 export default function DiseaseScannerPage() {
+    const [lang, setLang] = useState<'en' | 'hi'>('en');
+    const t = labels[lang];
     return (
     <div className="space-y-8">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Disease Scanner</h1>
-            <p className="text-muted-foreground">AI-powered analysis for images and lab reports.</p>
+        <div className="flex justify-between items-center">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight font-headline">{t.title}</h1>
+                <p className="text-muted-foreground">{t.description}</p>
+            </div>
+            <div className="flex items-center gap-2">
+                <Label htmlFor="lang-select">Language</Label>
+                <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
+                    <SelectTrigger id="lang-select" className="w-[120px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="hi">हिन्दी</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Disclaimer</AlertTitle>
+          <AlertTitle>{t.disclaimerTitle}</AlertTitle>
           <AlertDescription>
-            The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.
+            {t.disclaimerText}
           </AlertDescription>
         </Alert>
         
         <Tabs defaultValue="image-scanner">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="image-scanner">Disease Image Scanner</TabsTrigger>
-                <TabsTrigger value="xray-scanner">X-ray Scanner</TabsTrigger>
-                <TabsTrigger value="lab-scanner">Lab Report Analyzer</TabsTrigger>
+                <TabsTrigger value="image-scanner">{t.tabImage}</TabsTrigger>
+                <TabsTrigger value="xray-scanner">{t.tabXray}</TabsTrigger>
+                <TabsTrigger value="lab-scanner">{t.tabLab}</TabsTrigger>
             </TabsList>
             <TabsContent value="image-scanner" className="mt-6">
-                <DiseaseImageScanner />
+                <DiseaseImageScanner lang={lang} t={t} />
             </TabsContent>
             <TabsContent value="xray-scanner" className="mt-6">
-                <XRayScanner />
+                <XRayScanner t={t} />
             </TabsContent>
             <TabsContent value="lab-scanner" className="mt-6">
-                <LabReportAnalyzer />
+                <LabReportAnalyzer t={t} />
             </TabsContent>
         </Tabs>
     </div>
   );
 }
-
-
-    
-
-    

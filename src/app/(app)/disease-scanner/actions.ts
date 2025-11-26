@@ -1,3 +1,4 @@
+
 'use server';
 
 import { analyzeXray, AnalyzeXrayInput } from '@/ai/flows/xray-analyzer-flow';
@@ -55,6 +56,7 @@ export async function analyzeXrayAction(
 const healthAssistantSchema = z.object({
   query: z.string().min(3, 'Please ask a more detailed question.'),
   photoDataUri: z.string().optional(),
+  language: z.enum(['en', 'hi']).optional(),
 });
 
 export async function healthAssistantAction(
@@ -64,6 +66,7 @@ export async function healthAssistantAction(
   const validatedFields = healthAssistantSchema.safeParse({
     query: formData.get('query'),
     photoDataUri: formData.get('photoDataUri') || undefined,
+    language: formData.get('language') || 'en',
   });
 
   if (!validatedFields.success) {
