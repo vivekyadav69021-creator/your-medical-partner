@@ -74,6 +74,7 @@ export default function RootLayout({
             overflow: hidden;
             z-index: 999999999 !important;
             pointer-events: auto;
+            color: #333;
           }
           #YMP_HEADER {
             padding: 12px;
@@ -88,29 +89,12 @@ export default function RootLayout({
             overflow-y: auto;
             padding: 10px;
           }
-          #YMP_MSG_USER {
-            text-align: right;
-          }
-          .ymp-msg {
-            margin: 6px 0;
-            padding: 8px 10px;
-            border-radius: 10px;
-            max-width: 90%;
-            color: #333;
-          }
-          .ymp-user {
-            background: #dff3ff;
-            margin-left: auto;
-          }
-          .ymp-bot {
-            background: #f1f5f9;
-          }
           #YMP_FOOTER {
             padding: 10px;
             border-top: 1px solid #e2e8f0;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
           }
           #YMP_INPUT {
             flex: 1;
@@ -126,7 +110,7 @@ export default function RootLayout({
             color: white;
             cursor: pointer;
           }
-          .voiceWidget {
+           .voiceWidget {
             display: flex;
             gap: 8px;
             align-items: center;
@@ -139,6 +123,19 @@ export default function RootLayout({
             background: #1398d8;
             color: #fff;
           }
+          .ymp-msg {
+            margin: 6px 0;
+            padding: 8px 10px;
+            border-radius: 10px;
+            max-width: 90%;
+          }
+          .ymp-user {
+            background: #dff3ff;
+            margin-left: auto;
+          }
+          .ymp-bot {
+            background: #f1f5f9;
+          }
         `}} />
 
         <div id="YMP_FLOAT_ROOT">
@@ -146,125 +143,165 @@ export default function RootLayout({
           <div id="YMP_PANEL">
             <div id="YMP_HEADER">
               <strong>Your Medical Partner</strong>
-              <button id="YMP_CLOSE" style={{ background:'none', border:'none', fontSize:'18px', cursor:'pointer' }}>✖</button>
+               <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+                <button id="YMP_CLOSE" style={{background:'transparent', border:'0', color:'#555', fontSize:'18px', cursor:'pointer'}}>✕</button>
+              </div>
             </div>
             <div id="YMP_BODY"></div>
             <div id="YMP_FOOTER">
                <div className="voiceWidget">
                 <button id="speakBtn" className="assistBtn" title="Speak assistant's reply">🔊</button>
                 <button id="stopSpeechBtn" className="assistBtn" title="Stop speaking">■</button>
-                <select id="assistantLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
+                <select id="assistantLang" style={{borderRadius: 8, padding: 6, border:'1px solid #ddd', color: '#333', background: '#fff' }}>
                   <option value="en-IN">EN</option>
                   <option value="hi-IN">HI</option>
                 </select>
                 <button id="micBtn" className="assistBtn" title="Start microphone">🎤</button>
-                <span id="micStatus" style={{ fontSize: '12px', color: '#555', flex: 1 }}></span>
+                <span id="micStatus" style={{fontSize:'12px', color: '#555', flex: 1}}></span>
               </div>
-              <div style={{ display:'flex', gap: '8px' }}>
-                <input id="YMP_INPUT" placeholder="Ask about app features…" />
-                <button id="YMP_SEND">Ask</button>
+              <div style={{display:'flex', gap: '8px'}}>
+                <input id="YMP_INPUT" placeholder="Ask about any feature..." style={{flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1'}} />
+                <button id="YMP_SEND" className="assistBtn">Ask</button>
               </div>
             </div>
           </div>
         </div>
 
         <script dangerouslySetInnerHTML={{ __html: `
-          const bubble = document.getElementById("YMP_BUBBLE");
-          const panel = document.getElementById("YMP_PANEL");
-          const closeBtn = document.getElementById("YMP_CLOSE");
-          const input = document.getElementById("YMP_INPUT");
-          const send = document.getElementById("YMP_SEND");
-          const body = document.getElementById("YMP_BODY");
-          const speakBtn = document.getElementById('speakBtn');
-          const stopSpeechBtn = document.getElementById('stopSpeechBtn');
-          const micBtn = document.getElementById('micBtn');
-          const langSel = document.getElementById('assistantLang');
-          const micStatus = document.getElementById('micStatus');
-          
-          bubble.onclick = () => { panel.style.display = "flex"; };
-          closeBtn.onclick = () => { panel.style.display = "none"; };
+              (async function() {
+                // --- DOM References ---
+                const bubble = document.getElementById('YMP_BUBBLE');
+                const panel = document.getElementById('YMP_PANEL');
+                const closeBtn = document.getElementById('YMP_CLOSE');
+                const bodyEl = document.getElementById('YMP_BODY');
+                const inputEl = document.getElementById('YMP_INPUT');
+                const sendBtn = document.getElementById('YMP_SEND');
+                const langSel = document.getElementById('assistantLang');
+                const speakBtn = document.getElementById('speakBtn');
+                const stopSpeechBtn = document.getElementById('stopSpeechBtn');
+                const micBtn = document.getElementById('micBtn');
+                const micStatus = document.getElementById('micStatus');
 
-          function addMsg(text, sender = "bot") {
-            const div = document.createElement("div");
-            div.className = "ymp-msg " + (sender === "user" ? "ymp-user" : "ymp-bot");
-            div.innerText = text;
-            body.appendChild(div);
-            body.scrollTop = body.scrollHeight;
-          }
+                if (!bubble || !panel || !closeBtn || !bodyEl || !inputEl || !sendBtn) {
+                    console.error("YMP Assistant: One or more UI elements not found.");
+                    return;
+                }
 
-          function handleSend() {
-            const q = input.value.trim();
-            if (!q) return;
-            addMsg(q, "user");
-            input.value = "";
-            const answers = {
-              "doctor": "To book doctor, go to Doctor Consult → Select doctor → Choose date/time → Confirm.",
-              "disease": "Disease Scanner analyzes images, X-ray, reports → Open Disease Scanner from dashboard.",
-              "planner": "Your health planner creates weekly diet + workout plan → Open My Planner.",
-              "hospital": "Nearby Hospital finds hospitals around you via GPS.",
-            };
-            let reply = null;
-            for (const key in answers) {
-              if (q.toLowerCase().includes(key)) reply = answers[key];
-            }
-            if (!reply) reply = "I understand your question 👍. Tap the feature tile on Dashboard to open it.";
-            addMsg(reply, "bot");
-          }
+                // --- State ---
+                let chatHistory = JSON.parse(sessionStorage.getItem('ymp_feature_chat_v1') || '[]');
+                const synth = window.speechSynthesis;
+                let recognition;
 
-          send.onclick = () => handleSend();
-          input.addEventListener("keydown", (e) => e.key === "Enter" && handleSend());
+                // --- Helper Functions ---
+                function navigateTo(path) {
+                  if (path) window.location.href = path.startsWith('/') ? path : '/' + path;
+                }
+                function sanitize(s) { return String(s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c])); }
 
-          // --- TTS ---
-          const synth = window.speechSynthesis;
-          speakBtn.onclick = () => {
-            const botMessages = Array.from(body.querySelectorAll('.ymp-bot'));
-            if (botMessages.length === 0) return;
-            const lastMsg = botMessages[botMessages.length - 1].innerText;
-            if (!lastMsg) return;
-            
-            synth.cancel();
-            const utter = new SpeechSynthesisUtterance(lastMsg);
-            utter.lang = langSel.value || 'en-IN';
-            synth.speak(utter);
-          };
-          stopSpeechBtn.onclick = () => synth.cancel();
+                // --- Chat Rendering ---
+                function renderHistory() {
+                  if (!bodyEl) return;
+                  bodyEl.innerHTML = '';
+                  chatHistory.slice(-30).forEach(msg => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'ymp-msg ' + (msg.role === "user" ? "ymp-user" : "ymp-bot");
+                    wrap.innerHTML = sanitize(msg.text).replace(/\\n/g, '<br>');
+                    
+                    if (msg.meta?.path) {
+                      const btn = document.createElement('button');
+                      btn.className = 'sendToPageBtn';
+                      btn.textContent = (langSel.value === 'hi') ? 'पेज खोलें' : 'Open Page';
+                      btn.onclick = () => navigateTo(msg.meta.path);
+                       btn.style.display = 'block';
+                       btn.style.marginTop = '8px';
+                      wrap.appendChild(btn);
+                    }
+                    bodyEl.appendChild(wrap);
+                  });
+                  bodyEl.scrollTop = bodyEl.scrollHeight;
+                }
+                
+                function appendMessage(role, text, meta) {
+                    chatHistory.push({ role, text, meta, ts: Date.now() });
+                    sessionStorage.setItem('amp_feature_chat_v1', JSON.stringify(chatHistory));
+                    renderHistory();
+                }
 
-          // --- STT ---
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (SpeechRecognition) {
-            let recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            
-            micBtn.onclick = () => {
-              recognition.lang = langSel.value || 'en-IN';
-              recognition.start();
-            };
+                // --- Core Logic ---
+                async function onAsk() {
+                  const query = inputEl.value.trim();
+                  if (!query) return;
 
-            recognition.onstart = () => {
-              micStatus.innerText = 'Listening...';
-              micBtn.style.background = '#ff6b6b';
-            };
+                  appendMessage('user', query);
+                  inputEl.value = '';
 
-            recognition.onend = () => {
-              micStatus.innerText = '';
-              micBtn.style.background = '#1398d8';
-            };
+                  const lang = langSel.value;
+                  const response = await window.featureAssistant({ query, language: lang });
 
-            recognition.onresult = (event) => {
-              const transcript = event.results[0][0].transcript;
-              input.value = transcript;
-              handleSend();
-            };
+                  appendMessage('assistant', response.answer, response);
+                }
 
-            recognition.onerror = (event) => {
-              micStatus.innerText = 'Error: ' + event.error;
-            };
+                // --- Text-to-Speech (TTS) ---
+                function getBestVoice(lang) {
+                    if (!synth) return null;
+                    const voices = synth.getVoices();
+                    return voices.find(v => v.lang.startsWith(lang)) || voices.find(v => v.lang.startsWith('en'));
+                }
 
-          } else {
-            micBtn.disabled = true;
-            micStatus.innerText = 'STT not supported';
-          }
+                if (speakBtn) speakBtn.onclick = () => {
+                    const lastAssistMsg = [...chatHistory].reverse().find(m => m.role === 'assistant');
+                    if (!lastAssistMsg || !lastAssistMsg.text) return;
+                    synth.cancel();
+                    const utter = new SpeechSynthesisUtterance(lastAssistMsg.text);
+                    utter.lang = langSel.value === 'hi' ? 'hi-IN' : 'en-IN';
+                    const voice = getBestVoice(utter.lang);
+                    if (voice) utter.voice = voice;
+                    synth.speak(utter);
+                };
 
+                if (stopSpeechBtn) stopSpeechBtn.onclick = () => synth.cancel();
+
+                // --- Speech-to-Text (STT) ---
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition && micBtn) {
+                    let recognizing = false;
+                    micBtn.onclick = () => {
+                        if (recognizing) {
+                            recognition.stop();
+                            return;
+                        }
+                        recognition = new SpeechRecognition();
+                        recognition.lang = langSel.value === 'hi' ? 'hi-IN' : 'en-IN';
+                        recognition.onstart = () => { recognizing = true; if(micStatus) micStatus.textContent = 'Listening...'; micBtn.style.background = '#ff6b6b'; };
+                        recognition.onend = () => { recognizing = false; if(micStatus) micStatus.textContent = ''; micBtn.style.background = '#2b9edb'; };
+                        recognition.onresult = (event) => {
+                            inputEl.value = event.results[0][0].transcript;
+                            onAsk();
+                        };
+                        recognition.start();
+                    };
+                } else if(micBtn) {
+                    micBtn.disabled = true;
+                    if(micStatus) micStatus.textContent = 'Not supported';
+                }
+
+                // --- Event Listeners ---
+                bubble.onclick = () => { panel.style.display = 'flex'; inputEl.focus(); renderHistory(); };
+                closeBtn.onclick = () => { panel.style.display = 'none'; };
+                sendBtn.onclick = onAsk;
+                inputEl.onkeydown = (e) => { if (e.key === 'Enter') onAsk(); };
+                
+                // Define global function expected by the script
+                window.featureAssistant = window.featureAssistant || async function(input) {
+                    // This is a placeholder. The real function is in feature-assistant-flow.ts
+                    // For client-side only demo, you can add mock logic here.
+                    console.warn("featureAssistant flow not fully connected. Using mock response.");
+                    const answer = \`This is a mock response for: \${input.query}\`;
+                    return { answer, path: null, featureId: null };
+                };
+
+                renderHistory();
+              })();
         `}} />
       </body>
     </html>
