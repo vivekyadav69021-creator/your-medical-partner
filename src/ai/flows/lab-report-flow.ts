@@ -16,13 +16,13 @@ const LabFindingSchema = z.object({
   note: z.string().describe('A brief, one-sentence interpretation of the value (e.g., "Slightly high", "Normal").'),
 });
 
-export const LabReportInputSchema = z.object({
+const LabReportInputSchema = z.object({
   imageDataUri: z.string().describe("An image of the lab report, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   language: z.enum(['en', 'hi']).optional().default('en'),
 });
 export type LabReportInput = z.infer<typeof LabReportInputSchema>;
 
-export const LabReportOutputSchema = z.object({
+const LabReportOutputSchema = z.object({
   interpretations: z.array(LabFindingSchema).describe('A list of interpretations for each identified lab value.'),
   recommendation: z.string().describe('A general recommendation based on the overall findings. MUST include a disclaimer to consult a doctor.'),
 });
