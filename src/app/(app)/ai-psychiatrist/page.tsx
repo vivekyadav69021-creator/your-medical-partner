@@ -20,6 +20,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUserProfile } from '@/context/user-profile-context';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
+import Head from 'next/head';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -39,7 +40,7 @@ const initialSpeechState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="icon" disabled={pending}>
+    <Button type="submit" size="icon" disabled={pending} id="sendBtn">
       {pending ? (
         <Sparkles className="h-5 w-5 animate-pulse" />
       ) : (
@@ -49,6 +50,184 @@ function SubmitButton() {
     </Button>
   );
 }
+
+function VoiceWidget() {
+  useEffect(() => {
+    const CHAT_INPUT_ID = 'chatInput';
+    const SEND_BTN_ID = 'sendBtn';
+    const speakBtn = document.getElementById('speakBtn');
+    const stopSpeechBtn = document.getElementById('stopSpeechBtn');
+    const micBtn = document.getElementById('micBtn');
+    const voiceLang = document.getElementById('voiceLang') as HTMLSelectElement;
+    const voiceStatus = document.getElementById('voiceStatus');
+    const micStatus = document.getElementById('micStatus');
+
+    if (!speakBtn || !stopSpeechBtn || !micBtn || !voiceLang || !voiceStatus || !micStatus) return;
+
+    let synth = window.speechSynthesis;
+    let speakingUtter: SpeechSynthesisUtterance | null = null;
+
+    const getBestVoiceFor = (langPrefix: string) => {
+      const voices = synth.getVoices() || [];
+      let v = voices.find(x => x.lang && x.lang.toLowerCase() === langPrefix.toLowerCase());
+      if (v) return v;
+      v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(langPrefix.split('-')[0]));
+      if (v) return v;
+      return voices[0] || null;
+    };
+
+    const speakText = (text: string, lang: string) => {
+      if (!('speechSynthesis' in window)) { voiceStatus.textContent = 'TTS not supported'; return; }
+      if (!text || text.trim().length === 0) { voiceStatus.textContent = 'No text to speak'; return; }
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = lang || 'en-IN';
+      const voice = getBestVoiceFor(utter.lang);
+      if (voice) utter.voice = voice;
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+      utter.onstart = () => { speakingUtter = utter; voiceStatus.textContent = 'Speaking...'; };
+      utter.onend = () => { speakingUtter = null; voiceStatus.textContent = 'Done'; };
+      utter.onerror = (e) => { speakingUtter = null; voiceStatus.textContent = 'Speech error'; console.error(e); };
+      synth.speak(utter);
+    };
+
+    const handleStopSpeech = () => {
+      if (synth && synth.speaking) synth.cancel();
+      if(voiceStatus) voiceStatus.textContent = 'Stopped';
+    };
+
+    const getLatestAssistantText = () => {
+      const msgs = document.querySelectorAll('.assistant-message');
+      if (msgs && msgs.length) {
+        const last = msgs[msgs.length - 1] as HTMLElement;
+        return last.textContent?.trim() || '';
+      }
+      return '';
+    };
+
+    const handleSpeak = () => {
+      const txt = getLatestAssistantText();
+      const lang = voiceLang.value || 'en-IN';
+      if (!txt) {
+        if(voiceStatus) voiceStatus.textContent = 'No response found';
+        return;
+      }
+      speakText(txt, lang);
+    };
+
+    let recognition: any = null;
+    let recognizing = false;
+
+    const createRecognition = (lang: string) => {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
+      if (!SpeechRecognition) return null;
+      const r = new SpeechRecognition();
+      r.lang = lang || 'en-IN';
+      r.interimResults = false;
+      r.maxAlternatives = 1;
+      r.continuous = false;
+      return r;
+    };
+    
+    const stopRecognition = () => {
+      if(recognition) {
+        try { recognition.stop(); } catch(e){}
+        recognition = null;
+      }
+      recognizing = false;
+      if (micStatus) micStatus.textContent = 'Idle';
+      if (micBtn) micBtn.textContent = '🎤 Mic';
+    }
+
+    const handleMicToggle = async () => {
+      if (recognizing) {
+        stopRecognition();
+        return;
+      }
+      const lang = voiceLang.value === 'hi-IN' ? 'hi-IN' : 'en-IN';
+      recognition = createRecognition(lang);
+      if (!recognition) {
+        if (micStatus) micStatus.textContent = 'STT not supported';
+        return;
+      }
+      recognition.onstart = () => { recognizing = true; if (micStatus) micStatus.textContent = 'Listening...'; if (micBtn) micBtn.textContent = '🎤 (Stop)'; };
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if(micStatus) micStatus.textContent = 'Heard: ' + transcript;
+        const inputEl = document.getElementById(CHAT_INPUT_ID) as HTMLInputElement;
+        if (inputEl) {
+          inputEl.value = transcript;
+          inputEl.focus();
+        }
+      };
+      recognition.onerror = (e: any) => { console.error('recognition error', e); if (micStatus) micStatus.textContent = 'Recognition error'; stopRecognition(); };
+      recognition.onend = () => { stopRecognition(); };
+      recognition.start();
+    };
+
+    const ensureVoicesLoaded = () => {
+      return new Promise<SpeechSynthesisVoice[]>((resolve) => {
+        let voices = synth.getVoices();
+        if (voices.length) return resolve(voices);
+        synth.onvoiceschanged = () => {
+          voices = synth.getVoices();
+          resolve(voices);
+        };
+        setTimeout(() => resolve(synth.getVoices()), 1200);
+      });
+    };
+
+    ensureVoicesLoaded().then(() => {
+      if(voiceStatus) voiceStatus.textContent = 'Voice ready';
+    }).catch(() => {
+      if(voiceStatus) voiceStatus.textContent = 'Voice ready (limited)';
+    });
+
+    speakBtn.addEventListener('click', handleSpeak);
+    stopSpeechBtn.addEventListener('click', handleStopSpeech);
+    micBtn.addEventListener('click', handleMicToggle);
+
+    return () => {
+      speakBtn.removeEventListener('click', handleSpeak);
+      stopSpeechBtn.removeEventListener('click', handleStopSpeech);
+      micBtn.removeEventListener('click', handleMicToggle);
+      if (synth) synth.cancel();
+      stopRecognition();
+    };
+  }, []);
+
+  return (
+    <>
+      <Head>
+        <style>{`
+          .voiceWidget{display:flex;gap:8px;align-items:center}
+          .voiceBtn{padding:8px 10px;border-radius:8px;border:0;cursor:pointer;background:#1398d8;color:#fff}
+          .micBtn{background:#2b9edb}
+          .stopBtn{background:#ff6b6b}
+          .langSelect{padding:6px;border-radius:6px;border:1px solid #ddd}
+          .statusTiny{font-size:0.9rem;color:#444;margin-left:8px}
+        `}</style>
+      </Head>
+      <div id="voiceControls" style={{ maxWidth: '900px', margin: '12px auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="voiceWidget">
+          <button id="speakBtn" className="voiceBtn" title="Speak assistant's reply">🔊 Speak</button>
+          <button id="stopSpeechBtn" className="voiceBtn stopBtn" title="Stop speaking">■ Stop</button>
+          <select id="voiceLang" className="langSelect" title="Select language">
+            <option value="en-IN">English (India)</option>
+            <option value="hi-IN">हिन्दी</option>
+          </select>
+          <label className="statusTiny dark:text-gray-300" id="voiceStatus">Ready</label>
+        </div>
+        <div className="voiceWidget" style={{ marginLeft: '16px' }}>
+          <button id="micBtn" className="voiceBtn micBtn" title="Start / Stop microphone">🎤 Mic</button>
+          <label className="statusTiny dark:text-gray-300" id="micStatus">Mic idle</label>
+        </div>
+      </div>
+    </>
+  );
+}
+
 
 export default function AIPsychiatristPage() {
   const { userName, userImage } = useUserProfile();
@@ -157,6 +336,7 @@ export default function AIPsychiatristPage() {
           A safe space to talk about your mental health.
         </p>
       </div>
+      <VoiceWidget />
       <Card className="flex-1 flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -194,7 +374,7 @@ export default function AIPsychiatristPage() {
                     className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                        : 'bg-muted assistant-message'
                     }`}
                   >
                      <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
@@ -225,11 +405,13 @@ export default function AIPsychiatristPage() {
         <CardFooter>
           <form
             ref={formRef}
+            id="chatForm"
             action={handleFormAction}
             className="flex w-full items-center gap-2"
           >
             <Input
               ref={inputRef}
+              id="chatInput"
               name="query"
               placeholder="Share your feelings here... (English or Hindi)"
               className="flex-1"
