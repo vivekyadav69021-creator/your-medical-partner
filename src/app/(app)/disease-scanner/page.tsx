@@ -8,12 +8,13 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, Upload, X, Camera, CameraOff, SwitchCamera, AlertTriangle, Hospital, Save, FileText } from 'lucide-react';
+import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, Save, FileText } from 'lucide-react';
 import { analyzeXrayAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -25,7 +26,7 @@ const initialXrayState = {
   error: null,
 };
 
-function escapeHtml(s: string | undefined | null){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[String(c)])); }
+function escapeHtml(s: string | undefined | null){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[String(c)] as string)); }
 
 function LabReportAnalyzer() {
     const [labResult, setLabResult] = useState<any>(null);
@@ -113,13 +114,13 @@ function LabReportAnalyzer() {
 
 
     return (
-        <section>
-            <CardHeader className="px-0">
+        <Card className="h-full">
+            <CardHeader>
                 <CardTitle className="flex items-center gap-2"><FileText />Lab Report Analyzer</CardTitle>
                 <CardDescription>Get a quick interpretation of common lab test values.</CardDescription>
             </CardHeader>
-            <CardContent className="px-0 space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1"><Label htmlFor="fbs">Blood Sugar - Fasting (mg/dL)</Label><Input id="fbs" type="number" ref={inputs.fbs} /></div>
                     <div className="space-y-1"><Label htmlFor="hbA1c">HbA1c (%)</Label><Input id="hbA1c" type="number" step="0.1" ref={inputs.hbA1c} /></div>
                     <div className="space-y-1"><Label htmlFor="chol">Total Cholesterol (mg/dL)</Label><Input id="chol" type="number" ref={inputs.chol} /></div>
@@ -127,14 +128,7 @@ function LabReportAnalyzer() {
                     <div className="space-y-1"><Label htmlFor="hdl">HDL (mg/dL)</Label><Input id="hdl" type="number" ref={inputs.hdl} /></div>
                     <div className="space-y-1"><Label htmlFor="tg">Triglycerides (mg/dL)</Label><Input id="tg" type="number" ref={inputs.tg} /></div>
                 </div>
-
-                <div className="flex items-center gap-4">
-                    <Button onClick={analyzeLabs}>Analyze Labs</Button>
-                    <Button onClick={saveReport} variant="secondary"><Save className="mr-2 h-4 w-4" />Save Report</Button>
-                    <p className="text-sm text-muted-foreground">{labStatus}</p>
-                </div>
-                
-                {labResult && (
+                 {labResult && (
                     <div className="resultBox">
                         <h4 className="font-semibold">Interpretation — {new Date(labResult.timestamp).toLocaleString()}</h4>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
@@ -147,7 +141,14 @@ function LabReportAnalyzer() {
                     </div>
                 )}
             </CardContent>
-        </section>
+            <CardFooter className="flex-col items-start gap-4">
+                 <div className="flex items-center gap-4">
+                    <Button onClick={analyzeLabs}>Analyze Labs</Button>
+                    <Button onClick={saveReport} variant="secondary"><Save className="mr-2 h-4 w-4" />Save Report</Button>
+                 </div>
+                 <p className="text-sm text-muted-foreground">{labStatus}</p>
+            </CardFooter>
+        </Card>
     )
 }
 
@@ -197,7 +198,7 @@ export default function DiseaseScannerPage() {
         toast({ variant: 'destructive', title: "Camera Not Supported" });
         return;
     }
-    closeCamera();
+    stopStream();
     setIsCameraOpen(true);
     setPreview(null);
     try {
@@ -265,127 +266,130 @@ export default function DiseaseScannerPage() {
         toast({ variant: 'destructive', title: "Analysis Failed", description: "Please upload an image to be scanned." });
         return;
     }
-    const response = await analyzeXrayAction(null, formData);
-    if(response.result && user && firestore) {
+    formAction(formData);
+  };
+  
+   useEffect(() => {
+    if(state.result && user && firestore) {
       try {
         const doc = {
           createdAt: serverTimestamp(),
-          findings: response.result.findings || [],
-          recommendationText: response.result.recommendationText || '',
+          findings: state.result.findings || [],
+          recommendationText: state.result.recommendationText || '',
           fileName: selectedFile?.name || 'camera.jpg',
         };
         const analysesCol = collection(firestore, 'users', user.uid, 'xrayAnalyses');
-        await addDoc(analysesCol, doc);
+        addDoc(analysesCol, doc);
       } catch (e) {
         console.warn('Failed to save analysis record', e);
       }
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.result]);
+
 
   return (
     <div className="space-y-8">
        <canvas ref={canvasRef} className="hidden"></canvas>
-        <Card>
-            <CardHeader>
-                <CardTitle>Disease Scanner — X-ray Analysis & Lab Report Interpreter</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Disclaimer</AlertTitle>
-                  <AlertDescription>
-                    The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.
-                  </AlertDescription>
-                </Alert>
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Disease Scanner</h1>
+            <p className="text-muted-foreground">X-ray Analysis & Lab Report Interpreter</p>
+        </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Disclaimer</AlertTitle>
+          <AlertDescription>
+            The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.
+          </AlertDescription>
+        </Alert>
                 
-                <section className="mt-6">
-                    <CardHeader className="px-0">
-                        <CardTitle className="flex items-center gap-2"><Hospital />X-ray / Image Scanner</CardTitle>
-                    </CardHeader>
-                     <CardContent className="px-0 grid md:grid-cols-2 gap-8">
-                        <form action={handleFormAction} className="space-y-6">
-                             <div className="space-y-2">
-                                <Label htmlFor="xray-image">Select image (X-ray / photo)</Label>
-                                {isCameraOpen ? (
-                                  <div className="relative">
-                                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
-                                    <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
-                                        <Button type="button" onClick={takePicture}>Take Picture</Button>
-                                        <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  preview ? (
-                                     <div className="relative">
-                                       <Image src={preview} alt="Symptom preview" width={400} height={400} className="rounded-md border aspect-square object-cover w-full" />
-                                       <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}>
-                                         <X className="h-4 w-4"/>
-                                         <span className="sr-only">Remove image</span>
-                                       </Button>
-                                     </div>
-                                  ) : (
-                                    <div className="flex flex-col gap-2">
-                                      <div 
-                                        className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80"
-                                        onClick={() => fileInputRef.current?.click()}
-                                      >
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                          <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
-                                          <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag & drop</p>
-                                          <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
-                                        </div>
-                                         <input ref={fileInputRef} id="xray-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
-                                      </div>
-                                       <Button type="button" variant="outline" className="w-full" onClick={openCamera}>
-                                          <Camera className="mr-2 h-4 w-4" />
-                                          Open Camera
-                                       </Button>
-                                     </div>
-                                  )
-                                )}
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          <Card className="h-full">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Hospital />X-ray / Image Scanner</CardTitle>
+              </CardHeader>
+                <CardContent>
+                  <form action={handleFormAction} className="space-y-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="xray-image">Select image (X-ray / photo)</Label>
+                          {isCameraOpen ? (
+                            <div className="relative">
+                              <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
+                              <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                                  <Button type="button" onClick={takePicture}>Take Picture</Button>
+                                  <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
+                              </div>
                             </div>
-                            <AnalyzeXrayButton />
-                        </form>
-
-                        <div className="space-y-4">
-                            <h4 className="font-semibold">Analysis Result</h4>
-                            {!state.result && !state.error && (
-                                <div className="resultBox text-center text-muted-foreground py-10">
-                                    <p>Your scan results will appear here.</p>
+                          ) : (
+                            preview ? (
+                                <div className="relative">
+                                <Image src={preview} alt="Symptom preview" width={400} height={400} className="rounded-md border aspect-square object-cover w-full" />
+                                <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}>
+                                    <X className="h-4 w-4"/>
+                                    <span className="sr-only">Remove image</span>
+                                </Button>
                                 </div>
-                            )}
-                            {state.result && (
-                                <div className="resultBox">
-                                    <h5 className="font-bold">Findings</h5>
-                                    <ul className="list-disc pl-5 mt-2 space-y-2 text-sm">
-                                      {(state.result.findings || []).map((f: any, i: number) => (
-                                        <li key={i}>
-                                            <b>{escapeHtml(f.label)}</b> — Confidence: {Math.round((f.confidence||0)*100)}%
-                                            <p className="text-xs text-muted-foreground">{escapeHtml(f.notes)}</p>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                     <h5 className="font-bold mt-4">Recommendation</h5>
-                                     <p className="text-sm">{escapeHtml(state.result.recommendationText || 'Consult a qualified doctor for confirmation.')}</p>
+                            ) : (
+                              <div className="flex flex-col gap-2">
+                                <div 
+                                  className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80"
+                                  onClick={() => fileInputRef.current?.click()}
+                                >
+                                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
+                                    <p className="mb-1 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag & drop</p>
+                                    <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
+                                  </div>
+                                    <input ref={fileInputRef} id="xray-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
                                 </div>
-                            )}
-                             {state.error && (
-                                <Alert variant="destructive">
-                                  <AlertTriangle className="h-4 w-4" />
-                                  <AlertTitle>Analysis Failed</AlertTitle>
-                                  <AlertDescription>{state.error}</AlertDescription>
-                                </Alert>
-                              )}
-                        </div>
-                     </CardContent>
-                </section>
-
-                 <hr className="my-8"/>
-
-                 <LabReportAnalyzer />
-
-            </CardContent>
-        </Card>
+                                <Button type="button" variant="outline" className="w-full" onClick={openCamera}>
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    Open Camera
+                                </Button>
+                                </div>
+                            )
+                          )}
+                      </div>
+                      <AnalyzeXrayButton />
+                  </form>
+              </CardContent>
+              <CardFooter>
+                 <div className="w-full space-y-4">
+                      <h4 className="font-semibold">Analysis Result</h4>
+                      {!state.result && !state.error && (
+                          <div className="resultBox text-center text-muted-foreground py-10">
+                              <p>Your scan results will appear here.</p>
+                          </div>
+                      )}
+                      {state.result && (
+                          <div className="resultBox">
+                              <h5 className="font-bold">Findings</h5>
+                              <ul className="list-disc pl-5 mt-2 space-y-2 text-sm">
+                                {(state.result.findings || []).map((f: any, i: number) => (
+                                  <li key={i}>
+                                      <b>{escapeHtml(f.label)}</b> — Confidence: {Math.round((f.confidence||0)*100)}%
+                                      <p className="text-xs text-muted-foreground">{escapeHtml(f.notes)}</p>
+                                  </li>
+                                ))}
+                              </ul>
+                                <h5 className="font-bold mt-4">Recommendation</h5>
+                                <p className="text-sm">{escapeHtml(state.result.recommendationText || 'Consult a qualified doctor for confirmation.')}</p>
+                          </div>
+                      )}
+                        {state.error && (
+                          <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Analysis Failed</AlertTitle>
+                            <AlertDescription>{state.error}</AlertDescription>
+                          </Alert>
+                        )}
+                  </div>
+              </CardFooter>
+          </Card>
+          <LabReportAnalyzer />
+        </div>
     </div>
   );
 }
+
+    
