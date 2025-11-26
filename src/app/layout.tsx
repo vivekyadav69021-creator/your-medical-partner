@@ -59,30 +59,30 @@ export default function RootLayout({
         {/* Assistant Widget HTML */}
         <div id="floatingAssistant" aria-live="polite">
           <div id="assistantBubble" title="Open Assistant" role="button">AI</div>
-          <div id="assistantPanel" role="dialog" aria-label="AI Assistant">
-            <div id="assistantHeader">
+          <div id="assistantPanel" role="dialog" aria-label="AI Assistant" style={{ width: 360, maxWidth: '92vw', background: '#fff', borderRadius: 12, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', overflow: 'hidden', display: 'none', flexDirection: 'column' }}>
+            <div id="assistantHeader" style={{ background: 'linear-gradient(90deg,#1aa3d7,#1280b0)', color: '#fff', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h4>Your Medical Partner — Assistant</h4>
-              <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-                <select id="assistantLang" style={{borderRadius:'8px',padding:'6px',border:'0', color:'#333', background: '#f0f0f0'}}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <select id="assistantLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
                   <option value="en">EN</option>
                   <option value="hi">HI</option>
                 </select>
-                <button id="assistantClose" style={{background:'transparent',border:'0',color:'#fff',fontSize:'18px',cursor:'pointer'}}>✕</button>
+                <button id="assistantClose" style={{ background: 'transparent', border: '0', color: '#fff', fontSize: '18px', cursor: 'pointer' }}>✕</button>
               </div>
             </div>
             <div id="assistantBody" aria-live="polite"></div>
-            <div id="assistantFooter">
-                <div className="voiceWidget">
+            <div id="assistantFooter" style={{ padding: '10px', borderTop: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch' }}>
+                <div className="voiceWidget" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button id="speakBtn" className="assistBtn" title="Speak assistant's reply">🔊</button>
                     <button id="stopSpeechBtn" className="assistBtn" title="Stop speaking">■</button>
-                     <select id="assistantLang" style={{borderRadius:'8px',padding:'6px',border:'0', color:'#333', background: '#f0f0f0'}}>
-                      <option value="en">EN</option>
-                      <option value="hi">HI</option>
+                     <select id="voiceLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
+                      <option value="en-IN">EN</option>
+                      <option value="hi-IN">HI</option>
                     </select>
                     <button id="micBtn" className="assistBtn" title="Start microphone">🎤</button>
-                    <span id="micStatus" style={{fontSize:'12px', color: '#555', flex: 1}}></span>
+                    <span id="micStatus" style={{ fontSize: '12px', color: '#555', flex: 1 }}></span>
                 </div>
-              <div style={{display:'flex', gap: '8px'}}>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <input id="assistantInput" className="assistInput" placeholder="Ask about any feature..." />
                 <button id="assistantSend" className="assistBtn">Ask</button>
               </div>
@@ -107,6 +107,8 @@ export default function RootLayout({
                 const stopSpeechBtn = document.getElementById('stopSpeechBtn');
                 const micBtn = document.getElementById('micBtn');
                 const micStatus = document.getElementById('micStatus');
+                const voiceLang = document.getElementById('voiceLang');
+
 
                 // --- State ---
                 let chatHistory = JSON.parse(sessionStorage.getItem('amp_feature_chat_v1') || '[]');
@@ -173,7 +175,7 @@ export default function RootLayout({
                     if (!lastAssistMsg || !lastAssistMsg.text) return;
                     synth.cancel();
                     const utter = new SpeechSynthesisUtterance(lastAssistMsg.text);
-                    utter.lang = langSel.value === 'hi' ? 'hi-IN' : 'en-IN';
+                    utter.lang = voiceLang.value === 'hi-IN' ? 'hi-IN' : 'en-IN';
                     utter.voice = getBestVoice(utter.lang);
                     synth.speak(utter);
                 };
@@ -190,7 +192,7 @@ export default function RootLayout({
                             return;
                         }
                         recognition = new SpeechRecognition();
-                        recognition.lang = langSel.value === 'hi' ? 'hi-IN' : 'en-IN';
+                        recognition.lang = voiceLang.value === 'hi-IN' ? 'hi-IN' : 'en-IN';
                         recognition.onstart = () => { micStatus.textContent = 'Listening...'; micBtn.style.background = '#ff6b6b'; };
                         recognition.onend = () => { micStatus.textContent = ''; micBtn.style.background = '#2b9edb'; recognition.isStarted = false; };
                         recognition.onresult = (event) => {
