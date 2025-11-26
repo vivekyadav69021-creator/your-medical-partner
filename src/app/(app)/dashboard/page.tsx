@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -69,6 +70,12 @@ const quickAccessItems = [
     href: '/nearby-hospital',
     icon: Hospital,
   },
+  {
+    title: 'Disease Library',
+    description: 'Browse diseases and conditions.',
+    href: '/disease-library',
+    icon: BookHeart,
+  },
 ];
 
 const sleepData = [
@@ -137,7 +144,7 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {quickAccessItems.map(item => (
               <Card
                 key={item.title}
