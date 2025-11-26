@@ -15,13 +15,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, Save, FileText, Image as ImageIcon } from 'lucide-react';
-import { analyzeXrayAction } from './actions';
-import { healthAssistantAction } from './actions';
+import { analyzeXrayAction, healthAssistantAction } from './actions';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const initialXrayState = {
   result: null,
@@ -69,7 +69,7 @@ function DiseaseImageScanner() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ImageIcon/>Disease Image Scanner</CardTitle>
-                <CardDescription>Upload a photo of a visible symptom for a preliminary analysis.</CardDescription>
+                <CardDescription>Upload a photo of a visible symptom (like a skin rash) for a preliminary analysis by the Health Assistant AI.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form ref={formRef} action={handleFormAction} className="space-y-4">
@@ -81,7 +81,7 @@ function DiseaseImageScanner() {
                     )}
                     <div className="flex gap-2 mt-2">
                         <Button type="submit" disabled={!preview || isAnalyzing}>
-                            {isAnalyzing ? 'Analyzing...' : 'Analyze Image'}
+                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Analyzing...</>) : 'Analyze Image'}
                         </Button>
                         <Button type="button" variant="secondary" onClick={handleClear}>Clear</Button>
                     </div>
@@ -197,13 +197,18 @@ function XRayScanner() {
   
   const handleFormAction = async (formData: FormData) => {
     if (preview && selectedFile) {
-      formData.append('photoDataUri', preview);
-      formData.append('contentType', selectedFile.type);
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedFile);
+      reader.onloadend = () => {
+        const base64data = reader.result;
+        formData.append('photoDataUri', base64data as string);
+        formData.append('contentType', selectedFile.type);
+        formAction(formData);
+      };
     } else {
         toast({ variant: 'destructive', title: "Analysis Failed", description: "Please upload an image to be scanned." });
         return;
     }
-    formAction(formData);
   };
   
    useEffect(() => {
@@ -229,7 +234,7 @@ function XRayScanner() {
       <canvas ref={canvasRef} className="hidden"></canvas>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Hospital />X-ray / Radiology Scanner</CardTitle>
-        <CardDescription>Upload chest/limb X-ray for analysis by an AI model.</CardDescription>
+        <CardDescription>Upload chest/limb X-ray for analysis by an AI model. This tool is specialized for radiology images.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={handleFormAction} className="space-y-4">
@@ -244,7 +249,7 @@ function XRayScanner() {
                 </>
               ) : (
                 <>
-                  <Scan className="mr-2"/>Analyze Image
+                  <Scan className="mr-2"/>Analyze X-ray
                 </>
               )}
             </Button>
@@ -386,7 +391,7 @@ function LabReportAnalyzer() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><FileText />Lab Report Analyzer</CardTitle>
-                <CardDescription>Get a quick interpretation of common lab test values.</CardDescription>
+                <CardDescription>Get a quick interpretation of common lab test values. This is for educational purposes only.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -435,12 +440,23 @@ export default function DiseaseScannerPage() {
             The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.
           </AlertDescription>
         </Alert>
-                
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <DiseaseImageScanner />
-          <XRayScanner />
-          <LabReportAnalyzer />
-        </div>
+        
+        <Tabs defaultValue="image-scanner">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="image-scanner">Disease Image Scanner</TabsTrigger>
+                <TabsTrigger value="xray-scanner">X-ray Scanner</TabsTrigger>
+                <TabsTrigger value="lab-scanner">Lab Report Analyzer</TabsTrigger>
+            </TabsList>
+            <TabsContent value="image-scanner" className="mt-6">
+                <DiseaseImageScanner />
+            </TabsContent>
+            <TabsContent value="xray-scanner" className="mt-6">
+                <XRayScanner />
+            </TabsContent>
+            <TabsContent value="lab-scanner" className="mt-6">
+                <LabReportAnalyzer />
+            </TabsContent>
+        </Tabs>
     </div>
   );
 }
