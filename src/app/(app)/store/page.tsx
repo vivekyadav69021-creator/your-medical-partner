@@ -77,14 +77,17 @@ const PrescriptionAnalyzer = () => {
   const handleClear = () => {
       setPreview(null);
       if(fileInputRef.current) fileInputRef.current.value = '';
-      // Reset the form action state
+      // Reset the form action state by re-invoking the action with a reset flag or similar
+      // For simplicity here, we'll just clear the UI state. A more robust solution might involve a dedicated reset action.
       formRef.current?.reset();
-       const newInitialState = { result: null, error: null };
-      (formAction as any)({type: 'reset', state: newInitialState});
+      const newInitialState = { result: null, error: null };
+      // This is a way to tell the useActionState to reset.
+      // A more formal API for this might exist in future React versions.
+      (formAction as (payload: FormData | { type: 'reset' }) => void)({ type: 'reset' } as any);
   }
   
   const matchedMedicines = state.result?.availableMedicines
-    ? medicines.filter(med => state.result!.availableMedicines.includes(med.name))
+    ? medicines.filter(med => state.result!.availableMedicines.some(availMed => med.name.toLowerCase().includes(availMed.toLowerCase())))
     : [];
 
   return (
@@ -158,9 +161,9 @@ const PrescriptionAnalyzer = () => {
 
                 {state.result && state.result.unidentifiedMedicines.length > 0 && (
                     <Alert>
-                        <AlertTitle>Some items could not be identified</AlertTitle>
+                        <AlertTitle>Medicines Not Available</AlertTitle>
                         <AlertDescription>
-                            <p>The following items from your prescription could not be matched with our inventory:</p>
+                            <p>The following items were identified from your prescription but are not available in our store:</p>
                             <ul className="list-disc pl-5 mt-2">
                                 {state.result.unidentifiedMedicines.map((item, i) => <li key={i}>{item}</li>)}
                             </ul>
