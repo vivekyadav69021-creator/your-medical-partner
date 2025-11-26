@@ -1,6 +1,6 @@
 'use server';
 
-import { analyzeXray } from '@/ai/flows/xray-analyzer-flow';
+import { analyzeXray, AnalyzeXrayInput } from '@/ai/flows/xray-analyzer-flow';
 import { healthAssistant } from '@/ai/flows/health-assistant-flow';
 import { z } from 'zod';
 
@@ -23,6 +23,7 @@ export async function analyzeXrayAction(
       result: null,
       error:
         validatedFields.error.flatten().fieldErrors.photoDataUri?.[0] ??
+        validatedFields.error.flatten().fieldErrors.contentType?.[0] ??
         'Invalid input.',
     };
   }

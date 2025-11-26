@@ -272,14 +272,17 @@ function XRayScanner() {
       const context = canvas.getContext('2d');
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => {
-            if(blob) {
-                const file = new File([blob], "camera.jpg", { type: "image/jpeg" });
-                setSelectedFile(file);
-                setPreview(URL.createObjectURL(file));
-                closeCamera();
-            }
-        }, 'image/jpeg', 0.9);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        
+        // Convert data URL to Blob to create a File object
+        fetch(dataUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+            setSelectedFile(file);
+            setPreview(dataUrl);
+            closeCamera();
+          });
       }
     }
   }, [closeCamera]);
@@ -287,9 +290,13 @@ function XRayScanner() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      setPreview(URL.createObjectURL(file));
-      closeCamera();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setPreview(e.target?.result as string);
+            setSelectedFile(file);
+            closeCamera();
+        }
+        reader.readAsDataURL(file);
     }
   };
   
