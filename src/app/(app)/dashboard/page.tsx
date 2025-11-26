@@ -21,6 +21,8 @@ import {
   Check,
   ListTodo,
   Trophy,
+  Scan,
+  Store,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
@@ -39,9 +41,15 @@ const quickAccessItems = [
   },
   {
     title: 'AI Psychiatrist',
-    description: 'Talk to our AI about your mental health.',
+    description: 'Talk about your mental health.',
     href: '/ai-psychiatrist',
     icon: BrainCircuit,
+  },
+  {
+    title: 'Disease Scanner',
+    description: 'Analyze X-rays, lab reports & more.',
+    href: '/disease-scanner',
+    icon: Scan,
   },
   {
     title: 'Doctor Consult',
@@ -50,16 +58,16 @@ const quickAccessItems = [
     icon: Stethoscope,
   },
   {
-    title: 'Nearby Hospital',
-    description: 'Find hospitals and clinics near you.',
-    href: '/nearby-hospital',
-    icon: Hospital,
+    title: 'Medical Store',
+    description: 'Order medicines and products.',
+    href: '/store',
+    icon: Store,
   },
   {
-    title: 'Disease Library',
-    description: 'Learn about various diseases.',
-    href: '/disease-library',
-    icon: BookHeart,
+    title: 'Nearby Hospital',
+    description: 'Find clinics and hospitals near you.',
+    href: '/nearby-hospital',
+    icon: Hospital,
   },
 ];
 
