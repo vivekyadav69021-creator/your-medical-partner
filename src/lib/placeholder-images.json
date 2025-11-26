@@ -69,122 +69,122 @@
     {
       "id": "med01",
       "description": "Box of Paracetamol tablets",
-      "imageUrl": "https://images.unsplash.com/photo-1707555647487-6f06b1508ab8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtZWRpY2luZSUyMGJveHxlbnwwfHx8fDE3NjM4MjA4NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1631555123359-ca4c6c24a3a6?q=80&w=1780&auto=format&fit=crop",
       "imageHint": "medicine box"
     },
     {
       "id": "med02",
       "description": "Dolo 650 tablets",
-      "imageUrl": "https://cdn.pixabay.com/photo/2017/08/24/18/50/pill-2671913_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=2070&auto=format&fit=crop",
       "imageHint": "medicine pills"
     },
     {
       "id": "med03",
       "description": "ORS Electrolyte sachet",
-      "imageUrl": "https://cdn.pixabay.com/photo/2017/03/20/20/55/water-2165792_1280.jpg",
-      "imageHint": "water glass"
+      "imageUrl": "https://images.unsplash.com/photo-1616426464972-e16f39e97e20?q=80&w=1968&auto=format&fit=crop",
+      "imageHint": "powder sachet"
     },
     {
       "id": "med04",
       "description": "Cetirizine 10mg tablets",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/23/16/54/medicine-1851172_1280.jpg",
-      "imageHint": "medicine pills"
+      "imageUrl": "https://images.unsplash.com/photo-1627163683453-dc3542289943?q=80&w=1974&auto=format&fit=crop",
+      "imageHint": "allergy pills"
     },
     {
       "id": "med05",
       "description": "Ibuprofen 200mg tablets",
-      "imageUrl": "https://cdn.pixabay.com/photo/2018/04/08/17/30/health-3303164_1280.jpg",
-      "imageHint": "medicine pills"
+      "imageUrl": "https://images.unsplash.com/photo-1607963901931-9a3e2e00c3c5?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "painkiller pills"
     },
     {
       "id": "med06",
       "description": "Digene chewable tablets",
-      "imageUrl": "https://cdn.pixabay.com/photo/2017/08/24/18/50/pill-2671913_1280.jpg",
-      "imageHint": "medicine pills"
+      "imageUrl": "https://images.unsplash.com/photo-1628771065518-1d3c9a01d511?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "antacid tablets"
     },
     {
       "id": "med07",
       "description": "Zinc supplement tablets",
-      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/12/22/53/vitamins-3146985_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1600643929026-663f78a284a7?q=80&w=1925&auto=format&fit=crop",
       "imageHint": "vitamin bottle"
     },
     {
       "id": "med08",
       "description": "Vitamin C chewable tablets",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/18/16/50/vitamin-1838654_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1607620843249-5f333c106a7c?q=80&w=2070&auto=format&fit=crop",
       "imageHint": "vitamin pills"
     },
     {
       "id": "med09",
       "description": "Volini pain relief gel",
-      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/01/18/57/tube-3120471_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1621610459837-41e737a4c75c?q=80&w=1935&auto=format&fit=crop",
       "imageHint": "ointment tube"
     },
     {
       "id": "med10",
       "description": "Betadine antiseptic solution",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/12/06/18/27/bottle-1888029_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1618580101039-75179295550a?q=80&w=1974&auto=format&fit=crop",
       "imageHint": "medicine bottle"
     },
     {
       "id": "med11",
       "description": "Electrolyte sports drink",
-      "imageUrl": "https://cdn.pixabay.com/photo/2014/09/26/20/12/water-463651_1280.jpg",
-      "imageHint": "water bottle"
+      "imageUrl": "https://images.unsplash.com/photo-1581009137052-c0b24962b737?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "sports drink"
     },
     {
       "id": "med12",
       "description": "Herbal cough syrup",
-      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/01/18/46/medicine-3120433_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1620953924398-3578034a7039?q=80&w=1964&auto=format&fit=crop",
       "imageHint": "syrup bottle"
     },
     {
       "id": "med13",
       "description": "Antacid liquid suspension",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/03/27/19/46/bottle-1280.jpg",
-      "imageHint": "medicine bottle"
+      "imageUrl": "https://images.unsplash.com/photo-1627862719992-341e391b1523?q=80&w=1964&auto=format&fit=crop",
+      "imageHint": "liquid medicine"
     },
     {
       "id": "med14",
       "description": "Skin moisturizing cream",
-      "imageUrl": "https://cdn.pixabay.com/photo/2018/02/01/18/58/cream-3120490_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1599305103444-129a8f2316e6?q=80&w=1974&auto=format&fit=crop",
       "imageHint": "cream jar"
     },
     {
       "id": "med15",
       "description": "Adhesive bandages",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/29/09/08/patch-1869679_1280.png",
+      "imageUrl": "https://images.unsplash.com/photo-1605634591465-b3e64d7f57a3?q=80&w=2070&auto=format&fit=crop",
       "imageHint": "bandage strip"
     },
     {
       "id": "med16",
       "description": "Antiseptic sanitizing wipes",
-      "imageUrl": "https://cdn.pixabay.com/photo/2020/02/24/06/53/sanitizer-4874302_1280.jpg",
-      "imageHint": "sanitizer bottle"
+      "imageUrl": "https://images.unsplash.com/photo-1588804990393-ff1c9b36340f?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "sanitizer wipes"
     },
     {
       "id": "med17",
       "description": "ORS formula for kids",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/02/19/10/00/water-1209331_1280.jpg",
-      "imageHint": "water glass"
+      "imageUrl": "https://images.unsplash.com/photo-1547595628-c61a2c421758?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "juice box"
     },
     {
       "id": "med18",
       "description": "Glucose energy powder",
-      "imageUrl": "https://cdn.pixabay.com/photo/2017/03/12/20/06/sugar-2135274_1280.jpg",
-      "imageHint": "sugar powder"
+      "imageUrl": "https://images.unsplash.com/photo-1567602644214-d0313c4a229a?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "powder container"
     },
     {
       "id": "med19",
       "description": "Pain relief spray",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/11/29/04/17/spray-1869491_1280.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1585250003319-3fe3ba473724?q=80&w=1974&auto=format&fit=crop",
       "imageHint": "spray bottle"
     },
     {
       "id": "med20",
       "description": "Fruit flavored ORS",
-      "imageUrl": "https://cdn.pixabay.com/photo/2016/03/27/20/13/water-bottle-1280.jpg",
-      "imageHint": "water bottle"
+      "imageUrl": "https://images.unsplash.com/photo-1628100055106-0e1c8b3f5243?q=80&w=1974&auto=format&fit=crop",
+      "imageHint": "juice sachet"
     },
     {
       "id": "med21",
