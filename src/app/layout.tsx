@@ -4,7 +4,6 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
 import Script from 'next/script';
-import { featureAssistant } from '@/ai/flows/feature-assistant-flow';
 
 export const metadata: Metadata = {
   title: 'Your Medical Partner',
@@ -25,25 +24,6 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossOrigin=""/>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin=""></script>
         
-        {/* Assistant Widget Styles */}
-        <style dangerouslySetInnerHTML={{ __html: `
-          #floatingAssistant { position: fixed; right: 18px; bottom: 18px; z-index: 99999; font-family: Inter, Arial, sans-serif; }
-          #assistantBubble { width:64px; height:64px; border-radius:50%; background:#1398d8; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.18); cursor:pointer; font-weight: bold; font-size: 24px;}
-          #assistantPanel { width:360px; max-width:92vw; background:#fff; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden; display:none; flex-direction:column; color: #333; }
-          #assistantHeader { background:linear-gradient(90deg,#1aa3d7,#1280b0); color:#fff; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; }
-          #assistantHeader h4{ margin:0; font-size:15px; }
-          #assistantBody { padding:12px; max-height:360px; overflow:auto; }
-          #assistantFooter { padding:10px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:8px; align-items:stretch; }
-          .assistInput{ flex:1; padding:10px;border-radius:8px;border:1px solid #ddd; }
-          .assistBtn{ padding:8px 10px;border-radius:8px;border:0;background:#1398d8;color:#fff; cursor:pointer; }
-          .msg{ margin:8px 0; display:block; }
-          .msg.user{ text-align:right; }
-          .msg.user .bubble{ display:inline-block; background:#e6f6ff; padding:8px 10px; border-radius:10px; text-align:left;}
-          .msg.assist .bubble{ display:inline-block; background:#f6f8fb; padding:8px 10px; border-radius:10px; }
-          .msg .meta{ font-size:11px;color:#777;margin-top:4px; }
-          .sendToPageBtn{ margin-top:6px; display:inline-block; background:#e9f7ff; color:#0b6b87; padding:6px 8px; border-radius:8px; cursor:pointer; font-size:13px; border:1px solid #cceef9; }
-          .voiceWidget{display:flex;gap:8px;align-items:center}
-        `}} />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
@@ -56,168 +36,241 @@ export default function RootLayout({
           <Toaster />
         </ThemeProvider>
 
-        {/* Assistant Widget HTML */}
-        <div id="floatingAssistant" aria-live="polite">
-          <div id="assistantBubble" title="Open Assistant" role="button">AI</div>
-          <div id="assistantPanel" role="dialog" aria-label="AI Assistant" style={{ width: 360, maxWidth: '92vw', background: '#fff', borderRadius: 12, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', overflow: 'hidden', display: 'none', flexDirection: 'column' }}>
-            <div id="assistantHeader" style={{ background: 'linear-gradient(90deg,#1aa3d7,#1280b0)', color: '#fff', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h4>Your Medical Partner — Assistant</h4>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <select id="assistantLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
-                  <option value="en">EN</option>
-                  <option value="hi">HI</option>
+        {/* AI Flow Assistant Widget */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          .ymp-assistant { position: fixed; right: 20px; bottom: 24px; width: 360px; max-width: calc(100% - 40px); font-family: Inter, Arial, sans-serif; z-index: 99999; }
+          .ymp-toggle { width:56px; height:56px; border-radius:50%; background:#0ea5e9; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; box-shadow:0 10px 30px rgba(2,6,23,0.2); cursor:pointer; }
+          .ymp-panel { background:#fff; border-radius:12px; box-shadow:0 14px 40px rgba(2,6,23,0.18); overflow:hidden; width:100%; max-height:70vh; display:flex; flex-direction:column; }
+          .ymp-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #f0f3f7}
+          .ymp-title{font-weight:700;color:#0f172a}
+          .ymp-sub{font-size:12px;color:#475569}
+          .ymp-body{padding:12px; overflow:auto; flex:1}
+          .ymp-msg{margin:8px 0;padding:10px;border-radius:10px;max-width:86%}
+          .ymp-msg.user{background:#e6f7ff;margin-left:auto;color:#073b4c}
+          .ymp-msg.bot{background:#f8fafc;color:#0f172a}
+          .ymp-footer{display:flex;gap:8px;padding:10px;border-top:1px solid #f0f3f7;align-items:center}
+          .ymp-input{flex:1;padding:10px;border-radius:8px;border:1px solid #e6eef6}
+          .ymp-btn{background:#0ea5e9;color:white;padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
+          .ymp-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+          .chip{background:#f1f5f9;border-radius:20px;padding:6px 10px;font-size:13px;cursor:pointer;border:1px solid #e2e8f0}
+          .small{font-size:12px;color:#64748b}
+          .ymp-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+          .linkBtn{background:#f1f5f9;border:1px solid #e6eef6;padding:6px 8px;border-radius:8px;cursor:pointer;color:#0f172a}
+          .copyBtn{background:#f8fafc;border:1px solid #e2e8f0;padding:6px;border-radius:6px;cursor:pointer}
+          .typing{font-style:italic;color:#94a3b8;font-size:13px}
+          .langToggle{border:1px solid #e6eef6;padding:6px;border-radius:8px;background:#fff;cursor:pointer}
+        `}} />
+        <div id="ympAssistant" className="ymp-assistant" aria-hidden="true">
+          <div id="ympToggle" className="ymp-toggle" title="Your Medical Partner (AI)"><span>YMP</span></div>
+          <div id="ympPanel" className="ymp-panel" style={{display: 'none', width: 360}}>
+            <div className="ymp-header">
+              <div style={{flex: 1}}>
+                <div className="ymp-title">Your Medical Partner</div>
+                <div className="ymp-sub small">Ask about any feature — get instant answers & navigate.</div>
+              </div>
+              <div className="ymp-meta">
+                <select id="ympLang" className="langToggle" title="Language">
+                  <option value="en">English</option>
+                  <option value="hi">हिन्दी</option>
                 </select>
-                <button id="assistantClose" style={{ background: 'transparent', border: '0', color: '#fff', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                <button id="ympClose" className="linkBtn" style={{marginTop: 6}}>Close</button>
               </div>
             </div>
-            <div id="assistantBody" aria-live="polite"></div>
-            <div id="assistantFooter">
-                <div className="voiceWidget">
-                    <button id="speakBtn" className="assistBtn" title="Speak assistant's reply">🔊</button>
-                    <button id="stopSpeechBtn" className="assistBtn" title="Stop speaking">■</button>
-                     <select id="voiceLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
-                      <option value="en-IN">EN</option>
-                      <option value="hi-IN">HI</option>
-                    </select>
-                    <button id="micBtn" className="assistBtn" title="Start microphone">🎤</button>
-                    <span id="micStatus" style={{ fontSize: '12px', color: '#555', flex: 1 }}></span>
-                </div>
-              <div style={{ display:'flex', gap: '8px' }}>
-                <input id="assistantInput" className="assistInput" placeholder="Ask about any feature..." />
-                <button id="assistantSend" className="assistBtn">Ask</button>
-              </div>
+            <div id="ympBody" className="ymp-body" role="log" aria-live="polite"></div>
+            <div style={{padding: '0 12px'}}>
+              <div className="ymp-quick" id="ympQuick"></div>
+            </div>
+            <div className="ymp-footer">
+              <input id="ympInput" className="ymp-input" placeholder="Ask about: doctor booking, planner, disease scanner..." />
+              <button id="ympSend" className="ymp-btn">Ask</button>
+              <button id="ympClear" className="linkBtn" title="Clear">Clear</button>
             </div>
           </div>
         </div>
-
         <script
           id="feature-assistant-widget-script"
           dangerouslySetInnerHTML={{
             __html: `
-              (async function() {
-                // --- DOM References ---
-                const bubble = document.getElementById('assistantBubble');
-                const panel = document.getElementById('assistantPanel');
-                const closeBtn = document.getElementById('assistantClose');
-                const bodyEl = document.getElementById('assistantBody');
-                const inputEl = document.getElementById('assistantInput');
-                const sendBtn = document.getElementById('assistantSend');
-                const langSel = document.getElementById('assistantLang');
-                const speakBtn = document.getElementById('speakBtn');
-                const stopSpeechBtn = document.getElementById('stopSpeechBtn');
-                const micBtn = document.getElementById('micBtn');
-                const micStatus = document.getElementById('micStatus');
-                const voiceLang = document.getElementById('voiceLang');
+(function() {
+'use strict';
+
+/* -------- CONFIG -------- */
+const FUNCTION_ENDPOINT = '/chatAssistant'; // Keep as proxy path
+const enableFirestoreSave = false;
+const panelWidth = 360;
+
+const YMP_KB = [
+  { id: 'dashboard', keywords: ['dashboard', 'home', 'main screen'], featureId: 'dashboardPage', answer_en: 'Dashboard shows your profile, quick health score, appointments, and quick-access tiles to features like Disease Scanner, AI Assistant, and Medical Store.', answer_hi: 'डैशबोर्ड में आपका प्रोफ़ाइल, क्विक हेल्थ स्कोर, अपॉइंटमेंट और Disease Scanner, AI Assistant तथा Medical Store जैसे फास्ट-एक्सेस टाइल दिखती हैं।' },
+  { id: 'doctor_consult', keywords: ['doctor', 'consultation', 'book doctor', 'appointment'], featureId: 'consultationPage', answer_en: 'Doctor Consultation feature lets you choose Indian or Foreign doctors, pick date/time, set reminders, and start video call with the booked doctor.', answer_hi: 'Doctor Consultation फिचर में आप Indian या Foreign doctor चुन सकते हैं, तारीख/समय सेट कर सकते हैं, रिमाइंडर जोड़ सकते हैं और वीडियो कॉल शुरू कर सकते हैं।' },
+  { id: 'disease_scanner', keywords: ['disease scanner','scan disease','scanner','scan image'], featureId: 'diseaseScannerPage', answer_en: 'Disease Scanner accepts images (camera/front/back) and provides a preliminary analysis, plus option to chat further with the AI for symptom details.', answer_hi: 'Disease Scanner तस्वीर ले कर प्रारम्भिक विश्लेषण देता है और उपयोगकर्ता वार्ता के जरिए लक्षणों की और जानकारी भी दे सकता है।' },
+  { id: 'nearby_hospitals', keywords: ['nearby hospital','hospital','nearby'], featureId: 'nearbyHospitalsPage', answer_en: 'Nearby Hospitals fetches hospitals close to your location using OpenStreetMap-based geolocation. You can view addresses and call the hospital.', answer_hi: 'Nearby Hospitals आपके आस-पास के अस्पताल दिखाता है (OpenStreetMap आधारित)। आप उनका पता देख सकते हैं और कॉल कर सकते हैं।' },
+  { id: 'medicine_store', keywords: ['medical store','medicine store','buy medicine','pharmacy'], featureId: 'medicineStorePage', answer_en: 'Medical Store contains the medicine catalog with Indian prices, product details and buy flow (cart & checkout).', answer_hi: 'Medical Store में दवाओं की सूची, मूल्य और खरीदने का प्रोसेस (कार्ट और चेकआउट) उपलब्ध है।' },
+  { id: 'ai_assistant', keywords: ['ai assistant','chatbot','health assistant'], featureId: 'aiAssistantPage', answer_en: 'AI Health Assistant answers medical questions, provides suggestions and supports Hindi & English. Currently it is knowledge-base backed and can be extended via admin.', answer_hi: 'AI Health Assistant हिंदी और अंग्रेज़ी में सवालों के जवाब देता है। यह फिलहाल KB & LLM fallback से चलता है।' },
+  { id: 'planner', keywords: ['planner','health planner','create plan'], featureId: 'plannerPage', answer_en: 'Health Planner builds a weekly scientific plan based on user details (BMI, calories, exercise). You can download it as PDF and save to profile.', answer_hi: 'Health Planner उपयोगकर्ता के विवरण के आधार पर 7-दिन का प्लान बनाता है — PDF डाउनलोड और प्रोफ़ाइल में सेव किया जा सकता है।' },
+];
+
+/* --------- UI refs & State --------- */
+const panel = document.getElementById('ympPanel');
+const toggle = document.getElementById('ympToggle');
+const closeBtn = document.getElementById('ympClose');
+const body = document.getElementById('ympBody');
+const input = document.getElementById('ympInput');
+const sendBtn = document.getElementById('ympSend');
+const clearBtn = document.getElementById('ympClear');
+const quick = document.getElementById('ympQuick');
+const langSel = document.getElementById('ympLang');
+if (!panel || !toggle || !closeBtn || !body || !input || !sendBtn || !clearBtn || !quick || !langSel) return;
 
 
-                // --- State ---
-                let chatHistory = JSON.parse(sessionStorage.getItem('amp_feature_chat_v1') || '[]');
-                const synth = window.speechSynthesis;
-                let recognition;
+let visible = false;
+let sessionId = sessionStorage.getItem('ymp_session') || ('sess_' + Date.now());
+sessionStorage.setItem('ymp_session', sessionId);
+let chatHistory = JSON.parse(sessionStorage.getItem('ymp_history_' + sessionId) || '[]');
 
-                // --- Helper Functions ---
-                function navigateTo(path) {
-                  if (path) window.location.href = path;
-                }
-                function sanitize(s) { return String(s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function saveHistory() { sessionStorage.setItem('ymp_history_' + sessionId, JSON.stringify(chatHistory)); }
+function addMessage(role, text, meta) { chatHistory.push({ ts: Date.now(), role, text, meta }); saveHistory(); renderMessages(); }
+function escapeHtml(s) { return String(s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
 
-                // --- Chat Rendering ---
-                function renderHistory() {
-                  if (!bodyEl) return;
-                  bodyEl.innerHTML = '';
-                  chatHistory.slice(-30).forEach(msg => {
-                    const wrap = document.createElement('div');
-                    wrap.className = 'msg ' + msg.role;
-                    const bubble = document.createElement('div');
-                    bubble.className = 'bubble';
-                    bubble.innerHTML = sanitize(msg.text).replace(/\\n/g, '<br>');
-                    wrap.appendChild(bubble);
-                    if (msg.meta?.path) {
-                      const btn = document.createElement('div');
-                      btn.className = 'sendToPageBtn';
-                      btn.textContent = (langSel.value === 'hi') ? 'पेज खोलें' : 'Open Page';
-                      btn.onclick = () => navigateTo(msg.meta.path);
-                      wrap.appendChild(btn);
-                    }
-                    bodyEl.appendChild(wrap);
-                  });
-                  bodyEl.scrollTop = bodyEl.scrollHeight;
-                }
-                
-                function appendMessage(role, text, meta) {
-                    chatHistory.push({ role, text, meta, ts: Date.now() });
-                    sessionStorage.setItem('amp_feature_chat_v1', JSON.stringify(chatHistory));
-                    renderHistory();
-                }
+function renderMessages() {
+  body.innerHTML = '';
+  chatHistory.slice(-40).forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'ymp-msg ' + (m.role === 'user' ? 'user' : 'bot');
+    const bubble = document.createElement('div');
+    bubble.innerHTML = escapeHtml(m.text);
+    d.appendChild(bubble);
 
-                // --- Core Logic ---
-                async function onAsk() {
-                  const query = inputEl.value.trim();
-                  if (!query) return;
+    if (m.meta && m.meta.featureId) {
+      const btn = document.createElement('button');
+      btn.className = 'linkBtn';
+      btn.style.marginTop = '6px';
+      btn.textContent = (langSel.value === 'hi') ? 'फ़ीचर खोलें' : 'Open feature';
+      btn.addEventListener('click', () => triggerNavigate(m.meta.featureId));
+      d.appendChild(btn);
+    }
+    const cp = document.createElement('button');
+    cp.className = 'copyBtn';
+    cp.textContent = 'Copy';
+    cp.style.marginLeft = '8px';
+    cp.addEventListener('click', () => { navigator.clipboard.writeText(m.text); cp.textContent = 'Copied'; setTimeout(() => cp.textContent = 'Copy', 1200); });
+    d.appendChild(cp);
+    body.appendChild(d);
+  });
+  body.scrollTop = body.scrollHeight;
+}
 
-                  appendMessage('user', query);
-                  inputEl.value = '';
+const quickChips = [
+  { q_en: 'How to book doctor?', q_hi: 'Doctor kaise book kare?', kb: 'doctor_consult' },
+  { q_en: 'Open Disease Scanner', q_hi: 'Disease Scanner kholo', kb: 'disease_scanner' },
+  { q_en: 'Nearby hospitals', q_hi: 'Nazar ke hospital', kb: 'nearby_hospitals' },
+  { q_en: 'Create health planner', q_hi: 'Health planner banao', kb: 'planner' },
+  { q_en: 'How AI assistant works?', q_hi: 'AI assistant kaise kaam karta hai?', kb: 'ai_assistant' },
+];
 
-                  const lang = langSel.value;
-                  const response = await window.featureAssistant({ query, language: lang });
+function renderQuick() {
+  quick.innerHTML = '';
+  quickChips.forEach(c => {
+    const txt = langSel.value === 'hi' ? c.q_hi : c.q_en;
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = txt;
+    chip.addEventListener('click', () => { input.value = txt; onSend(); });
+    quick.appendChild(chip);
+  });
+}
 
-                  appendMessage('assistant', response.answer, response);
-                }
+function kbSearch(query) {
+  if (!query || query.trim().length < 2) return null;
+  const q = query.toLowerCase();
+  for (const item of YMP_KB) {
+    for (const k of item.keywords) {
+      if (q.includes(k) || k.includes(q) || q.split(' ').some(w => k.includes(w) || item.keywords.join(' ').includes(w))) {
+        return item;
+      }
+    }
+    if ((item.answer_en && item.answer_en.toLowerCase().includes(q)) || (item.answer_hi && item.answer_hi.toLowerCase().includes(q))) {
+      return item;
+    }
+  }
+  const tokens = q.split(/\\s+/).filter(Boolean);
+  let best = null, bestScore = 0;
+  for (const item of YMP_KB) {
+    const hay = (item.keywords.join(' ') + ' ' + (item.answer_en || '') + ' ' + (item.answer_hi || '')).toLowerCase();
+    let score = 0;
+    for (const t of tokens) if (hay.includes(t)) score++;
+    if (score > bestScore) { bestScore = score; best = item; }
+  }
+  if (bestScore >= Math.max(1, Math.floor(tokens.length / 2))) return best;
+  return null;
+}
 
-                // --- Text-to-Speech (TTS) ---
-                function getBestVoice(lang) {
-                    const voices = synth.getVoices();
-                    return voices.find(v => v.lang.startsWith(lang)) || voices.find(v => v.lang.startsWith('en'));
-                }
+async function callLLM(query, lang) {
+  try {
+    const res = await fetch(FUNCTION_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, query, lang }) });
+    if (!res.ok) throw new Error('LLM endpoint error: ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.warn('LLM call failed', err);
+    return { status: 'error', message: err.message || String(err) };
+  }
+}
 
-                speakBtn.onclick = () => {
-                    const lastAssistMsg = [...chatHistory].reverse().find(m => m.role === 'assistant');
-                    if (!lastAssistMsg || !lastAssistMsg.text) return;
-                    synth.cancel();
-                    const utter = new SpeechSynthesisUtterance(lastAssistMsg.text);
-                    utter.lang = voiceLang.value === 'hi-IN' ? 'hi-IN' : 'en-IN';
-                    utter.voice = getBestVoice(utter.lang);
-                    synth.speak(utter);
-                };
+function triggerNavigate(featureId) {
+    console.log('ymp:navigate ->', featureId);
+    const path = YMP_KB.find(f => f.featureId === featureId)?.path;
+    if(path) {
+        window.location.href = path;
+    } else if (typeof window.appNavigate === 'function') {
+        try { window.appNavigate(featureId); } catch (e) { console.warn(e); }
+    } else {
+        const ev = new CustomEvent('ymp:navigate', { detail: { featureId } });
+        window.dispatchEvent(ev);
+    }
+}
 
-                stopSpeechBtn.onclick = () => synth.cancel();
+async function onSend() {
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage('user', text);
+  input.value = '';
+  const kb = kbSearch(text);
+  if (kb) {
+    const ans = (langSel.value === 'hi' ? (kb.answer_hi || kb.answer_en) : (kb.answer_en || kb.answer_hi));
+    addMessage('bot', ans, { featureId: kb.featureId });
+    return;
+  }
+  addMessage('bot', (langSel.value === 'hi') ? 'Soch raha hoon...' : 'Thinking...', {});
+  const res = await callLLM(text, langSel.value);
+  if (chatHistory.length && chatHistory[chatHistory.length - 1].text.match(/Thinking|Soch raha/)) chatHistory.pop();
+  if (res.status === 'ok' && res.text) {
+    addMessage('bot', res.text, { featureId: res.featureId || null });
+  } else {
+    addMessage('bot', (langSel.value === 'hi') ? 'Mujhe jawab nahi mila. Kripya baad mein dubara koshish karein.' : 'I couldn\\'t get an answer right now. Try again later.', {});
+  }
+}
 
+toggle.addEventListener('click', () => {
+  visible = !visible;
+  panel.style.display = visible ? 'flex' : 'none';
+  document.getElementById('ympAssistant').setAttribute('aria-hidden', String(!visible));
+  if (visible) { renderMessages(); input.focus(); }
+});
+closeBtn.addEventListener('click', () => { visible = false; panel.style.display = 'none'; toggle.focus(); });
+document.addEventListener('keydown', (e) => { if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'y') { visible = !visible; panel.style.display = visible ? 'flex' : 'none'; } });
+sendBtn.addEventListener('click', onSend);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { onSend(); e.preventDefault(); } });
+clearBtn.addEventListener('click', () => { chatHistory = []; saveHistory(); renderMessages(); });
+langSel.addEventListener('change', () => { renderQuick(); renderMessages(); });
 
-                // --- Speech-to-Text (STT) ---
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (SpeechRecognition) {
-                    micBtn.onclick = () => {
-                        if (recognition && recognition.isStarted) {
-                            recognition.stop();
-                            return;
-                        }
-                        recognition = new SpeechRecognition();
-                        recognition.lang = voiceLang.value === 'hi-IN' ? 'hi-IN' : 'en-IN';
-                        recognition.onstart = () => { micStatus.textContent = 'Listening...'; micBtn.style.background = '#ff6b6b'; };
-                        recognition.onend = () => { micStatus.textContent = ''; micBtn.style.background = '#2b9edb'; recognition.isStarted = false; };
-                        recognition.onresult = (event) => {
-                            inputEl.value = event.results[0][0].transcript;
-                            onAsk();
-                        };
-                        recognition.start();
-                        recognition.isStarted = true;
-                    };
-                } else {
-                    micBtn.disabled = true;
-                    micStatus.textContent = 'Not supported';
-                }
+if (chatHistory.length === 0) {
+  addMessage('bot', (langSel.value === 'hi') ? 'Namaste! Main aapka Your Medical Partner assistant hoon. Kisi feature ke baare mein puchhiye — main turant bataunga.' : 'Hi! I am your Your Medical Partner assistant. Ask about any feature and I will help instantly.');
+}
 
-                // --- Event Listeners ---
-                bubble.onclick = () => { panel.style.display = 'flex'; inputEl.focus(); renderHistory(); };
-                closeBtn.onclick = () => { panel.style.display = 'none'; };
-                sendBtn.onclick = onAsk;
-                inputEl.onkeydown = (e) => { if (e.key === 'Enter') onAsk(); };
-                
-                // --- Global function ---
-                window.featureAssistant = ${featureAssistant.toString()};
+renderMessages();
+renderQuick();
+setInterval(() => saveHistory(), 3000);
 
-                renderHistory();
-              })();
+})();
             `,
           }}
         />
