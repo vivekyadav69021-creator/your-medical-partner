@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useEffect } from 'react';
+import { useActionState, useRef, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Check, Trophy, Star, Sparkles, Zap, Activity, Smile, Bot, Terminal } from 'lucide-react';
+import { Check, Trophy, Star, Sparkles, Zap, Activity, Smile, Bot, Terminal, Save, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
@@ -20,8 +20,13 @@ import { Label } from '@/components/ui/label';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { generateChallengeAction } from './actions';
-import type { GenerateChallengeOutput } from '@/ai/flows/challenge-generator-flow';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, addDoc, collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { jsPDF } from 'jspdf';
+
 
 const challenges = [
   {
@@ -73,131 +78,319 @@ const moodData = [
   { day: 'Sun', mood: 3 },
 ];
 
-const initialState = {
-  challenge: null,
-  error: null,
-};
-
-function GenerateButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? (
-        <>
-          <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-          Generating...
-        </>
-      ) : (
-        <>
-          <Sparkles className="mr-2 h-4 w-4" />
-          Generate My Challenge
-        </>
-      )}
-    </Button>
-  );
-}
-
-function AIChallengeGenerator() {
-  const [state, formAction] = useActionState(generateChallengeAction, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const handleFormAction = (formData: FormData) => {
-    formAction(formData);
+const labels = {
+    en: {
+      name: 'Name', age:'Age', gender:'Gender', weight:'Weight (kg)', height:'Height (cm)',
+      activity:'Activity level', goal:'Primary goal', medical:'Medical conditions / allergies',
+      time:'Daily exercise time (minutes)', notes:'Extra notes', generate:'Generate Planner',
+      save:'Save to Profile', download:'Download PDF', plannerTitle:'Your 7-day Health Plan',
+      statusSaving:'Saving...', statusSaved:'Saved ✓', statusNoAuth:'Please sign in to save.'
+    },
+    hi: {
+      name:'नाम', age:'आयु', gender:'लिंग', weight:'वजन (kg)', height:'ऊँचाई (cm)',
+      activity:'गतिविधि स्तर', goal:'प्राथमिक लक्ष्य', medical:'चिकित्सीय स्थिति / एलर्जी',
+      time:'दैनिक व्यायाम समय (मिनट)', notes:'अतिरिक्त नोट्स', generate:'प्लान बनाएँ',
+      save:'प्रोफ़ाइल में सेव करें', download:'PDF डाउनलोड', plannerTitle:'आपकी 7-दिवसीय हेल्थ योजना',
+      statusSaving:'सहेजा जा रहा है...', statusSaved:'सहेजा गया ✓', statusNoAuth:'सहेम के लिए साइन-इन करें।'
+    }
   };
-  
-  const generatedChallenge: GenerateChallengeOutput | null = state.challenge;
 
-  return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <Card>
-        <form ref={formRef} action={handleFormAction}>
-          <CardHeader>
-            <CardTitle>Tell AI Sensi About Your Routine</CardTitle>
-            <CardDescription>
-              Describe your daily activities, diet, and health goals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="routine-description">Your Daily Routine & Goals</Label>
-              <Textarea
-                id="routine-description"
-                name="routine-description"
-                placeholder="e.g., 'I work a desk job, 9-to-5. I want to have more energy in the afternoons. I usually eat sandwiches for lunch and order takeout for dinner. I want to start exercising but don't have much time.'"
-                rows={8}
-                required
-              />
-            </div>
-             {state.error && (
-                <Alert variant="destructive">
-                  <Terminal className="h-4 w-4" />
-                  <AlertTitle>Generation Failed</AlertTitle>
-                  <AlertDescription>{state.error}</AlertDescription>
-                </Alert>
-              )}
-          </CardContent>
-          <CardFooter>
-            <GenerateButton />
-          </CardFooter>
-        </form>
-      </Card>
 
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle>Your Personalized Challenge</CardTitle>
-          <CardDescription>
-            AI Sensi will generate a custom challenge for you here.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col items-center justify-center gap-4">
-          {generatedChallenge ? (
-            <div className="w-full">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-6 h-6 text-yellow-500" />
-                    {generatedChallenge.title}
-                  </CardTitle>
-                  <CardDescription>{generatedChallenge.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="text-sm font-medium">Progress</p>
-                      <p className="text-sm text-muted-foreground">0 / 5 days</p>
+function HealthPlanner() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [lang, setLang] = useState<'en' | 'hi'>('en');
+    const [formData, setFormData] = useState({
+        name: '',
+        age: '',
+        gender: 'male',
+        weight: '',
+        height: '',
+        activity: 'light',
+        goal: 'maintain',
+        medical: '',
+        timeMins: '30',
+        notes: ''
+    });
+    const [planner, setPlanner] = useState<any>(null);
+    const [status, setStatus] = useState('');
+    const t = labels[lang];
+
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({...prev, name: user.displayName || user.email || ''}));
+        }
+    }, [user]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handleSelectChange = (id: string, value: string) => {
+        setFormData(prev => ({ ...prev, [id]: value }));
+    }
+
+    const generatePlanner = () => {
+        if (!formData.name) {
+            toast({ variant: 'destructive', title: 'Name required', description: 'Please enter a name to generate a planner.' });
+            return;
+        }
+
+        const calcBMI = (weight: number, heightCm: number) => {
+            if(!weight || !heightCm) return null;
+            const h = heightCm/100;
+            const bmi = weight / (h*h);
+            return Math.round(bmi*10)/10;
+        };
+
+        const estimateCalories = (form: typeof formData) => {
+            const w = Number(form.weight), h = Number(form.height), age = Number(form.age);
+            if(!w || !h || !age) return null;
+            let bmr;
+            if(form.gender === 'female') bmr = 10*w + 6.25*h - 5*age - 161;
+            else bmr = 10*w + 6.25*h - 5*age + 5;
+            const mult = { sedentary:1.2, light:1.375, moderate:1.55, active:1.725 }[form.activity as 'sedentary' | 'light' | 'moderate' | 'active']||1.375;
+            let calories = Math.round(bmr * mult);
+            if(form.goal === 'lose') calories = Math.max(1200, calories - 400);
+            if(form.goal === 'gain') calories = calories + 300;
+            return calories;
+        };
+
+        const generateDailyDiet = (calories: number | null) => {
+          if(!calories) return [];
+          return [
+            { meal:'Breakfast', kcal: Math.round(calories * 0.25), sample: 'Oats/Poha/Idli + fruit + milk/curd' },
+            { meal:'Mid Snack', kcal: Math.round(calories * 0.05), sample: 'Fruit / nuts' },
+            { meal:'Lunch', kcal: Math.round(calories * 0.35), sample: 'Chapati/Rice + Dal/Paneer/Chicken + Salad' },
+            { meal:'Evening Snack', kcal: Math.round(calories * 0.05), sample: 'Buttermilk / Sprouts' },
+            { meal:'Dinner', kcal: Math.round(calories * 0.30), sample: 'Light veg/non-veg + soup' }
+          ];
+        };
+
+        const generateExercisePlan = (form: typeof formData) => {
+          const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+          return days.map((day, i) => {
+            let type = 'Brisk Walk or Yoga';
+            const time = Number(form.timeMins);
+            if (time >= 40 && form.activity === 'active') type = (i % 2 === 0) ? 'Strength training' : 'HIIT / Cardio';
+            else if (form.activity === 'moderate') type = (i % 3 === 0) ? 'Strength / Core' : 'Brisk Walk';
+            if (time < 10) type = 'Light Stretching';
+            if (i === 6) type = 'Rest or light walk';
+            return { day, activity: type, minutes: time };
+          });
+        };
+        
+        const newPlanner = {
+            createdAt: new Date().toISOString(),
+            personal: formData,
+            bmi: calcBMI(Number(formData.weight), Number(formData.height)),
+            calories: estimateCalories(formData),
+            dailyDiet: generateDailyDiet(estimateCalories(formData)),
+            exercise: generateExercisePlan(formData),
+            mental: ['Daily 5–10 min breathing exercise.', 'Aim for 7–8 hours of sleep.'],
+            hydration: 'Drink 30-40 ml per kg body weight daily.',
+        };
+
+        setPlanner(newPlanner);
+    };
+
+    const savePlanner = async () => {
+        if (!planner) {
+            toast({ variant: 'destructive', title: 'No planner generated', description: 'Please generate a planner first.' });
+            return;
+        }
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: t.statusNoAuth });
+            return;
+        }
+        setStatus(t.statusSaving);
+        try {
+            const plannersCol = collection(firestore, 'users', user.uid, 'planners');
+            await addDoc(plannersCol, planner);
+            setStatus(t.statusSaved);
+            toast({ title: 'Planner Saved', description: 'Your health planner has been saved to your profile.'});
+        } catch (error) {
+            console.error(error);
+            setStatus('Save failed.');
+            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your planner.'});
+        }
+    };
+    
+    const downloadPdf = async () => {
+        if (!planner) {
+          toast({ variant: "destructive", title: "No Planner", description: "Please generate a planner first." });
+          return;
+        }
+
+        setStatus('Preparing PDF...');
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+        const W = doc.internal.pageSize.getWidth();
+        let y = 40;
+
+        doc.setFontSize(18); doc.text('Your Medical Partner — Health Planner', W/2, y, {align:'center'}); y += 24;
+        doc.setFontSize(12);
+        doc.text(`Name: ${planner.personal.name || '-'}`, 40, y); doc.text(`Created: ${new Date(planner.createdAt).toLocaleDateString()}`, W-200, y); y += 18;
+        doc.text(`Age: ${planner.personal.age || '-'}  Gender: ${planner.personal.gender || '-'}`, 40, y); y += 18;
+        doc.text(`BMI: ${planner.bmi || '-'}  Est. Calories: ${planner.calories || '-'} kcal`, 40, y); y += 22;
+
+        doc.setFontSize(14); doc.text('Daily Diet', 40, y); y += 16;
+        doc.setFontSize(11);
+        planner.dailyDiet.forEach((d: any) => {
+          doc.text(`- ${d.meal}: ${d.kcal} kcal (${d.sample})`, 48, y); y += 14;
+        });
+
+        y += 8;
+        doc.setFontSize(14); doc.text('Weekly Exercise Plan', 40, y); y += 16;
+        doc.setFontSize(11);
+        planner.exercise.forEach((e: any) => {
+          doc.text(`- ${e.day}: ${e.activity} (${e.minutes} mins)`, 48, y); y += 14;
+        });
+        
+        y+= 8;
+        doc.setFontSize(14); doc.text('Mental Wellbeing', 40, y); y += 16;
+        doc.setFontSize(11);
+        planner.mental.forEach((m: string) => {
+            doc.text(`- ${m}`, 48, y); y+=14;
+        });
+
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        const nameSafe = (planner.personal.name || 'planner').replace(/\s+/g,'_');
+        a.download = `${nameSafe}_health_planner.pdf`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        setStatus('');
+        toast({title: "PDF Downloaded"});
+  };
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle>{lang === 'en' ? 'AI Health Planner' : 'एआई हेल्थ प्लानर'}</CardTitle>
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="hpLang">Language</Label>
+                        <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
+                            <SelectTrigger id="hpLang" className="w-[120px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="en">English</SelectItem>
+                                <SelectItem value="hi">हिन्दी</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <Progress value={0} className="h-2" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm">Tasks:</h4>
-                    {generatedChallenge.tasks.map((task, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-secondary/50">
-                        <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center border-primary`} />
-                        <p className="text-sm"><b>Day {task.day}:</b> {task.task}</p>
-                      </div>
-                    ))}
-                  </div>
+                </div>
+                <CardDescription>{lang === 'en' ? 'Fill in your details to get a personalized weekly health plan.' : 'व्यक्तिगत साप्ताहिक स्वास्थ्य योजना प्राप्त करने के लिए अपना विवरण भरें।'}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">{t.name}</Label>
+                        <Input id="name" value={formData.name} onChange={handleInputChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="age">{t.age}</Label>
+                        <Input id="age" type="number" value={formData.age} onChange={handleInputChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="gender">{t.gender}</Label>
+                        <Select value={formData.gender} onValueChange={(v) => handleSelectChange('gender', v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="weight">{t.weight}</Label>
+                        <Input id="weight" type="number" value={formData.weight} onChange={handleInputChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="height">{t.height}</Label>
+                        <Input id="height" type="number" value={formData.height} onChange={handleInputChange} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="activity">{t.activity}</Label>
+                        <Select value={formData.activity} onValueChange={(v) => handleSelectChange('activity', v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="sedentary">Sedentary</SelectItem>
+                                <SelectItem value="light">Light (1-3 days/wk)</SelectItem>
+                                <SelectItem value="moderate">Moderate (3-5 days/wk)</SelectItem>
+                                <SelectItem value="active">Active (6+ days/wk)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="goal">{t.goal}</Label>
+                        <Select value={formData.goal} onValueChange={(v) => handleSelectChange('goal', v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="maintain">Maintain weight</SelectItem>
+                                <SelectItem value="lose">Lose weight</SelectItem>
+                                <SelectItem value="gain">Gain muscle</SelectItem>
+                                <SelectItem value="improve_fitness">Improve fitness</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="medical">{t.medical}</Label>
+                        <Input id="medical" placeholder="e.g. Diabetes, Hypertension" value={formData.medical} onChange={handleInputChange} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="timeMins">{t.time}</Label>
+                        <Input id="timeMins" type="number" value={formData.timeMins} onChange={handleInputChange} />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="notes">{t.notes}</Label>
+                    <Textarea id="notes" placeholder="e.g. Vegetarian, intermittent fasting" value={formData.notes} onChange={handleInputChange} />
+                </div>
+            </CardContent>
+            <CardFooter className="flex flex-wrap items-center gap-4">
+                <Button onClick={generatePlanner}><Sparkles className="mr-2 h-4 w-4" />{t.generate}</Button>
+                <Button variant="outline" onClick={savePlanner} disabled={!planner || status === t.statusSaving}><Save className="mr-2 h-4 w-4" />{status === t.statusSaving ? t.statusSaving : t.save}</Button>
+                <Button variant="outline" onClick={downloadPdf} disabled={!planner}><Download className="mr-2 h-4 w-4" />{t.download}</Button>
+                <p className="text-sm text-muted-foreground">{status}</p>
+            </CardFooter>
+             {planner && (
+                <CardContent>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t.plannerTitle}</CardTitle>
+                            <CardDescription>Created: {new Date(planner.createdAt).toLocaleDateString()}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="prose prose-sm dark:prose-invert max-w-full">
+                            <p><strong>Name:</strong> {planner.personal.name || '-'} | <strong>BMI:</strong> {planner.bmi || '-'} | <strong>Est. Calories:</strong> {planner.calories || '-'} kcal</p>
+                            <hr/>
+                            <h4>Daily Diet</h4>
+                            <ul>{planner.dailyDiet.map((d: any, i:number) => <li key={i}><b>{d.meal}</b> — {d.kcal} kcal — <i>{d.sample}</i></li>)}</ul>
+                            <h4>Weekly Exercise Plan</h4>
+                            <table>
+                                <thead><tr><th>Day</th><th>Activity</th><th>Minutes</th></tr></thead>
+                                <tbody>{planner.exercise.map((e: any, i:number) => <tr key={i}><td>{e.day}</td><td>{e.activity}</td><td>{e.minutes}</td></tr>)}</tbody>
+                            </table>
+                             <h4>Mental Wellbeing</h4>
+                            <ul>{planner.mental.map((m: any, i:number) => <li key={i}>{m}</li>)}</ul>
+                            <p><strong>Hydration:</strong> {planner.hydration}</p>
+                            {planner.personal.medical && <p><strong>Medical Notes:</strong> {planner.personal.medical}</p>}
+                        </CardContent>
+                    </Card>
                 </CardContent>
-                <CardFooter className="flex-col items-start gap-4">
-                  <div className="flex items-center gap-2 text-primary font-semibold">
-                    <Star className="w-5 h-5" />
-                    <p>Reward: {generatedChallenge.reward}</p>
-                  </div>
-                  <Button className="w-full">Start this AI Challenge</Button>
-                </CardFooter>
-              </Card>
-            </div>
-          ) : (
-            <div className="text-center text-muted-foreground">
-                <Bot className="mx-auto h-12 w-12"/>
-                <p className="mt-4">Your AI-generated challenge will appear here.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+            )}
+        </Card>
+    );
 }
 
 
@@ -215,10 +408,10 @@ export default function ChallengesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="ai-sensi">
+      <Tabs defaultValue="ai-planner">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="community">Community Challenges</TabsTrigger>
-          <TabsTrigger value="ai-sensi"><Sparkles className="mr-2 h-4 w-4"/>AI Sensi</TabsTrigger>
+          <TabsTrigger value="ai-planner"><Sparkles className="mr-2 h-4 w-4"/>AI Health Planner</TabsTrigger>
           <TabsTrigger value="analysis">Health Analysis</TabsTrigger>
         </TabsList>
         
@@ -264,8 +457,8 @@ export default function ChallengesPage() {
           </div>
         </TabsContent>
         
-        <TabsContent value="ai-sensi" className="mt-6">
-           <AIChallengeGenerator />
+        <TabsContent value="ai-planner" className="mt-6">
+           <HealthPlanner />
         </TabsContent>
 
         <TabsContent value="analysis" className="mt-6">
