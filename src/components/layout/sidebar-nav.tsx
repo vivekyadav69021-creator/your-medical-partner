@@ -36,7 +36,7 @@ const aiToolsNav = [
 ];
 
 const servicesNav = [
-    { href: '/consultation', label: 'Consultations', icon: Stethoscope },
+    { href: '/consultation', label: 'Doctors Consult', icon: Stethoscope },
     { href: '/store', label: 'Medical Store', icon: Store },
     { href: '/planner', label: 'My Planner', icon: ListTodo },
     { href: '/nearby-hospital', label: 'Nearby Hospitals', icon: Hospital },
