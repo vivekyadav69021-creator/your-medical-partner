@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -81,17 +82,16 @@ function DiseaseImageScanner() {
     }, [toast, stopStream]);
 
     useEffect(() => {
-        if (isCameraOpen) {
-            openCamera(facingMode);
-        } else {
+        return () => {
             stopStream();
         }
-    }, [isCameraOpen, facingMode, openCamera, stopStream]);
+    }, [stopStream]);
 
 
     const closeCamera = useCallback(() => {
         setIsCameraOpen(false);
-    }, []);
+        stopStream();
+    }, [stopStream]);
 
     const takePicture = useCallback(() => {
         if (videoRef.current && canvasRef.current) {
@@ -116,7 +116,7 @@ function DiseaseImageScanner() {
             const reader = new FileReader();
             reader.onload = (e) => {
                 setPreview(e.target?.result as string);
-                setIsCameraOpen(false);
+                closeCamera();
             }
             reader.readAsDataURL(file);
         }
@@ -126,7 +126,7 @@ function DiseaseImageScanner() {
         setPreview(null);
         if(fileInputRef.current) fileInputRef.current.value = '';
         formRef.current?.reset();
-        setIsCameraOpen(false);
+        closeCamera();
     };
 
     const handleFormAction = (formData: FormData) => {
@@ -151,14 +151,14 @@ function DiseaseImageScanner() {
                         <Input id="disease-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
                     </div>
                      <div className="flex gap-2 mt-2">
-                        <Button type="button" variant="secondary" onClick={() => setIsCameraOpen(true)}><Camera className="mr-2"/>Open Camera</Button>
+                        <Button type="button" variant="secondary" onClick={() => openCamera(facingMode)}><Camera className="mr-2"/>Open Camera</Button>
                         <Button type="submit" disabled={!preview || isAnalyzing}>
                             {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Analyzing...</>) : 'Analyze Image'}
                         </Button>
                         <Button type="button" variant="outline" onClick={handleClear}>Clear</Button>
                     </div>
 
-                    {isCameraOpen ? (
+                    {isCameraOpen && (
                         <div className="relative mt-2">
                             <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
                             <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
@@ -169,7 +169,9 @@ function DiseaseImageScanner() {
                                 <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
                             </div>
                         </div>
-                    ) : preview && (
+                    )}
+                    
+                    {preview && !isCameraOpen && (
                         <div className="relative mt-2">
                             <Image src={preview} alt="Disease preview" width={300} height={300} className="rounded-md border aspect-square object-cover w-full" />
                         </div>
@@ -226,7 +228,7 @@ function XRayScanner() {
     }
   }, []);
 
-  const openCamera = useCallback(async (mode: 'user' | 'environment') => {
+  const openCamera = useCallback(async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast({ variant: 'destructive', title: "Camera Not Supported" });
         return;
@@ -238,7 +240,7 @@ function XRayScanner() {
     if(fileInputRef.current) fileInputRef.current.value = '';
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -247,20 +249,19 @@ function XRayScanner() {
        toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access camera. Please check permissions.' });
        setIsCameraOpen(false);
     }
-  }, [toast, stopStream]);
+  }, [toast, stopStream, facingMode]);
 
   useEffect(() => {
-    if (isCameraOpen) {
-        openCamera(facingMode);
-    } else {
+    return () => {
         stopStream();
     }
-  }, [isCameraOpen, facingMode, openCamera, stopStream]);
+  }, [stopStream]);
 
 
   const closeCamera = useCallback(() => {
     setIsCameraOpen(false);
-  }, []);
+    stopStream();
+  }, [stopStream]);
 
   const takePicture = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
@@ -288,7 +289,7 @@ function XRayScanner() {
     if (file) {
       setSelectedFile(file);
       setPreview(URL.createObjectURL(file));
-      setIsCameraOpen(false);
+      closeCamera();
     }
   };
   
@@ -297,19 +298,14 @@ function XRayScanner() {
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     formRef.current?.reset();
-    setIsCameraOpen(false);
+    closeCamera();
   };
   
   const handleFormAction = async (formData: FormData) => {
     if (preview && selectedFile) {
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedFile);
-      reader.onloadend = () => {
-        const base64data = reader.result;
-        formData.append('photoDataUri', base64data as string);
+        formData.append('photoDataUri', preview);
         formData.append('contentType', selectedFile.type);
         formAction(formData);
-      };
     } else {
         toast({ variant: 'destructive', title: "Analysis Failed", description: "Please upload an image to be scanned." });
         return;
@@ -348,7 +344,7 @@ function XRayScanner() {
             <Input id="xray-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*"/>
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={() => setIsCameraOpen(true)}><Camera className="mr-2"/>Open Camera</Button>
+            <Button type="button" variant="secondary" onClick={() => openCamera()}><Camera className="mr-2"/>Open Camera</Button>
             <Button type="submit" disabled={isAnalyzing || !selectedFile}>
               {isAnalyzing ? (
                 <>
@@ -363,8 +359,8 @@ function XRayScanner() {
             </Button>
              <Button type="button" variant="outline" onClick={handleClear}>Clear</Button>
           </div>
-          {isCameraOpen ? (
-              <div className="relative">
+            {isCameraOpen && (
+              <div className="relative mt-2">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
                 <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
                     <Button type="button" onClick={takePicture}>Take Picture</Button>
@@ -374,7 +370,9 @@ function XRayScanner() {
                     <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
                 </div>
               </div>
-            ) : preview && (
+            )}
+          
+          {preview && !isCameraOpen && (
               <div className="relative mt-2">
                 <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border aspect-square object-cover w-full" />
               </div>
@@ -573,5 +571,7 @@ export default function DiseaseScannerPage() {
   );
 }
 
+
+    
 
     
