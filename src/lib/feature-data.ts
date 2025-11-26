@@ -1,3 +1,4 @@
+
 export type Feature = {
     id: string;
     title: string;
@@ -53,7 +54,8 @@ export const features: Feature[] = [
     id: 'planner', 
     title: 'My Planner', 
     path: '/planner', 
-    content_en: 'Organize your daily health tasks. Add, edit, and track tasks related to medication, fitness, and general wellbeing.', s    content_hi: 'अपने दैनिक स्वास्थ्य कार्यों को व्यवस्थित करें। दवा, फिटनेस और सामान्य कल्याण से संबंधित कार्यों को जोड़ें, संपादित करें और ट्रैक करें।' 
+    content_en: 'Organize your daily health tasks. Add, edit, and track tasks related to medication, fitness, and general wellbeing.', 
+    content_hi: 'अपने दैनिक स्वास्थ्य कार्यों को व्यवस्थित करें। दवा, फिटनेस और सामान्य कल्याण से संबंधित कार्यों को जोड़ें, संपादित करें और ट्रैक करें।' 
   },
   { 
     id: 'nearby-hospital', 

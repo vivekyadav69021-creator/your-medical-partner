@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -62,22 +63,26 @@ export default function RootLayout({
             <div id="assistantHeader">
               <h4>Your Medical Partner — Assistant</h4>
               <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                <select id="assistantLang" style={{borderRadius:'8px',padding:'6px',border:'0', color:'#333', background: '#f0f0f0'}}>
+                  <option value="en">EN</option>
+                  <option value="hi">HI</option>
+                </select>
                 <button id="assistantClose" style={{background:'transparent',border:'0',color:'#fff',fontSize:'18px',cursor:'pointer'}}>✕</button>
               </div>
             </div>
             <div id="assistantBody" aria-live="polite"></div>
             <div id="assistantFooter">
-                <div class="voiceWidget">
-                    <button id="speakBtn" class="assistBtn" title="Speak assistant's reply">🔊</button>
-                    <button id="stopSpeechBtn" class="assistBtn" title="Stop speaking">■</button>
-                     <select id="assistantLang" style="border-radius:8px;padding:6px;border:0; color:#333; background: #f0f0f0;">
+                <div className="voiceWidget">
+                    <button id="speakBtn" className="assistBtn" title="Speak assistant's reply">🔊</button>
+                    <button id="stopSpeechBtn" className="assistBtn" title="Stop speaking">■</button>
+                     <select id="assistantLang" style={{borderRadius:'8px',padding:'6px',border:'0', color:'#333', background: '#f0f0f0'}}>
                       <option value="en">EN</option>
                       <option value="hi">HI</option>
                     </select>
-                    <button id="micBtn" class="assistBtn" title="Start microphone">🎤</button>
-                    <span id="micStatus" style="font-size:12px; color: #555; flex: 1;"></span>
+                    <button id="micBtn" className="assistBtn" title="Start microphone">🎤</button>
+                    <span id="micStatus" style={{fontSize:'12px', color: '#555', flex: 1}}></span>
                 </div>
-              <div style="display:flex; gap: 8px;">
+              <div style={{display:'flex', gap: '8px'}}>
                 <input id="assistantInput" className="assistInput" placeholder="Ask about any feature..." />
                 <button id="assistantSend" className="assistBtn">Ask</button>
               </div>
