@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useActionState, useEffect } from 'react';
@@ -46,9 +47,19 @@ function AnalyzeButton() {
 const PrescriptionAnalyzer = () => {
   const [state, formAction] = useActionState(analyzePrescriptionAction, initialAnalysisState);
   const [preview, setPreview] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (state.result) {
+      setAnalysisResult(state.result);
+    }
+    if (state.error) {
+      setAnalysisResult(null);
+    }
+  }, [state]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -76,18 +87,15 @@ const PrescriptionAnalyzer = () => {
   
   const handleClear = () => {
       setPreview(null);
-      if(fileInputRef.current) fileInputRef.current.value = '';
-      // Reset the form action state by re-invoking the action with a reset flag or similar
-      // For simplicity here, we'll just clear the UI state. A more robust solution might involve a dedicated reset action.
+      setAnalysisResult(null);
+      if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       formRef.current?.reset();
-      const newInitialState = { result: null, error: null };
-      // This is a way to tell the useActionState to reset.
-      // A more formal API for this might exist in future React versions.
-      (formAction as (payload: FormData | { type: 'reset' }) => void)({ type: 'reset' } as any);
   }
   
-  const matchedMedicines = state.result?.availableMedicines
-    ? medicines.filter(med => state.result!.availableMedicines.some(availMed => med.name.toLowerCase().includes(availMed.toLowerCase())))
+  const matchedMedicines = analysisResult?.availableMedicines
+    ? medicines.filter(med => analysisResult!.availableMedicines.some((availMed: string) => med.name.toLowerCase().includes(availMed.toLowerCase())))
     : [];
 
   return (
@@ -162,13 +170,13 @@ const PrescriptionAnalyzer = () => {
                      </div>
                 )}
 
-                {state.result && state.result.unidentifiedMedicines.length > 0 && (
+                {analysisResult && analysisResult.unidentifiedMedicines.length > 0 && (
                     <Alert>
                         <AlertTitle>Medicines Not Available</AlertTitle>
                         <AlertDescription>
                             <p>The following items were identified from your prescription but are not available in our store:</p>
                             <ul className="list-disc pl-5 mt-2">
-                                {state.result.unidentifiedMedicines.map((item, i) => <li key={i}>{item}</li>)}
+                                {analysisResult.unidentifiedMedicines.map((item: string, i: number) => <li key={i}>{item}</li>)}
                             </ul>
                         </AlertDescription>
                     </Alert>
