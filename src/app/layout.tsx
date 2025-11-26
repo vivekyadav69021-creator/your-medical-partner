@@ -109,6 +109,7 @@ export default function RootLayout({
             padding: 10px;
             border-top: 1px solid #e2e8f0;
             display: flex;
+            flex-direction: column;
             gap: 6px;
           }
           #YMP_INPUT {
@@ -125,19 +126,44 @@ export default function RootLayout({
             color: white;
             cursor: pointer;
           }
+          .voiceWidget {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+          }
+          .assistBtn {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer;
+            background: #1398d8;
+            color: #fff;
+          }
         `}} />
 
         <div id="YMP_FLOAT_ROOT">
           <div id="YMP_BUBBLE">YMP</div>
-          <div id="YMP_PANEL" style={{display: 'none'}}>
+          <div id="YMP_PANEL">
             <div id="YMP_HEADER">
               <strong>Your Medical Partner</strong>
-              <button id="YMP_CLOSE" style={{background:'none',border:'none',fontSize:'18px',cursor:'pointer'}}>✖</button>
+              <button id="YMP_CLOSE" style={{ background:'none', border:'none', fontSize:'18px', cursor:'pointer' }}>✖</button>
             </div>
             <div id="YMP_BODY"></div>
             <div id="YMP_FOOTER">
-              <input id="YMP_INPUT" placeholder="Ask about app features…" />
-              <button id="YMP_SEND">Send</button>
+               <div className="voiceWidget">
+                <button id="speakBtn" className="assistBtn" title="Speak assistant's reply">🔊</button>
+                <button id="stopSpeechBtn" className="assistBtn" title="Stop speaking">■</button>
+                <select id="assistantLang" style={{ borderRadius: 8, padding: 6, border: 0, color: '#333', background: '#f0f0f0' }}>
+                  <option value="en-IN">EN</option>
+                  <option value="hi-IN">HI</option>
+                </select>
+                <button id="micBtn" className="assistBtn" title="Start microphone">🎤</button>
+                <span id="micStatus" style={{ fontSize: '12px', color: '#555', flex: 1 }}></span>
+              </div>
+              <div style={{ display:'flex', gap: '8px' }}>
+                <input id="YMP_INPUT" placeholder="Ask about app features…" />
+                <button id="YMP_SEND">Ask</button>
+              </div>
             </div>
           </div>
         </div>
@@ -149,21 +175,16 @@ export default function RootLayout({
           const input = document.getElementById("YMP_INPUT");
           const send = document.getElementById("YMP_SEND");
           const body = document.getElementById("YMP_BODY");
-
-          if (bubble) {
-            bubble.onclick = () => {
-              if (panel) panel.style.display = "flex";
-            };
-          }
-
-          if (closeBtn) {
-            closeBtn.onclick = () => {
-              if (panel) panel.style.display = "none";
-            };
-          }
+          const speakBtn = document.getElementById('speakBtn');
+          const stopSpeechBtn = document.getElementById('stopSpeechBtn');
+          const micBtn = document.getElementById('micBtn');
+          const langSel = document.getElementById('assistantLang');
+          const micStatus = document.getElementById('micStatus');
+          
+          bubble.onclick = () => { panel.style.display = "flex"; };
+          closeBtn.onclick = () => { panel.style.display = "none"; };
 
           function addMsg(text, sender = "bot") {
-            if (!body) return;
             const div = document.createElement("div");
             div.className = "ymp-msg " + (sender === "user" ? "ymp-user" : "ymp-bot");
             div.innerText = text;
@@ -172,31 +193,78 @@ export default function RootLayout({
           }
 
           function handleSend() {
-            if (!input || !('value' in input)) return;
             const q = input.value.trim();
             if (!q) return;
             addMsg(q, "user");
             input.value = "";
-
             const answers = {
               "doctor": "To book doctor, go to Doctor Consult → Select doctor → Choose date/time → Confirm.",
               "disease": "Disease Scanner analyzes images, X-ray, reports → Open Disease Scanner from dashboard.",
               "planner": "Your health planner creates weekly diet + workout plan → Open My Planner.",
               "hospital": "Nearby Hospital finds hospitals around you via GPS.",
             };
-
             let reply = null;
             for (const key in answers) {
               if (q.toLowerCase().includes(key)) reply = answers[key];
             }
-
             if (!reply) reply = "I understand your question 👍. Tap the feature tile on Dashboard to open it.";
-
             addMsg(reply, "bot");
           }
-          
-          if (send) send.onclick = () => handleSend();
-          if (input) input.addEventListener("keydown", (e) => e.key === "Enter" && handleSend());
+
+          send.onclick = () => handleSend();
+          input.addEventListener("keydown", (e) => e.key === "Enter" && handleSend());
+
+          // --- TTS ---
+          const synth = window.speechSynthesis;
+          speakBtn.onclick = () => {
+            const botMessages = Array.from(body.querySelectorAll('.ymp-bot'));
+            if (botMessages.length === 0) return;
+            const lastMsg = botMessages[botMessages.length - 1].innerText;
+            if (!lastMsg) return;
+            
+            synth.cancel();
+            const utter = new SpeechSynthesisUtterance(lastMsg);
+            utter.lang = langSel.value || 'en-IN';
+            synth.speak(utter);
+          };
+          stopSpeechBtn.onclick = () => synth.cancel();
+
+          // --- STT ---
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (SpeechRecognition) {
+            let recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            
+            micBtn.onclick = () => {
+              recognition.lang = langSel.value || 'en-IN';
+              recognition.start();
+            };
+
+            recognition.onstart = () => {
+              micStatus.innerText = 'Listening...';
+              micBtn.style.background = '#ff6b6b';
+            };
+
+            recognition.onend = () => {
+              micStatus.innerText = '';
+              micBtn.style.background = '#1398d8';
+            };
+
+            recognition.onresult = (event) => {
+              const transcript = event.results[0][0].transcript;
+              input.value = transcript;
+              handleSend();
+            };
+
+            recognition.onerror = (event) => {
+              micStatus.innerText = 'Error: ' + event.error;
+            };
+
+          } else {
+            micBtn.disabled = true;
+            micStatus.innerText = 'STT not supported';
+          }
+
         `}} />
       </body>
     </html>
