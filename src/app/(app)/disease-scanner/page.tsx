@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera } from 'lucide-react';
-import { analyzeXrayAction, healthAssistantAction } from './actions';
+import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload } from 'lucide-react';
+import { analyzeXrayAction, healthAssistantAction, analyzeLabReportImageAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
@@ -34,6 +34,12 @@ const initialDiseaseState = {
     response: null,
     error: null,
 }
+
+const initialLabReportState = {
+    result: null,
+    error: null,
+};
+
 
 const labels = {
     en: {
@@ -63,7 +69,7 @@ const labels = {
         recommendation: 'Recommendation',
         consultDoctor: 'Consult a qualified doctor for confirmation.',
         labTitle: 'Lab Report Analyzer',
-        labDesc: 'Get a quick interpretation of common lab test values. This is for educational purposes only.',
+        labDesc: 'Get a quick interpretation of common lab test values. Upload an image or enter values manually.',
         labAnalyzeBtn: 'Analyze Labs',
         labSaveBtn: 'Save Report',
         labSaving: 'Saving...',
@@ -78,6 +84,8 @@ const labels = {
         ldl: 'LDL (mg/dL)',
         hdl: 'HDL (mg/dL)',
         tg: 'Triglycerides (mg/dL)',
+        uploadReport: 'Upload Lab Report Image',
+        analyzeReportImage: 'Analyze Report Image',
     },
     hi: {
         title: 'रोग स्कैनर',
@@ -106,7 +114,7 @@ const labels = {
         recommendation: 'सिफारिश',
         consultDoctor: 'पुष्टि के लिए एक योग्य चिकित्सक से परामर्श करें।',
         labTitle: 'लैब रिपोर्ट विश्लेषक',
-        labDesc: 'सामान्य लैब परीक्षण मूल्यों की त्वरित व्याख्या प्राप्त करें। यह केवल शैक्षिक उद्देश्यों के लिए है।',
+        labDesc: 'सामान्य लैब परीक्षण मूल्यों की त्वरित व्याख्या प्राप्त करें। एक छवि अपलोड करें या मान मैन्युअल रूप से दर्ज करें।',
         labAnalyzeBtn: 'लैब का विश्लेषण करें',
         labSaveBtn: 'रिपोर्ट सहेजें',
         labSaving: 'सहेज रहा है...',
@@ -121,6 +129,8 @@ const labels = {
         ldl: 'एलडीएल (mg/dL)',
         hdl: 'एचडीएल (mg/dL)',
         tg: 'ट्राइग्लिसराइड्स (mg/dL)',
+        uploadReport: 'लैब रिपोर्ट की छवि अपलोड करें',
+        analyzeReportImage: 'रिपोर्ट छवि का विश्लेषण करें',
     }
 };
 
@@ -510,12 +520,16 @@ function XRayScanner({t}: {t: typeof labels.en}) {
 }
 
 // Column 3: Lab Report Analyzer
-function LabReportAnalyzer({t}: {t: typeof labels.en}) {
-    const [labResult, setLabResult] = useState<any>(null);
+function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) {
+    const [manualLabResult, setManualLabResult] = useState<any>(null);
     const [labStatus, setLabStatus] = useState('');
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+
+    const [imageState, imageFormAction, isImageAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const imageFileInputRef = useRef<HTMLInputElement>(null);
 
     const inputs = {
         fbs: useRef<HTMLInputElement>(null),
@@ -524,6 +538,23 @@ function LabReportAnalyzer({t}: {t: typeof labels.en}) {
         ldl: useRef<HTMLInputElement>(null),
         hdl: useRef<HTMLInputElement>(null),
         tg: useRef<HTMLInputElement>(null),
+    };
+
+    const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => setImagePreview(e.target?.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    const handleImageFormAction = (formData: FormData) => {
+        if (imagePreview) {
+            formData.set('imageDataUri', imagePreview);
+            formData.set('language', lang);
+            imageFormAction(formData);
+        }
     };
 
     const analyzeLabs = () => {
@@ -568,11 +599,11 @@ function LabReportAnalyzer({t}: {t: typeof labels.en}) {
         }
 
         out.recommendation = 'This is an automated interpretation. For diagnosis & treatment, consult your physician.';
-        setLabResult(out);
+        setManualLabResult(out);
     }
     
-    const saveReport = async () => {
-        if (!labResult) {
+    const saveReport = async (reportData: any) => {
+        if (!reportData) {
             toast({ variant: 'destructive', title: 'No Report', description: t.labNoReport});
             return;
         }
@@ -583,7 +614,7 @@ function LabReportAnalyzer({t}: {t: typeof labels.en}) {
         setLabStatus(t.labSaving);
         try {
             const reportsCol = collection(firestore, 'users', user.uid, 'labReports');
-            await addDoc(reportsCol, { ...labResult, savedAt: serverTimestamp() });
+            await addDoc(reportsCol, { ...reportData, savedAt: serverTimestamp() });
             setLabStatus(t.labSaved);
             toast({ title: 'Report Saved', description: 'Your lab report interpretation has been saved.'});
         } catch (error) {
@@ -593,13 +624,33 @@ function LabReportAnalyzer({t}: {t: typeof labels.en}) {
         }
     }
 
+    const finalReport = imageState.result || manualLabResult;
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><FileText />{t.labTitle}</CardTitle>
                 <CardDescription>{t.labDesc}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+                {/* Image Upload Section */}
+                <form action={handleImageFormAction} className="space-y-4 p-4 border rounded-lg bg-secondary/50">
+                    <div className="space-y-2">
+                        <Label htmlFor="lab-report-image">{t.uploadReport}</Label>
+                        <Input id="lab-report-image" type="file" ref={imageFileInputRef} onChange={handleImageFileChange} accept="image/*" />
+                    </div>
+                    {imagePreview && (
+                        <div className="relative">
+                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border" />
+                            <Button variant="ghost" size="icon" className="absolute top-0 right-0" onClick={() => setImagePreview(null)}><X className="h-4 w-4" /></Button>
+                        </div>
+                    )}
+                    <Button type="submit" disabled={!imagePreview || isImageAnalyzing}>
+                        {isImageAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse"/>{t.analyzing}</>) : <><Upload className="mr-2 h-4 w-4"/>{t.analyzeReportImage}</>}
+                    </Button>
+                </form>
+
+                {/* Manual Entry Section */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1"><Label htmlFor="fbs">{t.fbs}</Label><Input id="fbs" type="number" ref={inputs.fbs} /></div>
                     <div className="space-y-1"><Label htmlFor="hbA1c">{t.hba1c}</Label><Input id="hbA1c" type="number" step="0.1" ref={inputs.hbA1c} /></div>
@@ -608,25 +659,40 @@ function LabReportAnalyzer({t}: {t: typeof labels.en}) {
                     <div className="space-y-1"><Label htmlFor="hdl">{t.hdl}</Label><Input id="hdl" type="number" ref={inputs.hdl} /></div>
                     <div className="space-y-1"><Label htmlFor="tg">{t.tg}</Label><Input id="tg" type="number" ref={inputs.tg} /></div>
                 </div>
+                 <Button onClick={analyzeLabs}>{t.labAnalyzeBtn}</Button>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
-                 <div className="flex items-center gap-4">
-                    <Button onClick={analyzeLabs}>{t.labAnalyzeBtn}</Button>
-                    <Button onClick={saveReport} variant="secondary"><Sparkles className="mr-2 h-4 w-4" />{t.labSaveBtn}</Button>
-                 </div>
-                 {labResult && (
+                 {isImageAnalyzing && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <span>{t.analyzing}</span>
+                    </div>
+                 )}
+
+                 {finalReport && (
                     <div className="resultBox w-full">
-                        <h4 className="font-semibold">{t.interpretation} — {new Date(labResult.timestamp).toLocaleString()}</h4>
+                        <h4 className="font-semibold">{t.interpretation} — {new Date(finalReport.timestamp).toLocaleString()}</h4>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
-                            {labResult.interpretations.map((i: any, idx: number) => (
+                            {finalReport.interpretations.map((i: any, idx: number) => (
                                 <li key={idx}><b>{i.test}</b>: {i.value} — <i>{i.note}</i></li>
                             ))}
                         </ul>
                         <p className="font-semibold mt-4">{t.recommendation}:</p>
-                        <p className="text-sm">{labResult.recommendation}</p>
+                        <p className="text-sm">{finalReport.recommendation}</p>
                     </div>
                 )}
-                 <p className="text-sm text-muted-foreground">{labStatus}</p>
+                 {imageState.error && (
+                    <Alert variant="destructive">
+                         <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>{t.analysisFailed}</AlertTitle>
+                        <AlertDescription>{imageState.error}</AlertDescription>
+                    </Alert>
+                )}
+
+                 <div className="flex items-center gap-4">
+                    <Button onClick={() => saveReport(finalReport)} variant="secondary" disabled={!finalReport || labStatus === t.labSaving}>{t.labSaveBtn}</Button>
+                    <p className="text-sm text-muted-foreground">{labStatus}</p>
+                 </div>
             </CardFooter>
         </Card>
     );
@@ -676,7 +742,7 @@ export default function DiseaseScannerPage() {
                 <XRayScanner t={t} />
             </TabsContent>
             <TabsContent value="lab-scanner" className="mt-6">
-                <LabReportAnalyzer t={t} />
+                <LabReportAnalyzer lang={lang} t={t} />
             </TabsContent>
         </Tabs>
     </div>

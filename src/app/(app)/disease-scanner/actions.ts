@@ -3,6 +3,7 @@
 
 import { analyzeXray, AnalyzeXrayInput } from '@/ai/flows/xray-analyzer-flow';
 import { healthAssistant } from '@/ai/flows/health-assistant-flow';
+import { analyzeLabReportImage } from '@/ai/flows/lab-report-flow';
 import { z } from 'zod';
 
 const xrayScannerSchema = z.object({
@@ -90,4 +91,37 @@ export async function healthAssistantAction(
       error: e.message || 'The AI model could not be reached. Please try again later.',
     };
   }
+}
+
+const labReportImageSchema = z.object({
+  imageDataUri: z.string().min(1, 'Please upload an image.'),
+  language: z.enum(['en', 'hi']).optional(),
+});
+
+export async function analyzeLabReportImageAction(
+  prevState: any,
+  formData: FormData
+) {
+    const validatedFields = labReportImageSchema.safeParse({
+        imageDataUri: formData.get('imageDataUri'),
+        language: formData.get('language') || 'en',
+    });
+
+    if (!validatedFields.success) {
+        return {
+            result: null,
+            error: validatedFields.error.flatten().fieldErrors.imageDataUri?.[0] ?? 'Invalid input.',
+        };
+    }
+
+    try {
+        const result = await analyzeLabReportImage(validatedFields.data);
+        return { result, error: null };
+    } catch (e: any) {
+        console.error("Action Error:", e);
+        return {
+            result: null,
+            error: e.message || 'The AI model could not be reached. Please try again later.',
+        };
+    }
 }
