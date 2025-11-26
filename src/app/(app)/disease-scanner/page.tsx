@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, Upload, X, Camera, CameraOff, AlertTriangle, Hospital, Save, FileText, Image as ImageIcon, SwitchCamera } from 'lucide-react';
+import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera } from 'lucide-react';
 import { analyzeXrayAction, healthAssistantAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -145,7 +146,10 @@ function DiseaseImageScanner() {
             </CardHeader>
             <CardContent>
                 <form ref={formRef} action={handleFormAction} className="space-y-4">
-                    <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+                    <div className="space-y-2">
+                        <Label htmlFor="disease-file-input">Upload Image</Label>
+                        <Input id="disease-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+                    </div>
                      <div className="flex gap-2 mt-2">
                         <Button type="button" variant="secondary" onClick={() => setIsCameraOpen(true)}><Camera className="mr-2"/>Open Camera</Button>
                         <Button type="submit" disabled={!preview || isAnalyzing}>
@@ -179,12 +183,12 @@ function DiseaseImageScanner() {
                         <span>AI is analyzing the image...</span>
                     </div>
                 )}
-                {state.response && !isAnalyzing && (
+                {state.response && (
                     <div className="resultBox prose prose-sm dark:prose-invert max-w-full">
                         <ReactMarkdown>{state.response}</ReactMarkdown>
                     </div>
                 )}
-                 {state.error && !isAnalyzing && (
+                 {state.error && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Analysis Failed</AlertTitle>
@@ -203,12 +207,14 @@ function XRayScanner() {
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
   
   const { user } = useUser();
   const firestore = useFirestore();
   
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -220,7 +226,7 @@ function XRayScanner() {
     }
   }, []);
 
-  const openCamera = useCallback(async () => {
+  const openCamera = useCallback(async (mode: 'user' | 'environment') => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast({ variant: 'destructive', title: "Camera Not Supported" });
         return;
@@ -228,10 +234,11 @@ function XRayScanner() {
     stopStream();
     setIsCameraOpen(true);
     setPreview(null);
+    setSelectedFile(null);
     if(fileInputRef.current) fileInputRef.current.value = '';
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -242,10 +249,18 @@ function XRayScanner() {
     }
   }, [toast, stopStream]);
 
+  useEffect(() => {
+    if (isCameraOpen) {
+        openCamera(facingMode);
+    } else {
+        stopStream();
+    }
+  }, [isCameraOpen, facingMode, openCamera, stopStream]);
+
+
   const closeCamera = useCallback(() => {
-    stopStream();
     setIsCameraOpen(false);
-  }, [stopStream]);
+  }, []);
 
   const takePicture = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
@@ -268,12 +283,6 @@ function XRayScanner() {
     }
   }, [closeCamera]);
 
-  useEffect(() => {
-    return () => {
-      stopStream();
-    };
-  }, [stopStream]);
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -281,6 +290,14 @@ function XRayScanner() {
       setPreview(URL.createObjectURL(file));
       setIsCameraOpen(false);
     }
+  };
+  
+  const handleClear = () => {
+    setPreview(null);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    formRef.current?.reset();
+    setIsCameraOpen(false);
   };
   
   const handleFormAction = async (formData: FormData) => {
@@ -325,10 +342,13 @@ function XRayScanner() {
         <CardDescription>Upload chest/limb X-ray for analysis by an AI model. This tool is specialized for radiology images.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={handleFormAction} className="space-y-4">
-          <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*"/>
+        <form ref={formRef} action={handleFormAction} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="xray-file-input">Upload X-Ray Image</Label>
+            <Input id="xray-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*"/>
+          </div>
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={openCamera}><Camera className="mr-2"/>Open Camera</Button>
+            <Button type="button" variant="secondary" onClick={() => setIsCameraOpen(true)}><Camera className="mr-2"/>Open Camera</Button>
             <Button type="submit" disabled={isAnalyzing || !selectedFile}>
               {isAnalyzing ? (
                 <>
@@ -341,12 +361,16 @@ function XRayScanner() {
                 </>
               )}
             </Button>
+             <Button type="button" variant="outline" onClick={handleClear}>Clear</Button>
           </div>
           {isCameraOpen ? (
               <div className="relative">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
                 <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
                     <Button type="button" onClick={takePicture}>Take Picture</Button>
+                    <Button type="button" variant="outline" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')}>
+                        <SwitchCamera />
+                    </Button>
                     <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
                 </div>
               </div>
@@ -494,7 +518,7 @@ function LabReportAnalyzer() {
             <CardFooter className="flex-col items-start gap-4">
                  <div className="flex items-center gap-4">
                     <Button onClick={analyzeLabs}>Analyze Labs</Button>
-                    <Button onClick={saveReport} variant="secondary"><Save className="mr-2 h-4 w-4" />Save Report</Button>
+                    <Button onClick={saveReport} variant="secondary"><Sparkles className="mr-2 h-4 w-4" />Save Report</Button>
                  </div>
                  {labResult && (
                     <div className="resultBox w-full">
@@ -548,5 +572,6 @@ export default function DiseaseScannerPage() {
     </div>
   );
 }
+
 
     
