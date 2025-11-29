@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -58,7 +59,7 @@ const resourcesNav = [
     { href: '/disease-library', label: 'Disease Library', icon: BookHeart },
 ]
 
-const NavSection = ({ title, items }: { title: string, items: {href: string, label: string, icon: React.ElementType}[]}) => {
+const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void}) => {
     const pathname = usePathname();
     return (
         <div className="px-3 py-2">
@@ -71,6 +72,7 @@ const NavSection = ({ title, items }: { title: string, items: {href: string, lab
                     <SidebarMenuButton
                         asChild
                         isActive={pathname.startsWith(item.href)}
+                        onClick={onLinkClick}
                     >
                         <Link href={item.href}>
                         <item.icon />
@@ -86,15 +88,18 @@ const NavSection = ({ title, items }: { title: string, items: {href: string, lab
 
 
 export function SidebarNav() {
-  const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  const handleLinkClick = () => {
+    setOpenMobile(false);
+  };
 
   return (
     <div className="space-y-4 py-4">
-        <NavSection title="Main" items={mainNav} />
-        <NavSection title="AI Tools" items={aiToolsNav} />
-        <NavSection title="Services" items={servicesNav} />
-        <NavSection title="Learn & Practice" items={learnNav} />
-        <NavSection title="Resources" items={resourcesNav} />
+        <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
+        <NavSection title="AI Tools" items={aiToolsNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Services" items={servicesNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Resources" items={resourcesNav} onLinkClick={handleLinkClick} />
     </div>
   );
 }
