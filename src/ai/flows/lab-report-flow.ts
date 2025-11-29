@@ -48,21 +48,21 @@ const prompt = ai.definePrompt({
   name: 'labReportAnalyzerPrompt',
   input: { schema: LabReportInputSchema },
   output: { schema: LabReportOutputSchema },
-  prompt: `You are an AI Lab Report Analyzer. Your task is to meticulously read the provided image of a medical lab report, extract key information, and provide a structured, educational interpretation.
+  prompt: `You are a specialized AI Lab Report Analyzer. Your primary function is to meticulously read the provided medical lab report image, extract all key information, and present it in a structured, clear, and educational format.
 
-  **Instructions:**
-  1.  **Analyze the Image:** Carefully scan the entire image for all lab test results. Pay attention to patient details, test names, values, units, and reference ranges.
-  2.  **Extract Patient Details:** If visible, extract the patient's name, age, and the date of the report.
-  3.  **Extract All Test Values:** For every test you can identify (e.g., Hemoglobin, Platelet Count, Cholesterol, Glucose), extract its name, the reported value with units, and the standard reference range if available.
-  4.  **Interpret Each Value:** For each test, provide a simple, clear note (e.g., "Normal," "High," "Low," "Borderline high").
-  5.  **Formulate Summary:** Write a concise, high-level summary of the most important findings.
-  6.  **Formulate Recommendation:** Based on the summary, provide a general, non-prescriptive recommendation.
-  7.  **Language:** Respond entirely in the language specified by the 'language' parameter ('en' for English, 'hi' for Hindi).
-  8.  **Crucial Disclaimer:** ALWAYS end your recommendation with the following disclaimer in the correct language:
-      - **English:** "This is an automated interpretation for educational purposes only. It is not a medical diagnosis. Please consult your physician for a complete evaluation and treatment plan."
-      - **Hindi:** "यह केवल शैक्षिक उद्देश्यों के लिए एक स्वचालित व्याख्या है। यह एक चिकित्सा निदान नहीं है। कृपया पूर्ण मूल्यांकन और उपचार योजना के लिए अपने चिकित्सक से परामर्श करें।"
+  **Critical Instructions:**
+  1.  **Language:** The entire response—including summaries, notes, and recommendations—MUST be in the specified language: \`'{{language}}'\`. If \`'hi'\`, use Hindi. Otherwise, use English.
+  2.  **Analyze the Image:** Carefully scan the entire lab report. Identify patient information (name, age, date) if present. Extract every single lab test listed, its corresponding value, units, and the reference range.
+  3.  **Extract Patient Details:** If patient details are visible, populate the \`patientDetails\` object. If not, leave it empty. Do not guess or invent information.
+  4.  **Extract All Test Values:** For every test result you can identify (e.g., Hemoglobin, Platelet Count, LDL Cholesterol, Glucose), create an entry in the \`interpretations\` array.
+  5.  **Interpret Each Value:** For each test, provide a simple, clear note in the specified language (e.g., "Normal," "High," "Low," "Borderline high" or "सामान्य," "अधिक," "कम," "सीमा पर").
+  6.  **Formulate Summary:** Write a concise, one- or two-sentence summary of the most important findings in the specified language.
+  7.  **Formulate Recommendation:** Based on the findings, provide a general, non-prescriptive recommendation.
+  8.  **Mandatory Disclaimer:** Your recommendation MUST ALWAYS conclude with the following disclaimer, translated into the correct language:
+      - **English:** "This is an automated interpretation for educational purposes only and not a medical diagnosis. Please consult a qualified physician for a complete evaluation and treatment plan."
+      - **Hindi:** "यह केवल शैक्षिक उद्देश्यों के लिए एक स्वचालित व्याख्या है और यह चिकित्सा निदान नहीं है। कृपया पूर्ण मूल्यांकन और उपचार योजना के लिए एक योग्य चिकित्सक से परामर्श करें।"
 
-  Analyze this lab report image:
+  Now, analyze this lab report image:
   {{media url=imageDataUri}}
   `,
 });
@@ -77,10 +77,19 @@ const labReportAnalyzerFlow = ai.defineFlow(
   async (input) => {
     try {
       const { output } = await prompt(input);
-      return output || { summary: 'Analysis failed to produce output.', interpretations: [], recommendation: 'Please try again.' };
+      if (!output) {
+        throw new Error("The AI model did not return a valid analysis.");
+      }
+      return output;
     } catch(e: any) {
         console.error("Lab report analysis flow error:", e);
-        return { summary: 'An error occurred during analysis.', interpretations: [], recommendation: e.message || 'An unexpected error occurred during analysis.' };
+        // Ensure a valid, structured error response is always returned.
+        const errorMessage = e.message || 'An unexpected error occurred during analysis.';
+        return { 
+            summary: 'Analysis Failed', 
+            interpretations: [], 
+            recommendation: `Error: ${errorMessage}. Please check the uploaded image or try again.` 
+        };
     }
   }
 );
