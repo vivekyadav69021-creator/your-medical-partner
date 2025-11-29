@@ -697,16 +697,6 @@ export default function DiseaseScannerPage() {
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const t = labels[lang];
     
-     useEffect(() => {
-        const script = document.createElement('script');
-        script.src = "https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js";
-        script.async = true;
-        document.body.appendChild(script);
-        return () => {
-          document.body.removeChild(script);
-        }
-      }, []);
-
     return (
     <div className="space-y-8">
         <div className="flex justify-between items-center">
@@ -754,5 +744,3 @@ export default function DiseaseScannerPage() {
     </div>
   );
 }
-
-    

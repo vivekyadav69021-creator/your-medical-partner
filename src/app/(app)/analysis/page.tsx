@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,6 +18,7 @@ import { collection, getDocs, orderBy, query, Timestamp } from 'firebase/firesto
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -194,17 +196,6 @@ export default function AnalysisPage() {
     toast({ title: "Report Downloaded", description: "Your PDF report has been successfully generated." });
   };
   
-  // You need to install `jspdf-autotable`
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://unpkg.com/jspdf-autotable@3.5.23/dist/jspdf.plugin.autotable.js";
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    }
-  }, []);
-
   return (
     <div className="space-y-8">
       <div>
