@@ -375,7 +375,7 @@ export default function HealthAssistantPage() {
             This is an AI assistant. Information may be inaccurate.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 overflow-hidden p-0">
+        <CardContent className="flex-grow overflow-hidden p-0">
           <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
             <div className="space-y-4">
               {messages.length === 0 && !isPending && (
