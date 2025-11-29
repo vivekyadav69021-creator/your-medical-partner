@@ -16,7 +16,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Sun, Moon, Laptop } from 'lucide-react';
+import { LogOut, User, Sun, Moon, Laptop, Siren, ShieldAlert } from 'lucide-react';
 import { useUserProfile } from '@/context/user-profile-context';
 import { useUser } from '@/firebase';
 import { logout } from '@/app/auth/actions';
@@ -90,6 +90,22 @@ export function UserNav() {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+         <DropdownMenuGroup>
+            <DropdownMenuLabel className="text-destructive font-semibold">Emergency</DropdownMenuLabel>
+            <a href="tel:108">
+                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <Siren className="mr-2 h-4 w-4" />
+                    <span>Call Ambulance (108)</span>
+                </DropdownMenuItem>
+            </a>
+            <a href="tel:112">
+                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <ShieldAlert className="mr-2 h-4 w-4" />
+                    <span>SOS (112)</span>
+                </DropdownMenuItem>
+            </a>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <form action={logout}>
