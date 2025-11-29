@@ -430,7 +430,7 @@ export default function HealthAssistantPage() {
   return (
     <div className="grid md:grid-cols-4 gap-4 h-[calc(100vh-6.5rem)]">
         {/* Chat History Sidebar */}
-        <Card className="md:col-span-1 flex-col hidden md:flex">
+        <Card className="hidden md:flex md:col-span-1 flex-col">
             <CardHeader className="flex-row items-center justify-between">
                 <CardTitle>Chat History</CardTitle>
                 <Button variant="ghost" size="icon" onClick={handleNewChat}>
