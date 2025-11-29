@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Sparkles, BrainCircuit, Mic, MicOff, Volume2, StopCircle } from 'lucide-react';
+import { Send, User, Sparkles, BrainCircuit, Mic, MicOff, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
 import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -22,6 +22,17 @@ import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -51,6 +62,81 @@ function SubmitButton() {
     </Button>
   );
 }
+
+function FeedbackActions({ messageContent }: { messageContent: string }) {
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(messageContent);
+    toast({ title: 'Copied to clipboard!' });
+  };
+  
+  const handleLike = () => {
+    // In a real app, you'd send this feedback to a server.
+    toast({ title: 'Feedback received!', description: 'Thank you for helping us improve.' });
+  };
+
+  const handleDislikeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const reason = formData.get('feedback-reason');
+    const details = formData.get('feedback-details');
+    // In a real app, you'd send this to a server.
+    console.log('Dislike Feedback:', { reason, details, message: messageContent });
+    toast({ title: 'Feedback received!', description: 'Thank you for your detailed feedback.' });
+    setIsDialogOpen(false);
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleLike}>
+        <ThumbsUp className="h-4 w-4" />
+      </Button>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <ThumbsDown className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <form onSubmit={handleDislikeSubmit}>
+            <DialogHeader>
+              <DialogTitle>Provide Additional Feedback</DialogTitle>
+              <DialogDescription>
+                Your feedback is valuable in helping us improve the AI.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+               <RadioGroup name="feedback-reason" defaultValue="not-helpful">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="not-helpful" id="r1" />
+                    <Label htmlFor="r1">Not helpful</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="incorrect" id="r2" />
+                    <Label htmlFor="r2">Factually incorrect</Label>
+                  </div>
+                   <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="offensive" id="r3" />
+                    <Label htmlFor="r3">Harmful or offensive</Label>
+                  </div>
+                </RadioGroup>
+                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Submit Feedback</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
+        <Copy className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 
 function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -286,7 +372,7 @@ export default function AIPsychiatristPage() {
                 <div
                   key={index}
                   className={`flex items-start gap-3 ${
-                    message.role === 'user' ? 'justify-end' : ''
+                    message.role === 'user' ? 'justify-end' : 'items-end'
                   }`}
                 >
                   {message.role === 'assistant' && (
@@ -299,10 +385,13 @@ export default function AIPsychiatristPage() {
                     className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted assistant-message'
+                        : 'bg-muted'
                     }`}
                   >
                      <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                     {message.role === 'assistant' && index === messages.length -1 && !isPending && (
+                       <FeedbackActions messageContent={message.content} />
+                     )}
                   </div>
                   {message.role === 'user' && (
                     <Avatar className="h-9 w-9">
