@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,8 @@ import {
   HeartPulse,
   Activity,
   Smartphone,
+  BedDouble,
+  Flame,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
@@ -181,52 +184,57 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-       <Card className="overflow-hidden">
-        <div className="grid md:grid-cols-2 items-center">
-            <div className="p-6 md:p-8">
-                 <CardHeader className="p-0 mb-4">
-                    <CardTitle>Connect Your Smartwatch</CardTitle>
-                    <CardDescription>Sync your health data for real-time tracking and a personalized health score.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0 space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-center">
-                        <Card className="p-4">
-                            <CardHeader className="p-0 mb-2">
-                                <CardTitle className="text-4xl font-bold">78</CardTitle>
-                                <CardDescription className="flex items-center justify-center gap-1"><HeartPulse className="w-4 h-4"/> Heart Rate</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <p className="text-xs text-muted-foreground">bpm (real-time)</p>
-                            </CardContent>
-                        </Card>
-                         <Card className="p-4">
-                            <CardHeader className="p-0 mb-2">
-                                <CardTitle className="text-4xl font-bold">6,521</CardTitle>
-                                <CardDescription className="flex items-center justify-center gap-1"><Activity className="w-4 h-4" /> Steps</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <p className="text-xs text-muted-foreground">Today</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-                     <Button className="w-full">
-                        <Smartphone className="mr-2 h-4 w-4" />
-                        Connect Device
-                    </Button>
-                </CardContent>
+      <Card>
+        <CardHeader>
+            <CardTitle>Connect Your Smartwatch</CardTitle>
+            <CardDescription>Sync your health data for real-time tracking and a personalized health score.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <Card className="p-4">
+                    <CardHeader className="p-0 mb-2">
+                        <CardTitle className="text-4xl font-bold">78</CardTitle>
+                        <CardDescription className="flex items-center justify-center gap-1"><HeartPulse className="w-4 h-4"/> Heart Rate</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <p className="text-xs text-muted-foreground">bpm (real-time)</p>
+                    </CardContent>
+                </Card>
+                 <Card className="p-4">
+                    <CardHeader className="p-0 mb-2">
+                        <CardTitle className="text-4xl font-bold">6,521</CardTitle>
+                        <CardDescription className="flex items-center justify-center gap-1"><Activity className="w-4 h-4" /> Steps</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <p className="text-xs text-muted-foreground">Today</p>
+                    </CardContent>
+                </Card>
+                 <Card className="p-4">
+                    <CardHeader className="p-0 mb-2">
+                        <CardTitle className="text-4xl font-bold">7h 15m</CardTitle>
+                        <CardDescription className="flex items-center justify-center gap-1"><BedDouble className="w-4 h-4" /> Sleep</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <p className="text-xs text-muted-foreground">Last night</p>
+                    </CardContent>
+                </Card>
+                 <Card className="p-4">
+                    <CardHeader className="p-0 mb-2">
+                        <CardTitle className="text-4xl font-bold">340</CardTitle>
+                        <CardDescription className="flex items-center justify-center gap-1"><Flame className="w-4 h-4" /> Calories</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <p className="text-xs text-muted-foreground">Active kcal</p>
+                    </CardContent>
+                </Card>
             </div>
-            <div className="relative h-64 md:h-full w-full">
-                {smartwatchImage && (
-                    <Image 
-                        src={smartwatchImage.imageUrl}
-                        alt={smartwatchImage.description}
-                        layout="fill"
-                        className="object-cover"
-                        data-ai-hint={smartwatchImage.imageHint}
-                    />
-                )}
-            </div>
-        </div>
+        </CardContent>
+        <CardFooter>
+            <Button>
+                <Smartphone className="mr-2 h-4 w-4" />
+                Connect Device
+            </Button>
+        </CardFooter>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
