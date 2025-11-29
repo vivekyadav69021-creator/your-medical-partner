@@ -315,7 +315,7 @@ export default function HealthLessonsPage() {
             </div>
             <DialogFooter>
                 {!showResult ? (
-                    <Button onClick={submitQuiz} className="w-full">{lang === 'en' ? 'Submit Quiz' : 'क्विज़ जमा करें'}</Button>
+                    <Button onClick={() => { submitQuiz(); }} className="w-full">{lang === 'en' ? 'Submit Quiz' : 'क्विज़ जमा करें'}</Button>
                 ) : (
                     <Button onClick={resetQuiz} variant="outline" className="w-full">{lang === 'en' ? 'Close' : 'बंद करें'}</Button>
                 )}
