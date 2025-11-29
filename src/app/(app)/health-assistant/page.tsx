@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useActionState, useRef, useEffect, useState } from 'react';
+import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -13,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
+import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -34,11 +35,20 @@ import {
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
   image?: string;
+};
+
+type Session = {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
 };
 
 const initialState = {
@@ -76,7 +86,6 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
   };
   
   const handleLike = () => {
-    // In a real app, you'd send this feedback to a server.
     toast({ title: 'Feedback received!', description: 'Thank you for helping us improve.' });
   };
 
@@ -85,7 +94,6 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
     const formData = new FormData(event.currentTarget);
     const reason = formData.get('feedback-reason');
     const details = formData.get('feedback-details');
-    // In a real app, you'd send this to a server.
     console.log('Dislike Feedback:', { reason, details, message: messageContent });
     toast({ title: 'Feedback received!', description: 'Thank you for your detailed feedback.' });
     setIsDialogOpen(false);
@@ -154,7 +162,6 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect handles the result of the speech-to-text action
     // @ts-ignore
     const { transcript, error } = _;
     if (transcript && document.getElementById('chatInput')) {
@@ -168,9 +175,7 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
 
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
-    const handleVoicesChanged = () => {
-      // Voices loaded
-    };
+    const handleVoicesChanged = () => {};
     if (synthRef.current) {
         synthRef.current.addEventListener('voiceschanged', handleVoicesChanged);
     }
@@ -196,7 +201,7 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
         toast({variant: "destructive", title: "Nothing to speak", description: "There is no assistant message to read out."});
         return;
     }
-    synthRef.current.cancel(); // Stop any previous speech
+    synthRef.current.cancel(); 
     const utterance = new SpeechSynthesisUtterance(lastAssistantMessage);
     utterance.lang = selectedLang;
     const voice = getBestVoice(selectedLang);
@@ -296,7 +301,9 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
 
 export default function HealthAssistantPage() {
   const { userName, userImage } = useUserProfile();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  
   const [state, formAction, isPending] = useActionState(healthAssistantAction, initialState);
   
   const formRef = useRef<HTMLFormElement>(null);
@@ -305,7 +312,66 @@ export default function HealthAssistantPage() {
 
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
+  // Load sessions from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedSessions = localStorage.getItem('healthAssistantSessions');
+      if (savedSessions) {
+        const parsedSessions = JSON.parse(savedSessions);
+        setSessions(parsedSessions);
+        if (parsedSessions.length > 0) {
+          setActiveSessionId(parsedSessions[0].id);
+        } else {
+            handleNewChat();
+        }
+      } else {
+        handleNewChat();
+      }
+    } catch (error) {
+      console.error("Failed to load sessions from localStorage", error);
+      handleNewChat();
+    }
+  }, []);
+
+  // Save sessions to localStorage whenever they change
+  useEffect(() => {
+    if (sessions.length > 0) {
+      localStorage.setItem('healthAssistantSessions', JSON.stringify(sessions));
+    }
+  }, [sessions]);
+
+
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+  const messages = activeSession?.messages || [];
   const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop()?.content || '';
+  
+  const handleNewChat = useCallback(() => {
+    const newSession: Session = {
+      id: `session-${Date.now()}`,
+      title: 'New Chat',
+      messages: [],
+      createdAt: Date.now(),
+    };
+    setSessions(prev => [newSession, ...prev]);
+    setActiveSessionId(newSession.id);
+  }, []);
+
+  const handleDeleteChat = (sessionId: string) => {
+    setSessions(prev => {
+        const filtered = prev.filter(s => s.id !== sessionId);
+        if (activeSessionId === sessionId) {
+            if (filtered.length > 0) {
+                setActiveSessionId(filtered[0].id);
+            } else {
+                handleNewChat();
+            }
+        }
+        if(filtered.length === 0) {
+             localStorage.removeItem('healthAssistantSessions');
+        }
+        return filtered;
+    });
+  };
 
   const handleFormAction = (formData: FormData) => {
     const query = formData.get('query') as string;
@@ -317,22 +383,27 @@ export default function HealthAssistantPage() {
       formData.append('photoDataUri', attachedImage);
     }
     
-    setMessages(prev => [...prev, userMessage]);
+    setSessions(prev => prev.map(s => {
+      if (s.id === activeSessionId) {
+        const newMessages = [...s.messages, userMessage];
+        const newTitle = s.messages.length === 0 ? query.substring(0, 30) : s.title;
+        return { ...s, messages: newMessages, title: newTitle };
+      }
+      return s;
+    }));
     formAction(formData);
     formRef.current?.reset();
     setAttachedImage(null);
   };
   
   useEffect(() => {
-    if (!isPending) {
-        if (state.response) {
-          setMessages(prev => [...prev, { role: 'assistant', content: state.response! }]);
-        }
-        if (state.error) {
-          setMessages(prev => [...prev, { role: 'assistant', content: state.error! }]);
-        }
+    if (!isPending && (state.response || state.error)) {
+        const content = state.response || state.error || 'Sorry, an unknown error occurred.';
+        setSessions(prev => prev.map(s => 
+            s.id === activeSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s
+        ));
     }
-  }, [state, isPending]);
+  }, [state, isPending, activeSessionId]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -357,152 +428,189 @@ export default function HealthAssistantPage() {
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)]">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">AI Health Assistant</h1>
-        <p className="text-muted-foreground">
-          Ask me anything about health, medicines, or diseases.
-        </p>
-      </div>
-      <VoiceWidget lastAssistantMessage={lastAssistantMessage} />
-      <Card className="flex-1 flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot />
-            Chat with Health Assistant
-          </CardTitle>
-          <CardDescription>
-            This is an AI assistant. Information may be inaccurate.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-grow overflow-hidden p-0">
-          <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
-            <div className="space-y-4">
-              {messages.length === 0 && !isPending && (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
-                  <Bot className="w-16 h-16 mb-4" />
-                  <p className="text-lg font-medium">I am your AI Health Assistant.</p>
-                  <p>Ask me a question to get started!</p>
-                </div>
-              )}
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex items-start gap-3 ${
-                    message.role === 'user' ? 'justify-end' : 'items-end'
-                  }`}
-                >
-                  {message.role === 'assistant' && (
-                    <Avatar className="h-9 w-9">
-                      {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint}/>}
-                      <AvatarFallback>AI</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div
-                    className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                     {message.image && (
-                      <Image
-                        src={message.image}
-                        alt="User upload"
-                        width={200}
-                        height={200}
-                        className="rounded-md mb-2"
-                      />
-                    )}
-                    {message.role === 'assistant' ? (
-                        <>
-                          <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
-                          {index === messages.length -1 && !isPending && (
-                            <FeedbackActions messageContent={message.content} />
-                          )}
-                        </>
-                    ) : (
-                        <p>{message.content}</p>
-                    )}
-                  </div>
-                  {message.role === 'user' && (
-                    <Avatar className="h-9 w-9">
-                       <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
-                      <AvatarFallback><User /></AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-              {isPending && (
-                <div className="flex items-start gap-3">
-                   <Avatar className="h-9 w-9">
-                      {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
-                      <AvatarFallback>AI</AvatarFallback>
-                    </Avatar>
-                    <div className="max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 bg-muted flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 animate-pulse" />
-                        <span className="text-sm italic">Assistant is typing...</span>
+    <div className="grid md:grid-cols-4 gap-4 h-[calc(100vh-6.5rem)]">
+        {/* Chat History Sidebar */}
+        <Card className="md:col-span-1 flex-col hidden md:flex">
+            <CardHeader className="flex-row items-center justify-between">
+                <CardTitle>Chat History</CardTitle>
+                <Button variant="ghost" size="icon" onClick={handleNewChat}>
+                    <PlusCircle className="h-5 w-5" />
+                </Button>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto p-2">
+                <ScrollArea className="h-full">
+                    <div className="space-y-2">
+                        {sessions.map(session => (
+                            <div 
+                                key={session.id} 
+                                className={cn(
+                                    "p-3 rounded-lg cursor-pointer group flex items-center justify-between",
+                                    activeSessionId === session.id ? "bg-primary/20" : "hover:bg-muted"
+                                )}
+                                onClick={() => setActiveSessionId(session.id)}
+                            >
+                                <div className="flex-1 overflow-hidden">
+                                  <p className="text-sm font-medium truncate">{session.title}</p>
+                                  <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                        ))}
                     </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+      
+      {/* Main Chat Area */}
+      <div className="md:col-span-3 flex flex-col h-full">
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold tracking-tight font-headline">AI Health Assistant</h1>
+            <p className="text-muted-foreground">
+              Ask me anything about health, medicines, or diseases.
+            </p>
+          </div>
+          <VoiceWidget lastAssistantMessage={lastAssistantMessage} />
+          <Card className="flex-1 flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot />
+                Chat with Health Assistant
+              </CardTitle>
+              <CardDescription>
+                This is an AI assistant. Information may be inaccurate.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-hidden p-0">
+              <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
+                <div className="space-y-4">
+                  {messages.length === 0 && !isPending && (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+                      <Bot className="w-16 h-16 mb-4" />
+                      <p className="text-lg font-medium">I am your AI Health Assistant.</p>
+                      <p>Ask me a question to get started!</p>
+                    </div>
+                  )}
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-3 ${
+                        message.role === 'user' ? 'justify-end' : 'items-end'
+                      }`}
+                    >
+                      {message.role === 'assistant' && (
+                        <Avatar className="h-9 w-9">
+                          {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint}/>}
+                          <AvatarFallback>AI</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div
+                        className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                         {message.image && (
+                          <Image
+                            src={message.image}
+                            alt="User upload"
+                            width={200}
+                            height={200}
+                            className="rounded-md mb-2"
+                          />
+                        )}
+                        {message.role === 'assistant' ? (
+                            <>
+                              <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                              {index === messages.length -1 && !isPending && (
+                                <FeedbackActions messageContent={message.content} />
+                              )}
+                            </>
+                        ) : (
+                            <p>{message.content}</p>
+                        )}
+                      </div>
+                      {message.role === 'user' && (
+                        <Avatar className="h-9 w-9">
+                           <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
+                          <AvatarFallback><User /></AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
+                  {isPending && (
+                    <div className="flex items-start gap-3">
+                       <Avatar className="h-9 w-9">
+                          {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
+                          <AvatarFallback>AI</AvatarFallback>
+                        </Avatar>
+                        <div className="max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 bg-muted flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 animate-pulse" />
+                            <span className="text-sm italic">Assistant is typing...</span>
+                        </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+            <CardFooter className="flex-col items-start gap-2">
+               {attachedImage && (
+                <div className="relative p-2 border rounded-md">
+                  <Image
+                    src={attachedImage}
+                    alt="Preview"
+                    width={80}
+                    height={80}
+                    className="rounded-md"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
+                    onClick={() => setAttachedImage(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-        <CardFooter className="flex-col items-start gap-2">
-           {attachedImage && (
-            <div className="relative p-2 border rounded-md">
-              <Image
-                src={attachedImage}
-                alt="Preview"
-                width={80}
-                height={80}
-                className="rounded-md"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
-                onClick={() => setAttachedImage(null)}
+              <form
+                ref={formRef}
+                id="chatForm"
+                action={handleFormAction}
+                className="flex w-full items-center gap-2"
               >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-          <form
-            ref={formRef}
-            id="chatForm"
-            action={handleFormAction}
-            className="flex w-full items-center gap-2"
-          >
-            <Input
-              id="chatInput"
-              name="query"
-              placeholder="Type your message..."
-              className="flex-1"
-              autoComplete="off"
-              disabled={isPending}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  formRef.current?.requestSubmit();
-                }
-              }}
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/*"
-            />
-             <Button type="button" size="icon" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
-              <Paperclip className="h-5 w-5" />
-              <span className="sr-only">Attach file</span>
-            </Button>
-            <SubmitButton />
-          </form>
-        </CardFooter>
-      </Card>
+                <Input
+                  id="chatInput"
+                  name="query"
+                  placeholder="Type your message..."
+                  className="flex-1"
+                  autoComplete="off"
+                  disabled={isPending}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      formRef.current?.requestSubmit();
+                    }
+                  }}
+                />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*"
+                />
+                 <Button type="button" size="icon" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
+                  <Paperclip className="h-5 w-5" />
+                  <span className="sr-only">Attach file</span>
+                </Button>
+                <SubmitButton />
+              </form>
+            </CardFooter>
+          </Card>
+      </div>
     </div>
   );
 }
