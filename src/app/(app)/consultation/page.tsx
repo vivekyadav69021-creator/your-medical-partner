@@ -32,27 +32,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Star, Video, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Star, Video, Calendar as CalendarIcon, Clock, Briefcase, IndianRupee } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 const indianDoctors = [
-  { name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2' },
-  { name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1' },
-  { name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2' },
-  { name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3' },
-  { name: 'Dr. Arjun Gupta', specialty: 'Neurologist', rating: 4.7, imageId: 'doctor-4' },
-  { name: 'Dr. Sameer Khan', specialty: 'Oncologist', rating: 4.9, imageId: 'doctor-7'},
-  { name: 'Dr. Meera Iyer', specialty: 'Gynecologist', rating: 4.8, imageId: 'doctor-8'},
+  { name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2', fees: '₹500', experience: '8 years', bio: 'Compassionate general physician with expertise in managing chronic diseases and acute illnesses.' },
+  { name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1', fees: '₹800', experience: '12 years', bio: 'Leading cardiologist specializing in heart failure management and preventive cardiology.' },
+  { name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2', fees: '₹600', experience: '10 years', bio: 'Expert in clinical and cosmetic dermatology, providing solutions for all skin concerns.' },
+  { name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3', fees: '₹550', experience: '9 years', bio: 'Dedicated pediatrician focused on child wellness and development from newborn to adolescent.' },
+  { name: 'Dr. Arjun Gupta', specialty: 'Neurologist', rating: 4.7, imageId: 'doctor-4', fees: '₹900', experience: '15 years', bio: 'Specialist in treating neurological disorders including stroke, epilepsy, and migraines.' },
+  { name: 'Dr. Sameer Khan', specialty: 'Oncologist', rating: 4.9, imageId: 'doctor-7', fees: '₹1200', experience: '18 years', bio: 'Renowned oncologist with a focus on personalized cancer treatment and research.'},
+  { name: 'Dr. Meera Iyer', specialty: 'Gynecologist', rating: 4.8, imageId: 'doctor-8', fees: '₹700', experience: '11 years', bio: 'Expert in women\'s reproductive health, providing care through all stages of life.'},
 ];
 
 const foreignDoctors = [
-  { name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5' },
-  { name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6' },
-  { name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9'},
-  { name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10'},
+  { name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5', fees: '$80', experience: '10 years', bio: 'Board-certified physician from the USA, focused on holistic patient care and diagnostics.' },
+  { name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6', fees: '$120', experience: '14 years', bio: 'UK-based orthopedic surgeon specializing in sports injuries and joint replacement.' },
+  { name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9', fees: '$150', experience: '12 years', bio: 'Expert in hormonal disorders including diabetes and thyroid conditions from Canada.'},
+  { name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10', fees: '$100', experience: '16 years', bio: 'Specializing in adult psychiatry with a focus on cognitive behavioral therapy (CBT).'},
 ];
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"];
@@ -83,6 +83,9 @@ type Doctor = {
   specialty: string;
   rating: number;
   imageId: string;
+  fees: string;
+  experience: string;
+  bio: string;
 };
 
 type Appointment = {
@@ -100,6 +103,9 @@ const DoctorCard = ({
   specialty,
   rating,
   imageId,
+  fees,
+  experience,
+  bio,
   onBook,
 }: Doctor & { onBook: (details: Omit<Appointment, 'id' | 'type'>) => void }) => {
   const image = PlaceHolderImages.find(img => img.id === imageId);
@@ -121,7 +127,7 @@ const DoctorCard = ({
   };
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader className="flex-row gap-4 items-start">
         {image && (
           <Image
@@ -142,13 +148,23 @@ const DoctorCard = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">Experienced {specialty} with over 10 years of practice. Fluent in English and Hindi.</p>
+      <CardContent className="flex-1">
+        <p className="text-sm text-muted-foreground">{bio}</p>
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="flex items-center justify-between">
+         <div className="flex gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+                <IndianRupee className="w-4 h-4 text-muted-foreground" />
+                <span className="font-semibold">{fees}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+                <Briefcase className="w-4 h-4 text-muted-foreground" />
+                <span className="font-semibold">{experience}</span>
+            </div>
+         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Book Appointment</Button>
+            <Button>Book Now</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
