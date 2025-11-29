@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload } from 'lucide-react';
+import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download } from 'lucide-react';
 import { analyzeXrayAction, healthAssistantAction, analyzeLabReportImageAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +24,9 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReactMarkdown from 'react-markdown';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 const initialXrayState = {
   result: null,
@@ -87,6 +90,7 @@ const labels = {
         tg: 'Triglycerides (mg/dL)',
         uploadReport: 'Upload Lab Report Image',
         analyzeReportImage: 'Analyze Report Image',
+        downloadPdf: 'Download PDF'
     },
     hi: {
         title: 'रोग स्कैनर',
@@ -133,6 +137,7 @@ const labels = {
         tg: 'ट्राइग्लिसराइड्स (mg/dL)',
         uploadReport: 'लैब रिपोर्ट की छवि अपलोड करें',
         analyzeReportImage: 'रिपोर्ट छवि का विश्लेषण करें',
+        downloadPdf: 'पीडीएफ डाउनलोड करें'
     }
 };
 
@@ -375,7 +380,6 @@ function XRayScanner({t}: {t: typeof labels.en}) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         
-        // Convert data URL to Blob to create a File object
         fetch(dataUrl)
           .then(res => res.blob())
           .then(blob => {
@@ -534,24 +538,11 @@ function XRayScanner({t}: {t: typeof labels.en}) {
 
 // Column 3: Lab Report Analyzer
 function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) {
-    const [manualLabResult, setManualLabResult] = useState<any>(null);
-    const [labStatus, setLabStatus] = useState('');
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-
     const [imageState, imageFormAction, isImageAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const imageFileInputRef = useRef<HTMLInputElement>(null);
-
-    const inputs = {
-        fbs: useRef<HTMLInputElement>(null),
-        hbA1c: useRef<HTMLInputElement>(null),
-        chol: useRef<HTMLInputElement>(null),
-        ldl: useRef<HTMLInputElement>(null),
-        hdl: useRef<HTMLInputElement>(null),
-        tg: useRef<HTMLInputElement>(null),
-    };
+    const { toast } = useToast();
+    const { user } = useUser();
 
     const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -569,84 +560,64 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
             imageFormAction(formData);
         }
     };
-
-    const analyzeLabs = () => {
-        const values = {
-            fbs: Number(inputs.fbs.current?.value) || null,
-            hbA1c: Number(inputs.hbA1c.current?.value) || null,
-            chol: Number(inputs.chol.current?.value) || null,
-            ldl: Number(inputs.ldl.current?.value) || null,
-            hdl: Number(inputs.hdl.current?.value) || null,
-            tg: Number(inputs.tg.current?.value) || null,
-        };
-
-        const out: { timestamp: string, interpretations: any[], recommendation: string } = { timestamp: new Date().toISOString(), interpretations: [], recommendation: '' };
-
-        if(values.fbs != null){
-            if(values.fbs < 70) out.interpretations.push({ test:'Fasting Glucose', value: values.fbs, note:'Low (hypoglycemia). If symptomatic, seek care.' });
-            else if(values.fbs < 100) out.interpretations.push({ test:'Fasting Glucose', value: values.fbs, note:'Normal fasting glucose.' });
-            else if(values.fbs < 126) out.interpretations.push({ test:'Fasting Glucose', value: values.fbs, note:'Impaired fasting glucose (prediabetes) — consider lifestyle changes.' });
-            else out.interpretations.push({ test:'Fasting Glucose', value: values.fbs, note:'High (diabetic range). Consult physician.' });
-        }
-        if(values.hbA1c != null){
-            if(values.hbA1c < 5.7) out.interpretations.push({ test:'HbA1c', value: values.hbA1c + '%', note:'Normal' });
-            else if(values.hbA1c < 6.5) out.interpretations.push({ test:'HbA1c', value: values.hbA1c + '%', note:'Prediabetes' });
-            else out.interpretations.push({ test:'HbA1c', value: values.hbA1c + '%', note:'Diabetes range — medical review recommended' });
-        }
-        if(values.chol != null){
-            if(values.chol < 200) out.interpretations.push({ test:'Total Cholesterol', value: values.chol, note:'Desirable' });
-            else if(values.chol < 240) out.interpretations.push({ test:'Total Cholesterol', value: values.chol, note:'Borderline high' });
-            else out.interpretations.push({ test:'Total Cholesterol', value: values.chol, note:'High — evaluate diet and meds' });
-        }
-        if(values.ldl != null){
-            if(values.ldl < 100) out.interpretations.push({ test:'LDL', value: values.ldl, note:'Optimal' });
-            else out.interpretations.push({ test:'LDL', value: values.ldl, note:'Near optimal' });
-        }
-        if(values.hdl != null){
-            if(values.hdl < 40) out.interpretations.push({ test:'HDL', value: values.hdl, note:'Low — higher is better' });
-            else out.interpretations.push({ test:'HDL', value: values.hdl, note:'Protective / Good' });
-        }
-        if(values.tg != null){
-            if(values.tg < 150) out.interpretations.push({ test:'Triglycerides', value: values.tg, note:'Normal' });
-            else out.interpretations.push({ test:'Triglycerides', value: values.tg, note:'High — lifestyle changes recommended' });
-        }
-
-        out.recommendation = 'This is an automated interpretation. For diagnosis & treatment, consult your physician.';
-        setManualLabResult(out);
-    }
     
-    const saveReport = async (reportData: any) => {
-        if (!reportData) {
-            toast({ variant: 'destructive', title: 'No Report', description: t.labNoReport});
-            return;
+    const downloadPdf = (report: any) => {
+        if (!report) {
+          toast({ variant: "destructive", title: "No Report", description: "Please analyze a report first." });
+          return;
         }
-        if (!user || !firestore) {
-            toast({ variant: 'destructive', title: 'Authentication Error', description: t.labNoAuth });
-            return;
-        }
-        setLabStatus(t.labSaving);
-        try {
-            const reportsCol = collection(firestore, 'users', user.uid, 'labReports');
-            await addDoc(reportsCol, { ...reportData, savedAt: serverTimestamp() });
-            setLabStatus(t.labSaved);
-            toast({ title: 'Report Saved', description: 'Your lab report interpretation has been saved.'});
-        } catch (error) {
-            console.error(error);
-            setLabStatus(t.labFailed);
-            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your report.'});
-        }
-    }
 
-    const finalReport = imageState.result || manualLabResult;
+        const doc = new jsPDF();
+        const patientName = report.patientDetails?.name || user?.displayName || 'N/A';
+        
+        doc.setFontSize(18);
+        doc.text("Lab Report Analysis", 105, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text(`Patient: ${patientName}`, 20, 40);
+        doc.text(`Date of Report: ${report.patientDetails?.date || 'N/A'}`, 130, 40);
+        doc.setLineWidth(0.5);
+        doc.line(20, 45, 190, 45);
+
+        doc.setFontSize(14);
+        doc.text("Summary", 20, 60);
+        doc.setFontSize(11);
+        const summaryLines = doc.splitTextToSize(report.summary, 170);
+        doc.text(summaryLines, 20, 68);
+
+        let finalY = (doc as any).lastAutoTable.finalY || 80;
+        if (summaryLines.length > 3) finalY += (summaryLines.length - 3) * 5;
+
+        (doc as any).autoTable({
+            startY: finalY + 10,
+            head: [['Test', 'Value', 'Standard Range', 'Interpretation']],
+            body: report.interpretations.map((i: any) => [i.test, i.value, i.range || 'N/A', i.note]),
+            headStyles: { fillColor: [76, 129, 190] }
+        });
+        
+        finalY = (doc as any).lastAutoTable.finalY;
+        doc.setFontSize(14);
+        doc.text("Recommendations", 20, finalY + 15);
+        doc.setFontSize(11);
+        const recLines = doc.splitTextToSize(report.recommendation, 170);
+        doc.text(recLines, 20, finalY + 23);
+
+        finalY += 23 + (recLines.length * 5);
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.text("Disclaimer: This is an AI-generated analysis for educational purposes. Consult a doctor.", 105, finalY + 15, { align: 'center' });
+
+
+        doc.save(`Lab-Report-Analysis-${patientName}.pdf`);
+        toast({ title: "PDF Downloaded", description: "Your lab report analysis has been saved as a PDF." });
+    };
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><FileText />{t.labTitle}</CardTitle>
-                <CardDescription>{t.labDesc}</CardDescription>
+                <CardDescription>Upload an image of your lab report for a detailed AI-powered analysis.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                {/* Image Upload Section */}
                 <form action={handleImageFormAction} className="space-y-4 p-4 border rounded-lg bg-secondary/50">
                     <div className="space-y-2">
                         <Label htmlFor="lab-report-image">{t.uploadReport}</Label>
@@ -662,17 +633,6 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                         {isImageAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse"/>{t.analyzing}</>) : <><Upload className="mr-2 h-4 w-4"/>{t.analyzeReportImage}</>}
                     </Button>
                 </form>
-
-                {/* Manual Entry Section */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label htmlFor="fbs">{t.fbs}</Label><Input id="fbs" type="number" ref={inputs.fbs} /></div>
-                    <div className="space-y-1"><Label htmlFor="hbA1c">{t.hba1c}</Label><Input id="hbA1c" type="number" step="0.1" ref={inputs.hbA1c} /></div>
-                    <div className="space-y-1"><Label htmlFor="chol">{t.chol}</Label><Input id="chol" type="number" ref={inputs.chol} /></div>
-                    <div className="space-y-1"><Label htmlFor="ldl">{t.ldl}</Label><Input id="ldl" type="number" ref={inputs.ldl} /></div>
-                    <div className="space-y-1"><Label htmlFor="hdl">{t.hdl}</Label><Input id="hdl" type="number" ref={inputs.hdl} /></div>
-                    <div className="space-y-1"><Label htmlFor="tg">{t.tg}</Label><Input id="tg" type="number" ref={inputs.tg} /></div>
-                </div>
-                 <Button onClick={analyzeLabs}>{t.labAnalyzeBtn}</Button>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
                  {isImageAnalyzing && (
@@ -682,16 +642,43 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                     </div>
                  )}
 
-                 {finalReport && (
-                    <div className="resultBox w-full">
-                        <h4 className="font-semibold">{t.interpretation} — {new Date(finalReport.timestamp).toLocaleString()}</h4>
-                        <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
-                            {finalReport.interpretations.map((i: any, idx: number) => (
-                                <li key={idx}><b>{i.test}</b>: {i.value} — <i>{i.note}</i></li>
-                            ))}
-                        </ul>
-                        <p className="font-semibold mt-4">{t.recommendation}:</p>
-                        <p className="text-sm">{finalReport.recommendation}</p>
+                 {imageState.result && (
+                    <div className="resultBox w-full space-y-4">
+                        <h4 className="font-bold text-xl">{t.interpretation}</h4>
+                        <div>
+                            <h5 className="font-semibold text-lg">Overall Summary</h5>
+                            <p className="text-sm">{imageState.result.summary}</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted">
+                                    <tr>
+                                        <th className="p-2">Test</th>
+                                        <th className="p-2">Value</th>
+                                        <th className="p-2">Standard Range</th>
+                                        <th className="p-2">Interpretation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {imageState.result.interpretations.map((item: any, idx: number) => (
+                                        <tr key={idx} className="border-b">
+                                            <td className="p-2 font-medium">{item.test}</td>
+                                            <td className="p-2">{item.value}</td>
+                                            <td className="p-2">{item.range || 'N/A'}</td>
+                                            <td className="p-2">{item.note}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                         <div>
+                            <h5 className="font-semibold text-lg">Recommendations</h5>
+                            <p className="text-sm whitespace-pre-wrap">{imageState.result.recommendation}</p>
+                        </div>
+                        <Button onClick={() => downloadPdf(imageState.result)}>
+                            <Download className="mr-2 h-4 w-4" />
+                            {t.downloadPdf}
+                        </Button>
                     </div>
                 )}
                  {imageState.error && (
@@ -701,11 +688,6 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                         <AlertDescription>{imageState.error}</AlertDescription>
                     </Alert>
                 )}
-
-                 <div className="flex items-center gap-4">
-                    <Button onClick={() => saveReport(finalReport)} variant="secondary" disabled={!finalReport || labStatus === t.labSaving}>{t.labSaveBtn}</Button>
-                    <p className="text-sm text-muted-foreground">{labStatus}</p>
-                 </div>
             </CardFooter>
         </Card>
     );
@@ -714,6 +696,17 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
 export default function DiseaseScannerPage() {
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const t = labels[lang];
+    
+     useEffect(() => {
+        const script = document.createElement('script');
+        script.src = "https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js";
+        script.async = true;
+        document.body.appendChild(script);
+        return () => {
+          document.body.removeChild(script);
+        }
+      }, []);
+
     return (
     <div className="space-y-8">
         <div className="flex justify-between items-center">
@@ -761,3 +754,5 @@ export default function DiseaseScannerPage() {
     </div>
   );
 }
+
+    
