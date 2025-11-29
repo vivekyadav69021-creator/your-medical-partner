@@ -36,6 +36,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Progress } from '@/components/ui/progress';
 import { HealthScoreDisplay } from '@/components/health-score-display';
+import Image from 'next/image';
 
 
 const quickAccessItems = [
@@ -130,6 +131,8 @@ const activeChallenge = {
 
 export default function DashboardPage() {
   const { userName } = useUserProfile();
+  const smartwatchImage = PlaceHolderImages.find(p => p.id === 'smartwatch-connect');
+
   return (
     <div className="space-y-8">
       <div>
@@ -178,42 +181,52 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-       <Card>
-        <CardHeader>
-          <CardTitle>Connect Your Smartwatch</CardTitle>
-          <CardDescription>Sync your health data for a personalized health score and real-time tracking.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid md:grid-cols-3 gap-6 items-center">
-            <div className="flex justify-center">
-                <HealthScoreDisplay score={82} />
-            </div>
-            <div className="md:col-span-2 grid grid-cols-2 gap-4 text-center">
-                 <Card className="p-4">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-4xl font-bold">78</CardTitle>
-                        <CardDescription className="flex items-center justify-center gap-1"><HeartPulse className="w-4 h-4"/> Heart Rate</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className="text-xs text-muted-foreground">bpm (real-time)</p>
-                    </CardContent>
-                 </Card>
-                 <Card className="p-4">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-4xl font-bold">6,521</CardTitle>
-                        <CardDescription className="flex items-center justify-center gap-1"><Activity className="w-4 h-4" /> Steps</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className="text-xs text-muted-foreground">Today</p>
-                    </CardContent>
-                 </Card>
-                 <div className="col-span-2">
-                    <Button className="w-full">
+       <Card className="overflow-hidden">
+        <div className="grid md:grid-cols-2 items-center">
+            <div className="p-6 md:p-8">
+                 <CardHeader className="p-0 mb-4">
+                    <CardTitle>Connect Your Smartwatch</CardTitle>
+                    <CardDescription>Sync your health data for real-time tracking and a personalized health score.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                        <Card className="p-4">
+                            <CardHeader className="p-0 mb-2">
+                                <CardTitle className="text-4xl font-bold">78</CardTitle>
+                                <CardDescription className="flex items-center justify-center gap-1"><HeartPulse className="w-4 h-4"/> Heart Rate</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <p className="text-xs text-muted-foreground">bpm (real-time)</p>
+                            </CardContent>
+                        </Card>
+                         <Card className="p-4">
+                            <CardHeader className="p-0 mb-2">
+                                <CardTitle className="text-4xl font-bold">6,521</CardTitle>
+                                <CardDescription className="flex items-center justify-center gap-1"><Activity className="w-4 h-4" /> Steps</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <p className="text-xs text-muted-foreground">Today</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                     <Button className="w-full">
                         <Smartphone className="mr-2 h-4 w-4" />
                         Connect Device
                     </Button>
-                </div>
+                </CardContent>
             </div>
-        </CardContent>
+            <div className="relative h-64 md:h-full w-full">
+                {smartwatchImage && (
+                    <Image 
+                        src={smartwatchImage.imageUrl}
+                        alt={smartwatchImage.description}
+                        layout="fill"
+                        className="object-cover"
+                        data-ai-hint={smartwatchImage.imageHint}
+                    />
+                )}
+            </div>
+        </div>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">

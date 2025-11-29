@@ -67,6 +67,12 @@
       "imageHint": "yoga meditation"
     },
     {
+      "id": "smartwatch-connect",
+      "description": "A person's wrist with a modern smartwatch displaying health metrics",
+      "imageUrl": "https://images.unsplash.com/photo-1544135336-685764491a6c?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "smartwatch fitness"
+    },
+    {
       "id": "med01",
       "description": "Box of Paracetamol tablets",
       "imageUrl": "https://images.unsplash.com/photo-1631555123359-ca4c6c24a3a6?q=80&w=1780&auto=format&fit=crop",
