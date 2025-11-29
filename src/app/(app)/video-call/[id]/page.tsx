@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export default function VideoCallPage({ params }: { params: { id: string } }) {
+export default function VideoCallPage({ params: paramsProp }: { params: { id: string } }) {
+  const params = use(paramsProp);
   const searchParams = useSearchParams();
   const doctorName = searchParams.get('doctor') || 'Doctor';
   const { toast } = useToast();
