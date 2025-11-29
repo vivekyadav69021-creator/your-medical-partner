@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
 import { UserNav } from './user-nav';
-import { ThemeToggle } from '../theme-toggle';
 import { HeartPulse } from 'lucide-react';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +34,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            <ThemeToggle />
             <UserNav />
           </div>
         </header>
