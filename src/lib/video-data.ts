@@ -34,7 +34,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'fa1', title: { en: 'How to do CPR — St John Ambulance', hi: 'सीपीआर कैसे करें — सेंट जॉन एम्बुलेंस' }, description: { en: 'Adult CPR steps.', hi: 'वयस्कों के लिए सीपीआर के चरण।' }, youtube_url: 'https://www.youtube.com/embed/BQNNOh8c8ks' },
       { id: 'fa2', title: { en: 'Choking first aid — St John Ambulance', hi: 'चोकिंग फर्स्ट ऐड — सेंट जॉन एम्बुलेंस' }, description: { en: 'Help a choking adult/child.', hi: 'एक घुटते हुए वयस्क/बच्चे की मदद करें।' }, youtube_url: 'https://www.youtube.com/embed/HGBBu4zr8sM' },
       { id: 'fa3', title: { en: 'Basic Life Support (animated)', hi: 'बेसिक लाइफ सपोर्ट (एनिमेटेड)' }, description: { en: 'Chest compressions & rescue breaths basics.', hi: 'छाती संपीड़न और बचाव श्वास की मूल बातें।' }, youtube_url: 'https://www.youtube.com/embed/Mlp5dRIJk4M' },
-      { id: 'fa4', title: { en: 'How to treat burns — Red Cross', hi: 'जलने का इलाज कैसे करें — रेड क्रॉस' }, description: { en: 'First steps for burns.', hi: 'जलने के लिए पहले कदम।' }, youtube_url: 'https://www.youtube.com/embed/VWVQ5dGv2tI' },
+      { id: 'fa4', title: { en: 'How to treat burns — Red Cross', hi: 'जलने का इलाज कैसे करें — रेड क्रॉस' }, description: { en: 'First steps for burns.', hi: 'जलने के लिए पहले कदम।' }, youtube_url: 'https://youtu.be/CYHGRtPupOo?si=vTGSTQasLubLGleF' },
       { id: 'fa5', title: { en: 'Stop the bleed — simple actions', hi: 'खून बहना बंद करें — सरल क्रियाएं' }, description: { en: 'Controlling bleeding basics.', hi: 'खून बहने को नियंत्रित करने की मूल बातें।' }, youtube_url: 'https://www.youtube.com/embed/2tJYv-7g1wI' }
     ]
   },
@@ -143,7 +143,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'dw2', title: { en: 'Meal planning basics — Mayo Clinic', hi: 'भोजन योजना की मूल बातें — मेयो क्लिनिक' }, description: { en: 'Portion control & planning.', hi: 'भाग नियंत्रण और योजना।' }, youtube_url: 'https://www.youtube.com/embed/z0rFJ5mY1Zs' },
       { id: 'dw3', title: { en: 'Intermittent fasting overview — NutritionFacts', hi: 'आंतरायिक उपवास अवलोकन — न्यूट्रिशनफैक्ट्स' }, description: { en: 'What the science says.', hi: 'विज्ञान क्या कहता है।' }, youtube_url: 'https://www.youtube.com/embed/2bD3xiM8nTU' },
       { id: 'dw4', title: { en: 'Healthy swaps for snacks', hi: 'स्नैक्स के लिए स्वस्थ स्वैप' }, description: { en: 'Small changes that add up.', hi: 'छोटे बदलाव जो जुड़ते हैं।' }, youtube_url: 'https://www.youtube.com/embed/7aG_JI1kQ28' },
-      { id: 'dw5', title: { en: 'Behavioral tips for weight management', hi: 'वजन प्रबंधन के लिए व्यवहारिक सुझाव' }, description: { en: 'Sensible habit building.', hi: 'समझदार आदत निर्माण।' }, youtube_url: 'https://www.youtube.com/embed/QZ8kqVYb5sA' }
+      { id: 'dw5', title: { en: 'Behavioral tips for weight management', hi: 'वजन प्रबंधन के लिए व्यवहारिक सुझाव' }, description: { en: 'Sensible habit building.', hi: 'समझदार आदत निर्माण।' }, youtube_url: 'https://www.youtube.com/embed/QZ8K9y2a3Z4' }
     ]
   },
   {
