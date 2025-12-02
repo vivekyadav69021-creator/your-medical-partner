@@ -25,7 +25,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const indianDoctors = [
@@ -39,10 +39,10 @@ const indianDoctors = [
 ];
 
 const foreignDoctors = [
-  { id: 'dr-john-smith', name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5', fees: '₹6500', experience: '10 years', location: 'New York, USA', bio: 'Board-certified physician from the USA, focused on holistic patient care and diagnostics.' },
-  { id: 'dr-emily-williams', name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6', fees: '₹10000', experience: '14 years', location: 'London, UK', bio: 'UK-based orthopedic surgeon specializing in sports injuries and joint replacement.' },
-  { id: 'dr-olivia-chen', name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9', fees: '₹12500', experience: '12 years', location: 'Toronto, Canada', bio: 'Expert in hormonal disorders including diabetes and thyroid conditions from Canada.'},
-  { id: 'dr-michael-brown', name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10', fees: '₹8000', experience: '16 years', location: 'Sydney, Australia', bio: 'Specializing in adult psychiatry with a focus on cognitive behavioral therapy (CBT).'},
+  { id: 'dr-john-smith', name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5', fees: '₹2500', experience: '10 years', location: 'New York, USA', bio: 'Board-certified physician from the USA, focused on holistic patient care and diagnostics.' },
+  { id: 'dr-emily-williams', name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6', fees: '₹4000', experience: '14 years', location: 'London, UK', bio: 'UK-based orthopedic surgeon specializing in sports injuries and joint replacement.' },
+  { id: 'dr-olivia-chen', name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9', fees: '₹5000', experience: '12 years', location: 'Toronto, Canada', bio: 'Expert in hormonal disorders including diabetes and thyroid conditions from Canada.'},
+  { id: 'dr-michael-brown', name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10', fees: '₹3000', experience: '16 years', location: 'Sydney, Australia', bio: 'Specializing in adult psychiatry with a focus on cognitive behavioral therapy (CBT).'},
 ];
 
 const initialAppointments = [
@@ -66,6 +66,7 @@ const initialAppointments = [
   },
 ];
 
+
 type Doctor = {
   id: string;
   name: string;
@@ -78,7 +79,7 @@ type Doctor = {
   bio: string;
 };
 
-type Appointment = {
+export type Appointment = {
   id: string;
   doctorName: string;
   specialty: string;
@@ -140,8 +141,18 @@ const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, bi
 
 
 export default function ConsultationPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Load appointments from localStorage on component mount
+    const savedAppointments = localStorage.getItem('appointments');
+    if (savedAppointments) {
+      setAppointments(JSON.parse(savedAppointments));
+    } else {
+      setAppointments(initialAppointments); // Load initial if none saved
+    }
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -238,4 +249,13 @@ export default function ConsultationPage() {
 // Full doctors list for detail page lookup
 export const allDoctors = [...indianDoctors, ...foreignDoctors];
 
+// Function to add a new appointment, can be exported or passed down
+export const addAppointment = (newAppointment: Appointment) => {
+  const savedAppointments = localStorage.getItem('appointments');
+  const appointments = savedAppointments ? JSON.parse(savedAppointments) : initialAppointments;
+  const updatedAppointments = [newAppointment, ...appointments];
+  localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  // This function would typically be part of a context or state management solution
+  // to trigger a re-render. For now, it just saves to localStorage.
+};
     

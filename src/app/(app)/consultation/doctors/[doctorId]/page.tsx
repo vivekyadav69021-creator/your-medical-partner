@@ -2,11 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { allDoctors } from '@/app/(app)/consultation/page';
+import { allDoctors, Appointment } from '@/app/(app)/consultation/page';
 import {
   Card,
   CardContent,
@@ -43,6 +43,7 @@ const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "
 
 export default function DoctorProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const doctorId = params.doctorId as string;
   const doctor = allDoctors.find(d => d.id === doctorId);
   const { toast } = useToast();
@@ -57,11 +58,32 @@ export default function DoctorProfilePage() {
   
   const handleConfirmBooking = () => {
     if (selectedDate && selectedTime && doctor) {
+      
+      const newAppointment: Appointment = {
+        id: `appt-${Date.now()}`,
+        doctorName: doctor.name,
+        specialty: doctor.specialty,
+        date: format(selectedDate, 'MMM dd, yyyy'),
+        time: selectedTime,
+        type: 'Video Call',
+        imageId: doctor.imageId,
+      };
+
+      // Retrieve existing appointments from localStorage and add the new one
+      const savedAppointments = localStorage.getItem('appointments');
+      const appointments = savedAppointments ? JSON.parse(savedAppointments) : [];
+      const updatedAppointments = [newAppointment, ...appointments];
+      localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+
+
       toast({
         title: 'Appointment Booked!',
         description: `Your appointment with ${doctor.name} on ${format(selectedDate, 'MMM dd, yyyy')} at ${selectedTime} has been confirmed.`,
       });
       setIsDialogOpen(false);
+      
+      // Navigate back to the consultation page to see the updated list
+      router.push('/consultation');
     }
   };
 
@@ -172,3 +194,4 @@ export default function DoctorProfilePage() {
     </div>
   );
 }
+    
