@@ -23,7 +23,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'hyg2', title: { en: 'Hand-washing steps (WHO)', hi: 'हाथ धोने के चरण (WHO)' }, description: { en: 'WHO step-by-step hand hygiene.', hi: 'WHO द्वारा कदम-दर-कदम हाथ की स्वच्छता।' }, youtube_url: 'https://www.youtube.com/embed/IisgnbMfKvI' },
       { id: 'hyg3', title: { en: 'Best Way to Wash Your Hands (WHO 11-step)', hi: 'हाथ धोने का सबसे अच्छा तरीका (WHO 11-चरणीय)' }, description: { en: 'Comprehensive WHO demo.', hi: 'WHO का व्यापक प्रदर्शन।' }, youtube_url: 'https://www.youtube.com/embed/v7AYKMP6rOE' },
       { id: 'hyg4', title: { en: 'Oral hygiene basics — Colgate (trusted tutorial)', hi: 'मौखिक स्वच्छता की मूल बातें — कोलगेट' }, description: { en: 'Daily oral care tips.', hi: 'दैनिक मौखिक देखभाल युक्तियाँ।' }, youtube_url: 'https://youtu.be/5J89gCDt_rk?si=4FgFkfeW2oWduuKH' },
-      { id: 'hyg5', title: { en: 'Personal hygiene for kids — UNICEF', hi: 'बच्चों के लिए व्यक्तिगत स्वच्छता — यूनिसेफ' }, description: { en: 'Hygiene for children.', hi: 'बच्चों के लिए स्वच्छता।' }, youtube_url: 'https://www.youtube.com/embed/2J7-5HkA0Z8' }
+      { id: 'hyg5', title: { en: 'Personal hygiene for kids — UNICEF', hi: 'बच्चों के लिए व्यक्तिगत स्वच्छता — यूनिसेफ' }, description: { en: 'Hygiene for children.', hi: 'बच्चों के लिए स्वच्छता।' }, youtube_url: 'https://youtu.be/0ZPTXQ0KqOQ?si=gmh9kq8aiMP-tJ4W' }
     ]
   },
   {
