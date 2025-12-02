@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useRef, useEffect, useState } from 'react';
@@ -80,14 +81,14 @@ const moodData = [
 
 const labels = {
     en: {
-      name: 'Name', age:'Age', gender:'Gender', weight:'Weight (kg)', height:'Height (cm)',
+      name: 'Name', age:'Age', gender:'Gender', weight:'Weight (kg)', height:'Height',
       activity:'Activity level', goal:'Primary goal', medical:'Medical conditions / allergies',
       time:'Daily exercise time (minutes)', notes:'Extra notes', generate:'Generate Planner',
       save:'Save to Profile', download:'Download PDF', plannerTitle:'Your 7-day Health Plan',
       statusSaving:'Saving...', statusSaved:'Saved ✓', statusNoAuth:'Please sign in to save.'
     },
     hi: {
-      name:'नाम', age:'आयु', gender:'लिंग', weight:'वजन (kg)', height:'ऊँचाई (cm)',
+      name:'नाम', age:'आयु', gender:'लिंग', weight:'वजन (kg)', height:'ऊँचाई',
       activity:'गतिविधि स्तर', goal:'प्राथमिक लक्ष्य', medical:'चिकित्सीय स्थिति / एलर्जी',
       time:'दैनिक व्यायाम समय (मिनट)', notes:'अतिरिक्त नोट्स', generate:'प्लान बनाएँ',
       save:'प्रोफ़ाइल में सेव करें', download:'PDF डाउनलोड', plannerTitle:'आपकी 7-दिवसीय हेल्थ योजना',
@@ -107,6 +108,9 @@ function HealthPlanner() {
         gender: 'male',
         weight: '',
         height: '',
+        heightFt: '',
+        heightIn: '',
+        heightUnit: 'cm',
         activity: 'light',
         goal: 'maintain',
         medical: '',
@@ -138,16 +142,37 @@ function HealthPlanner() {
             return;
         }
 
-        const calcBMI = (weight: number, heightCm: number) => {
-            if(!weight || !heightCm) return null;
+        const calcBMI = (weight: number, heightVal: string, heightUnit: string, heightFtVal: string, heightInVal: string) => {
+            if(!weight) return null;
+            let heightCm = 0;
+            if (heightUnit === 'ft') {
+                const ft = Number(heightFtVal) || 0;
+                const inches = Number(heightInVal) || 0;
+                if (ft === 0) return null;
+                heightCm = (ft * 30.48) + (inches * 2.54);
+            } else {
+                heightCm = Number(heightVal) || 0;
+            }
+            
+            if (heightCm === 0) return null;
+
             const h = heightCm/100;
             const bmi = weight / (h*h);
             return Math.round(bmi*10)/10;
         };
 
         const estimateCalories = (form: typeof formData) => {
-            const w = Number(form.weight), h = Number(form.height), age = Number(form.age);
-            if(!w || !h || !age) return null;
+            const w = Number(form.weight), age = Number(form.age);
+            let heightCm = 0;
+             if (form.heightUnit === 'ft') {
+                const ft = Number(form.heightFt) || 0;
+                const inches = Number(form.heightIn) || 0;
+                heightCm = (ft * 30.48) + (inches * 2.54);
+            } else {
+                heightCm = Number(form.height) || 0;
+            }
+            
+            if(!w || !heightCm || !age) return null;
             let bmr;
             if(form.gender === 'female') bmr = 10*w + 6.25*h - 5*age - 161;
             else bmr = 10*w + 6.25*h - 5*age + 5;
@@ -185,7 +210,7 @@ function HealthPlanner() {
         const newPlanner = {
             createdAt: new Date().toISOString(),
             personal: formData,
-            bmi: calcBMI(Number(formData.weight), Number(formData.height)),
+            bmi: calcBMI(Number(formData.weight), formData.height, formData.heightUnit, formData.heightFt, formData.heightIn),
             calories: estimateCalories(formData),
             dailyDiet: generateDailyDiet(estimateCalories(formData)),
             exercise: generateExercisePlan(formData),
@@ -316,7 +341,23 @@ function HealthPlanner() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="height">{t.height}</Label>
-                        <Input id="height" type="number" value={formData.height} onChange={handleInputChange} />
+                        <div className="flex gap-2">
+                           {formData.heightUnit === 'cm' ? (
+                               <Input id="height" type="number" placeholder="cm" value={formData.height} onChange={handleInputChange} />
+                           ) : (
+                               <div className="flex gap-2 w-full">
+                                    <Input id="heightFt" type="number" placeholder="ft" value={formData.heightFt} onChange={handleInputChange} className="w-1/2" />
+                                    <Input id="heightIn" type="number" placeholder="in" value={formData.heightIn} onChange={handleInputChange} className="w-1/2" />
+                               </div>
+                           )}
+                           <Select value={formData.heightUnit} onValueChange={(v) => handleSelectChange('heightUnit', v)}>
+                                <SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="cm">cm</SelectItem>
+                                    <SelectItem value="ft">ft</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="activity">{t.activity}</Label>
