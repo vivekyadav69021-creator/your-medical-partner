@@ -21,8 +21,8 @@ export const videoTutorialsData: VideoCategory[] = [
     videos: [
       { id: 'hyg1', title: { en: 'How to wash your hands — WHO', hi: 'अपने हाथ कैसे धोएं — WHO' }, description: { en: 'Proper technique from WHO.', hi: 'WHO से उचित तकनीक।' }, youtube_url: 'https://www.youtube.com/embed/3PmVJQUCm4E' },
       { id: 'hyg2', title: { en: 'Hand-washing steps (WHO)', hi: 'हाथ धोने के चरण (WHO)' }, description: { en: 'WHO step-by-step hand hygiene.', hi: 'WHO द्वारा कदम-दर-कदम हाथ की स्वच्छता।' }, youtube_url: 'https://www.youtube.com/embed/IisgnbMfKvI' },
-      { id: 'hyg3', title: { en: 'Best Way to Wash Your Hands (WHO 11-step)', hi: 'हाथ धोने का सबसे अच्छा तरीका (WHO 11-चरणीय)' }, description: { en: 'Comprehensive WHO demo.', hi: 'WHO का व्यापक प्रदर्शन।' }, youtube_url: 'https://www.youtube.com/embed/vXPfF2A-xf4' },
-      { id: 'hyg4', title: { en: 'Oral hygiene basics — Colgate (trusted tutorial)', hi: 'मौखिक स्वच्छता की मूल बातें — कोलगेट' }, description: { en: 'Daily oral care tips.', hi: 'दैनिक मौखिक देखभाल युक्तियाँ।' }, youtube_url: 'https://www.youtube.com/embed/0cRce68y4N0' },
+      { id: 'hyg3', title: { en: 'Best Way to Wash Your Hands (WHO 11-step)', hi: 'हाथ धोने का सबसे अच्छा तरीका (WHO 11-चरणीय)' }, description: { en: 'Comprehensive WHO demo.', hi: 'WHO का व्यापक प्रदर्शन।' }, youtube_url: 'https://www.youtube.com/embed/v7AYKMP6rOE' },
+      { id: 'hyg4', title: { en: 'Oral hygiene basics — Colgate (trusted tutorial)', hi: 'मौखिक स्वच्छता की मूल बातें — कोलगेट' }, description: { en: 'Daily oral care tips.', hi: 'दैनिक मौखिक देखभाल युक्तियाँ।' }, youtube_url: 'https://youtu.be/5J89gCDt_rk?si=4FgFkfeW2oWduuKH' },
       { id: 'hyg5', title: { en: 'Personal hygiene for kids — UNICEF', hi: 'बच्चों के लिए व्यक्तिगत स्वच्छता — यूनिसेफ' }, description: { en: 'Hygiene for children.', hi: 'बच्चों के लिए स्वच्छता।' }, youtube_url: 'https://www.youtube.com/embed/2J7-5HkA0Z8' }
     ]
   },
@@ -70,7 +70,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'n1', title: { en: 'Healthy Eating Plate — Harvard', hi: 'हेल्दी ईटिंग प्लेट — हार्वर्ड' }, description: { en: "Harvard's guide to balanced plates.", hi: 'हार्वर्ड का संतुलित प्लेटों के लिए गाइड।' }, youtube_url: 'https://www.youtube.com/embed/UuvvbGSe_Y4' },
       { id: 'n2', title: { en: 'Nutrition basics — Mayo Clinic', hi: 'पोषण की मूल बातें — मेयो क्लिनिक' }, description: { en: 'Practical nutrition advice.', hi: 'व्यावहारिक पोषण सलाह।' }, youtube_url: 'https://www.youtube.com/embed/o-2L8C2DdR8' },
       { id: 'n3', title: { en: 'What to eat to lose weight — NHS', hi: 'वजन कम करने के लिए क्या खाएं — एनएचएस' }, description: { en: 'Evidence-based tips.', hi: 'सबूत-आधारित युक्तियाँ।' }, youtube_url: 'https://www.youtube.com/embed/7s7WZ0LkW6c' },
-      { id: 'n4', title: { en: 'Plant-based nutrition — NutritionFacts.org', hi: 'पौधा-आधारित पोषण — NutritionFacts.org' }, description: { en: 'Science-backed nutrition facts.', hi: 'विज्ञान-समर्थित पोषण तथ्य।' }, youtube_url: 'https://www.youtube.com/embed/TfU6u9k3ZgU' },
+      { id: 'n4', title: { en: 'Plant-based nutrition — NutritionFacts.org', hi: 'पौधा-आधारित पोषण — NutritionFacts.org' }, description: { en: 'Science-backed nutrition facts.', hi: 'विज्ञान-समर्थित पोषण तथ्य।' }, youtube_url: 'https://www.youtube.com/embed/TfU6u3bY1m6c' },
       { id: 'n5', title: { en: 'Hydration & ORS — WHO', hi: 'हाइड्रेशन और ओआरएस — डब्ल्यूएचओ' }, description: { en: 'When and how to use ORS.', hi: 'ओआरएस का उपयोग कब और कैसे करें।' }, youtube_url: 'https://www.youtube.com/embed/9f0vL0vJb1E' }
     ]
   },
@@ -107,7 +107,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'w2', title: { en: 'Pregnancy essentials — NHS', hi: 'गर्भावस्था की अनिवार्य बातें — एनएचएस' }, description: { en: 'Antenatal basics & safety.', hi: 'प्रसव पूर्व मूल बातें और सुरक्षा।' }, youtube_url: 'https://www.youtube.com/embed/Z4K9U9C0Y5Y' },
       { id: 'w3', title: { en: 'PCOS explained — NHS/Endocrine', hi: 'पीसीओएस समझाया गया — एनएचएस/एंडोक्राइन' }, description: { en: 'Symptoms and management.', hi: 'लक्षण और प्रबंधन।' }, youtube_url: 'https://www.youtube.com/embed/4v3Z9q7bXWU' },
       { id: 'w4', title: { en: 'Iron deficiency & anemia — WHO', hi: 'आयरन की कमी और एनीमिया — डब्ल्यूएचओ' }, description: { en: 'Prevention and diet tips.', hi: 'रोकथाम और आहार युक्तियाँ।' }, youtube_url: 'https://www.youtube.com/embed/jw3Xu3i2xI4' },
-      { id: 'w5', title: { en: 'Breast self-exam — Mayo Clinic', hi: 'स्तन स्व-परीक्षा — मेयो क्लिनिक' }, description: { en: 'How to check and when to consult.', hi: 'कैसे जांच करें और कब परामर्श करें।' }, youtube_url: 'https://www.youtube.com/embed/9a5w4b0u4Yg' }
+      { id: 'w5', title: { en: 'Breast self-exam — Mayo Clinic', hi: 'स्तन स्व-परीक्षा — मेयो क्लिनिक' }, description: { en: 'How to check and when to consult.', hi: 'कैसे जांच करें और कब परामर्श करें।' }, youtube_url: 'https://www.youtube.com/embed/9a5w4bY9YgQ' }
     ]
   },
   {
