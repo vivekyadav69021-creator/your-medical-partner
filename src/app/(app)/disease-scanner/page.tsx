@@ -278,8 +278,8 @@ function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.
                     )}
                     
                     {preview && !isCameraOpen && (
-                        <div className="relative mt-2">
-                            <Image src={preview} alt="Disease preview" width={300} height={300} className="rounded-md border aspect-square object-cover w-full" />
+                        <div className="relative mt-2 w-full max-w-sm">
+                            <Image src={preview} alt="Disease preview" width={300} height={300} className="rounded-md border w-full h-auto" />
                         </div>
                     )}
                 </form>
@@ -485,8 +485,8 @@ function XRayScanner({t}: {t: typeof labels.en}) {
             )}
           
           {preview && !isCameraOpen && (
-              <div className="relative mt-2">
-                <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border aspect-square object-cover w-full" />
+              <div className="relative mt-2 w-full max-w-sm">
+                <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border w-full h-auto" />
               </div>
           )}
         </form>
@@ -624,8 +624,8 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                         <Input id="lab-report-image" type="file" ref={imageFileInputRef} onChange={handleImageFileChange} accept="image/*" />
                     </div>
                     {imagePreview && (
-                        <div className="relative">
-                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border" />
+                        <div className="relative w-full max-w-sm">
+                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border w-full h-auto" />
                             <Button variant="ghost" size="icon" className="absolute top-0 right-0" onClick={() => setImagePreview(null)}><X className="h-4 w-4" /></Button>
                         </div>
                     )}
