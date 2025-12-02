@@ -352,7 +352,7 @@ export default function AIPsychiatristPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BrainCircuit />
-            Chat with Your AI Companion
+            A Dialogue with Your Digital Confidant
           </CardTitle>
           <CardDescription>
             This is a safe and confidential space. Your privacy is respected.
