@@ -35,7 +35,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'fa2', title: { en: 'Choking first aid — St John Ambulance', hi: 'चोकिंग फर्स्ट ऐड — सेंट जॉन एम्बुलेंस' }, description: { en: 'Help a choking adult/child.', hi: 'एक घुटते हुए वयस्क/बच्चे की मदद करें।' }, youtube_url: 'https://www.youtube.com/embed/HGBBu4zr8sM' },
       { id: 'fa3', title: { en: 'Basic Life Support (animated)', hi: 'बेसिक लाइफ सपोर्ट (एनिमेटेड)' }, description: { en: 'Chest compressions & rescue breaths basics.', hi: 'छाती संपीड़न और बचाव श्वास की मूल बातें।' }, youtube_url: 'https://www.youtube.com/embed/Mlp5dRIJk4M' },
       { id: 'fa4', title: { en: 'How to treat burns — Red Cross', hi: 'जलने का इलाज कैसे करें — रेड क्रॉस' }, description: { en: 'First steps for burns.', hi: 'जलने के लिए पहले कदम।' }, youtube_url: 'https://youtu.be/CYHGRtPupOo?si=vTGSTQasLubLGleF' },
-      { id: 'fa5', title: { en: 'Stop the bleed — simple actions', hi: 'खून बहना बंद करें — सरल क्रियाएं' }, description: { en: 'Controlling bleeding basics.', hi: 'खून बहने को नियंत्रित करने की मूल बातें।' }, youtube_url: 'https://www.youtube.com/embed/2tJYv-7g1wI' }
+      { id: 'fa5', title: { en: 'Stop the bleed — simple actions', hi: 'खून बहना बंद करें — सरल क्रियाएं' }, description: { en: 'Controlling bleeding basics.', hi: 'खून बहने को नियंत्रित करने की मूल बातें।' }, youtube_url: 'https://youtu.be/NxO5LvgqZe0?si=noVUTzNrKTRzx_UW' }
     ]
   },
   {
@@ -191,7 +191,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'im2', title: { en: 'Lifestyle tips to support immunity — Harvard Health', hi: 'प्रतिरक्षा का समर्थन करने के लिए जीवनशैली युक्तियाँ — हार्वर्ड हेल्थ' }, description: { en: 'Sleep, diet, exercise basics.', hi: 'नींद, आहार, व्यायाम की मूल बातें।' }, youtube_url: 'https://www.youtube.com/embed/3jG3a8GhR5I' },
       { id: 'im3', title: { en: 'Nutrition for immunity — NutritionFacts.org', hi: 'प्रतिरक्षा के लिए पोषण — NutritionFacts.org' }, description: { en: 'Food and immunity science.', hi: 'भोजन और प्रतिरक्षा विज्ञान।' }, youtube_url: 'https://www.youtube.com/embed/4kJ4t1aZ7jo' },
       { id: 'im4', title: { en: 'Vaccines: how they work — WHO', hi: 'टीके: वे कैसे काम करते हैं — डब्ल्यूएचओ' }, description: { en: 'How vaccines protect communities.', hi: 'टीके समुदायों की रक्षा कैसे करते हैं।' }, youtube_url: 'https://www.youtube.com/embed/pp6jR5sP0X4' },
-      { id: 'im5', title: { en: 'Stress & immunity link — TEDx / science explainer', hi: 'तनाव और प्रतिरक्षा लिंक — टेडएक्स / विज्ञान व्याख्याता' }, description: { en: 'Why stress weakens immunity.', hi: 'तनाव प्रतिरक्षा को क्यों कमजोर करता है।' }, youtube_url: 'https://www.youtube.com/embed/5dD1v0Qn0ZU' }
+      { id: 'im5', title: { en: 'Stress & immunity link — TEDx / science explainer', hi: 'तनाव और प्रतिरक्षा लिंक — टेडएक्स / विज्ञान व्याख्याता' }, description: { en: 'Why stress weakens immunity.', hi: 'तनाव प्रतिरक्षा को क्यों कमजोर करता है।' }, youtube_url: 'https://www.youtube.com/embed/5dD1pGqN0ZU' }
     ]
   }
 ];
