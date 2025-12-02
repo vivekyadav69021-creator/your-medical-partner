@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -28,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash, Pill, HeartPulse, Dumbbell, Calendar, GripVertical, Pencil } from 'lucide-react';
+import { Plus, Trash, Pill, HeartPulse, Dumbbell, Calendar, Pencil } from 'lucide-react';
 
 const initialTasks = [
   { id: 'task-1', title: 'Take morning medication', category: 'Medication', completed: true },
@@ -47,13 +48,14 @@ const categoryIcons = {
 };
 
 type Category = 'Medication' | 'Fitness' | 'General' | 'Appointment';
+type Task = { id: string; title: string; category: Category; completed: boolean };
 
 export default function PlannerPage() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<typeof initialTasks[0] | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const handleAddTask = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleTaskSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const title = formData.get('title') as string;
@@ -62,7 +64,7 @@ export default function PlannerPage() {
     if (editingTask) {
         setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, title, category } : t));
     } else {
-        const newTask = {
+        const newTask: Task = {
           id: `task-${Date.now()}`,
           title,
           category,
@@ -87,7 +89,7 @@ export default function PlannerPage() {
     setTasks(tasks.filter(task => task.id !== taskId));
   };
   
-  const handleEditClick = (task: typeof initialTasks[0]) => {
+  const handleEditClick = (task: Task) => {
     setEditingTask(task);
     setIsDialogOpen(true);
   }
@@ -96,7 +98,6 @@ export default function PlannerPage() {
     setEditingTask(null);
     setIsDialogOpen(true);
   }
-
 
   const completedTasks = tasks.filter(t => t.completed);
   const pendingTasks = tasks.filter(t => !t.completed);
@@ -110,7 +111,10 @@ export default function PlannerPage() {
             Organize your health-related tasks and stay on track.
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
+          setIsDialogOpen(isOpen);
+          if (!isOpen) setEditingTask(null);
+        }}>
           <DialogTrigger asChild>
             <Button onClick={openNewTaskDialog}>
               <Plus className="mr-2 h-4 w-4" />
@@ -124,7 +128,7 @@ export default function PlannerPage() {
                 Fill in the details for your task below.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleAddTask} className="grid gap-4 py-4">
+            <form onSubmit={handleTaskSubmit} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="title" className="text-right">
                   Task
@@ -176,7 +180,7 @@ export default function PlannerPage() {
                         {task.title}
                      </label>
                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                        {categoryIcons[task.category as Category]}
+                        {categoryIcons[task.category]}
                         <span>{task.category}</span>
                      </div>
                   </div>
@@ -218,7 +222,7 @@ export default function PlannerPage() {
                             {task.title}
                          </label>
                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                             {categoryIcons[task.category as Category]}
+                             {categoryIcons[task.category]}
                             <span>{task.category}</span>
                          </div>
                      </div>
