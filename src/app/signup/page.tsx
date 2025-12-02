@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { HeartPulse, Terminal } from 'lucide-react';
+import { HeartPulse, Terminal, Eye, EyeOff } from 'lucide-react';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -40,6 +40,7 @@ function SignUpForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const auth = useAuth();
   const router = useRouter();
 
@@ -93,7 +94,24 @@ function SignUpForm() {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" name="password" required value={password} onChange={e => setPassword(e.target.value)} disabled={isLoading} />
+            <div className="relative">
+                <Input 
+                    id="password" 
+                    type={isPasswordVisible ? "text" : "password"} 
+                    name="password" required value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                    disabled={isLoading}
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                    onClick={() => setIsPasswordVisible(prev => !prev)}
+                >
+                    {isPasswordVisible ? <EyeOff /> : <Eye />}
+                </Button>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">

@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -19,10 +19,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { HeartPulse, Terminal } from 'lucide-react';
+import { HeartPulse, Terminal, Eye, EyeOff } from 'lucide-react';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useAuth } from '@/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { sendPasswordResetAction } from '@/app/auth/actions';
 
 function GoogleIcon() {
   return (
@@ -35,11 +45,57 @@ function GoogleIcon() {
   );
 }
 
+const initialResetState = { message: null, error: null };
+
+function ForgotPasswordDialog({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  const [state, formAction] = useActionState(sendPasswordResetAction, initialResetState);
+
+  return (
+    <DialogContent>
+      <form action={formAction}>
+        <DialogHeader>
+          <DialogTitle>Forgot Password</DialogTitle>
+          <DialogDescription>
+            Enter your email address and we'll send you a link to reset your password.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          {state.message && (
+            <Alert variant="default" className="border-green-500 text-green-700">
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>{state.message}</AlertDescription>
+            </Alert>
+          )}
+          {state.error && (
+             <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{state.error}</AlertDescription>
+            </Alert>
+          )}
+          {!state.message && (
+             <div className="grid gap-2 mt-4">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input id="reset-email" type="email" name="email" placeholder="m@example.com" required />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          {!state.message && <Button type="submit">Send Reset Link</Button>}
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
+
   const auth = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -101,8 +157,35 @@ function LoginForm() {
             <Input id="email" type="email" name="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" name="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
+             <div className="flex items-center">
+              <Label htmlFor="password">Password</Label>
+              <Dialog open={isForgotDialogOpen} onOpenChange={setIsForgotDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="link" type="button" className="ml-auto inline-block text-sm underline">
+                        Forgot your password?
+                    </Button>
+                  </DialogTrigger>
+                  <ForgotPasswordDialog onOpenChange={setIsForgotDialogOpen} />
+              </Dialog>
+            </div>
+            <div className="relative">
+                <Input 
+                    id="password" 
+                    type={isPasswordVisible ? "text" : "password"} 
+                    name="password" required value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    disabled={isLoading}
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                    onClick={() => setIsPasswordVisible(prev => !prev)}
+                >
+                    {isPasswordVisible ? <EyeOff /> : <Eye />}
+                </Button>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
