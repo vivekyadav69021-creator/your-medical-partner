@@ -47,5 +47,5 @@ export const guidedMeditations: Meditation[] = [
 
 export const learnCollections: LearnCollection[] = [
   { id: 'patanjali_overview', title: 'Patanjali Yoga-Sutras', desc: '4 chapters: Samadhi, Sadhana, Vibhuti, Kaivalya' },
-  { id: 'gita_overview', title: 'Bhagavad Gita', desc: '18 chapters: Core teachings of karma, bhakti, jnana' },
 ];
+
