@@ -263,37 +263,9 @@ export default function MeditationHubPage() {
                 </Card>
             </div>
 
-            {/* Center Column */}
-            <div className="lg:col-span-1 space-y-6">
-                 <Card className="overflow-hidden">
-                    {heroImage && (
-                      <div className="relative h-48 w-full">
-                        <Image
-                            src={heroImage.imageUrl}
-                            alt={heroImage.description}
-                            fill
-                            className="object-cover"
-                            data-ai-hint={heroImage.imageHint}
-                        />
-                      </div>
-                    )}
-                    <CardHeader>
-                        <CardTitle>Welcome to the Hub</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground text-sm">
-                           Start a guided practice, learn ancient wisdom from the Yoga-Sutras, or get an AI-powered meditation suggestion based on your mood.
-                        </p>
-                    </CardContent>
-                     <CardFooter className="flex-col items-start gap-2">
-                        {quickActions.map(action => (
-                            <Button key={action.label} variant="outline" className="w-full justify-start" asChild>
-                                <Link href={action.action}><Zap className="mr-2 h-4 w-4"/>{action.label}</Link>
-                            </Button>
-                        ))}
-                    </CardFooter>
-                </Card>
-                <Card>
+            {/* Right Column (Main Content) */}
+            <div className="lg:col-span-2 space-y-6">
+                 <Card>
                     <CardHeader>
                         <CardTitle>Start Practice</CardTitle>
                         <CardDescription>Choose a guided meditation and begin your session.</CardDescription>
@@ -320,13 +292,9 @@ export default function MeditationHubPage() {
                         })}
                     </CardContent>
                 </Card>
-            </div>
-            
-            {/* Right Column */}
-            <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BookOpen/>Learn — Patanjali & Gita</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><BookOpen/>Learn — Patanjali Yoga-Sutras</CardTitle>
                         <CardDescription>Click to open full chapter pages.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -346,6 +314,7 @@ export default function MeditationHubPage() {
                     </CardContent>
                 </Card>
             </div>
+            
         </div>
     </div>
   );
