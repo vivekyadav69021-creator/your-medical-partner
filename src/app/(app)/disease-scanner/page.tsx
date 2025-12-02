@@ -537,7 +537,7 @@ function XRayScanner({t}: {t: typeof labels.en}) {
           
           {preview && !isCameraOpen && (
               <div className="relative mt-2 w-full max-w-sm">
-                <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border w-full h-auto object-contain" />
+                <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border object-contain" />
               </div>
           )}
         </form>
@@ -676,7 +676,7 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                     </div>
                     {imagePreview && (
                         <div className="relative w-full max-w-sm">
-                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border w-full h-auto object-contain" />
+                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border object-contain" />
                             <Button variant="ghost" size="icon" className="absolute top-0 right-0" onClick={() => setImagePreview(null)}><X className="h-4 w-4" /></Button>
                         </div>
                     )}
@@ -752,12 +752,76 @@ function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) 
     const formRef = useRef<HTMLFormElement>(null);
     const { toast } = useToast();
 
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+
+    const stopStream = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+    }, []);
+
+    const openCamera = useCallback(async (mode: 'user' | 'environment') => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            toast({ variant: 'destructive', title: "Camera Not Supported" });
+            return;
+        }
+        stopStream();
+        setIsCameraOpen(true);
+        setPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+            streamRef.current = stream;
+        } catch (err) {
+           toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access camera. Please check permissions.' });
+           setIsCameraOpen(false);
+        }
+    }, [toast, stopStream]);
+    
+    useEffect(() => {
+        return () => {
+            stopStream();
+        }
+    }, [stopStream]);
+
+    const closeCamera = useCallback(() => {
+        setIsCameraOpen(false);
+        stopStream();
+    }, [stopStream]);
+
+    const takePicture = useCallback(() => {
+        if (videoRef.current && canvasRef.current) {
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const context = canvas.getContext('2d');
+          if (context) {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            setPreview(dataUrl);
+            closeCamera();
+          }
+        }
+    }, [closeCamera]);
+
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => setPreview(e.target?.result as string);
             reader.readAsDataURL(file);
+            closeCamera();
         }
     };
 
@@ -765,6 +829,7 @@ function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) 
         setPreview(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         formRef.current?.reset();
+        closeCamera();
     };
 
     const handleFormAction = (formData: FormData) => {
@@ -777,6 +842,7 @@ function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) 
 
     return (
         <Card>
+            <canvas ref={canvasRef} className="hidden"></canvas>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><FileHeart />{t.injuryTitle}</CardTitle>
                 <CardDescription>{t.injuryDesc}</CardDescription>
@@ -791,9 +857,26 @@ function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) 
                         <Label htmlFor="injury-file-input">{t.uploadInjuryPhoto}</Label>
                         <Input id="injury-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
                     </div>
-                    {preview && (
+                     <div className="flex flex-wrap gap-2 mt-2">
+                        <Button type="button" variant="secondary" onClick={() => openCamera(facingMode)}><Camera className="mr-2"/>{t.openCamera}</Button>
+                         <Button type="button" variant="secondary" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')} disabled={!isCameraOpen}>
+                            <SwitchCamera />
+                        </Button>
+                    </div>
+
+                    {isCameraOpen && (
+                        <div className="relative mt-2">
+                            <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
+                            <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                                <Button type="button" onClick={takePicture}>{t.takePicture}</Button>
+                                <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {preview && !isCameraOpen && (
                         <div className="relative mt-2 w-full max-w-sm">
-                            <Image src={preview} alt="Injury preview" width={300} height={300} className="rounded-md border w-full h-auto object-contain" />
+                            <Image src={preview} alt="Injury preview" width={300} height={300} className="rounded-md border object-contain" />
                             <Button variant="ghost" size="icon" className="absolute top-0 right-0" onClick={() => setPreview(null)}>
                                 <X className="h-4 w-4" />
                             </Button>
