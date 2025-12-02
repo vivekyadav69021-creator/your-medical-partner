@@ -13,6 +13,7 @@ import { BookHeart, AlertTriangle, Pill, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { TTSWidget } from '@/components/tts-widget';
+import React from 'react';
 
 const InfoCard = ({ title, content, icon: Icon }: { title: string, content: string, icon: React.ElementType }) => (
     <Card>
@@ -28,7 +29,8 @@ const InfoCard = ({ title, content, icon: Icon }: { title: string, content: stri
     </Card>
 );
 
-export default function DiseaseDetailPage({ params }: { params: { diseaseId: string } }) {
+export default function DiseaseDetailPage({ params: paramsProp }: { params: { diseaseId: string } }) {
+  const params = React.use(paramsProp);
   const searchParams = useSearchParams();
   const lang = searchParams.get('lang') === 'hi' ? 'hi' : 'en';
 
