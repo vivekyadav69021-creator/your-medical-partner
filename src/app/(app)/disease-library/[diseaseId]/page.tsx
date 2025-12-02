@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { diseases, Disease } from '@/lib/disease-data';
+import { diseases } from '@/lib/disease-data';
 import {
   Card,
   CardContent,
@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BookHeart, AlertTriangle, Pill, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { TTSWidget } from '@/components/tts-widget';
 
 const InfoCard = ({ title, content, icon: Icon }: { title: string, content: string, icon: React.ElementType }) => (
     <Card>
@@ -48,6 +48,14 @@ export default function DiseaseDetailPage({ params }: { params: { diseaseId: str
       </div>
     );
   }
+  
+  const textToSpeak = `
+    ${lang === 'en' ? disease.nameEn : disease.nameHi}.
+    ${lang === 'en' ? 'Overview' : 'अवलोकन'}. ${lang === 'en' ? disease.overviewEn : disease.overviewHi}.
+    ${lang === 'en' ? 'Symptoms' : 'लक्षण'}. ${lang === 'en' ? disease.symptomsEn : disease.symptomsHi}.
+    ${lang === 'en' ? 'Treatment' : 'इलाज'}. ${lang === 'en' ? disease.treatmentEn : disease.treatmentHi}.
+    ${lang === 'en' ? 'When to See a Doctor' : 'डॉक्टर से कब मिलें'}. ${lang === 'en' ? disease.whenToSeeDoctorEn : disease.whenToSeeDoctorHi}.
+  `.replace(/<[^>]+>/g, ''); // Strip HTML tags
 
   return (
     <div className="space-y-8">
@@ -65,6 +73,8 @@ export default function DiseaseDetailPage({ params }: { params: { diseaseId: str
             {lang === 'en' ? disease.overviewEn : disease.overviewHi}
         </p>
       </div>
+
+      <TTSWidget textToSpeak={textToSpeak} initialLang={lang === 'en' ? 'en-IN' : 'hi-IN'} />
 
       <div className="grid gap-6">
         <InfoCard 
