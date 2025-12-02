@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Check, Trophy, Star, Sparkles, Zap, Activity, Smile, Bot, Terminal, Save, Download } from 'lucide-react';
+import { Check, Trophy, Star, Sparkles, Zap, Activity, Smile, Bot, Terminal, Save, Download, CheckCircle, Flame } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
@@ -27,9 +27,10 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, addDoc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
-const challenges = [
+const initialChallenges = [
   {
     id: 'challenge-1',
     title: '7-Day Walking Challenge',
@@ -37,7 +38,8 @@ const challenges = [
     reward: '250 Points & a Virtual Badge',
     progress: 4,
     total: 7,
-    status: 'active',
+    status: 'active' as 'new' | 'active' | 'completed',
+    daily: Array(7).fill(false).map((_, i) => i < 4)
   },
   {
     id: 'challenge-2',
@@ -46,7 +48,8 @@ const challenges = [
     reward: '500 Points & Mindfulness Master Badge',
     progress: 0,
     total: 30,
-    status: 'new',
+    status: 'new' as 'new' | 'active' | 'completed',
+    daily: Array(30).fill(false)
   },
     {
     id: 'challenge-3',
@@ -55,7 +58,8 @@ const challenges = [
     reward: '200 Points',
     progress: 14,
     total: 14,
-    status: 'completed',
+    status: 'completed' as 'new' | 'active' | 'completed',
+    daily: Array(14).fill(true)
   },
 ];
 
@@ -436,6 +440,39 @@ function HealthPlanner() {
 
 
 export default function ChallengesPage() {
+    const [challenges, setChallenges] = useState(initialChallenges);
+    const { toast } = useToast();
+
+    const handleJoinChallenge = (challengeId: string) => {
+        setChallenges(prev =>
+            prev.map(c =>
+                c.id === challengeId ? { ...c, status: 'active' } : c
+            )
+        );
+        toast({ title: "Challenge Joined!", description: "You can now track your progress." });
+    };
+
+    const handleDailyProgress = (challengeId: string, dayIndex: number) => {
+        setChallenges(prev =>
+            prev.map(c => {
+                if (c.id === challengeId) {
+                    const newDaily = [...c.daily];
+                    newDaily[dayIndex] = !newDaily[dayIndex];
+                    const newProgress = newDaily.filter(Boolean).length;
+                    const newStatus = newProgress === c.total ? 'completed' : c.status;
+                    if (newStatus === 'completed') {
+                        toast({
+                            title: "Challenge Complete!",
+                            description: `Congratulations! You've completed the ${c.title}.`
+                        });
+                    }
+                    return { ...c, daily: newDaily, progress: newProgress, status: newStatus };
+                }
+                return c;
+            })
+        );
+    };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -449,7 +486,7 @@ export default function ChallengesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="ai-planner">
+      <Tabs defaultValue="community">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="community">Community Challenges</TabsTrigger>
           <TabsTrigger value="ai-planner"><Sparkles className="mr-2 h-4 w-4"/>AI Health Planner</TabsTrigger>
@@ -468,12 +505,11 @@ export default function ChallengesPage() {
                     </CardTitle>
                     {challenge.status === 'active' && <Badge>Active</Badge>}
                     {challenge.status === 'new' && <Badge variant="secondary">New</Badge>}
-                    {challenge.status === 'completed' && <Badge variant="outline">Completed</Badge>}
+                    {challenge.status === 'completed' && <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="mr-1 h-4 w-4"/>Completed</Badge>}
                   </div>
                   <CardDescription>{challenge.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {challenge.status === 'active' && (
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <p className="text-sm font-medium">Progress</p>
@@ -481,7 +517,25 @@ export default function ChallengesPage() {
                       </div>
                       <Progress value={(challenge.progress / challenge.total) * 100} className="h-2" />
                     </div>
+                  
+                  {challenge.status === 'active' && (
+                    <div className="space-y-2">
+                      <Label>Log Your Daily Progress:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {challenge.daily.map((isDone, index) => (
+                           <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
+                                <Checkbox
+                                    id={`${challenge.id}-day-${index}`}
+                                    checked={isDone}
+                                    onCheckedChange={() => handleDailyProgress(challenge.id, index)}
+                                />
+                                <Label htmlFor={`${challenge.id}-day-${index}`} className="text-xs">Day {index + 1}</Label>
+                           </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
+
                   <div className="flex items-center gap-2 text-primary">
                     <Star className="w-5 h-5"/>
                     <p className="font-semibold">{challenge.reward}</p>
@@ -489,8 +543,8 @@ export default function ChallengesPage() {
 
                 </CardContent>
                 <CardFooter>
-                    {challenge.status === 'new' && <Button>Join Challenge</Button>}
-                    {challenge.status === 'active' && <Button variant="outline">View Details</Button>}
+                    {challenge.status === 'new' && <Button onClick={() => handleJoinChallenge(challenge.id)}><Flame className="mr-2 h-4 w-4"/>Join Challenge</Button>}
+                    {challenge.status === 'active' && <Button variant="outline" disabled>Challenge in Progress</Button>}
                     {challenge.status === 'completed' && <Button variant="ghost" disabled>Challenge Completed</Button>}
                 </CardFooter>
               </Card>
