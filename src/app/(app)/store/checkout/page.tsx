@@ -39,7 +39,14 @@ export default function CheckoutPage() {
     setTimeout(() => {
         setIsProcessing(false);
         const orderId = `order-${Date.now()}`;
+        
         // In a real app, save order to database here
+        toast({
+            title: "Payment Confirmed!",
+            description: "Your order has been successfully placed.",
+            variant: "default",
+        });
+
         clearCart();
         router.push(`/store/order-confirmation?orderId=${orderId}&total=${totalAmount}`);
     }, 3000);
