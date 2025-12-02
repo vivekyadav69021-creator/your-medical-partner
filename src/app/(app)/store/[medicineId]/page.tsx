@@ -1,4 +1,6 @@
 
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -12,10 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, ShoppingCart, Info, User, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { medicines } from '@/lib/medicine-data';
+import { medicines, Medicine } from '@/lib/medicine-data';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useCart } from '@/context/cart-context';
+import { useToast } from '@/hooks/use-toast';
 
 const MedicineCard = ({ id, name, price, category }: { id: string, name: string, price: string, category: string }) => {
   const image = PlaceHolderImages.find(img => img.id === id);
@@ -61,11 +65,21 @@ const InfoRow = ({ icon, label, value }: { icon: React.ReactNode, label: string,
 
 
 export default function MedicineDetailPage({ params }: { params: { medicineId: string } }) {
+  const { addToCart } = useCart();
+  const { toast } = useToast();
   const medicine = medicines.find(m => m.id === params.medicineId);
 
   if (!medicine) {
     notFound();
   }
+  
+  const handleAddToCart = () => {
+    addToCart(medicine as Medicine);
+    toast({
+        title: "Added to Cart",
+        description: `${medicine.name} has been added to your cart.`,
+    });
+  };
 
   const image = PlaceHolderImages.find(img => img.id === medicine.id);
   const similarProducts = medicines.filter(m => m.category === medicine.category && m.id !== medicine.id).slice(0, 4);
@@ -107,7 +121,7 @@ export default function MedicineDetailPage({ params }: { params: { medicineId: s
             <div>
               <p className="text-3xl font-bold">{medicine.price}</p>
             </div>
-            <Button size="lg" className="w-full">
+            <Button size="lg" className="w-full" onClick={handleAddToCart}>
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
             </Button>

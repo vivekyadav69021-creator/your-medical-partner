@@ -8,6 +8,7 @@ import { UserProfileProvider } from '@/context/user-profile-context';
 import { useUser } from '@/firebase';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { SplashScreen } from '@/components/splash-screen';
+import { CartProvider } from '@/context/cart-context';
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -29,7 +30,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   // If user is logged in, render the main layout.
   return (
     <UserProfileProvider>
-      <MainLayout>{children}</MainLayout>
+      <CartProvider>
+        <MainLayout>{children}</MainLayout>
+      </CartProvider>
     </UserProfileProvider>
   );
 }
@@ -45,5 +48,3 @@ export default function AppLayout({
     </FirebaseClientProvider>
   );
 }
-
-    
