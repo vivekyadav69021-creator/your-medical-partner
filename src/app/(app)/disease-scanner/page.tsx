@@ -15,17 +15,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download } from 'lucide-react';
-import { analyzeXrayAction, healthAssistantAction, analyzeLabReportImageAction } from './actions';
+import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download, CircleDot, Bot } from 'lucide-react';
+import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ReactMarkdown from 'react-markdown';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 
 
 const initialXrayState = {
@@ -33,8 +34,8 @@ const initialXrayState = {
   error: null,
 };
 
-const initialDiseaseState = {
-    response: null,
+const initialSkinState = {
+    result: null,
     error: null,
 }
 
@@ -50,18 +51,18 @@ const labels = {
         description: 'AI-powered analysis for images and lab reports.',
         disclaimerTitle: 'Disclaimer',
         disclaimerText: 'The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.',
-        tabImage: 'Disease Image Scanner',
+        tabImage: 'Skin & Face Scanner',
         tabXray: 'X-ray Scanner',
         tabLab: 'Lab Report Analyzer',
-        imageTitle: 'Disease Image Scanner',
-        imageDesc: 'Upload a photo of a visible symptom (like a skin rash) for a preliminary analysis by the Health Assistant AI.',
-        uploadLabel: 'Upload Image',
+        imageTitle: 'Skin & Face Scanner',
+        imageDesc: 'Upload a clear, well-lit photo of your face to get a preliminary analysis of common skin concerns like acne, dark circles, and more.',
+        uploadLabel: 'Upload Face Photo',
         openCamera: 'Open Camera',
-        analyzeImage: 'Analyze Image',
+        analyzeImage: 'Analyze Skin',
         analyzing: 'Analyzing...',
         clear: 'Clear',
         analysisFailed: 'Analysis Failed',
-        diseaseQuery: 'Analyze this image of a health concern.',
+        skinQueryPlaceholder: 'Optional: Describe your concern (e.g., "red spots on my cheeks").',
         xrayTitle: 'X-ray / Radiology Scanner',
         xrayDesc: 'Upload chest/limb X-ray for analysis by an AI model. This tool is specialized for radiology images.',
         uploadXray: 'Upload X-Ray Image',
@@ -97,18 +98,18 @@ const labels = {
         description: 'छवियों और लैब रिपोर्ट के लिए एआई-संचालित विश्लेषण।',
         disclaimerTitle: 'अस्वीकरण',
         disclaimerText: 'यह विश्लेषण केवल जानकारी के लिए है और यह चिकित्सा निदान नहीं है। निश्चित व्याख्या के लिए हमेशा एक योग्य डॉक्टर/रेडियोलॉजिस्ट से परामर्श करें।',
-        tabImage: 'रोग छवि स्कैनर',
+        tabImage: 'त्वचा और चेहरा स्कैनर',
         tabXray: 'एक्स-रे स्कैनर',
         tabLab: 'लैब रिपोर्ट विश्लेषक',
-        imageTitle: 'रोग छवि स्कैनर',
-        imageDesc: 'स्वास्थ्य सहायक एआई द्वारा प्रारंभिक विश्लेषण के लिए एक दृश्य लक्षण (जैसे त्वचा पर लाल चकत्ते) की एक तस्वीर अपलोड करें।',
-        uploadLabel: 'छवि अपलोड करें',
+        imageTitle: 'त्वचा और चेहरा स्कैनर',
+        imageDesc: 'मुंहासे, काले घेरे आदि जैसी सामान्य त्वचा संबंधी चिंताओं का प्रारंभिक विश्लेषण प्राप्त करने के लिए अपने चेहरे की एक स्पष्ट, अच्छी तरह से रोशनी वाली तस्वीर अपलोड करें।',
+        uploadLabel: 'चेहरे की तस्वीर अपलोड करें',
         openCamera: 'कैमरा खोलें',
-        analyzeImage: 'छवि का विश्लेषण करें',
+        analyzeImage: 'त्वचा का विश्लेषण करें',
         analyzing: 'विश्लेषण हो रहा है...',
         clear: 'साफ़ करें',
         analysisFailed: 'विश्लेषण विफल',
-        diseaseQuery: 'स्वास्थ्य संबंधी चिंता की इस छवि का विश्लेषण करें।',
+        skinQueryPlaceholder: 'वैकल्पिक: अपनी चिंता का वर्णन करें (जैसे, "मेरे गालों पर लाल धब्बे")।',
         xrayTitle: 'एक्स-रे / रेडियोलॉजी स्कैनर',
         xrayDesc: 'एक एआई मॉडल द्वारा विश्लेषण के लिए छाती/अंग एक्स-रे अपलोड करें। यह उपकरण रेडियोलॉजी छवियों के लिए विशिष्ट है।',
         uploadXray: 'एक्स-रे छवि अपलोड करें',
@@ -143,16 +144,16 @@ const labels = {
 
 function escapeHtml(s: string | undefined | null){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[String(c)] as string)); }
 
-// Column 1: Disease Image Scanner
-function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en}) {
-    const [state, formAction, isAnalyzing] = useActionState(healthAssistantAction, initialDiseaseState);
+// Column 1: Skin & Face Scanner
+function SkinFaceScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en}) {
+    const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
     const { toast } = useToast();
 
     const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
@@ -192,7 +193,6 @@ function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.
         }
     }, [stopStream]);
 
-
     const closeCamera = useCallback(() => {
         setIsCameraOpen(false);
         stopStream();
@@ -214,7 +214,6 @@ function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.
         }
     }, [closeCamera]);
 
-    
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -236,9 +235,7 @@ function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.
 
     const handleFormAction = (formData: FormData) => {
         if (preview) {
-            formData.set('photoDataUri', preview);
-            formData.set('query', t.diseaseQuery);
-            formData.set('language', lang);
+            formData.set('imageDataUri', preview);
             formAction(formData);
         }
     }
@@ -252,14 +249,18 @@ function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.
             </CardHeader>
             <CardContent>
                 <form ref={formRef} action={handleFormAction} className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="skin-query">{t.skinQueryPlaceholder}</Label>
+                        <Textarea id="skin-query" name="userQuery" placeholder={t.skinQueryPlaceholder} rows={2} />
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="disease-file-input">{t.uploadLabel}</Label>
                         <Input id="disease-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
                     </div>
-                     <div className="flex gap-2 mt-2">
+                     <div className="flex flex-wrap gap-2 mt-2">
                         <Button type="button" variant="secondary" onClick={() => openCamera(facingMode)}><Camera className="mr-2"/>{t.openCamera}</Button>
                         <Button type="submit" disabled={!preview || isAnalyzing}>
-                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>) : t.analyzeImage}
+                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>) : <>{t.analyzeImage}</>}
                         </Button>
                         <Button type="button" variant="outline" onClick={handleClear}>{t.clear}</Button>
                     </div>
@@ -279,21 +280,54 @@ function DiseaseImageScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.
                     
                     {preview && !isCameraOpen && (
                         <div className="relative mt-2 w-full max-w-sm">
-                            <Image src={preview} alt="Disease preview" width={300} height={300} className="rounded-md border w-full h-auto" />
+                            <Image src={preview} alt="Skin concern preview" width={300} height={300} className="rounded-md border w-full h-auto object-contain" />
                         </div>
                     )}
                 </form>
             </CardContent>
-             <CardFooter className="flex-col items-start gap-2">
+             <CardFooter className="flex-col items-start gap-4">
                 {isAnalyzing && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Sparkles className="h-4 w-4 animate-pulse" />
                         <span>{t.analyzing}</span>
                     </div>
                 )}
-                {state.response && (
-                    <div className="resultBox prose prose-sm dark:prose-invert max-w-full">
-                        <ReactMarkdown>{state.response}</ReactMarkdown>
+                {state.result && (
+                    <div className="resultBox w-full space-y-4">
+                        <Alert>
+                            <Bot className="h-4 w-4" />
+                            <AlertTitle>AI Assessment</AlertTitle>
+                            <AlertDescription>{state.result.overallAssessment}</AlertDescription>
+                        </Alert>
+                        
+                        {state.result.identifiedConditions?.length > 0 && (
+                            <div>
+                                <h5 className="font-bold text-lg mb-2">Potential Conditions Identified</h5>
+                                <div className="space-y-2">
+                                    {state.result.identifiedConditions.map((c: any, i: number) => (
+                                        <Card key={i} className="p-3">
+                                            <p className="font-semibold">{c.name}</p>
+                                            <Progress value={c.confidence * 100} className="h-2 my-1" />
+                                            <p className="text-xs text-muted-foreground">Confidence: {Math.round(c.confidence * 100)}%</p>
+                                            <p className="text-sm mt-1">{c.description}</p>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {state.result.recommendations?.length > 0 && (
+                             <div>
+                                <h5 className="font-bold text-lg mb-2">General Recommendations</h5>
+                                <ul className="list-disc pl-5 space-y-2 text-sm">
+                                    {state.result.recommendations.map((r: any, i: number) => (
+                                        <li key={i}>
+                                            <span className="font-semibold capitalize">{r.type}:</span> {r.suggestion}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                 )}
                  {state.error && (
@@ -486,7 +520,7 @@ function XRayScanner({t}: {t: typeof labels.en}) {
           
           {preview && !isCameraOpen && (
               <div className="relative mt-2 w-full max-w-sm">
-                <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border w-full h-auto" />
+                <Image src={preview} alt="X-ray preview" width={400} height={400} className="rounded-md border w-full h-auto object-contain" />
               </div>
           )}
         </form>
@@ -625,7 +659,7 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                     </div>
                     {imagePreview && (
                         <div className="relative w-full max-w-sm">
-                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border w-full h-auto" />
+                            <Image src={imagePreview} alt="Lab report preview" width={200} height={200} className="rounded-md border w-full h-auto object-contain" />
                             <Button variant="ghost" size="icon" className="absolute top-0 right-0" onClick={() => setImagePreview(null)}><X className="h-4 w-4" /></Button>
                         </div>
                     )}
@@ -732,7 +766,7 @@ export default function DiseaseScannerPage() {
                 <TabsTrigger value="lab-scanner">{t.tabLab}</TabsTrigger>
             </TabsList>
             <TabsContent value="image-scanner" className="mt-6">
-                <DiseaseImageScanner lang={lang} t={t} />
+                <SkinFaceScanner lang={lang} t={t} />
             </TabsContent>
             <TabsContent value="xray-scanner" className="mt-6">
                 <XRayScanner t={t} />

@@ -1,9 +1,9 @@
-
 'use server';
 
 import { analyzeXray, AnalyzeXrayInput } from '@/ai/flows/xray-analyzer-flow';
 import { healthAssistant } from '@/ai/flows/health-assistant-flow';
 import { analyzeLabReportImage } from '@/ai/flows/lab-report-flow';
+import { analyzeSkinImage } from '@/ai/flows/skin-analyzer-flow';
 import { z } from 'zod';
 
 const xrayScannerSchema = z.object({
@@ -54,44 +54,42 @@ export async function analyzeXrayAction(
 }
 
 
-const healthAssistantSchema = z.object({
-  query: z.string().min(3, 'Please ask a more detailed question.'),
-  photoDataUri: z.string().optional(),
-  language: z.enum(['en', 'hi']).optional(),
+const skinAnalysisSchema = z.object({
+  imageDataUri: z.string().min(1, 'Please upload an image.'),
+  userQuery: z.string().optional(),
 });
 
-export async function healthAssistantAction(
+export async function analyzeSkinImageAction(
   prevState: any,
   formData: FormData
 ) {
-  const validatedFields = healthAssistantSchema.safeParse({
-    query: formData.get('query'),
-    photoDataUri: formData.get('photoDataUri') || undefined,
-    language: formData.get('language') || 'en',
+  const validatedFields = skinAnalysisSchema.safeParse({
+    imageDataUri: formData.get('imageDataUri'),
+    userQuery: formData.get('userQuery') || undefined,
   });
 
   if (!validatedFields.success) {
     return {
-      response: null,
+      result: null,
       error:
-        validatedFields.error.flatten().fieldErrors.query?.[0] ??
-        'Invalid input.',
+        validatedFields.error.flatten().fieldErrors.imageDataUri?.[0] ?? 'Invalid input.',
     };
   }
 
   try {
-    const result = await healthAssistant(validatedFields.data);
+    const result = await analyzeSkinImage(validatedFields.data);
     return {
-      response: result.response,
+      result,
       error: null,
     };
   } catch (e: any) {
     return {
-      response: null,
+      result: null,
       error: e.message || 'The AI model could not be reached. Please try again later.',
     };
   }
 }
+
 
 const labReportImageSchema = z.object({
   imageDataUri: z.string().min(1, 'Please upload an image.'),
