@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Star, Video, Calendar as CalendarIcon, ArrowLeft, Briefcase, IndianRupee } from 'lucide-react';
+import { Star, Video, Calendar as CalendarIcon, ArrowLeft, Briefcase, IndianRupee, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -94,7 +94,7 @@ export default function DoctorProfilePage() {
             <div className="flex-1">
               <Badge>{doctor.specialty}</Badge>
               <h1 className="text-4xl font-bold tracking-tight font-headline mt-2">{doctor.name}</h1>
-              <div className="flex items-center gap-4 mt-3 text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-4 mt-3 text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Star className="w-5 h-5 text-yellow-400 fill-yellow-400"/>
                     <span className="font-semibold text-lg">{doctor.rating}</span>
@@ -106,6 +106,10 @@ export default function DoctorProfilePage() {
                    <div className="flex items-center gap-1.5">
                     <IndianRupee className="w-5 h-5"/>
                     <span className="font-semibold text-lg">{doctor.fees}</span>
+                  </div>
+                   <div className="flex items-center gap-1.5">
+                    <MapPin className="w-5 h-5"/>
+                    <span className="font-semibold text-lg">{doctor.location}</span>
                   </div>
               </div>
             </div>
