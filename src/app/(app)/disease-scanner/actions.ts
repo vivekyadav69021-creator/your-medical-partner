@@ -123,3 +123,41 @@ export async function analyzeLabReportImageAction(
         };
     }
 }
+
+const injuryAnalysisSchema = z.object({
+  photoDataUri: z.string().optional(),
+  query: z.string().min(1, 'Please describe your injury or symptom.'),
+  language: z.enum(['en', 'hi']).optional(),
+});
+
+export async function analyzeInjuryAction(
+  prevState: any,
+  formData: FormData
+) {
+  const validatedFields = injuryAnalysisSchema.safeParse({
+    photoDataUri: formData.get('photoDataUri') as string || undefined,
+    query: formData.get('query'),
+    language: formData.get('language') || 'en',
+  });
+
+  if (!validatedFields.success) {
+    return {
+      result: null,
+      error:
+        validatedFields.error.flatten().fieldErrors.query?.[0] ?? 'Invalid input.',
+    };
+  }
+
+  try {
+    const result = await healthAssistant(validatedFields.data);
+    return {
+      result,
+      error: null,
+    };
+  } catch (e: any) {
+    return {
+      result: null,
+      error: e.message || 'The AI model could not be reached. Please try again later.',
+    };
+  }
+}

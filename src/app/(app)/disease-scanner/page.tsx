@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download, CircleDot, Bot } from 'lucide-react';
-import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction } from './actions';
+import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download, CircleDot, Bot, FileHeart } from 'lucide-react';
+import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
@@ -27,6 +27,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import ReactMarkdown from 'react-markdown';
 
 
 const initialXrayState = {
@@ -44,16 +45,21 @@ const initialLabReportState = {
     error: null,
 };
 
+const initialInjuryState = {
+    result: null,
+    error: null,
+}
 
 const labels = {
     en: {
         title: 'Disease Scanner',
-        description: 'AI-powered analysis for images and lab reports.',
+        description: 'AI-powered analysis for images, symptoms and lab reports.',
         disclaimerTitle: 'Disclaimer',
-        disclaimerText: 'The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor/radiologist for definitive interpretation.',
+        disclaimerText: 'The analysis is informative only and not a medical diagnosis. Always consult a qualified doctor for definitive interpretation.',
         tabImage: 'Skin & Face Scanner',
         tabXray: 'X-ray Scanner',
         tabLab: 'Lab Report Analyzer',
+        tabInjury: 'Injury & Symptom Scanner',
         imageTitle: 'Skin & Face Scanner',
         imageDesc: 'Upload a clear, well-lit photo of your face to get a preliminary analysis of common skin concerns like acne, dark circles, and more.',
         uploadLabel: 'Upload Face Photo',
@@ -91,16 +97,22 @@ const labels = {
         tg: 'Triglycerides (mg/dL)',
         uploadReport: 'Upload Lab Report Image',
         analyzeReportImage: 'Analyze Report Image',
-        downloadPdf: 'Download PDF'
+        downloadPdf: 'Download PDF',
+        injuryTitle: 'Injury & Symptom Scanner',
+        injuryDesc: 'Describe your injury or symptom and upload a photo for an AI-guided analysis and first-aid recommendations.',
+        injuryQueryPlaceholder: 'Describe your injury... e.g., "I cut my finger while chopping vegetables." or "I have a strange rash on my arm."',
+        uploadInjuryPhoto: 'Upload Injury Photo (Optional)',
+        analyzeInjury: 'Analyze Injury/Symptom'
     },
     hi: {
         title: 'रोग स्कैनर',
-        description: 'छवियों और लैब रिपोर्ट के लिए एआई-संचालित विश्लेषण।',
+        description: 'छवियों, लक्षणों और लैब रिपोर्ट के लिए एआई-संचालित विश्लेषण।',
         disclaimerTitle: 'अस्वीकरण',
-        disclaimerText: 'यह विश्लेषण केवल जानकारी के लिए है और यह चिकित्सा निदान नहीं है। निश्चित व्याख्या के लिए हमेशा एक योग्य डॉक्टर/रेडियोलॉजिस्ट से परामर्श करें।',
+        disclaimerText: 'यह विश्लेषण केवल जानकारी के लिए है और यह चिकित्सा निदान नहीं है। निश्चित व्याख्या के लिए हमेशा एक योग्य डॉक्टर से परामर्श करें।',
         tabImage: 'त्वचा और चेहरा स्कैनर',
         tabXray: 'एक्स-रे स्कैनर',
         tabLab: 'लैब रिपोर्ट विश्लेषक',
+        tabInjury: 'चोट और लक्षण स्कैनर',
         imageTitle: 'त्वचा और चेहरा स्कैनर',
         imageDesc: 'मुंहासे, काले घेरे आदि जैसी सामान्य त्वचा संबंधी चिंताओं का प्रारंभिक विश्लेषण प्राप्त करने के लिए अपने चेहरे की एक स्पष्ट, अच्छी तरह से रोशनी वाली तस्वीर अपलोड करें।',
         uploadLabel: 'चेहरे की तस्वीर अपलोड करें',
@@ -138,7 +150,12 @@ const labels = {
         tg: 'ट्राइग्लिसराइड्स (mg/dL)',
         uploadReport: 'लैब रिपोर्ट की छवि अपलोड करें',
         analyzeReportImage: 'रिपोर्ट छवि का विश्लेषण करें',
-        downloadPdf: 'पीडीएफ डाउनलोड करें'
+        downloadPdf: 'पीडीएफ डाउनलोड करें',
+        injuryTitle: 'चोट और लक्षण स्कैनर',
+        injuryDesc: 'एआई-निर्देशित विश्लेषण और प्राथमिक चिकित्सा सिफारिशों के लिए अपनी चोट या लक्षण का वर्णन करें और एक तस्वीर अपलोड करें।',
+        injuryQueryPlaceholder: 'अपनी चोट का वर्णन करें... जैसे, "सब्जी काटते समय मेरी उंगली कट गई।" या "मेरे हाथ पर एक अजीब दाने हैं।"',
+        uploadInjuryPhoto: 'चोट की तस्वीर अपलोड करें (वैकल्पिक)',
+        analyzeInjury: 'चोट/लक्षण का विश्लेषण करें'
     }
 };
 
@@ -259,6 +276,9 @@ function SkinFaceScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en})
                     </div>
                      <div className="flex flex-wrap gap-2 mt-2">
                         <Button type="button" variant="secondary" onClick={() => openCamera(facingMode)}><Camera className="mr-2"/>{t.openCamera}</Button>
+                         <Button type="button" variant="secondary" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')} disabled={!isCameraOpen}>
+                            <SwitchCamera />
+                        </Button>
                         <Button type="submit" disabled={!preview || isAnalyzing}>
                             {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>) : <>{t.analyzeImage}</>}
                         </Button>
@@ -270,9 +290,6 @@ function SkinFaceScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en})
                             <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
                             <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
                                 <Button type="button" onClick={takePicture}>{t.takePicture}</Button>
-                                <Button type="button" variant="outline" size="icon" onClick={() => setFacingMode(p => p === 'user' ? 'environment' : 'user')}>
-                                    <SwitchCamera />
-                                </Button>
                                 <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
                             </div>
                         </div>
@@ -727,6 +744,102 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
     );
 }
 
+
+function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) {
+    const [state, formAction, isAnalyzing] = useActionState(analyzeInjuryAction, initialInjuryState);
+    const [preview, setPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const formRef = useRef<HTMLFormElement>(null);
+    const { toast } = useToast();
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => setPreview(e.target?.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleClear = () => {
+        setPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        formRef.current?.reset();
+    };
+
+    const handleFormAction = (formData: FormData) => {
+        if (preview) {
+            formData.set('photoDataUri', preview);
+        }
+        formData.set('language', lang);
+        formAction(formData);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><FileHeart />{t.injuryTitle}</CardTitle>
+                <CardDescription>{t.injuryDesc}</CardDescription>
+            </CardHeader>
+            <form ref={formRef} action={handleFormAction}>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="injury-query">{t.injuryQueryPlaceholder}</Label>
+                        <Textarea id="injury-query" name="query" placeholder={t.injuryQueryPlaceholder} rows={3} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="injury-file-input">{t.uploadInjuryPhoto}</Label>
+                        <Input id="injury-file-input" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+                    </div>
+                    {preview && (
+                        <div className="relative mt-2 w-full max-w-sm">
+                            <Image src={preview} alt="Injury preview" width={300} height={300} className="rounded-md border w-full h-auto object-contain" />
+                            <Button variant="ghost" size="icon" className="absolute top-0 right-0" onClick={() => setPreview(null)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-4">
+                    <div className="flex items-center gap-2">
+                        <Button type="submit" disabled={isAnalyzing}>
+                            {isAnalyzing ? (
+                                <><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>
+                            ) : (
+                                <><Scan className="mr-2" />{t.analyzeInjury}</>
+                            )}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleClear}>{t.clear}</Button>
+                    </div>
+
+                    {isAnalyzing && (
+                        <div className="flex items-center gap-2 text-muted-foreground pt-4">
+                            <Sparkles className="h-4 w-4 animate-pulse" />
+                            <span>{t.analyzing}</span>
+                        </div>
+                    )}
+
+                    {state.result && (
+                        <div className="resultBox w-full space-y-4 pt-4">
+                             <article className="prose prose-sm dark:prose-invert max-w-full"><ReactMarkdown>{state.result.response}</ReactMarkdown></article>
+                        </div>
+                    )}
+
+                    {state.error && (
+                        <Alert variant="destructive" className="mt-4">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>{t.analysisFailed}</AlertTitle>
+                            <AlertDescription>{state.error}</AlertDescription>
+                        </Alert>
+                    )}
+                </CardFooter>
+            </form>
+        </Card>
+    );
+}
+
+
+
 export default function DiseaseScannerPage() {
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const t = labels[lang];
@@ -760,13 +873,17 @@ export default function DiseaseScannerPage() {
         </Alert>
         
         <Tabs defaultValue="image-scanner">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="image-scanner">{t.tabImage}</TabsTrigger>
+                <TabsTrigger value="injury-scanner">{t.tabInjury}</TabsTrigger>
                 <TabsTrigger value="xray-scanner">{t.tabXray}</TabsTrigger>
                 <TabsTrigger value="lab-scanner">{t.tabLab}</TabsTrigger>
             </TabsList>
             <TabsContent value="image-scanner" className="mt-6">
                 <SkinFaceScanner lang={lang} t={t} />
+            </TabsContent>
+            <TabsContent value="injury-scanner" className="mt-6">
+                <InjuryScanner lang={lang} t={t} />
             </TabsContent>
             <TabsContent value="xray-scanner" className="mt-6">
                 <XRayScanner t={t} />
