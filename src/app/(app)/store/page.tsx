@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Upload, Sparkles, X, Camera } from 'lucide-react';
+import { Search, Upload, Sparkles, X, Camera, CameraOff } from 'lucide-react';
 import { medicines, categories } from '@/lib/medicine-data';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,11 @@ const PrescriptionAnalyzer = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   useEffect(() => {
     if (state.result) {
       setAnalysisResult(state.result);
@@ -61,12 +66,63 @@ const PrescriptionAnalyzer = () => {
     }
   }, [state]);
 
+  const stopStream = () => {
+    if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+    }
+  };
+  
+  const openCamera = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          toast({ variant: 'destructive', title: "Camera Not Supported" });
+          return;
+      }
+      stopStream();
+      setIsCameraOpen(true);
+      setPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
+      try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          streamRef.current = stream;
+      } catch (err) {
+         toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access camera. Please check permissions.' });
+         setIsCameraOpen(false);
+      }
+  };
+
+  const closeCamera = () => {
+      setIsCameraOpen(false);
+      stopStream();
+  };
+
+  const takePicture = () => {
+      if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (context) {
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          setPreview(dataUrl);
+          closeCamera();
+        }
+      }
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = e => {
         setPreview(e.target?.result as string);
+        closeCamera();
       };
       reader.readAsDataURL(file);
     }
@@ -77,7 +133,7 @@ const PrescriptionAnalyzer = () => {
       toast({
         variant: 'destructive',
         title: 'No Image Selected',
-        description: 'Please upload an image of your prescription to analyze.',
+        description: 'Please upload or capture an image of your prescription to analyze.',
       });
       return;
     }
@@ -92,6 +148,7 @@ const PrescriptionAnalyzer = () => {
         fileInputRef.current.value = '';
       }
       formRef.current?.reset();
+      closeCamera();
   }
   
   const matchedMedicines = analysisResult?.availableMedicines
@@ -100,6 +157,7 @@ const PrescriptionAnalyzer = () => {
 
   return (
     <Card className="bg-secondary/50">
+        <canvas ref={canvasRef} className="hidden"></canvas>
         <CardHeader>
             <CardTitle>AI Prescription Analyzer</CardTitle>
             <CardDescription>Upload a picture of your prescription, and our AI will find the available medicines for you.</CardDescription>
@@ -119,13 +177,23 @@ const PrescriptionAnalyzer = () => {
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Image
                     </Button>
-                    <Button type="button" variant="outline" disabled>
+                    <Button type="button" variant="outline" onClick={openCamera}>
                         <Camera className="mr-2 h-4 w-4" />
                         Use Camera
                     </Button>
                 </div>
 
-                 {preview && (
+                {isCameraOpen && (
+                    <div className="relative mt-2">
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-md border aspect-video object-cover bg-black" />
+                        <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                            <Button type="button" onClick={takePicture}>Take Picture</Button>
+                            <Button type="button" variant="destructive" onClick={closeCamera}><CameraOff /></Button>
+                        </div>
+                    </div>
+                )}
+
+                 {preview && !isCameraOpen && (
                     <div className="relative w-fit">
                         <Image src={preview} alt="Prescription preview" width={150} height={150} className="rounded-md border-2" />
                          <Button variant="ghost" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground" onClick={handleClear}>

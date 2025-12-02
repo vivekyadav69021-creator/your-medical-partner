@@ -10,34 +10,39 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ShoppingCart, Info, User, Clock, Calendar, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Info, User, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { medicines } from '@/lib/medicine-data';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const MedicineCard = ({ id, name, price, category }: { id: string, name: string, price: string, category: string }) => {
   const image = PlaceHolderImages.find(img => img.id === id);
 
   return (
     <Link href={`/store/${id}`}>
-      <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
-        <CardHeader>
-          {image && (
+      <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full flex flex-col">
+        <CardHeader className="p-0">
+          {image ? (
             <Image
               src={image.imageUrl}
               alt={image.description}
               width={400}
               height={400}
-              className="rounded-md aspect-square object-cover"
+              className="rounded-t-lg aspect-square object-cover"
               data-ai-hint={image.imageHint}
             />
+          ) : (
+            <div className="rounded-t-lg aspect-square object-cover bg-secondary flex items-center justify-center">
+              <p className="text-sm text-muted-foreground">No Image</p>
+            </div>
           )}
         </CardHeader>
-        <CardContent>
-          <CardTitle className="text-lg">{name}</CardTitle>
-          <CardDescription>{category}</CardDescription>
-          <p className="text-lg font-bold mt-2">{price}</p>
+        <CardContent className="p-4 flex-1 flex flex-col">
+          <CardTitle className="text-base font-semibold line-clamp-2">{name}</CardTitle>
+          <CardDescription className="text-xs mt-1">{category}</CardDescription>
+          <p className="text-base font-bold mt-auto pt-2">{price}</p>
         </CardContent>
       </Card>
     </Link>
@@ -45,7 +50,7 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
 }
 
 const InfoRow = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-4">
         <div className="text-primary mt-1">{icon}</div>
         <div>
             <p className="font-semibold">{label}</p>
@@ -96,33 +101,48 @@ export default function MedicineDetailPage({ params }: { params: { medicineId: s
               <Badge>{medicine.category}</Badge>
               <h1 className="text-4xl font-bold tracking-tight font-headline mt-2">{medicine.name}</h1>
             </div>
+            
             <p className="text-muted-foreground">{medicine.description}</p>
             
-             <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">Product Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <InfoRow icon={<Info className="w-5 h-5"/>} label="Use For" value={medicine.use_for} />
-                    <InfoRow icon={<User className="w-5 h-5"/>} label="Who Can Use" value={medicine.who_can_use} />
-                    <InfoRow icon={<Clock className="w-5 h-5"/>} label="General Dose" value={medicine.general_dose} />
-                    <InfoRow icon={<Calendar className="w-5 h-5"/>} label="Expiry" value={medicine.expiry} />
-                    <InfoRow icon={<ShieldCheck className="w-5 h-5"/>} label="Official" value={medicine.official} />
-                </CardContent>
-             </Card>
-
             <div>
               <p className="text-3xl font-bold">{medicine.price}</p>
             </div>
             <Button size="lg" className="w-full">
               <ShoppingCart className="mr-2 h-5 w-5" />
-              Buy Now
+              Add to Cart
             </Button>
             <div className="text-xs text-muted-foreground text-center">
               Please consult your doctor before use.
             </div>
           </div>
         </div>
+      </div>
+      
+      <div className="grid md:grid-cols-2 gap-8">
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><Info className="h-5 w-5"/>How to Use</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <InfoRow icon={<User className="w-5 h-5"/>} label="Who Can Use" value={medicine.who_can_use} />
+                <InfoRow icon={<Clock className="w-5 h-5"/>} label="General Dose" value={medicine.general_dose} />
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive"/>Safety & Side Effects</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Alert variant="destructive">
+                    <AlertTitle>Safety Advice</AlertTitle>
+                    <AlertDescription>{medicine.safety_advice}</AlertDescription>
+                </Alert>
+                 <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Common Side Effects:</h4>
+                    <p className="text-sm text-muted-foreground">{medicine.side_effects}</p>
+                 </div>
+            </CardContent>
+        </Card>
       </div>
 
       <Separator />
