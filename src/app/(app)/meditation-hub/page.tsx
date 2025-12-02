@@ -24,6 +24,7 @@ import {
   Wind,
   Scan,
   Repeat,
+  Image as ImageIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { guidedMeditations } from '@/lib/meditation-data';
