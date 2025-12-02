@@ -174,8 +174,8 @@ function HealthPlanner() {
             
             if(!w || !heightCm || !age) return null;
             let bmr;
-            if(form.gender === 'female') bmr = 10*w + 6.25*h - 5*age - 161;
-            else bmr = 10*w + 6.25*h - 5*age + 5;
+            if(form.gender === 'female') bmr = 10*w + 6.25*heightCm - 5*age - 161;
+            else bmr = 10*w + 6.25*heightCm - 5*age + 5;
             const mult = { sedentary:1.2, light:1.375, moderate:1.55, active:1.725 }[form.activity as 'sedentary' | 'light' | 'moderate' | 'active']||1.375;
             let calories = Math.round(bmr * mult);
             if(form.goal === 'lose') calories = Math.max(1200, calories - 400);
