@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -19,6 +20,10 @@ import {
   Zap,
   Sparkles,
   Heart,
+  Footprints,
+  Wind,
+  Scan,
+  Repeat,
 } from 'lucide-react';
 import Link from 'next/link';
 import { guidedMeditations } from '@/lib/meditation-data';
@@ -218,6 +223,16 @@ function AiMoodTracker() {
     );
 }
 
+const iconMap: { [key: string]: React.ElementType } = {
+    wind: Wind,
+    scan: Scan,
+    repeat: Repeat,
+    heart: Heart,
+    footprints: Footprints,
+    image: ImageIcon,
+    default: PlayCircle,
+};
+
 
 export default function MeditationHubPage() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'meditation-hero');
@@ -232,28 +247,17 @@ export default function MeditationHubPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column */}
             <div className="lg:col-span-1 space-y-6">
+                <AiMoodTracker />
                 <Card>
                     <CardHeader>
-                        <CardTitle>Start Practice</CardTitle>
-                        <CardDescription>Choose a guided meditation and start a timed session.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><BarChart2 />Your Practice Summary</CardTitle>
+                        <CardDescription>Quick stats of your practice.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {guidedMeditations.map(med => (
-                            <Card key={med.id} className="hover:bg-muted/50">
-                                <CardContent className="p-3 flex items-center justify-between">
-                                    <div>
-                                        <p className="font-semibold">{med.title}</p>
-                                        <p className="text-sm text-muted-foreground">{med.description}</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                         <Button variant="ghost" size="icon" asChild>
-                                            <Link href={`/practice/${med.id}`}><PlayCircle className="w-5 h-5"/></Link>
-                                         </Button>
-                                         <Button variant="ghost" size="icon"><PlusCircle className="w-5 h-5"/></Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                    <CardContent className="text-sm text-muted-foreground space-y-4">
+                        <PracticeSummary />
+                        <Button asChild className="w-full">
+                            <Link href="/analysis">Open Analysis</Link>
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
@@ -277,10 +281,48 @@ export default function MeditationHubPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-muted-foreground text-sm">
-                           Learn ancient Indian techniques, Patanjali Yoga-Sutras, Bhagavad Gita chapters & build a practice. Tap any lesson to open the dedicated Learn page.
+                           Start a guided practice, learn ancient wisdom from the Yoga-Sutras, or get an AI-powered meditation suggestion based on your mood.
                         </p>
                     </CardContent>
+                     <CardFooter className="flex-col items-start gap-2">
+                        {quickActions.map(action => (
+                            <Button key={action.label} variant="outline" className="w-full justify-start" asChild>
+                                <Link href={action.action}><Zap className="mr-2 h-4 w-4"/>{action.label}</Link>
+                            </Button>
+                        ))}
+                    </CardFooter>
                 </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Start Practice</CardTitle>
+                        <CardDescription>Choose a guided meditation and begin your session.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {guidedMeditations.map(med => {
+                            const Icon = iconMap[med.icon] || iconMap.default;
+                            return (
+                                <Card key={med.id} className="hover:bg-muted/50">
+                                    <CardContent className="p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Icon className="w-5 h-5 text-primary" />
+                                            <div>
+                                                <p className="font-semibold">{med.title}</p>
+                                                <p className="text-sm text-muted-foreground">{med.description}</p>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/practice/${med.id}`}><PlayCircle className="w-6 h-6"/></Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
+                    </CardContent>
+                </Card>
+            </div>
+            
+            {/* Right Column */}
+            <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><BookOpen/>Learn — Patanjali & Gita</CardTitle>
@@ -300,35 +342,6 @@ export default function MeditationHubPage() {
                                 </Link>
                             );
                          })}
-                    </CardContent>
-                </Card>
-            </div>
-            
-            {/* Right Column */}
-            <div className="lg:col-span-1 space-y-6">
-                <AiMoodTracker />
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BarChart2 />Your Practice Summary</CardTitle>
-                        <CardDescription>Quick stats of your practice.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground space-y-4">
-                        <PracticeSummary />
-                        <Button asChild className="w-full">
-                            <Link href="/analysis">Open Analysis</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Zap/>Quick Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {quickActions.map(action => (
-                            <Button key={action.label} variant="outline" className="w-full justify-start" asChild>
-                                <Link href={action.action}>{action.label}</Link>
-                            </Button>
-                        ))}
                     </CardContent>
                 </Card>
             </div>
