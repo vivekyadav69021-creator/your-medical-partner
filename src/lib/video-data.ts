@@ -46,7 +46,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'mh1', title: { en: 'Breathing techniques for relaxation — NHS', hi: 'विश्राम के लिए श्वास तकनीक — एनएचएस' }, description: { en: 'Simple breathing to calm anxiety (NHS).', hi: 'चिंता को शांत करने के लिए सरल श्वास (एनएचएस)।' }, youtube_url: 'https://www.youtube.com/embed/GqfrbGtorBE' },
       { id: 'mh2', title: { en: 'Box Breathing — 4-step calming technique', hi: 'बॉक्स ब्रीदिंग — 4-चरणीय शांत करने वाली तकनीक' }, description: { en: 'Box breathing practice.', hi: 'बॉक्स ब्रीदिंग अभ्यास।' }, youtube_url: 'https://www.youtube.com/embed/tEmt1Znux58' },
       { id: 'mh3', title: { en: 'Mindfulness for beginners — Jon Kabat-Zinn (intro)', hi: 'शुरुआती के लिए माइंडफुलनेस — जॉन कबात-ज़िन (परिचय)' }, description: { en: 'Foundations of mindfulness.', hi: 'माइंडफुलनेस की नींव।' }, youtube_url: 'https://www.youtube.com/embed/3nwwKbM_vJc' },
-      { id: 'mh4', title: { en: 'How to manage anxiety — TED-Ed', hi: 'चिंता का प्रबंधन कैसे करें — टेड-एड' }, description: { en: 'Animated insight & tips.', hi: 'एनिमेटेड अंतर्दृष्टि और युक्तियाँ।' }, youtube_url: 'https://www.youtube.com/embed/2Lz0VOltZKA' },
+      { id: 'mh4', title: { en: 'How to manage anxiety — TED-Ed', hi: 'चिंता का प्रबंधन कैसे करें — टेड-एड' }, description: { en: 'Animated insight & tips.', hi: 'एनिमेटेड अंतर्दृष्टि और युक्तियाँ।' }, youtube_url: 'https://youtu.be/tK2LaefZcy8?si=oZS62dRS1749KVPp' },
       { id: 'mh5', title: { en: 'Guided relaxation for sleep — NHS', hi: 'नींद के लिए निर्देशित विश्राम — एनएचएस' }, description: { en: 'Short relaxation for sleep.', hi: 'नींद के लिए संक्षिप्त विश्राम।' }, youtube_url: 'https://www.youtube.com/embed/WykPp0sXJxE' }
     ]
   },
@@ -107,7 +107,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'w2', title: { en: 'Pregnancy essentials — NHS', hi: 'गर्भावस्था की अनिवार्य बातें — एनएचएस' }, description: { en: 'Antenatal basics & safety.', hi: 'प्रसव पूर्व मूल बातें और सुरक्षा।' }, youtube_url: 'https://www.youtube.com/embed/Z4K9U9C0Y5Y' },
       { id: 'w3', title: { en: 'PCOS explained — NHS/Endocrine', hi: 'पीसीओएस समझाया गया — एनएचएस/एंडोक्राइन' }, description: { en: 'Symptoms and management.', hi: 'लक्षण और प्रबंधन।' }, youtube_url: 'https://www.youtube.com/embed/4v3Z9q7bXWU' },
       { id: 'w4', title: { en: 'Iron deficiency & anemia — WHO', hi: 'आयरन की कमी और एनीमिया — डब्ल्यूएचओ' }, description: { en: 'Prevention and diet tips.', hi: 'रोकथाम और आहार युक्तियाँ।' }, youtube_url: 'https://www.youtube.com/embed/jw3Xu3i2xI4' },
-      { id: 'w5', title: { en: 'Breast self-exam — Mayo Clinic', hi: 'स्तन स्व-परीक्षा — मेयो क्लिनिक' }, description: { en: 'How to check and when to consult.', hi: 'कैसे जांच करें और कब परामर्श करें।' }, youtube_url: 'https://www.youtube.com/embed/9a5w4bY9YgQ' }
+      { id: 'w5', title: { en: 'Breast self-exam — Mayo Clinic', hi: 'स्तन स्व-परीक्षा — मेयो क्लिनिक' }, description: { en: 'How to check and when to consult.', hi: 'कैसे जांच करें और कब परामर्श करें।' }, youtube_url: 'https://www.youtube.com/embed/9aGq3bYpQG8' }
     ]
   },
   {
