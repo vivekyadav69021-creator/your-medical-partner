@@ -47,7 +47,7 @@ export const videoTutorialsData: VideoCategory[] = [
       { id: 'mh2', title: { en: 'Box Breathing — 4-step calming technique', hi: 'बॉक्स ब्रीदिंग — 4-चरणीय शांत करने वाली तकनीक' }, description: { en: 'Box breathing practice.', hi: 'बॉक्स ब्रीदिंग अभ्यास।' }, youtube_url: 'https://www.youtube.com/embed/tEmt1Znux58' },
       { id: 'mh3', title: { en: 'Mindfulness for beginners — Jon Kabat-Zinn (intro)', hi: 'शुरुआती के लिए माइंडफुलनेस — जॉन कबात-ज़िन (परिचय)' }, description: { en: 'Foundations of mindfulness.', hi: 'माइंडफुलनेस की नींव।' }, youtube_url: 'https://www.youtube.com/embed/3nwwKbM_vJc' },
       { id: 'mh4', title: { en: 'How to manage anxiety — TED-Ed', hi: 'चिंता का प्रबंधन कैसे करें — टेड-एड' }, description: { en: 'Animated insight & tips.', hi: 'एनिमेटेड अंतर्दृष्टि और युक्तियाँ।' }, youtube_url: 'https://youtu.be/tK2LaefZcy8?si=oZS62dRS1749KVPp' },
-      { id: 'mh5', title: { en: 'Guided relaxation for sleep — NHS', hi: 'नींद के लिए निर्देशित विश्राम — एनएचएस' }, description: { en: 'Short relaxation for sleep.', hi: 'नींद के लिए संक्षिप्त विश्राम।' }, youtube_url: 'https://www.youtube.com/embed/WykPp0sXJxE' }
+      { id: 'mh5', title: { en: 'Guided relaxation for sleep — NHS', hi: 'नींद के लिए निर्देशित विश्राम — एनएचएस' }, description: { en: 'Short relaxation for sleep.', hi: 'नींद के लिए संक्षिप्त विश्राम।' }, youtube_url: 'https://youtu.be/tK2LaefZcy8?si=v0M8CXuKbYcQdb0O' }
     ]
   },
   {
