@@ -232,6 +232,144 @@ export const lessons: Lesson[] = [
       },
       topic: "Mental Health",
       quizId: "quiz_mental"
+    },
+    {
+      id: "blood_pressure_basics",
+      title: { en: "Understanding Blood Pressure", hi: "रक्तचाप को समझना" },
+      summary: { en: "Learn what your blood pressure numbers mean and why it's important for your health.", hi: "जानें कि आपके रक्तचाप की संख्या का क्या मतलब है और यह आपके स्वास्थ्य के लिए क्यों महत्वपूर्ण है।" },
+      content: {
+        en: `
+          <h4>What is Blood Pressure?</h4>
+          <p>Blood pressure is the force of blood pushing against the walls of your arteries. It's recorded as two numbers:</p>
+          <ul>
+            <li><strong>Systolic pressure (the top number):</strong> measures the pressure in your arteries when your heart beats.</li>
+            <li><strong>Diastolic pressure (the bottom number):</strong> measures the pressure in your arteries when your heart rests between beats.</li>
+          </ul>
+
+          <h4>Blood Pressure Categories</h4>
+          <ul>
+            <li><strong>Normal:</strong> Less than 120/80 mm Hg</li>
+            <li><strong>Elevated:</strong> Systolic between 120-129 and diastolic less than 80.</li>
+            <li><strong>Hypertension Stage 1:</strong> Systolic between 130-139 or diastolic between 80-89.</li>
+            <li><strong>Hypertension Stage 2:</strong> Systolic 140 or higher or diastolic 90 or higher.</li>
+            <li><strong>Hypertensive Crisis:</strong> Higher than 180/120 mm Hg. Seek medical attention immediately.</li>
+          </ul>
+          
+          <h4>Why High Blood Pressure (Hypertension) is Dangerous</h4>
+          <p>Hypertension often has no symptoms but can quietly damage your body for years. Uncontrolled high blood pressure can lead to heart attack, stroke, kidney disease, and other serious health problems.</p>
+          
+          <h4>How to Manage Blood Pressure</h4>
+          <p>Lifestyle changes are crucial:</p>
+          <ul>
+            <li>Eat a heart-healthy diet, low in salt (sodium).</li>
+            <li>Get regular physical activity.</li>
+            <li>Maintain a healthy weight.</li>
+            <li>Limit alcohol.</li>
+            <li>Don't smoke.</li>
+          </ul>
+        `,
+        hi: `
+          <h4>रक्तचाप क्या है?</h4>
+          <p>रक्तचाप आपकी धमनियों की दीवारों के खिलाफ रक्त के दबाव का बल है। इसे दो संख्याओं के रूप में दर्ज किया जाता है:</p>
+          <ul>
+            <li><strong>सिस्टोलिक दबाव (ऊपरी संख्या):</strong> जब आपका दिल धड़कता है तो आपकी धमनियों में दबाव को मापता है।</li>
+            <li><strong>डायस्टोलिक दबाव (निचली संख्या):</strong> जब आपका दिल धड़कनों के बीच आराम करता है तो आपकी धमनियों में दबाव को मापता है।</li>
+          </ul>
+
+          <h4>रक्तचाप की श्रेणियाँ</h4>
+          <ul>
+            <li><strong>सामान्य:</strong> 120/80 मिमी एचजी से कम</li>
+            <li><strong>बढ़ा हुआ:</strong> सिस्टोलिक 120-129 के बीच और डायस्टोलिक 80 से कम।</li>
+            <li><strong>उच्च रक्तचाप चरण 1:</strong> सिस्टोलिक 130-139 के बीच या डायस्टोलिक 80-89 के बीच।</li>
+            <li><strong>उच्च रक्तचाप चरण 2:</strong> सिस्टोलिक 140 या अधिक या डायस्टोलिक 90 या अधिक।</li>
+            <li><strong>उच्च रक्तचाप संकट:</strong> 180/120 मिमी एचजी से अधिक। तुरंत चिकित्सा सहायता लें।</li>
+          </ul>
+          
+          <h4>उच्च रक्तचाप (हाइपरटेंशन) क्यों खतरनाक है</h4>
+          <p>उच्च रक्तचाप के अक्सर कोई लक्षण नहीं होते हैं, लेकिन यह वर्षों तक आपके शरीर को चुपचाप नुकसान पहुंचा सकता है। अनियंत्रित उच्च रक्तचाप दिल का दौरा, स्ट्रोक, गुर्दे की बीमारी और अन्य गंभीर स्वास्थ्य समस्याओं का कारण बन सकता है।</p>
+          
+          <h4>रक्तचाप का प्रबंधन कैसे करें</h4>
+          <p>जीवनशैली में बदलाव महत्वपूर्ण हैं:</p>
+          <ul>
+            <li>नमक (सोडियम) में कम, हृदय-स्वस्थ आहार खाएं।</li>
+            <li>नियमित शारीरिक गतिविधि करें।</li>
+            <li>स्वस्थ वजन बनाए रखें।</li>
+            <li>शराब सीमित करें।</li>
+            <li>धूम्रपान न करें।</li>
+          </ul>
+        `
+      },
+      topic: "Health Metrics",
+      quizId: "quiz_bp"
+    },
+    {
+      id: "sleep_importance",
+      title: { en: "The Importance of Sleep", hi: "नींद का महत्व" },
+      summary: { en: "Discover why sleep is essential for your physical and mental health and learn tips for better sleep.", hi: "जानें कि नींद आपके शारीरिक और मानसिक स्वास्थ्य के लिए क्यों आवश्यक है और बेहतर नींद के लिए सुझाव जानें।" },
+      content: {
+        en: `
+          <h4>Why Do We Need Sleep?</h4>
+          <p>Sleep is not just a period of rest; it's a critical function during which your body and mind recharge. Good sleep improves brain performance, mood, and overall health.</p>
+          
+          <h4>What Happens When You Sleep?</h4>
+          <ul>
+            <li>Your brain sorts and stores information from the day, which helps with learning and memory.</li>
+            <li>Your body repairs cells, restores energy, and releases important hormones and proteins.</li>
+            <li>Your immune system is strengthened, helping you fight off illness.</li>
+          </ul>
+
+          <h4>Consequences of Poor Sleep</h4>
+          <p>A lack of quality sleep can have serious effects:</p>
+          <ul>
+            <li>Difficulty concentrating and making decisions.</li>
+            <li>Increased risk of accidents.</li>
+            <li>Weakened immune system.</li>
+            <li>Higher risk for chronic health problems like heart disease, kidney disease, high blood pressure, and diabetes.</li>
+            <li>Mood swings, anxiety, and depression.</li>
+          </ul>
+
+          <h4>Tips for Better Sleep (Sleep Hygiene)</h4>
+          <ol>
+            <li><strong>Be consistent:</strong> Go to bed and wake up at the same time every day, even on weekends.</li>
+            <li><strong>Create a restful environment:</strong> Make sure your bedroom is dark, quiet, and cool.</li>
+            <li><strong>Avoid screens before bed:</strong> The blue light from phones, tablets, and TVs can interfere with sleep.</li>
+            <li><strong>Avoid large meals, caffeine, and alcohol before bedtime.</strong></li>
+            <li><strong>Get some exercise during the day.</strong></li>
+          </ol>
+        `,
+        hi: `
+          <h4>हमें नींद की आवश्यकता क्यों है?</h4>
+          <p>नींद केवल आराम की अवधि नहीं है; यह एक महत्वपूर्ण कार्य है जिसके दौरान आपका शरीर और मन रिचार्ज होते हैं। अच्छी नींद मस्तिष्क के प्रदर्शन, मनोदशा और समग्र स्वास्थ्य में सुधार करती है।</p>
+          
+          <h4>जब आप सोते हैं तो क्या होता है?</h4>
+          <ul>
+            <li>आपका मस्तिष्क दिन की जानकारी को छाँटता और संग्रहीत करता है, जो सीखने और स्मृति में मदद करता है।</li>
+            <li>आपका शरीर कोशिकाओं की मरम्मत करता है, ऊर्जा बहाल करता है, और महत्वपूर्ण हार्मोन और प्रोटीन जारी करता है।</li>
+            <li>आपकी प्रतिरक्षा प्रणाली मजबूत होती है, जो आपको बीमारी से लड़ने में मदद करती है।</li>
+          </ul>
+
+          <h4>खराब नींद के परिणाम</h4>
+          <p>गुणवत्तापूर्ण नींद की कमी के गंभीर प्रभाव हो सकते हैं:</p>
+          <ul>
+            <li>ध्यान केंद्रित करने और निर्णय लेने में कठिनाई।</li>
+            <li>दुर्घटनाओं का खतरा बढ़ जाता है।</li>
+            <li>कमजोर प्रतिरक्षा प्रणाली।</li>
+            <li>हृदय रोग, गुर्दे की बीमारी, उच्च रक्तचाप और मधुमेह जैसी पुरानी स्वास्थ्य समस्याओं का अधिक खतरा।</li>
+            <li>मूड स्विंग, चिंता और अवसाद।</li>
+          </ul>
+
+          <h4>बेहतर नींद के लिए टिप्स (नींद की स्वच्छता)</h4>
+          <ol>
+            <li><strong>लगातार रहें:</strong> हर दिन एक ही समय पर सोएं और उठें, यहां तक कि सप्ताहांत पर भी।</li>
+            <li><strong>एक आरामदायक वातावरण बनाएं:</strong> सुनिश्चित करें कि आपका शयनकक्ष अंधेरा, शांत और ठंडा हो।</li>
+            <li><strong>सोने से पहले स्क्रीन से बचें:</strong> फोन, टैबलेट और टीवी से नीली रोशनी नींद में बाधा डाल सकती है।</li>
+            <li><strong>सोने से पहले बड़े भोजन, कैफीन और शराब से बचें।</strong></li>
+            <li><strong>दिन में कुछ व्यायाम करें।</strong></li>
+          </ol>
+        `
+      },
+      topic: "Lifestyle",
+      quizId: "quiz_sleep"
     }
 ];
 
@@ -268,7 +406,23 @@ export const quizzes: Quiz[] = [
         { q:"Which technique is recommended for calming anxiety quickly?", q_hi:"चिंता को जल्दी शांत करने के लिए कौन सी तकनीक अनुशंसित है?", options:["Box Breathing","Running immediately","Eating sugar","Watching TV"], options_hi:["बॉक्स ब्रीदिंग","तुरंत दौड़ना","चीनी खाना","टीवी देखना"], answer:0 },
         { q:"If a friend seems persistently sad and has lost interest in their hobbies, what should you do?", q_hi:"यदि कोई दोस्त लगातार दुखी लगता है और अपने शौक में रुचि खो चुका है, तो आपको क्या करना चाहिए?", options:["Encourage them to seek professional help","Ignore them","Tell them to 'toughen up'","Joke about it"], options_hi:["उन्हें पेशेवर मदद लेने के लिए प्रोत्साहित करें","उन्हें अनदेखा करें","उन्हें 'कठोर बनने' के लिए कहें","इस पर मजाक करें"], answer:0 }
       ]
+    },
+    {
+      id: "quiz_bp",
+      lessonId: "blood_pressure_basics",
+      questions: [
+        { q:"What do the two numbers in a blood pressure reading represent?", q_hi:"रक्तचाप रीडिंग में दो संख्याएं क्या दर्शाती हैं?", options:["Systolic and Diastolic","Heart Rate and Oxygen","High and Low Pulse","Morning and Evening"], options_hi:["सिस्टोलिक और डायस्टोलिक","हृदय गति और ऑक्सीजन","उच्च और निम्न पल्स","सुबह और शाम"], answer:0 },
+        { q:"Which of the following is considered a normal blood pressure reading?", q_hi:"निम्नलिखित में से किसे सामान्य रक्तचाप रीडिंग माना जाता है?", options:["120/80 mm Hg or less","140/90 mm Hg","100/60 mm Hg","135/85 mm Hg"], options_hi:["120/80 मिमी एचजी या उससे कम","140/90 मिमी एचजी","100/60 मिमी एचजी","135/85 मिमी एचजी"], answer:0 }
+      ]
+    },
+    {
+      id: "quiz_sleep",
+      lessonId: "sleep_importance",
+      questions: [
+        { q:"How many hours of sleep are generally recommended for adults?", q_hi:"वयस्कों के लिए आम तौर पर कितने घंटे की नींद की सिफारिश की जाती है?", options:["7-9 hours","5-6 hours","10-11 hours","4-5 hours"], options_hi:["7-9 घंटे","5-6 घंटे","10-11 घंटे","4-5 घंटे"], answer:0 },
+        { q:"Which of the following is a good 'sleep hygiene' practice?", q_hi:"निम्नलिखित में से कौन सी एक अच्छी 'नींद की स्वच्छता' प्रथा है?", options:["Going to bed at the same time every night","Watching TV in bed to relax","Having a large meal before sleeping","Checking your phone in bed"], options_hi:["हर रात एक ही समय पर सोना","आराम करने के लिए बिस्तर में टीवी देखना","सोने से पहले भारी भोजन करना","बिस्तर में अपना फोन जांचना"], answer:0 }
+      ]
     }
 ];
 
-export const topics = [ "All", "Nutrition", "Hygiene", "First Aid", "Mental Health" ];
+export const topics = [ "All", "Nutrition", "Hygiene", "First Aid", "Mental Health", "Health Metrics", "Lifestyle" ];
