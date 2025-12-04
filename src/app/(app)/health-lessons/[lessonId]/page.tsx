@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import React from 'react';
 
 export default function LessonDetailPage() {
-  const params = React.use(useParams());
+  const params = useParams();
   const searchParams = useSearchParams();
   const lang = searchParams.get('lang') === 'hi' ? 'hi' : 'en';
 
