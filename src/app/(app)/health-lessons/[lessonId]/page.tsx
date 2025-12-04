@@ -14,9 +14,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BookHeart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import React from 'react';
 
 export default function LessonDetailPage() {
-  const params = useParams();
+  const params = React.use(useParams());
   const searchParams = useSearchParams();
   const lang = searchParams.get('lang') === 'hi' ? 'hi' : 'en';
 
@@ -57,9 +58,9 @@ export default function LessonDetailPage() {
     </Card>
     
     <Alert>
-      <AlertTitle>{lang === 'en' ? 'Next Step' : 'अगला कदम'}</AlertTitle>
+      <AlertTitle>{lang === 'en' ? 'End of Lesson' : 'पाठ का अंत'}</AlertTitle>
       <AlertDescription>
-        {lang === 'en' ? 'Ready to test your knowledge? Go back to the lessons page to take the quiz and earn your certificate!' : 'क्या आप अपना ज्ञान परखने के लिए तैयार हैं? क्विज़ देने और अपना प्रमाणपत्र अर्जित करने के लिए पाठ पृष्ठ पर वापस जाएं!'}
+        {lang === 'en' ? 'You have completed this lesson. Go back to discover more topics.' : 'आपने यह पाठ पूरा कर लिया है। अधिक विषय खोजने के लिए वापस जाएं।'}
       </AlertDescription>
     </Alert>
 
