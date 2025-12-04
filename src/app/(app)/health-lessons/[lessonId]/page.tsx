@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BookHeart, ArrowLeft } from 'lucide-react';
+import { BookHeart, ArrowLeft, Award } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import React from 'react';
@@ -59,8 +59,14 @@ export default function LessonDetailPage() {
     
     <Alert>
       <AlertTitle>{lang === 'en' ? 'End of Lesson' : 'पाठ का अंत'}</AlertTitle>
-      <AlertDescription>
-        {lang === 'en' ? 'You have completed this lesson. Go back to discover more topics.' : 'आपने यह पाठ पूरा कर लिया है। अधिक विषय खोजने के लिए वापस जाएं।'}
+      <AlertDescription className="flex justify-between items-center">
+        <span>{lang === 'en' ? 'You have completed this lesson. Take the quiz to test your knowledge!' : 'आपने यह पाठ पूरा कर लिया है। अपने ज्ञान का परीक्षण करने के लिए प्रश्नोत्तरी लें!'}</span>
+        <Button asChild>
+            <Link href={`/health-lessons/${lesson.id}/quiz?lang=${lang}`}>
+                <Award className="mr-2 h-4 w-4" />
+                {lang === 'en' ? 'Take Quiz' : 'प्रश्नोत्तरी लें'}
+            </Link>
+        </Button>
       </AlertDescription>
     </Alert>
 
