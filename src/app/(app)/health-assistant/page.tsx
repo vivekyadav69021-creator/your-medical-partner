@@ -243,7 +243,6 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
         stream.getTracks().forEach(track => track.stop());
       };
       mediaRecorderRef.current.start();
-      setIsRecording(true);
       toast({ title: 'Recording started...', description: 'Speak your query now.' });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -428,9 +427,9 @@ export default function HealthAssistantPage() {
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
   return (
-    <div className="grid md:grid-cols-4 gap-4 h-[calc(100vh-6.5rem)]">
+    <div className="flex h-[calc(100vh-6.5rem)] gap-4">
         {/* Chat History Sidebar */}
-        <Card className="hidden md:flex md:col-span-1 flex-col">
+        <Card className="hidden md:flex md:w-1/4 flex-col">
             <CardHeader className="flex-row items-center justify-between">
                 <CardTitle>Chat History</CardTitle>
                 <Button variant="ghost" size="icon" onClick={handleNewChat}>
@@ -464,7 +463,7 @@ export default function HealthAssistantPage() {
         </Card>
       
       {/* Main Chat Area */}
-      <div className="md:col-span-3 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full">
           <div className="mb-4">
             <h1 className="text-3xl font-bold tracking-tight font-headline">AI Health Assistant</h1>
             <p className="text-muted-foreground">
@@ -482,7 +481,7 @@ export default function HealthAssistantPage() {
                 This is an AI assistant. Information may be inaccurate.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow overflow-hidden p-0">
+            <CardContent className="flex-1 overflow-hidden p-0">
               <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
                 <div className="space-y-4">
                   {messages.length === 0 && !isPending && (
