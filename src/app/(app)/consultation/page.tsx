@@ -51,7 +51,7 @@ type Review = {
     comment: string;
 };
 
-type Doctor = {
+export type Doctor = {
   id: string;
   name: string;
   specialty: string;
@@ -76,7 +76,7 @@ export type Appointment = {
   notes?: string;
 };
 
-const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, reviews }: Doctor) => {
+const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, reviews, bio }: Doctor) => {
   const image = PlaceHolderImages.find(img => img.id === imageId);
   const reviewCount = reviews.length;
 
