@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -14,8 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, MessageSquare, Trash2 } from 'lucide-react';
-import { healthAssistantAction, speechToTextAction } from './actions';
+import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit } from 'lucide-react';
+import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUserProfile } from '@/context/user-profile-context';
@@ -37,6 +36,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 type Message = {
   role: 'user' | 'assistant';
@@ -61,6 +62,18 @@ const initialSpeechState = {
   error: null,
 };
 
+const doctorSpecialties = [
+  "General Physician",
+  "Cardiologist",
+  "Dermatologist",
+  "Pediatrician",
+  "Neurologist",
+  "Oncologist",
+  "Gynecologist",
+  "Orthopedist",
+  "Endocrinologist",
+  "Psychiatrist",
+];
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -149,29 +162,27 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
 }
 
 
-function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string }) {
+function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMessage: string, onTranscript: (text: string) => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedLang, setSelectedLang] = useState('en-IN');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const synthRef = useRef<SpeechSynthesis | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const [_, speechFormAction, isTranscribing] = useActionState(speechToTextAction, initialSpeechState);
+  const [speechState, speechFormAction, isTranscribing] = useActionState(speechToTextAction, initialSpeechState);
   const { toast } = useToast();
 
   useEffect(() => {
-    // @ts-ignore
-    const { transcript, error } = _;
-    if (transcript && document.getElementById('chatInput')) {
-      (document.getElementById('chatInput') as HTMLInputElement).value = transcript;
+    const { transcript, error } = speechState;
+    if (transcript) {
+      onTranscript(transcript);
       toast({ title: 'Transcription complete', description: 'Your message is ready to send.' });
     }
     if (error) {
       toast({ variant: 'destructive', title: 'Transcription Failed', description: error });
     }
-  }, [_]);
+  }, [speechState, onTranscript, toast]);
 
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
@@ -202,7 +213,7 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
         return;
     }
     synthRef.current.cancel(); 
-    const utterance = new SpeechSynthesisUtterance(lastAssistantMessage);
+    const utterance = new SpeechSynthesisUtterance(lastAssistantMessage.replace(/[*#_`]/g, ''));
     utterance.lang = selectedLang;
     const voice = getBestVoice(selectedLang);
     if (voice) {
@@ -211,7 +222,6 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
-    utteranceRef.current = utterance;
     synthRef.current.speak(utterance);
   };
 
@@ -243,6 +253,7 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
         stream.getTracks().forEach(track => track.stop());
       };
       mediaRecorderRef.current.start();
+      setIsRecording(true);
       toast({ title: 'Recording started...', description: 'Speak your query now.' });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -303,46 +314,53 @@ export default function HealthAssistantPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   
-  const [state, formAction, isPending] = useActionState(healthAssistantAction, initialState);
-  
+  const [generalState, generalFormAction, isGeneralPending] = useActionState(healthAssistantAction, initialState);
+  const [doctorState, doctorFormAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
+
+  const [activeMode, setActiveMode] = useState<'general' | 'doctor'>('general');
+  const [specialty, setSpecialty] = useState<string>("General Physician");
+
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const queryInputRef = useRef<HTMLInputElement>(null);
 
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
-  // Load sessions from localStorage on mount
   useEffect(() => {
     try {
       const savedSessions = localStorage.getItem('healthAssistantSessions');
       if (savedSessions) {
         const parsedSessions = JSON.parse(savedSessions);
         setSessions(parsedSessions);
-        if (parsedSessions.length > 0) {
-          setActiveSessionId(parsedSessions[0].id);
-        } else {
-            handleNewChat();
-        }
-      } else {
-        handleNewChat();
+        setActiveSessionId(parsedSessions[0]?.id || null);
       }
     } catch (error) {
       console.error("Failed to load sessions from localStorage", error);
-      handleNewChat();
     }
   }, []);
 
-  // Save sessions to localStorage whenever they change
   useEffect(() => {
     if (sessions.length > 0) {
       localStorage.setItem('healthAssistantSessions', JSON.stringify(sessions));
+    } else if (localStorage.getItem('healthAssistantSessions')) {
+      localStorage.removeItem('healthAssistantSessions');
     }
   }, [sessions]);
+  
+  useEffect(() => {
+    if (!activeSessionId && sessions.length > 0) {
+        setActiveSessionId(sessions[0].id);
+    } else if (sessions.length === 0) {
+        handleNewChat();
+    }
+  }, [sessions, activeSessionId]);
 
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession?.messages || [];
   const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop()?.content || '';
+  const isPending = isGeneralPending || isDoctorPending;
   
   const handleNewChat = useCallback(() => {
     const newSession: Session = {
@@ -351,58 +369,66 @@ export default function HealthAssistantPage() {
       messages: [],
       createdAt: Date.now(),
     };
-    setSessions(prev => [newSession, ...prev]);
+    setSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
     setActiveSessionId(newSession.id);
+    setAttachedImage(null);
   }, []);
 
   const handleDeleteChat = (sessionId: string) => {
     setSessions(prev => {
         const filtered = prev.filter(s => s.id !== sessionId);
         if (activeSessionId === sessionId) {
-            if (filtered.length > 0) {
-                setActiveSessionId(filtered[0].id);
-            } else {
-                handleNewChat();
-            }
-        }
-        if(filtered.length === 0) {
-             localStorage.removeItem('healthAssistantSessions');
+            setActiveSessionId(filtered[0]?.id || null);
         }
         return filtered;
     });
   };
-
-  const handleFormAction = (formData: FormData) => {
+  
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const query = formData.get('query') as string;
+
     if (!query && !attachedImage) return;
 
     let userMessage: Message = { role: 'user', content: query || 'Image analysis' };
-    if (attachedImage) {
+     if (attachedImage) {
       userMessage.image = attachedImage;
-      formData.append('photoDataUri', attachedImage);
+      formData.set('photoDataUri', attachedImage);
     }
-    
-    setSessions(prev => prev.map(s => {
+
+     setSessions(prev => prev.map(s => {
       if (s.id === activeSessionId) {
         const newMessages = [...s.messages, userMessage];
-        const newTitle = s.messages.length === 0 ? query.substring(0, 30) : s.title;
+        const newTitle = s.messages.length === 0 && query ? query.substring(0, 30) : s.title;
         return { ...s, messages: newMessages, title: newTitle };
       }
       return s;
     }));
-    formAction(formData);
+    
+    if (activeMode === 'doctor') {
+      formData.set('specialty', specialty);
+      formData.set('history', JSON.stringify(messages));
+      doctorFormAction(formData);
+    } else {
+      generalFormAction(formData);
+    }
+    
     formRef.current?.reset();
     setAttachedImage(null);
-  };
-  
-  useEffect(() => {
+  }
+
+  const handleStateUpdate = useCallback((state: typeof initialState) => {
     if (!isPending && (state.response || state.error)) {
-        const content = state.response || state.error || 'Sorry, an unknown error occurred.';
+        const content = state.response || `Sorry, an error occurred: ${state.error}`;
         setSessions(prev => prev.map(s => 
             s.id === activeSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s
         ));
     }
-  }, [state, isPending, activeSessionId]);
+  }, [isPending, activeSessionId]);
+  
+  useEffect(() => handleStateUpdate(generalState), [generalState, handleStateUpdate]);
+  useEffect(() => handleStateUpdate(doctorState), [doctorState, handleStateUpdate]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -417,12 +443,21 @@ export default function HealthAssistantPage() {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setAttachedImage(e.target?.result as string);
-      };
+      reader.onload = (e) => setAttachedImage(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleSpecialtyChange = (newSpecialty: string) => {
+    setSpecialty(newSpecialty);
+    handleNewChat();
+  };
+
+  const handleTranscript = (transcript: string) => {
+    if (queryInputRef.current) {
+      queryInputRef.current.value = transcript;
+    }
+  }
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
 
@@ -464,152 +499,230 @@ export default function HealthAssistantPage() {
       
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full">
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold tracking-tight font-headline">AI Health Assistant</h1>
-            <p className="text-muted-foreground">
-              Ask me anything about health, medicines, or diseases.
-            </p>
-          </div>
-          <VoiceWidget lastAssistantMessage={lastAssistantMessage} />
-          <Card className="flex-1 flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot />
-                Chat with Health Assistant
-              </CardTitle>
-              <CardDescription>
-                This is an AI assistant. Information may be inaccurate.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
-                <div className="space-y-4">
-                  {messages.length === 0 && !isPending && (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
-                      <Bot className="w-16 h-16 mb-4" />
-                      <p className="text-lg font-medium">I am your AI Health Assistant.</p>
-                      <p>Ask me a question to get started!</p>
-                    </div>
-                  )}
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-start gap-3 ${
-                        message.role === 'user' ? 'justify-end' : 'items-end'
-                      }`}
+          <Tabs defaultValue="general" onValueChange={(value) => {
+            setActiveMode(value as 'general' | 'doctor');
+            handleNewChat();
+          }} className="flex-grow flex flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="general">General Assistant</TabsTrigger>
+                <TabsTrigger value="doctor">Specialist Doctor</TabsTrigger>
+            </TabsList>
+            <div className="flex-grow flex flex-col mt-4">
+                <VoiceWidget lastAssistantMessage={lastAssistantMessage} onTranscript={handleTranscript}/>
+                <TabsContent value="general" asChild>
+                    <ChatInterface 
+                        key={`general-${activeSessionId}`}
+                        messages={messages}
+                        isPending={isPending}
+                        onFormSubmit={handleFormSubmit}
+                        onFileChange={handleFileChange}
+                        formRef={formRef}
+                        fileInputRef={fileInputRef}
+                        scrollAreaRef={scrollAreaRef}
+                        queryInputRef={queryInputRef}
+                        attachedImage={attachedImage}
+                        setAttachedImage={setAttachedImage}
+                        userImage={userImage}
+                        assistantImage={assistantImage}
+                        title="AI Health Assistant"
+                        description="Ask me anything about health, medicines, or diseases."
+                        placeholder="Type your message..."
+                        initialMessage="Hello! I am your AI Health Assistant. How can I help you today?"
+                        Icon={Bot}
+                    />
+                </TabsContent>
+                <TabsContent value="doctor" asChild>
+                     <ChatInterface 
+                        key={`doctor-${activeSessionId}`}
+                        messages={messages}
+                        isPending={isPending}
+                        onFormSubmit={handleFormSubmit}
+                        onFileChange={handleFileChange}
+                        formRef={formRef}
+                        fileInputRef={fileInputRef}
+                        scrollAreaRef={scrollAreaRef}
+                        queryInputRef={queryInputRef}
+                        attachedImage={attachedImage}
+                        setAttachedImage={setAttachedImage}
+                        userImage={userImage}
+                        assistantImage={assistantImage}
+                        title={`AI ${specialty}`}
+                        description="Chat with an AI specialist. This is not a substitute for real medical advice."
+                        placeholder={`Ask the AI ${specialty}...`}
+                        initialMessage={`Hello! I am your AI ${specialty}. How may I help you?`}
+                        Icon={BrainCircuit}
                     >
-                      {message.role === 'assistant' && (
-                        <Avatar className="h-9 w-9">
-                          {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint}/>}
-                          <AvatarFallback>AI</AvatarFallback>
-                        </Avatar>
-                      )}
-                      <div
-                        className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
-                         {message.image && (
-                          <Image
-                            src={message.image}
-                            alt="User upload"
-                            width={200}
-                            height={200}
-                            className="rounded-md mb-2"
-                          />
+                       <Card className="mb-4">
+                            <CardContent className="p-4">
+                               <Label htmlFor="specialty-select">Select a Specialty</Label>
+                               <Select value={specialty} onValueChange={handleSpecialtyChange}>
+                                <SelectTrigger id="specialty-select">
+                                    <SelectValue placeholder="Select a doctor specialty" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {doctorSpecialties.map(spec => (
+                                    <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                            </CardContent>
+                        </Card>
+                    </ChatInterface>
+                </TabsContent>
+            </div>
+          </Tabs>
+      </div>
+    </div>
+  );
+}
+
+
+interface ChatInterfaceProps {
+    messages: Message[];
+    isPending: boolean;
+    onFormSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+    onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    formRef: React.RefObject<HTMLFormElement>;
+    fileInputRef: React.RefObject<HTMLInputElement>;
+    scrollAreaRef: React.RefObject<HTMLDivElement>;
+    queryInputRef: React.RefObject<HTMLInputElement>;
+    attachedImage: string | null;
+    setAttachedImage: (image: string | null) => void;
+    userImage: string;
+    assistantImage?: { imageUrl: string, imageHint: string };
+    title: string;
+    description: string;
+    placeholder: string;
+    initialMessage: string;
+    Icon: React.ElementType;
+    children?: React.ReactNode;
+}
+
+function ChatInterface({
+    messages, isPending, onFormSubmit, onFileChange, formRef, fileInputRef, scrollAreaRef, queryInputRef,
+    attachedImage, setAttachedImage, userImage, assistantImage, title, description, placeholder,
+    initialMessage, Icon, children
+}: ChatInterfaceProps) {
+    return (
+         <div className="flex-grow flex flex-col">
+            {children}
+            <Card className="flex-1 flex flex-col">
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Icon />{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 overflow-hidden p-0">
+                <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
+                    <div className="space-y-4">
+                    {messages.length === 0 && !isPending && (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+                        <Icon className="w-16 h-16 mb-4" />
+                        <p className="text-lg font-medium">{initialMessage}</p>
+                        </div>
+                    )}
+                    {messages.map((message, index) => (
+                        <div
+                        key={index}
+                        className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : 'items-end'}`}
+                        >
+                        {message.role === 'assistant' && (
+                            <Avatar className="h-9 w-9">
+                            {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint}/>}
+                            <AvatarFallback>AI</AvatarFallback>
+                            </Avatar>
                         )}
-                        {message.role === 'assistant' ? (
+                        <div
+                            className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
+                            message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                            }`}
+                        >
+                            {message.image && (
+                            <Image src={message.image} alt="User upload" width={200} height={200} className="rounded-md mb-2" />
+                            )}
+                            {message.role === 'assistant' ? (
                             <>
-                              <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
-                              {index === messages.length -1 && !isPending && (
+                                <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                                {index === messages.length - 1 && !isPending && (
                                 <FeedbackActions messageContent={message.content} />
-                              )}
+                                )}
                             </>
-                        ) : (
+                            ) : (
                             <p>{message.content}</p>
+                            )}
+                        </div>
+                        {message.role === 'user' && (
+                            <Avatar className="h-9 w-9">
+                            <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
+                            <AvatarFallback><User /></AvatarFallback>
+                            </Avatar>
                         )}
-                      </div>
-                      {message.role === 'user' && (
+                        </div>
+                    ))}
+                    {isPending && (
+                        <div className="flex items-start gap-3">
                         <Avatar className="h-9 w-9">
-                           <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
-                          <AvatarFallback><User /></AvatarFallback>
-                        </Avatar>
-                      )}
-                    </div>
-                  ))}
-                  {isPending && (
-                    <div className="flex items-start gap-3">
-                       <Avatar className="h-9 w-9">
-                          {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
-                          <AvatarFallback>AI</AvatarFallback>
+                            {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
+                            <AvatarFallback>AI</AvatarFallback>
                         </Avatar>
                         <div className="max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 bg-muted flex items-center gap-2">
                             <Sparkles className="h-4 w-4 animate-pulse" />
                             <span className="text-sm italic">Assistant is typing...</span>
                         </div>
+                        </div>
+                    )}
                     </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-2">
-               {attachedImage && (
-                <div className="relative p-2 border rounded-md">
-                  <Image
-                    src={attachedImage}
-                    alt="Preview"
-                    width={80}
-                    height={80}
-                    className="rounded-md"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
-                    onClick={() => setAttachedImage(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              <form
-                ref={formRef}
-                id="chatForm"
-                action={handleFormAction}
-                className="flex w-full items-center gap-2"
-              >
-                <Input
-                  id="chatInput"
-                  name="query"
-                  placeholder="Type your message..."
-                  className="flex-1"
-                  autoComplete="off"
-                  disabled={isPending}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      formRef.current?.requestSubmit();
-                    }
-                  }}
-                />
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept="image/*"
-                />
-                 <Button type="button" size="icon" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
-                  <Paperclip className="h-5 w-5" />
-                  <span className="sr-only">Attach file</span>
-                </Button>
-                <SubmitButton />
-              </form>
-            </CardFooter>
-          </Card>
-      </div>
-    </div>
-  );
+                </ScrollArea>
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-2">
+                {attachedImage && (
+                    <div className="relative p-2 border rounded-md">
+                    <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-md" />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
+                        onClick={() => setAttachedImage(null)}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                    </div>
+                )}
+                <form
+                    ref={formRef}
+                    id="chatForm"
+                    onSubmit={onFormSubmit}
+                    className="flex w-full items-center gap-2"
+                >
+                    <Input
+                    id="chatInput"
+                    ref={queryInputRef}
+                    name="query"
+                    placeholder={placeholder}
+                    className="flex-1"
+                    autoComplete="off"
+                    disabled={isPending}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        formRef.current?.requestSubmit();
+                        }
+                    }}
+                    />
+                    <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={onFileChange}
+                    className="hidden"
+                    accept="image/*"
+                    />
+                    <Button type="button" size="icon" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
+                    <Paperclip className="h-5 w-5" />
+                    <span className="sr-only">Attach file</span>
+                    </Button>
+                    <SubmitButton />
+                </form>
+                </CardFooter>
+            </Card>
+        </div>
+    )
 }

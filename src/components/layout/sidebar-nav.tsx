@@ -34,7 +34,6 @@ const mainNav = [
 const smartToolsNav = [
     { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
     { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
-    { href: '/ai-doctor-chat', label: 'AI Doctor Chat', icon: Stethoscope },
     { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
 ];
 
