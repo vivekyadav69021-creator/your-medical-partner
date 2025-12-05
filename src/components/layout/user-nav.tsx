@@ -15,26 +15,43 @@ import {
   DropdownMenuPortal,
   DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
-import { Sun, Moon, Laptop, Siren, ShieldAlert, Settings } from 'lucide-react';
+import { Sun, Moon, Laptop, Siren, ShieldAlert, Settings, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useUserProfile } from '@/context/user-profile-context';
 
 export function UserNav() {
   const { setTheme } = useTheme();
+  const { userName, userImage } = useUserProfile();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Settings />
+            <Avatar className="h-9 w-9">
+                <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
+                <AvatarFallback>{userName?.charAt(0)}</AvatarFallback>
+            </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <p className="text-sm font-medium leading-none">Settings</p>
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{userName}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              Welcome!
+            </p>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+           <Link href="/profile">
+            <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -58,6 +75,10 @@ export function UserNav() {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+           <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+            </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
          <DropdownMenuGroup>
