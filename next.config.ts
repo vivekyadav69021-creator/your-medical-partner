@@ -61,11 +61,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-   experimental: {
-    // This is required to fix a Next.js bug that causes the server to restart
-    // when a cross-origin request is made to a resource that is not found.
-    allowedDevOrigins: ["*"],
-  },
 };
 
 export default nextConfig;
