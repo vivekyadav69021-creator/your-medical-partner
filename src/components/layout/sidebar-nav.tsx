@@ -23,12 +23,7 @@ import {
   Wind,
   Video,
   GraduationCap,
-  FileText,
-  Activity,
-  BedDouble,
-  Flame,
 } from 'lucide-react';
-import { Separator } from '../ui/separator';
 
 const mainNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

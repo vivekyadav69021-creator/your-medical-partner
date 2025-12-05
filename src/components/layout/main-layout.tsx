@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Sidebar,
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();
