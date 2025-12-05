@@ -28,7 +28,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarHeader>
           <div className="flex items-center gap-3 p-3">
             <HeartPulse className="w-8 h-8 text-primary" />
-            <h1 className="text-xl font-bold font-headline text-primary group-data-[state=collapsed]:hidden">MediMate</h1>
+            <h1 className="text-xl font-bold font-headline text-primary group-data-[state=collapsed]:hidden">Your Medical Partner</h1>
           </div>
         </SidebarHeader>
         <SidebarContent>
