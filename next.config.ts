@@ -2,7 +2,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactStrictMode: true,
   typescript: {
     ignoreBuildErrors: true,
@@ -61,6 +60,11 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+   experimental: {
+    // This is required to fix a Next.js bug that causes the server to restart
+    // when a cross-origin request is made to a resource that is not found.
+    allowedDevOrigins: ["*"],
   },
 };
 
