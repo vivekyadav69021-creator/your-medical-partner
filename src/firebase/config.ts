@@ -1,9 +1,9 @@
 export const firebaseConfig = {
-  apiKey: 'AIzaSyA6F9OucjQN_h3B3QBckszT1PYztz4Bklc',
-  authDomain: 'your-medical-partner-e9420.firebaseapp.com',
-  projectId: 'your-medical-partner-e9420',
-  storageBucket: 'your-medical-partner-e9420.appspot.com',
-  messagingSenderId: '876832389694',
-  appId: '1:876832389694:web:1f30fd659b448bed4eaf6f',
-  measurementId: 'G-NBVDWQL3V3',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
