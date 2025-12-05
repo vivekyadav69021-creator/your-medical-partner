@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -23,49 +22,34 @@ import {
   IndianRupee,
   ArrowRight,
   MapPin,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const indianDoctors = [
-  { id: 'dr-shivam-yadav', name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2', fees: '₹500', experience: '8 years', location: 'Delhi, India', bio: 'Compassionate general physician with expertise in managing chronic diseases and acute illnesses.' },
-  { id: 'dr-ananya-sharma', name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1', fees: '₹800', experience: '12 years', location: 'Mumbai, India', bio: 'Leading cardiologist specializing in heart failure management and preventive cardiology.' },
-  { id: 'dr-vikram-singh', name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2', fees: '₹600', experience: '10 years', location: 'Bangalore, India', bio: 'Expert in clinical and cosmetic dermatology, providing solutions for all skin concerns.' },
-  { id: 'dr-priya-patel', name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3', fees: '₹550', experience: '9 years', location: 'Ahmedabad, India', bio: 'Dedicated pediatrician focused on child wellness and development from newborn to adolescent.' },
-  { id: 'dr-arjun-gupta', name: 'Dr. Arjun Gupta', specialty: 'Neurologist', rating: 4.7, imageId: 'doctor-4', fees: '₹900', experience: '15 years', location: 'Chennai, India', bio: 'Specialist in treating neurological disorders including stroke, epilepsy, and migraines.' },
-  { id: 'dr-sameer-khan', name: 'Dr. Sameer Khan', specialty: 'Oncologist', rating: 4.9, imageId: 'doctor-7', fees: '₹1200', experience: '18 years', location: 'Hyderabad, India', bio: 'Renowned oncologist with a focus on personalized cancer treatment and research.'},
-  { id: 'dr-meera-iyer', name: 'Dr. Meera Iyer', specialty: 'Gynecologist', rating: 4.8, imageId: 'doctor-8', fees: '₹700', experience: '11 years', location: 'Pune, India', bio: 'Expert in women\'s reproductive health, providing care through all stages of life.'},
+  { id: 'dr-shivam-yadav', name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2', fees: '₹500', experience: '8 years', location: 'Delhi, India', bio: 'Compassionate general physician with expertise in managing chronic diseases and acute illnesses.', education: 'MBBS, MD (General Medicine)', reviews: [{user: 'Rohan S.', rating: 5, comment: "Very helpful and listens patiently."}] },
+  { id: 'dr-ananya-sharma', name: 'Dr. Ananya Sharma', specialty: 'Cardiologist', rating: 4.9, imageId: 'doctor-1', fees: '₹800', experience: '12 years', location: 'Mumbai, India', bio: 'Leading cardiologist specializing in heart failure management and preventive cardiology.', education: 'MBBS, MD (Cardiology), FACC', reviews: [{user: 'Priya K.', rating: 5, comment: "Excellent doctor. Highly recommend for any heart-related issues."}] },
+  { id: 'dr-vikram-singh', name: 'Dr. Vikram Singh', specialty: 'Dermatologist', rating: 4.8, imageId: 'doctor-2', fees: '₹600', experience: '10 years', location: 'Bangalore, India', bio: 'Expert in clinical and cosmetic dermatology, providing solutions for all skin concerns.', education: 'MBBS, DDVL (Dermatology)', reviews: [] },
+  { id: 'dr-priya-patel', name: 'Dr. Priya Patel', specialty: 'Pediatrician', rating: 4.9, imageId: 'doctor-3', fees: '₹550', experience: '9 years', location: 'Ahmedabad, India', bio: 'Dedicated pediatrician focused on child wellness and development from newborn to adolescent.', education: 'MBBS, DCH (Pediatrics)', reviews: [] },
+  { id: 'dr-arjun-gupta', name: 'Dr. Arjun Gupta', specialty: 'Neurologist', rating: 4.7, imageId: 'doctor-4', fees: '₹900', experience: '15 years', location: 'Chennai, India', bio: 'Specialist in treating neurological disorders including stroke, epilepsy, and migraines.', education: 'MBBS, DM (Neurology)', reviews: [] },
+  { id: 'dr-sameer-khan', name: 'Dr. Sameer Khan', specialty: 'Oncologist', rating: 4.9, imageId: 'doctor-7', fees: '₹1200', experience: '18 years', location: 'Hyderabad, India', bio: 'Renowned oncologist with a focus on personalized cancer treatment and research.', education: 'MBBS, DM (Medical Oncology)', reviews: []},
+  { id: 'dr-meera-iyer', name: 'Dr. Meera Iyer', specialty: 'Gynecologist', rating: 4.8, imageId: 'doctor-8', fees: '₹700', experience: '11 years', location: 'Pune, India', bio: 'Expert in women\'s reproductive health, providing care through all stages of life.', education: 'MBBS, MS (Obstetrics & Gynaecology)', reviews: []},
 ];
 
 const foreignDoctors = [
-  { id: 'dr-john-smith', name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5', fees: '₹2500', experience: '10 years', location: 'New York, USA', bio: 'Board-certified physician from the USA, focused on holistic patient care and diagnostics.' },
-  { id: 'dr-emily-williams', name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6', fees: '₹4000', experience: '14 years', location: 'London, UK', bio: 'UK-based orthopedic surgeon specializing in sports injuries and joint replacement.' },
-  { id: 'dr-olivia-chen', name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9', fees: '₹5000', experience: '12 years', location: 'Toronto, Canada', bio: 'Expert in hormonal disorders including diabetes and thyroid conditions from Canada.'},
-  { id: 'dr-michael-brown', name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10', fees: '₹3000', experience: '16 years', location: 'Sydney, Australia', bio: 'Specializing in adult psychiatry with a focus on cognitive behavioral therapy (CBT).'},
+  { id: 'dr-john-smith', name: 'Dr. John Smith', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-5', fees: '₹2500', experience: '10 years', location: 'New York, USA', bio: 'Board-certified physician from the USA, focused on holistic patient care and diagnostics.', education: 'MD (USA), Board Certified in Internal Medicine', reviews: [] },
+  { id: 'dr-emily-williams', name: 'Dr. Emily Williams', specialty: 'Orthopedist', rating: 4.9, imageId: 'doctor-6', fees: '₹4000', experience: '14 years', location: 'London, UK', bio: 'UK-based orthopedic surgeon specializing in sports injuries and joint replacement.', education: 'MBChB, FRCS (Orth)', reviews: [] },
+  { id: 'dr-olivia-chen', name: 'Dr. Olivia Chen', specialty: 'Endocrinologist', rating: 4.7, imageId: 'doctor-9', fees: '₹5000', experience: '12 years', location: 'Toronto, Canada', bio: 'Expert in hormonal disorders including diabetes and thyroid conditions from Canada.', education: 'MD, FRCPC (Endocrinology)', reviews: []},
+  { id: 'dr-michael-brown', name: 'Dr. Michael Brown', specialty: 'Psychiatrist', rating: 4.8, imageId: 'doctor-10', fees: '₹3000', experience: '16 years', location: 'Sydney, Australia', bio: 'Specializing in adult psychiatry with a focus on cognitive behavioral therapy (CBT).', education: 'MBBS, FRANZCP', reviews: []},
 ];
 
-const initialAppointments = [
-  {
-    id: 'appt-1',
-    doctorName: 'Dr. Priya Patel',
-    specialty: 'Pediatrician',
-    date: 'Dec 15, 2024',
-    time: '11:30 AM',
-    type: 'Video Call',
-    imageId: 'doctor-3',
-  },
-  {
-    id: 'appt-2',
-    doctorName: 'Dr. John Smith',
-    specialty: 'General Physician',
-    date: 'Dec 18, 2024',
-    time: '02:00 PM',
-    type: 'In-Person',
-    imageId: 'doctor-5',
-  },
-];
-
+type Review = {
+    user: string;
+    rating: number;
+    comment: string;
+};
 
 type Doctor = {
   id: string;
@@ -77,6 +61,8 @@ type Doctor = {
   experience: string;
   location: string;
   bio: string;
+  education: string;
+  reviews: Review[];
 };
 
 export type Appointment = {
@@ -87,10 +73,12 @@ export type Appointment = {
   time: string;
   type: string;
   imageId: string;
+  notes?: string;
 };
 
-const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, bio }: Doctor) => {
+const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, reviews }: Doctor) => {
   const image = PlaceHolderImages.find(img => img.id === imageId);
+  const reviewCount = reviews.length;
 
   return (
     <Link href={`/consultation/doctors/${id}`}>
@@ -109,9 +97,15 @@ const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, bi
           <div className="flex-1">
             <CardTitle>{name}</CardTitle>
             <CardDescription>{specialty}</CardDescription>
-            <div className="flex items-center gap-1 mt-2">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400"/>
-              <span className="text-sm font-medium">{rating}</span>
+            <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-1">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400"/>
+                  <span className="text-sm font-medium">{rating.toFixed(1)}</span>
+                </div>
+                 <div className="flex items-center gap-1">
+                  <MessageSquare className="w-4 h-4 text-muted-foreground"/>
+                  <span className="text-sm font-medium">{reviewCount} Reviews</span>
+                </div>
             </div>
           </div>
         </CardHeader>
@@ -149,8 +143,6 @@ export default function ConsultationPage() {
     const savedAppointments = localStorage.getItem('appointments');
     if (savedAppointments) {
       setAppointments(JSON.parse(savedAppointments));
-    } else {
-      setAppointments(initialAppointments); // Load initial if none saved
     }
   }, []);
 
@@ -214,6 +206,11 @@ export default function ConsultationPage() {
                                         <Clock className="w-5 h-5 text-muted-foreground"/>
                                         <p className="font-medium">{appt.time}</p>
                                     </div>
+                                    {appt.notes && (
+                                        <div className="col-span-2 text-sm text-muted-foreground">
+                                          <strong>Notes:</strong> {appt.notes}
+                                        </div>
+                                    )}
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
                                     <Button variant="outline">Reschedule</Button>
@@ -247,15 +244,21 @@ export default function ConsultationPage() {
 }
 
 // Full doctors list for detail page lookup
-export const allDoctors = [...indianDoctors, ...foreignDoctors];
+export const allDoctors: Doctor[] = [...indianDoctors, ...foreignDoctors];
 
 // Function to add a new appointment, can be exported or passed down
 export const addAppointment = (newAppointment: Appointment) => {
   const savedAppointments = localStorage.getItem('appointments');
-  const appointments = savedAppointments ? JSON.parse(savedAppointments) : initialAppointments;
+  const appointments = savedAppointments ? JSON.parse(savedAppointments) : [];
   const updatedAppointments = [newAppointment, ...appointments];
   localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
-  // This function would typically be part of a context or state management solution
-  // to trigger a re-render. For now, it just saves to localStorage.
 };
-    
+
+export const addDoctorReview = (doctorId: string, review: Review) => {
+    const doctor = allDoctors.find(d => d.id === doctorId);
+    if (doctor) {
+        doctor.reviews.push(review);
+        const totalRating = doctor.reviews.reduce((sum, r) => sum + r.rating, 0);
+        doctor.rating = totalRating / doctor.reviews.length;
+    }
+};
