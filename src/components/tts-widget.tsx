@@ -45,6 +45,12 @@ export function TTSWidget({ textToSpeak, initialLang = 'en-IN' }: TTSWidgetProps
     if (voice) return voice;
     // Fallback to a voice with the same language code (e.g., 'en' for 'en-GB')
     voice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+    
+    // Add specific fallback for Hindi
+    if (!voice && lang.startsWith('hi')) {
+      voice = voices.find(v => v.lang.startsWith('hi'));
+    }
+    
     return voice || voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
   };
 
