@@ -28,10 +28,10 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Avatar className="h-9 w-9">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Avatar className="h-10 w-10">
                 <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
-                <AvatarFallback>{userName?.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{userName?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
         </Button>
       </DropdownMenuTrigger>

@@ -26,20 +26,20 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
+          <div className="flex items-center gap-3 p-3">
             <HeartPulse className="w-8 h-8 text-primary" />
-            <h1 className="text-xl font-bold font-headline text-primary">Your Medical Partner</h1>
+            <h1 className="text-xl font-bold font-headline text-primary group-data-[state=collapsed]:hidden">MediMate</h1>
           </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarNav />
         </SidebarContent>
-        <SidebarFooter>
+        <SidebarFooter className="group-data-[state=collapsed]:hidden">
           {/* Footer content if any */}
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <header className="flex items-center justify-between p-4 border-b">
+        <header className="flex h-16 items-center justify-between p-4 border-b">
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1" />
           <div className="flex items-center gap-4">
@@ -54,7 +54,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <UserNav />
           </div>
         </header>
-        <main className="flex-1 p-4 overflow-y-auto md:p-6 lg:p-8">
+        <main className="flex-1 p-4 overflow-y-auto md:p-6 lg:p-8 bg-secondary/50 dark:bg-background">
           {children}
         </main>
       </SidebarInset>

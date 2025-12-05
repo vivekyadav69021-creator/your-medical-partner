@@ -31,36 +31,33 @@ const mainNav = [
     { href: '/profile', label: 'Profile', icon: User },
 ];
 
-const aiToolsNav = [
+const smartToolsNav = [
     { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
     { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
     { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
 ];
 
-const servicesNav = [
-    { href: '/consultation', label: 'Doctors Consult', icon: Stethoscope },
+const yourHealthNav = [
+    { href: '/consultation', label: 'Doctor Consultation', icon: Stethoscope },
     { href: '/store', label: 'Medical Store', icon: Store },
     { href: '/planner', label: 'My Planner', icon: ListTodo },
     { href: '/nearby-hospital', label: 'Nearby Hospitals', icon: Hospital },
+    { href: '/disease-library', label: 'Disease Library', icon: BookHeart },
 ];
 
 const learnNav = [
-    { href: '/challenges', label: 'Challenges', icon: Trophy },
+    { href: '/challenges', label: 'Health Challenges', icon: Trophy },
     { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
     { href: '/yoga-library', label: 'Yoga Library', icon: Wind },
     { href: '/video-tutorials', label: 'Video Tutorials', icon: Video },
     { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
 ];
 
-const resourcesNav = [
-    { href: '/disease-library', label: 'Disease Library', icon: BookHeart },
-]
-
 const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void}) => {
     const pathname = usePathname();
     return (
         <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            <h2 className="mb-2 px-2 text-sm font-semibold tracking-tight text-muted-foreground">
                 {title}
             </h2>
             <SidebarMenu>
@@ -70,6 +67,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
                         asChild
                         isActive={pathname.startsWith(item.href)}
                         onClick={onLinkClick}
+                        tooltip={item.label}
                     >
                         <Link href={item.href}>
                         <item.icon />
@@ -91,12 +89,11 @@ export function SidebarNav() {
   };
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-2 py-2">
         <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
-        <NavSection title="AI Tools" items={aiToolsNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Services" items={servicesNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Smart Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />
         <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Resources" items={resourcesNav} onLinkClick={handleLinkClick} />
     </div>
   );
 }
