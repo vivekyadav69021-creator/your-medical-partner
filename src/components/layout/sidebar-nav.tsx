@@ -1,6 +1,6 @@
 
 'use client';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   SidebarMenu,
@@ -24,7 +24,9 @@ import {
   Video,
   GraduationCap,
   Settings,
+  LogIn,
 } from 'lucide-react';
+import { useUser } from '@/firebase';
 
 const mainNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -56,8 +58,21 @@ const settingsNav = [
     { href: '/profile', label: 'Settings', icon: Settings },
 ];
 
-const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void}) => {
+const authNav = [
+  { href: '/login', label: 'Sign In', icon: LogIn },
+];
+
+
+const NavSection = ({ title, items, onLinkClick, user }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void, user?: any}) => {
     const pathname = usePathname();
+    const router = useRouter();
+
+    // If a section requires auth and user is not present, don't render it.
+    // The exception is the 'Authentication' section itself.
+    if(title !== 'Authentication' && !user) return null;
+    // If the section is 'Authentication' and user IS present, don't render it.
+    if(title === 'Authentication' && user) return null;
+
     return (
         <div className="px-3 py-2">
             <h2 className="mb-2 px-2 text-sm font-semibold tracking-tight text-muted-foreground group-data-[state=collapsed]:hidden">
@@ -87,6 +102,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
 
 export function SidebarNav() {
   const { setOpenMobile } = useSidebar();
+  const { user } = useUser();
   const handleLinkClick = () => {
     if (window.innerWidth < 768) {
       setOpenMobile(false);
@@ -95,11 +111,12 @@ export function SidebarNav() {
 
   return (
     <div className="space-y-2 py-2">
-        <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Smart Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Configuration" items={settingsNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} user={user} />
+        <NavSection title="Smart Tools" items={smartToolsNav} onLinkClick={handleLinkClick} user={user} />
+        <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} user={user} />
+        <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} user={user} />
+        <NavSection title="Configuration" items={settingsNav} onLinkClick={handleLinkClick} user={user} />
+        <NavSection title="Authentication" items={authNav} onLinkClick={handleLinkClick} user={user} />
     </div>
   );
 }
