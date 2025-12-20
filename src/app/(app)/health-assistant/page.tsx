@@ -50,6 +50,7 @@ type Session = {
   title: string;
   messages: Message[];
   createdAt: number;
+  specialty?: string; // For doctor chats
 };
 
 const initialState = {
@@ -310,79 +311,119 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
 
 
 export default function HealthAssistantPage() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  
+  const [generalSessions, setGeneralSessions] = useState<Session[]>([]);
+  const [doctorSessions, setDoctorSessions] = useState<Session[]>([]);
+  const [activeGeneralSessionId, setActiveGeneralSessionId] = useState<string | null>(null);
+  const [activeDoctorSessionId, setActiveDoctorSessionId] = useState<string | null>(null);
+
   const [generalState, generalFormAction, isGeneralPending] = useActionState(healthAssistantAction, initialState);
   const [doctorState, doctorFormAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
-  const [isPending, startTransition] = useTransition();
-
-
+  
   const [activeMode, setActiveMode] = useState<'general' | 'doctor'>('general');
   const [specialty, setSpecialty] = useState<string>("General Physician");
 
   const formRef = useRef<HTMLFormElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const queryInputRef = useRef<HTMLInputElement>(null);
 
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  
+  const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
+  const sessions = activeMode === 'general' ? generalSessions : doctorSessions.filter(s => s.specialty === specialty);
+  const activeSessionId = activeMode === 'general' ? activeGeneralSessionId : activeDoctorSessionId;
+  const setSessions = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
+  const setActiveSessionId = activeMode === 'general' ? setActiveGeneralSessionId : setActiveDoctorSessionId;
+
+  const handleStateUpdate = useCallback((state: typeof initialState, mode: 'general' | 'doctor') => {
+      const currentSessionId = mode === 'general' ? activeGeneralSessionId : activeDoctorSessionId;
+      const setSessionList = mode === 'general' ? setGeneralSessions : setDoctorSessions;
+
+      if ((state.response || state.error) && currentSessionId) {
+          const content = state.response || `Sorry, an error occurred: ${state.error}`;
+          setSessionList(prev => prev.map(s => 
+              s.id === currentSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s
+          ));
+      }
+  }, [activeGeneralSessionId, activeDoctorSessionId]);
 
   useEffect(() => {
+      if (!isGeneralPending) handleStateUpdate(generalState, 'general');
+  }, [generalState, isGeneralPending, handleStateUpdate]);
+
+  useEffect(() => {
+      if (!isDoctorPending) handleStateUpdate(doctorState, 'doctor');
+  }, [doctorState, isDoctorPending, handleStateUpdate]);
+
+  const loadSessions = (mode: 'general' | 'doctor') => {
     try {
-      const savedSessions = localStorage.getItem('healthAssistantSessions');
-      if (savedSessions) {
-        const parsedSessions = JSON.parse(savedSessions);
-        setSessions(parsedSessions);
-        if (parsedSessions.length > 0 && !activeSessionId) {
-          setActiveSessionId(parsedSessions[0].id);
-        } else if (parsedSessions.length === 0) {
-            handleNewChat();
-        }
+      const key = `healthAssistantSessions_${mode}`;
+      const savedSessions = localStorage.getItem(key);
+      const parsedSessions = savedSessions ? JSON.parse(savedSessions) : [];
+      if (mode === 'general') {
+        setGeneralSessions(parsedSessions);
+        if (parsedSessions.length > 0) setActiveGeneralSessionId(parsedSessions[0].id);
+        else handleNewChat();
       } else {
-        handleNewChat();
+        setDoctorSessions(parsedSessions);
+        const relevantDoctorSessions = parsedSessions.filter((s: Session) => s.specialty === specialty);
+        if (relevantDoctorSessions.length > 0) setActiveDoctorSessionId(relevantDoctorSessions[0].id);
+        else handleNewChat();
       }
     } catch (error) {
-      console.error("Failed to load sessions from localStorage", error);
+      console.error(`Failed to load ${mode} sessions:`, error);
       handleNewChat();
     }
+  };
+
+  useEffect(() => {
+    loadSessions('general');
+    loadSessions('doctor');
   }, []);
 
   useEffect(() => {
-    // Avoid saving empty initial session
-    if (sessions.some(s => s.messages.length > 0)) {
-        localStorage.setItem('healthAssistantSessions', JSON.stringify(sessions));
+    if (generalSessions.some(s => s.messages.length > 0)) {
+      localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
     }
-  }, [sessions]);
+  }, [generalSessions]);
   
   useEffect(() => {
-    if (!activeSessionId && sessions.length > 0) {
-        setActiveSessionId(sessions[0].id);
+    if (doctorSessions.some(s => s.messages.length > 0)) {
+      localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
     }
-  }, [sessions, activeSessionId]);
+  }, [doctorSessions]);
 
-
-  const activeSession = sessions.find(s => s.id === activeSessionId);
-  const messages = activeSession?.messages || [];
-  const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop()?.content || '';
-  
   const handleNewChat = useCallback(() => {
     const newSession: Session = {
       id: `session-${Date.now()}`,
-      title: 'New Chat',
+      title: activeMode === 'doctor' ? `${specialty} Chat` : 'New Chat',
       messages: [],
       createdAt: Date.now(),
+      ...(activeMode === 'doctor' && { specialty }),
     };
-    setSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-    setActiveSessionId(newSession.id);
+
+    const setSessionList = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
+    const setActiveId = activeMode === 'general' ? setActiveGeneralSessionId : setActiveDoctorSessionId;
+    
+    setSessionList(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+    setActiveId(newSession.id);
     setAttachedImage(null);
-  }, []);
+  }, [activeMode, specialty]);
+
+  useEffect(() => {
+    const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions.filter(s => s.specialty === specialty);
+    if (!currentSessions.find(s => s.id === activeSessionId)) {
+        if (currentSessions.length > 0) {
+            setActiveSessionId(currentSessions[0].id);
+        } else {
+            handleNewChat();
+        }
+    }
+  }, [activeMode, specialty, generalSessions, doctorSessions, activeSessionId, handleNewChat, setActiveSessionId]);
 
   const handleDeleteChat = (sessionId: string) => {
     setSessions(prev => {
         const filtered = prev.filter(s => s.id !== sessionId);
         if (activeSessionId === sessionId) {
-            if(filtered.length > 0) {
+            if (filtered.length > 0) {
                 setActiveSessionId(filtered[0].id);
             } else {
                 handleNewChat();
@@ -392,7 +433,7 @@ export default function HealthAssistantPage() {
     });
   };
   
-   const handleFormAction = (formData: FormData) => {
+  const handleFormAction = (formData: FormData) => {
     const query = formData.get('query') as string;
     if (!query && !attachedImage) return;
 
@@ -402,68 +443,36 @@ export default function HealthAssistantPage() {
       formData.set('photoDataUri', attachedImage);
     }
     
-     setSessions(prev => prev.map(s => {
+    setSessions(prev => prev.map(s => {
       if (s.id === activeSessionId) {
         const newMessages = [...s.messages, userMessage];
-        const newTitle = s.messages.length === 0 && query ? query.substring(0, 30) : s.title;
+        const newTitle = (s.messages.length === 0 && query) ? query.substring(0, 30) : s.title;
         return { ...s, messages: newMessages, title: newTitle };
       }
       return s;
     }));
     
-    startTransition(() => {
-        if (activeMode === 'doctor') {
-            formData.set('specialty', specialty);
-            formData.set('history', JSON.stringify(messages));
-            doctorFormAction(formData);
-        } else {
-            generalFormAction(formData);
-        }
-    });
+    if (activeMode === 'doctor') {
+      formData.set('specialty', specialty);
+      formData.set('history', JSON.stringify(activeSession?.messages || []));
+      doctorFormAction(formData);
+    } else {
+      generalFormAction(formData);
+    }
     
     formRef.current?.reset();
+    if(queryInputRef.current) queryInputRef.current.value = '';
     setAttachedImage(null);
   }
 
-  const handleStateUpdate = useCallback((state: typeof initialState) => {
-    if (state.response || state.error) {
-        const content = state.response || `Sorry, an error occurred: ${state.error}`;
-        setSessions(prev => prev.map(s => 
-            s.id === activeSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s
-        ));
-    }
-  }, [activeSessionId]);
-  
-  useEffect(() => {
-    if (!isGeneralPending) handleStateUpdate(generalState);
-  }, [generalState, isGeneralPending, handleStateUpdate]);
-
-  useEffect(() => {
-      if (!isDoctorPending) handleStateUpdate(doctorState);
-  }, [doctorState, isDoctorPending, handleStateUpdate]);
-
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
-  }, [messages, isPending, isGeneralPending, isDoctorPending]);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => setAttachedImage(e.target?.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-  
   const handleSpecialtyChange = (newSpecialty: string) => {
     setSpecialty(newSpecialty);
-    handleNewChat();
+    const existingChat = doctorSessions.find(s => s.specialty === newSpecialty);
+    if (existingChat) {
+      setActiveDoctorSessionId(existingChat.id);
+    } else {
+      handleNewChat();
+    }
   };
 
   const handleTranscript = (transcript: string) => {
@@ -471,6 +480,10 @@ export default function HealthAssistantPage() {
       queryInputRef.current.value = transcript;
     }
   }
+  
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+  const messages = activeSession?.messages || [];
+  const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop()?.content || '';
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
   const userImage = 'https://picsum.photos/seed/user/100/100';
@@ -515,7 +528,6 @@ export default function HealthAssistantPage() {
       <div className="flex-1 flex flex-col h-full">
           <Tabs defaultValue="general" value={activeMode} onValueChange={(value) => {
             setActiveMode(value as 'general' | 'doctor');
-            handleNewChat();
           }} className="flex-grow flex flex-col">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="general">General Assistant</TabsTrigger>
@@ -527,11 +539,9 @@ export default function HealthAssistantPage() {
                     <ChatInterface 
                         key={`general-${activeSessionId}`}
                         messages={messages}
-                        isPending={isGeneralPending}
+                        isPending={isPending}
                         onFormAction={handleFormAction}
                         formRef={formRef}
-                        fileInputRef={fileInputRef}
-                        scrollAreaRef={scrollAreaRef}
                         queryInputRef={queryInputRef}
                         attachedImage={attachedImage}
                         setAttachedImage={setAttachedImage}
@@ -548,11 +558,9 @@ export default function HealthAssistantPage() {
                      <ChatInterface 
                         key={`doctor-${activeSessionId}`}
                         messages={messages}
-                        isPending={isDoctorPending}
+                        isPending={isPending}
                         onFormAction={handleFormAction}
                         formRef={formRef}
-                        fileInputRef={fileInputRef}
-                        scrollAreaRef={scrollAreaRef}
                         queryInputRef={queryInputRef}
                         attachedImage={attachedImage}
                         setAttachedImage={setAttachedImage}
@@ -593,10 +601,7 @@ interface ChatInterfaceProps {
     messages: Message[];
     isPending: boolean;
     onFormAction: (formData: FormData) => void;
-    onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     formRef: React.RefObject<HTMLFormElement>;
-    fileInputRef: React.RefObject<HTMLInputElement>;
-    scrollAreaRef: React.RefObject<HTMLDivElement>;
     queryInputRef: React.RefObject<HTMLInputElement>;
     attachedImage: string | null;
     setAttachedImage: (image: string | null) => void;
@@ -611,10 +616,32 @@ interface ChatInterfaceProps {
 }
 
 function ChatInterface({
-    messages, isPending, onFormAction, onFileChange, formRef, fileInputRef, scrollAreaRef, queryInputRef,
+    messages, isPending, onFormAction, formRef, queryInputRef,
     attachedImage, setAttachedImage, userImage, assistantImage, title, description, placeholder,
     initialMessage, Icon, children
 }: ChatInterfaceProps) {
+    
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => setAttachedImage(e.target?.result as string);
+          reader.readAsDataURL(file);
+        }
+    };
+    
+    useEffect(() => {
+        if (scrollAreaRef.current) {
+          const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+          if (viewport) {
+            viewport.scrollTop = viewport.scrollHeight;
+          }
+        }
+    }, [messages, isPending]);
+
     return (
          <div className="flex-grow flex flex-col">
             {children}
@@ -722,7 +749,7 @@ function ChatInterface({
                     <input
                     type="file"
                     ref={fileInputRef}
-                    onChange={onFileChange}
+                    onChange={handleFileChange}
                     className="hidden"
                     accept="image/*"
                     />
