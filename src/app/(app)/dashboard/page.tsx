@@ -41,6 +41,7 @@ import { Progress } from '@/components/ui/progress';
 import { HealthScoreDisplay } from '@/components/health-score-display';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { OnboardingModal } from '@/components/onboarding-modal';
 
 type UserProfile = {
   name: string;
@@ -144,8 +145,8 @@ const activeChallenge = {
 
 
 export default function DashboardPage() {
-  const smartwatchImage = PlaceHolderImages.find(p => p.id === 'smartwatch-connect');
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     try {
@@ -153,15 +154,31 @@ export default function DashboardPage() {
       if (savedProfile) {
         setProfile(JSON.parse(savedProfile));
       }
+
+      const hasOnboarded = localStorage.getItem('hasOnboarded');
+      if (!hasOnboarded) {
+        setShowOnboarding(true);
+      }
     } catch (e) {
       console.error("Failed to load profile from local storage", e);
+      // If there's an error, assume they haven't onboarded
+      const hasOnboarded = localStorage.getItem('hasOnboarded');
+      if (!hasOnboarded) {
+        setShowOnboarding(true);
+      }
     }
   }, []);
+
+  const handleOnboardingClose = () => {
+    localStorage.setItem('hasOnboarded', 'true');
+    setShowOnboarding(false);
+  };
   
   const greetingName = profile?.name || 'Guest';
 
   return (
     <div className="space-y-8">
+      <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingClose} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">
           Hi, {greetingName}!
