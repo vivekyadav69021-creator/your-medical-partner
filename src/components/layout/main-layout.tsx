@@ -26,10 +26,13 @@ import {
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUserProfile } from '@/context/user-profile-context';
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();
+  const { userImage, userName } = useUserProfile();
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const { setTheme } = useTheme();
 
@@ -65,9 +68,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <UserIcon />
-                  <span className="sr-only">User Menu</span>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar>
+                      <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
+                      <AvatarFallback>
+                          <UserIcon />
+                      </AvatarFallback>
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

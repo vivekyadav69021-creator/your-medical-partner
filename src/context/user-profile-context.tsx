@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 type UserProfileContextType = {
   userName: string;
@@ -14,10 +14,27 @@ const UserProfileContext = createContext<UserProfileContextType | undefined>(und
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
   const [userName, setUserNameState] = useState('Guest');
-  const [userImage, setUserImage] = useState('https://picsum.photos/seed/user/100/100');
+  const [userImage, setUserImageState] = useState('https://picsum.photos/seed/user/100/100');
+
+  useEffect(() => {
+    try {
+      const savedProfile = localStorage.getItem('userMedicalProfile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        if (parsedProfile.name) setUserNameState(parsedProfile.name);
+        if (parsedProfile.image) setUserImageState(parsedProfile.image);
+      }
+    } catch (e) {
+      console.error("Failed to load profile from localStorage in context", e);
+    }
+  }, []);
 
   const setUserName = (name: string) => {
       setUserNameState(name);
+  };
+
+  const setUserImage = (image: string) => {
+    setUserImageState(image);
   };
 
   return (

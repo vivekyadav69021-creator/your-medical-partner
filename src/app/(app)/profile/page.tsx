@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -15,11 +15,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Laptop, Save } from 'lucide-react';
+import { Sun, Moon, Laptop, Save, User as UserIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUserProfile } from '@/context/user-profile-context';
 
-type UserProfile = {
+type UserProfileData = {
   name: string;
   age: string;
   gender: string;
@@ -28,12 +30,15 @@ type UserProfile = {
   bloodGroup: string;
   conditions: string;
   allergies: string;
+  image: string;
 };
 
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile>({
+  const { userName, userImage, setUserName, setUserImage } = useUserProfile();
+
+  const [profile, setProfile] = useState<UserProfileData>({
     name: '',
     age: '',
     gender: 'not-specified',
@@ -42,13 +47,21 @@ export default function ProfilePage() {
     bloodGroup: '',
     conditions: '',
     allergies: '',
+    image: 'https://picsum.photos/seed/user/100/100',
   });
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
       const savedProfile = localStorage.getItem('userMedicalProfile');
       if (savedProfile) {
-        setProfile(JSON.parse(savedProfile));
+        const parsedProfile = JSON.parse(savedProfile);
+        setProfile(parsedProfile);
+        setUserName(parsedProfile.name || 'Guest');
+        setUserImage(parsedProfile.image || 'https://picsum.photos/seed/user/100/100');
+      } else {
+         setProfile(prev => ({...prev, name: userName, image: userImage}));
       }
     } catch (e) {
       console.error("Failed to load profile from local storage", e);
@@ -60,16 +73,30 @@ export default function ProfilePage() {
     setProfile(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSelectChange = (id: keyof UserProfile, value: string) => {
+  const handleSelectChange = (id: keyof UserProfileData, value: string) => {
     setProfile(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              const result = e.target?.result as string;
+              setProfile(prev => ({ ...prev, image: result }));
+          }
+          reader.readAsDataURL(file);
+      }
   };
 
   const handleSaveProfile = () => {
     try {
       localStorage.setItem('userMedicalProfile', JSON.stringify(profile));
+      setUserName(profile.name || 'Guest');
+      setUserImage(profile.image);
       toast({
         title: "Profile Saved",
-        description: "Your medical information has been saved locally on this device.",
+        description: "Your information has been saved locally on this device.",
       });
     } catch (e) {
       toast({
@@ -99,6 +126,19 @@ export default function ProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+            <div className="flex items-center gap-6">
+                <Avatar className="h-24 w-24">
+                    <AvatarImage src={profile.image} alt={profile.name || 'User'} data-ai-hint="person face" />
+                    <AvatarFallback>
+                        <UserIcon className="h-12 w-12" />
+                    </AvatarFallback>
+                </Avatar>
+                <div className="space-y-2">
+                    <Button onClick={() => fileInputRef.current?.click()}>Change Photo</Button>
+                    <Input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
+                    <p className="text-xs text-muted-foreground">Recommended: Square image (e.g., 400x400px)</p>
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
