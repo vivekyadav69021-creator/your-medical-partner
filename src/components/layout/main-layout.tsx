@@ -10,16 +10,28 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
-import { HeartPulse, ShoppingCart, User as UserIcon } from 'lucide-react';
+import { HeartPulse, ShoppingCart, User as UserIcon, Moon, Sun, Laptop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import { Badge } from '@/components/ui/badge';
-import { ThemeToggle } from '@/components/theme-toggle';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+} from '@/components/ui/dropdown-menu';
+import { useTheme } from 'next-themes';
+
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const { setTheme } = useTheme();
 
   return (
     <SidebarProvider>
@@ -50,13 +62,44 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 )}
               </Link>
             </Button>
-             <Button variant="ghost" size="icon" asChild>
-                <Link href="/profile">
-                    <UserIcon />
-                    <span className="sr-only">Profile</span>
-                </Link>
-             </Button>
-            <ThemeToggle />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <UserIcon />
+                  <span className="sr-only">User Menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                   <Link href="/profile">
+                    Profile
+                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    Theme
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setTheme('light')}>
+                        <Sun className="mr-2 h-4 w-4" />
+                        <span>Light</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme('dark')}>
+                        <Moon className="mr-2 h-4 w-4" />
+                        <span>Dark</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme('system')}>
+                        <Laptop className="mr-2 h-4 w-4" />
+                        <span>System</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
           </div>
         </header>
         <main className="flex-1 p-4 overflow-y-auto md:p-6 lg:p-8 bg-secondary/50 dark:bg-background">
