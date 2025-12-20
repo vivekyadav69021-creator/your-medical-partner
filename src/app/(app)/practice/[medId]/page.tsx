@@ -11,8 +11,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Play, Pause, Timer, Save } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function PracticePage() {
   const params = useParams();
@@ -32,9 +30,6 @@ export default function PracticePage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  const firestore = useFirestore();
-  const { user } = useUser();
-
   useEffect(() => {
     const foundMeditation = guidedMeditations.find(m => m.id === medId);
     if (foundMeditation) {
@@ -99,37 +94,7 @@ export default function PracticePage() {
   };
 
   const handleSaveSession = async () => {
-    if (!user || !firestore || !meditation) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not save. User not logged in.' });
-        return;
-    }
-    if (!selectedMood) {
-        toast({ variant: 'destructive', title: 'Mood Required', description: 'Please select your mood after the session.' });
-        return;
-    }
-    setIsSaving(true);
-    try {
-        const sessionData = {
-            medId: meditation.id,
-            title: meditation.title,
-            duration_min: parseInt(selectedDuration, 10),
-            mood: selectedMood,
-            createdAt: serverTimestamp(),
-        };
-        const sessionsCol = collection(firestore, 'users', user.uid, 'sessions');
-        await addDoc(sessionsCol, sessionData);
-
-        toast({
-            title: 'Session Saved!',
-            description: `Your ${meditation?.title} session has been logged.`,
-        });
-        router.push('/meditation-hub');
-    } catch(error) {
-        console.error("Error saving session:", error);
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save session to your profile.' });
-    } finally {
-        setIsSaving(false);
-    }
+    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to save a session.' });
   }
 
   if (!meditation) {

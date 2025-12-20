@@ -20,39 +20,16 @@
             "format": "email",
             "description": "The user's email address."
         },
-        "age": {
-          "type": "number",
-          "description": "The user's age."
-        },
-        "phone": {
-          "type": "string",
-          "description": "The user's mobile phone number."
-        },
-        "conditions": {
-          "type": "string",
-          "description": "Any medical conditions the user has."
-        },
-        "allergy": {
-          "type": "string",
-          "description": "Any allergies the user has."
-        },
         "createdAt": {
           "type": "string",
           "description": "The date and time the user profile was created.",
           "format": "date-time"
-        },
-        "profileCompleted": {
-            "type": "boolean",
-            "description": "Flag to indicate if the user has filled out their initial health profile."
         }
       },
       "required": [
         "id",
         "name",
-        "age",
-        "phone",
-        "email",
-        "profileCompleted"
+        "email"
       ]
     },
     "Doctor": {
@@ -230,9 +207,7 @@
     }
   },
   "auth": {
-    "providers": [
-      "password"
-    ]
+    "providers": []
   },
   "firestore": {
     "structure": [
@@ -243,7 +218,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information. Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
+          "description": "Stores user profile information. Since auth is removed, this is not used.",
           "params": [
             {
               "name": "userId",
@@ -269,26 +244,6 @@
         }
       },
       {
-        "path": "/users/{userId}/appointments/{appointmentId}",
-        "definition": {
-          "entityName": "Appointment",
-          "schema": {
-            "$ref": "#/backend/entities/Appointment"
-          },
-          "description": "Stores appointment information for a specific user. Includes denormalized 'userId' and 'doctorId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "appointmentId",
-              "description": "The unique identifier for the appointment."
-            }
-          ]
-        }
-      },
-      {
         "path": "/medicines/{medicineId}",
         "definition": {
           "entityName": "Medicine",
@@ -303,44 +258,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/users/{userId}/orders/{orderId}",
-        "definition": {
-          "entityName": "Order",
-          "schema": {
-            "$ref": "#/backend/entities/Order"
-          },
-          "description": "Stores order information for a specific user. Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier for the order."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/healthScore",
-        "definition": {
-          "entityName": "HealthScore",
-          "schema": {
-            "$ref": "#/backend/entities/HealthScore"
-          },
-          "description": "Stores health score information for a specific user. Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to prioritize authorization independence, clarity, and scalability. User profiles are stored under `/users/{userId}` for simple ownership-based security rules. Denormalization is employed to ensure authorization independence. Specifically, for collaborative data like appointments, the `userId` and `doctorId` are stored within the appointment document itself, eliminating the need for `get()` calls to parent documents during security rule evaluation. This allows for atomic operations (transactions/batches) when creating appointments. Doctors and Medicines are stored in root-level collections (`/doctors`, `/medicines`) as their access is not user-specific. Orders are stored under `/users/{userId}/orders/{orderId}` to reflect user ownership.  HealthScores are stored under `/users/{userId}/healthScore` to represent a 1:1 relationship with the user profile. This structure supports the QAPs (Rules are not Filters) principle by using structural segregation; each collection has a homogeneous security posture, simplifying list operations. Also, using path-based ownership `/users/{userId}` enables secure list operations for a specific user's data, and separate collections `/doctors` and `/medicines` do not require user-specific filtering in rules."
+    "reasoning": "With authentication removed, the data structure is simplified. User-specific collections like appointments, orders, and health scores are no longer relevant as there's no concept of a logged-in user. The remaining public collections for doctors and medicines are kept as they are globally accessible."
   }
 }

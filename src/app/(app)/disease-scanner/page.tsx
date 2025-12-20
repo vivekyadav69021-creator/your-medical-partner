@@ -19,8 +19,6 @@ import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import jsPDF from 'jspdf';
@@ -369,9 +367,6 @@ function XRayScanner({t}: {t: typeof labels.en}) {
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
   
-  const { user } = useUser();
-  const firestore = useFirestore();
-  
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -474,23 +469,6 @@ function XRayScanner({t}: {t: typeof labels.en}) {
         return;
     }
   };
-  
-   useEffect(() => {
-    if(state.result && user && firestore) {
-      try {
-        const doc = {
-          createdAt: serverTimestamp(),
-          report: state.result.report || {},
-          recommendationText: state.result.recommendationText || '',
-          fileName: selectedFile?.name || 'camera.jpg',
-        };
-        const analysesCol = collection(firestore, 'users', user.uid, 'xrayAnalyses');
-        addDoc(analysesCol, doc);
-      } catch (e) {
-        console.warn('Failed to save analysis record', e);
-      }
-    }
-  }, [state.result, user, firestore, selectedFile]);
 
 
   return (
@@ -593,7 +571,6 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const imageFileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const { user } = useUser();
 
     const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -619,7 +596,7 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
         }
 
         const doc = new jsPDF();
-        const patientName = report.patientDetails?.name || user?.displayName || 'N/A';
+        const patientName = report.patientDetails?.name || 'Guest';
         
         doc.setFontSize(18);
         doc.text("Lab Report Analysis", 105, 20, { align: 'center' });

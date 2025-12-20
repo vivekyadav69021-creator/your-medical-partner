@@ -18,7 +18,6 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, XCircle, Award, Download, ArrowLeft } from 'lucide-react';
 import { type Quiz, type Lesson } from '@/lib/lessons-data';
 import { jsPDF } from 'jspdf';
-import { useUserProfile } from '@/context/user-profile-context';
 import { useToast } from '@/hooks/use-toast';
 
 type Language = 'en' | 'hi';
@@ -35,7 +34,6 @@ export default function QuizClient({ quiz, lesson, lang }: QuizClientProps) {
     Array(quiz.questions.length).fill(null)
   );
   const [showResults, setShowResults] = useState(false);
-  const { userName } = useUserProfile();
   const { toast } = useToast();
 
   const handleAnswerSelect = (answerIndex: number) => {
@@ -61,6 +59,7 @@ export default function QuizClient({ quiz, lesson, lang }: QuizClientProps) {
   const downloadCertificate = () => {
     try {
         const doc = new jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' });
+        const userName = 'Guest';
 
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();

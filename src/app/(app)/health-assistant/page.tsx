@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -17,7 +18,6 @@ import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X, Volume2, StopCirc
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useUserProfile } from '@/context/user-profile-context';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -253,7 +253,6 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
         stream.getTracks().forEach(track => track.stop());
       };
       mediaRecorderRef.current.start();
-      setIsRecording(true);
       toast({ title: 'Recording started...', description: 'Speak your query now.' });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -310,7 +309,6 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
 
 
 export default function HealthAssistantPage() {
-  const { userName, userImage } = useUserProfile();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   
@@ -460,6 +458,7 @@ export default function HealthAssistantPage() {
   }
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
+  const userImage = 'https://picsum.photos/seed/user/100/100';
 
   return (
     <div className="flex h-[calc(100vh-6.5rem)] gap-4">

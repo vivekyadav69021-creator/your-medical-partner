@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -29,8 +30,6 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash, Pill, HeartPulse, Dumbbell, Calendar, Pencil, Loader2 } from 'lucide-react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -45,69 +44,25 @@ type Category = 'Medication' | 'Fitness' | 'General' | 'Appointment';
 type Task = { id: string; title: string; category: Category; completed: boolean; createdAt: any };
 
 export default function PlannerPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const { toast } = useToast();
-  
-  const tasksQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, 'users', user.uid, 'tasks'), orderBy('createdAt', 'desc')) : null
-  , [user, firestore]);
-
-  const { data: tasks, isLoading } = useCollection<Task>(tasksQuery);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const handleTaskSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!user || !firestore) return;
-
-    const formData = new FormData(event.currentTarget);
-    const title = formData.get('title') as string;
-    const category = formData.get('category') as Category;
-
-    try {
-        if (editingTask) {
-            const taskRef = doc(firestore, 'users', user.uid, 'tasks', editingTask.id);
-            await updateDoc(taskRef, { title, category });
-            toast({ title: 'Task Updated' });
-        } else {
-            const tasksCol = collection(firestore, 'users', user.uid, 'tasks');
-            await addDoc(tasksCol, {
-              title,
-              category,
-              completed: false,
-              createdAt: serverTimestamp(),
-            });
-            toast({ title: 'Task Added' });
-        }
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not save the task.'});
-    }
-    
+    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to manage tasks.' });
     setIsDialogOpen(false);
-    setEditingTask(null);
   };
 
   const toggleTask = async (task: Task) => {
-    if (!user || !firestore) return;
-    const taskRef = doc(firestore, 'users', user.uid, 'tasks', task.id);
-    try {
-        await updateDoc(taskRef, { completed: !task.completed });
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not update the task.'});
-    }
+    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to manage tasks.' });
   };
   
   const deleteTask = async (taskId: string) => {
-    if (!user || !firestore) return;
-    const taskRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
-    try {
-        await deleteDoc(taskRef);
-        toast({ title: 'Task Deleted' });
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the task.'});
-    }
+    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to manage tasks.' });
   };
   
   const handleEditClick = (task: Task) => {
@@ -137,7 +92,7 @@ export default function PlannerPage() {
           if (!isOpen) setEditingTask(null);
         }}>
           <DialogTrigger asChild>
-            <Button onClick={openNewTaskDialog} disabled={!user}>
+            <Button onClick={openNewTaskDialog}>
               <Plus className="mr-2 h-4 w-4" />
               Add Task
             </Button>
@@ -219,7 +174,7 @@ export default function PlannerPage() {
               ))
             ) : (
               !isLoading && <p className="text-sm text-muted-foreground text-center py-8">
-                No pending tasks. Great job!
+                Log in to manage your tasks.
               </p>
             )}
           </CardContent>

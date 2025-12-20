@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -17,7 +18,6 @@ import { Send, User, Sparkles, BrainCircuit, Mic, MicOff, Volume2, StopCircle, T
 import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useUserProfile } from '@/context/user-profile-context';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
@@ -237,7 +237,6 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
         stream.getTracks().forEach(track => track.stop());
       };
       mediaRecorderRef.current.start();
-      setIsRecording(true);
       toast({ title: 'Recording started...', description: 'Speak your message now.' });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -294,7 +293,6 @@ function VoiceWidget({ lastAssistantMessage }: { lastAssistantMessage: string })
 
 
 export default function AIPsychiatristPage() {
-  const { userName, userImage } = useUserProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [state, formAction, isPending] = useActionState(aiPsychiatristAction, initialState);
   
@@ -338,6 +336,7 @@ export default function AIPsychiatristPage() {
   }, [messages, isPending]);
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
+  const userImage = "https://picsum.photos/seed/user/100/100";
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)]">

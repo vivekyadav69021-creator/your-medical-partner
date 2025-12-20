@@ -13,8 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Download, BarChart2, Calendar, Clock, Smile, History, Star } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { jsPDF } from 'jspdf';
@@ -30,7 +28,7 @@ type Session = {
     medId: string;
     title: string;
     mood: string;
-    createdAt: Timestamp;
+    createdAt: any;
 };
 
 type AnalyticsData = {
@@ -44,103 +42,25 @@ type AnalyticsData = {
 };
 
 export default function AnalysisPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user || !firestore) return;
-
-    const fetchAnalytics = async () => {
-      setLoading(true);
-      try {
-        const sessionsCol = collection(firestore, 'users', user.uid, 'sessions');
-        const q = query(sessionsCol, orderBy('createdAt', 'desc'));
-        const sessionsSnap = await getDocs(q);
-        
-        const sessions: Session[] = sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Session));
-
-        let totalMin = 0;
-        const byType: { [key: string]: number } = {};
-        const moods: string[] = [];
-        const titles: string[] = [];
-
-        sessions.forEach(session => {
-            const duration = session.duration_min || 0;
-            totalMin += duration;
-            if (session.medId) {
-                byType[session.title] = (byType[session.title] || 0) + duration;
-                titles.push(session.title);
-            }
-            if (session.mood) {
-                moods.push(session.mood);
-            }
-        });
-        
-        const totalHours = Math.floor(totalMin / 60);
-        const remainingMins = totalMin % 60;
-
-        const byTypeData = Object.entries(byType).map(([name, minutes]) => ({ name, minutes }));
-
-        const moodCounts: {[key: string]: number} = moods.reduce((acc, mood) => {
-            acc[mood] = (acc[mood] || 0) + 1;
-            return acc;
-        }, {} as {[key: string]: number});
-        const averageMood = Object.keys(moodCounts).reduce((a, b) => moodCounts[a] > moodCounts[b] ? a : b, 'N/A');
-
-        const titleCounts: {[key: string]: number} = titles.reduce((acc, title) => {
-            acc[title] = (acc[title] || 0) + 1;
-            return acc;
-        }, {} as {[key: string]: number});
-        const mostPracticed = Object.keys(titleCounts).reduce((a, b) => titleCounts[a] > titleCounts[b] ? a : b, 'N/A');
-
-
-        let streak = 0;
-        if (sessions.length > 0) {
-            const uniqueSortedDays = [...new Set(sessions.map(s => s.createdAt.toDate().toDateString()))]
-                .map(ds => new Date(ds))
-                .sort((a, b) => b.getTime() - a.getTime());
-            
-            if (uniqueSortedDays.length > 0) {
-                const today = new Date();
-                const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                const lastSessionDateOnly = new Date(uniqueSortedDays[0].getFullYear(), uniqueSortedDays[0].getMonth(), uniqueSortedDays[0].getDate());
-                const diffWithToday = (todayDateOnly.getTime() - lastSessionDateOnly.getTime()) / (1000 * 60 * 60 * 24);
-
-                if (diffWithToday <= 1) {
-                    streak = 1;
-                    for (let i = 0; i < uniqueSortedDays.length - 1; i++) {
-                        const diff = (uniqueSortedDays[i].getTime() - uniqueSortedDays[i+1].getTime()) / (1000 * 60 * 60 * 24);
-                        if (diff === 1) streak++;
-                        else break;
-                    }
-                }
-            }
-        }
-
-        setAnalytics({
-            totalSessions: sessions.length,
-            totalTime: `${totalHours}h ${remainingMins}m`,
-            currentStreak: streak,
-            averageMood,
-            mostPracticed,
-            byTypeData,
-            recentSessions: sessions.slice(0, 10),
-        });
-
-      } catch (err) {
-        console.error("Error fetching analytics:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAnalytics();
-  }, [user, firestore]);
+    setAnalytics({
+        totalSessions: 0,
+        totalTime: '0h 0m',
+        currentStreak: 0,
+        averageMood: 'N/A',
+        mostPracticed: 'N/A',
+        byTypeData: [],
+        recentSessions: [],
+    });
+    setLoading(false);
+  }, []);
   
   const downloadReport = () => {
-    if (!analytics || !user) {
+    if (!analytics) {
         toast({
             variant: "destructive",
             title: "Error",
@@ -150,7 +70,7 @@ export default function AnalysisPage() {
     }
     
     const doc = new jsPDF();
-    const userName = user.displayName || user.email || 'User';
+    const userName = 'Guest';
     const reportDate = new Date().toLocaleDateString();
 
     doc.setFontSize(22);
@@ -299,7 +219,7 @@ export default function AnalysisPage() {
                     </ChartContainer>
                 ) : (
                     <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                        No practice data to display.
+                        No practice data to display. Please log in to see your analytics.
                     </div>
                 )}
             </CardContent>
@@ -334,7 +254,7 @@ export default function AnalysisPage() {
                     </Table>
                 ) : (
                      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                        No recent sessions found.
+                        No recent sessions found. Please log in to see your sessions.
                     </div>
                 )}
             </CardContent>

@@ -15,8 +15,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -31,9 +29,6 @@ export default function LearnPage() {
   const collectionId = Array.isArray(params.collectionId) ? params.collectionId[0] : params.collectionId;
   const chapterId = searchParams.get('chapter');
   
-  const firestore = useFirestore();
-  const { user } = useUser();
-
   const [collection, setCollection] = useState<LearnCollectionItem | null>(null);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
   const [lang, setLang] = useState<'en' | 'hi'>('en');
@@ -73,26 +68,7 @@ export default function LearnPage() {
   };
 
   const handleMarkComplete = async (chapterId: string, chapterTitle: string) => {
-    if (!user || !firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save progress.'});
-        return;
-    }
-    try {
-        const progressRef = doc(firestore, 'users', user.uid, 'progress', chapterId);
-        await setDoc(progressRef, {
-            completedAt: serverTimestamp(),
-            chapterId: chapterId,
-            collectionId: collection?.id,
-            title: chapterTitle,
-        });
-        toast({
-            title: lang === 'en' ? 'Chapter Marked as Complete!' : 'अध्याय पूर्ण के रूप में चिह्नित!',
-            description: `${lang === 'en' ? "You've completed" : "आपने पूरा कर लिया है"} "${chapterTitle}".`,
-        });
-    } catch (error) {
-        console.error("Error marking as complete:", error);
-        toast({ variant: 'destructive', title: lang === 'en' ? 'Save Failed' : 'सहेजें विफल', description: lang === 'en' ? 'Could not save your progress.' : 'आपकी प्रगति सहेजी नहीं जा सकी।'});
-    }
+    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to save progress.'});
   }
 
   if (!collection || !activeChapter) {

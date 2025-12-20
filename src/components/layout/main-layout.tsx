@@ -10,7 +10,6 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
-import { UserNav } from './user-nav';
 import { HeartPulse, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -51,7 +50,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 )}
               </Link>
             </Button>
-            <UserNav />
+            <ThemeToggle />
           </div>
         </header>
         <main className="flex-1 p-4 overflow-y-auto md:p-6 lg:p-8 bg-secondary/50 dark:bg-background">

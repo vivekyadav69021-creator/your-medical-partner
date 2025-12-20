@@ -23,12 +23,10 @@ import {
   Wind,
   Video,
   GraduationCap,
-  User,
 } from 'lucide-react';
 
 const mainNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/profile', label: 'Profile', icon: User },
 ];
 
 const smartToolsNav = [

@@ -23,8 +23,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineCh
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, addDoc, collection, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -102,8 +100,6 @@ const labels = {
 
 
 function HealthPlanner() {
-    const { user } = useUser();
-    const firestore = useFirestore();
     const { toast } = useToast();
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const [formData, setFormData] = useState({
@@ -124,12 +120,6 @@ function HealthPlanner() {
     const [planner, setPlanner] = useState<any>(null);
     const [status, setStatus] = useState('');
     const t = labels[lang];
-
-    useEffect(() => {
-        if (user) {
-            setFormData(prev => ({...prev, name: user.displayName || user.email || ''}));
-        }
-    }, [user]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
@@ -226,25 +216,7 @@ function HealthPlanner() {
     };
 
     const savePlanner = async () => {
-        if (!planner) {
-            toast({ variant: 'destructive', title: 'No planner generated', description: 'Please generate a planner first.' });
-            return;
-        }
-        if (!user || !firestore) {
-            toast({ variant: 'destructive', title: 'Authentication Error', description: t.statusNoAuth });
-            return;
-        }
-        setStatus(t.statusSaving);
-        try {
-            const plannersCol = collection(firestore, 'users', user.uid, 'planners');
-            await addDoc(plannersCol, planner);
-            setStatus(t.statusSaved);
-            toast({ title: 'Planner Saved', description: 'Your health planner has been saved to your profile.'});
-        } catch (error) {
-            console.error(error);
-            setStatus('Save failed.');
-            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your planner.'});
-        }
+        toast({ variant: 'destructive', title: 'Login Required', description: t.statusNoAuth });
     };
     
     const downloadPdf = async () => {
@@ -444,16 +416,7 @@ type PlannerTask = { id: string; title: string; completed: boolean; category: st
 export default function ChallengesPage() {
     const [challenges, setChallenges] = useState(initialChallenges);
     const { toast } = useToast();
-    const { user } = useUser();
-    const firestore = useFirestore();
-
-    const plannerTasksQuery = useMemoFirebase(() => 
-        user ? query(collection(firestore, 'users', user.uid, 'tasks'), orderBy('createdAt', 'desc')) : null
-    , [user, firestore]);
-
-    const { data: plannerTasks } = useCollection<PlannerTask>(plannerTasksQuery);
-
-    const fitnessTasks = useMemo(() => plannerTasks?.filter(task => task.category === 'Fitness') || [], [plannerTasks]);
+    const plannerTasks: PlannerTask[] = []; // No tasks without auth
 
     const handleJoinChallenge = (challengeId: string) => {
         setChallenges(prev =>
@@ -507,29 +470,6 @@ export default function ChallengesPage() {
         
         <TabsContent value="community" className="mt-6">
           <div className="space-y-6">
-            {fitnessTasks.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Custom Fitness Challenges</CardTitle>
-                  <CardDescription>These are fitness tasks from your personal planner.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    {fitnessTasks.map(task => (
-                      <div key={task.id} className="flex items-center p-3 rounded-lg border bg-secondary/30">
-                        <Flame className="w-5 h-5 mr-3 text-primary" />
-                        <div className="flex-1">
-                          <p className="font-semibold">{task.title}</p>
-                          <p className="text-xs text-muted-foreground">Personal goal from My Planner</p>
-                        </div>
-                        <Badge variant={task.completed ? "outline" : "default"}>
-                          {task.completed ? "Done" : "Pending"}
-                        </Badge>
-                      </div>
-                    ))}
-                </CardContent>
-              </Card>
-            )}
-
             {challenges.map(challenge => (
               <Card key={challenge.id}>
                 <CardHeader>

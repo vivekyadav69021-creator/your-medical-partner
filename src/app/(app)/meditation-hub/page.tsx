@@ -29,8 +29,6 @@ import {
 import Link from 'next/link';
 import { guidedMeditations } from '@/lib/meditation-data';
 import { learnCollectionsData } from '@/lib/learn-data';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, Timestamp, limit } from 'firebase/firestore';
 import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,84 +49,13 @@ const initialSuggestionState = {
 
 
 function PracticeSummary() {
-    const { user } = useUser();
-    const firestore = useFirestore();
     const [summary, setSummary] = useState<{ sessions: number; totalMin: number; streak: number; } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user || !firestore) return;
-
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                // Fetch sessions
-                const sessionsCol = collection(firestore, 'users', user.uid, 'sessions');
-                const q = query(sessionsCol, orderBy('createdAt', 'desc'));
-                const sessionsSnap = await getDocs(q);
-
-                let totalMin = 0;
-                let sessions = 0;
-                const uniqueDays = new Set<string>();
-
-                sessionsSnap.forEach(doc => {
-                    const s = doc.data();
-                    if (s.duration_min) totalMin += s.duration_min;
-                    sessions++;
-                    if (s.createdAt) {
-                        const date = s.createdAt.toDate();
-                        uniqueDays.add(date.toDateString());
-                    }
-                });
-
-                // Compute streak
-                let streak = 0;
-                if (sessions > 0) {
-                     const sortedDates = sessionsSnap.docs
-                        .map(doc => doc.data().createdAt.toDate())
-                        .sort((a, b) => b.getTime() - a.getTime());
-                    
-                    const uniqueSortedDays = [...new Set(sortedDates.map(d => d.toDateString()))]
-                        .map(ds => new Date(ds))
-                        .sort((a, b) => b.getTime() - a.getTime());
-
-                    if (uniqueSortedDays.length > 0) {
-                        const today = new Date();
-                        const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-                        const lastSessionDate = uniqueSortedDays[0];
-                         const lastSessionDateOnly = new Date(lastSessionDate.getFullYear(), lastSessionDate.getMonth(), lastSessionDate.getDate());
-
-                        const diffWithToday = (todayDateOnly.getTime() - lastSessionDateOnly.getTime()) / (1000 * 60 * 60 * 24);
-
-                        if (diffWithToday <= 1) {
-                            streak = 1;
-                            for (let i = 0; i < uniqueSortedDays.length - 1; i++) {
-                                const currentDate = uniqueSortedDays[i];
-                                const nextDate = uniqueSortedDays[i+1];
-                                const diff = (currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24);
-                                if (diff === 1) {
-                                    streak++;
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                setSummary({ sessions, totalMin, streak });
-
-            } catch (error) {
-                console.error("Error fetching practice summary:", error);
-                setSummary({ sessions: 0, totalMin: 0, streak: 0 }); // Show zeros on error
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [user, firestore]);
+        setLoading(false);
+        setSummary({ sessions: 0, totalMin: 0, streak: 0 });
+    }, []);
 
     if (loading) {
         return (
@@ -141,7 +68,7 @@ function PracticeSummary() {
     }
     
     if (!summary) {
-        return <p>No practice data found.</p>
+        return <p>No practice data found. Log in to see your stats.</p>
     }
 
     return (

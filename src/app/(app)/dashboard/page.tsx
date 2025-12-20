@@ -33,7 +33,6 @@ import {
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -133,14 +132,13 @@ const activeChallenge = {
 
 
 export default function DashboardPage() {
-  const { userName } = useUserProfile();
   const smartwatchImage = PlaceHolderImages.find(p => p.id === 'smartwatch-connect');
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Hi, {userName}!
+          Hi, Guest!
         </h1>
         <p className="text-muted-foreground">
           Welcome to your personal health dashboard.
