@@ -4,43 +4,43 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile in the MediMate application.",
+      "description": "Represents a user's profile information.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the UserProfile entity."
         },
-        "firstName": {
+        "name": {
           "type": "string",
-          "description": "The user's first name."
+          "description": "The user's full name."
         },
-        "lastName": {
-          "type": "string",
-          "description": "The user's last name."
+        "age": {
+          "type": "number",
+          "description": "The user's age."
         },
-        "email": {
+        "phone": {
           "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
+          "description": "The user's mobile phone number."
         },
-        "profilePicture": {
+        "conditions": {
           "type": "string",
-          "description": "URL of the user's profile picture."
+          "description": "Any medical conditions the user has."
         },
-        "themePreference": {
+        "allergy": {
           "type": "string",
-          "description": "User's preferred theme (e.g., light, dark)."
+          "description": "Any allergies the user has."
         },
-        "smartwatchId": {
+        "createdAt": {
           "type": "string",
-          "description": "Reference to Smartwatch data if connected. (Relationship: UserProfile 1:1 Smartwatch)"
+          "description": "The date and time the user profile was created.",
+          "format": "date-time"
         }
       },
       "required": [
         "id",
-        "firstName",
-        "lastName",
-        "email"
+        "name",
+        "age",
+        "phone"
       ]
     },
     "Doctor": {
@@ -57,9 +57,9 @@
           "type": "string",
           "description": "The doctor's full name."
         },
-        "specialization": {
+        "specialty": {
           "type": "string",
-          "description": "The doctor's area of specialization."
+          "description": "The doctor's medical specialty."
         },
         "location": {
           "type": "string",
@@ -67,13 +67,13 @@
         },
         "isIndianDoctor": {
           "type": "boolean",
-          "description": "Indicates whether the doctor is an Indian Doctor or not."
+          "description": "Indicates if the doctor is an Indian Doctor or not."
         }
       },
       "required": [
         "id",
         "name",
-        "specialization"
+        "specialty"
       ]
     },
     "Appointment": {
@@ -101,7 +101,7 @@
         },
         "notes": {
           "type": "string",
-          "description": "Notes for the appointment."
+          "description": "Additional notes for the appointment."
         }
       },
       "required": [
@@ -189,7 +189,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "HealthScore",
       "type": "object",
-      "description": "Represents a personalized health score for a user.",
+      "description": "Represents a user's health score.",
       "properties": {
         "id": {
           "type": "string",
@@ -201,11 +201,11 @@
         },
         "score": {
           "type": "number",
-          "description": "The calculated health score for the user."
+          "description": "The user's health score."
         },
-        "dateCalculated": {
+        "lastUpdated": {
           "type": "string",
-          "description": "The date the health score was calculated.",
+          "description": "The date and time the score was last updated.",
           "format": "date-time"
         }
       },
@@ -213,52 +213,14 @@
         "id",
         "userId",
         "score",
-        "dateCalculated"
-      ]
-    },
-    "Smartwatch": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Smartwatch",
-      "type": "object",
-      "description": "Represents data gathered from a connected smartwatch.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Smartwatch data."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 Smartwatch)"
-        },
-        "heartRate": {
-          "type": "number",
-          "description": "The user's heart rate."
-        },
-        "steps": {
-          "type": "number",
-          "description": "The number of steps taken."
-        },
-        "sleepHours": {
-          "type": "number",
-          "description": "The number of hours slept."
-        },
-        "dateCollected": {
-          "type": "string",
-          "description": "The date the data was collected.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "dateCollected"
+        "lastUpdated"
       ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
@@ -270,7 +232,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information. Uses path-based ownership for data privacy. The user with {userId} owns their profile document.",
+          "description": "Stores user profile information.  Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
           "params": [
             {
               "name": "userId",
@@ -286,7 +248,7 @@
           "schema": {
             "$ref": "#/backend/entities/Doctor"
           },
-          "description": "Stores information about doctors available for consultation. Accessible to all users for browsing.",
+          "description": "Stores doctor information. Accessible to all users.",
           "params": [
             {
               "name": "doctorId",
@@ -302,7 +264,7 @@
           "schema": {
             "$ref": "#/backend/entities/Appointment"
           },
-          "description": "Stores appointment data for each user. Path-based ownership, only the user with {userId} and doctors can read and write this data.",
+          "description": "Stores appointment information for a specific user. Includes denormalized 'userId' and 'doctorId' for authorization independence.",
           "params": [
             {
               "name": "userId",
@@ -322,7 +284,7 @@
           "schema": {
             "$ref": "#/backend/entities/Medicine"
           },
-          "description": "Stores information about medicines available in the medical store. Accessible to all users.",
+          "description": "Stores medicine information. Accessible to all users.",
           "params": [
             {
               "name": "medicineId",
@@ -338,7 +300,7 @@
           "schema": {
             "$ref": "#/backend/entities/Order"
           },
-          "description": "Stores order information for medicines placed by each user. Path-based ownership; only the user with {userId} can access their order data.",
+          "description": "Stores order information for a specific user. Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
           "params": [
             {
               "name": "userId",
@@ -358,37 +320,16 @@
           "schema": {
             "$ref": "#/backend/entities/HealthScore"
           },
-          "description": "Stores the personalized health score for a user. Path-based ownership, only the user with {userId} can access their health score.",
+          "description": "Stores health score information for a specific user. Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
           "params": [
             {
               "name": "userId",
               "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/smartwatchData/{smartwatchId}",
-        "definition": {
-          "entityName": "Smartwatch",
-          "schema": {
-            "$ref": "#/backend/entities/Smartwatch"
-          },
-          "description": "Stores smartwatch data for each user. Path-based ownership, only the user with {userId} can access their smartwatch data.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "smartwatchId",
-              "description": "The unique identifier for the smartwatch data entry."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the MediMate application's features, focusing on user profiles, doctor consultations, and medicine ordering. The structure emphasizes authorization independence and efficient data retrieval, following the core design principles. User-owned data is stored under `/users/{userId}` for simple, path-based ownership rules. Collaborative data patterns are implemented where applicable using membership maps or denormalization. Global roles (e.g. admin) can be implemented with existence checks against dedicated collections. This design ensures security rules are straightforward and debuggable.\n\n**Authorization Independence:** Data required for authorization, such as user roles or group memberships, is denormalized into subcollections where necessary. For instance, access to appointment data is directly controlled by the user's ID within the appointment document, avoiding costly and insecure `get()` calls in security rules.\n\n**QAPs (Rules Are Not Filters):** The structure segregates data based on access requirements. Private user data resides under `/users/{userId}`, while doctors and medicines are in top-level collections that can be queried without compromising security. This segregation prevents the need for complex filtering logic in security rules.\n\nThe design continues the path structure for nested data. For instance, the Appointments collection is stored under `/users/{userId}/appointments/{appointmentId}`.\n\n"
+    "reasoning": "The Firestore data structure is designed to prioritize authorization independence, clarity, and scalability. User profiles are stored under `/users/{userId}` for simple ownership-based security rules. Denormalization is employed to ensure authorization independence. Specifically, for collaborative data like appointments, the `userId` and `doctorId` are stored within the appointment document itself, eliminating the need for `get()` calls to parent documents during security rule evaluation. This allows for atomic operations (transactions/batches) when creating appointments. Doctors and Medicines are stored in root-level collections (`/doctors`, `/medicines`) as their access is not user-specific. Orders are stored under `/users/{userId}/orders/{orderId}` to reflect user ownership.  HealthScores are stored under `/users/{userId}/healthScore` to represent a 1:1 relationship with the user profile. This structure supports the QAPs (Rules are not Filters) principle by using structural segregation; each collection has a homogeneous security posture, simplifying list operations. Also, using path-based ownership `/users/{userId}` enables secure list operations for a specific user's data, and separate collections `/doctors` and `/medicines` do not require user-specific filtering in rules."
   }
 }
-    
