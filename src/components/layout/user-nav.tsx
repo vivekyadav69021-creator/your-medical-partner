@@ -15,15 +15,34 @@ import {
   DropdownMenuPortal,
   DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
-import { Sun, Moon, Laptop, Siren, ShieldAlert, Settings, User } from 'lucide-react';
+import { Sun, Moon, Laptop, Siren, ShieldAlert, Settings, User, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
+import { getAuth, signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 
 export function UserNav() {
   const { setTheme } = useTheme();
+  const { user } = useUser();
   const { userName, userImage } = useUserProfile();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+        await signOut(auth);
+        toast({ title: 'Logged Out', description: 'You have been successfully logged out.'});
+        router.push('/login');
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'Logout Failed', description: 'Could not log you out. Please try again.'});
+    }
+  };
+
 
   return (
     <DropdownMenu>
@@ -40,7 +59,7 @@ export function UserNav() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{userName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              Welcome!
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -96,6 +115,11 @@ export function UserNav() {
                 </DropdownMenuItem>
             </a>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

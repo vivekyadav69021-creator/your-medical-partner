@@ -1,11 +1,20 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+
+type UserProfile = {
+  name?: string;
+  profileCompleted?: boolean;
+  // Add other profile fields here as needed
+}
 
 type UserProfileContextType = {
   userName: string;
   userImage: string;
+  profileCompleted: boolean;
   setUserName: (name: string) => void;
   setUserImage: (image: string) => void;
 };
@@ -13,19 +22,42 @@ type UserProfileContextType = {
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
-  const [userName, setUserName] = useState('User');
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  
+  const userProfileRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+
+  const [userName, setUserNameState] = useState('User');
   const [userImage, setUserImage] = useState('https://picsum.photos/seed/user/100/100');
+  const [profileCompleted, setProfileCompleted] = useState(false);
 
   useEffect(() => {
-    if (user) {
-        setUserName(user.displayName || user.email || 'User');
+    if (!isUserLoading && !isProfileLoading) {
+      if (user) {
+        // Set user name from profile if available, otherwise from auth, finally fallback
+        setUserNameState(userProfile?.name || user.displayName || user.email || 'User');
         setUserImage(user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`);
+        setProfileCompleted(userProfile?.profileCompleted || false);
+      } else {
+        // Reset on logout
+        setUserNameState('User');
+        setUserImage('https://picsum.photos/seed/user/100/100');
+        setProfileCompleted(false);
+      }
     }
-  }, [user]);
+  }, [user, userProfile, isUserLoading, isProfileLoading]);
+
+  const setUserName = (name: string) => {
+      setUserNameState(name);
+  };
 
   return (
-    <UserProfileContext.Provider value={{ userName, userImage, setUserName, setUserImage }}>
+    <UserProfileContext.Provider value={{ userName, userImage, profileCompleted, setUserName, setUserImage }}>
       {children}
     </UserProfileContext.Provider>
   );
@@ -38,5 +70,3 @@ export function useUserProfile() {
   }
   return context;
 }
-
-    

@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -8,11 +9,16 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
+          "description": "Unique identifier for the UserProfile entity, matches Firebase Auth UID."
         },
         "name": {
           "type": "string",
           "description": "The user's full name."
+        },
+        "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The user's email address."
         },
         "age": {
           "type": "number",
@@ -34,13 +40,19 @@
           "type": "string",
           "description": "The date and time the user profile was created.",
           "format": "date-time"
+        },
+        "profileCompleted": {
+            "type": "boolean",
+            "description": "Flag to indicate if the user has filled out their initial health profile."
         }
       },
       "required": [
         "id",
         "name",
         "age",
-        "phone"
+        "phone",
+        "email",
+        "profileCompleted"
       ]
     },
     "Doctor": {
@@ -219,8 +231,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -232,7 +243,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information.  Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
+          "description": "Stores user profile information. Path-based ownership enforced. Includes 'userId' as a parameter for easy rule creation.",
           "params": [
             {
               "name": "userId",

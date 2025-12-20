@@ -1,29 +1,61 @@
+
 'use client';
 
 import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, Laptop, User } from 'lucide-react';
+import { Sun, Moon, Laptop, User, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
+import { getAuth, signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { useState } from 'react';
 
 export default function ProfilePage() {
   const { user } = useUser();
-  const { userName, userImage } = useUserProfile();
+  const firestore = useFirestore();
+  const { userName, userImage, setUserName } = useUserProfile();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const router = useRouter();
+  
+  const [currentName, setCurrentName] = useState(userName);
 
-  const handleUpdateProfile = (event: React.FormEvent) => {
+  const handleUpdateProfile = async (event: React.FormEvent) => {
     event.preventDefault();
-    // In a real app, you would update the user's profile in Firebase Auth and/or Firestore.
-    toast({
-      title: 'Profile Updated',
-      description: 'Your changes have been saved (simulation).',
-    });
+    if (!user || !firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.'});
+      return;
+    }
+
+    try {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userDocRef, { name: currentName });
+      
+      // Also update context
+      setUserName(currentName);
+      
+      toast({
+        title: 'Profile Updated',
+        description: 'Your changes have been saved.',
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update profile.'});
+    }
+  };
+  
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    toast({ title: 'Logged Out', description: 'You have been successfully logged out.'});
+    router.push('/login');
   };
 
   return (
@@ -54,7 +86,7 @@ export default function ProfilePage() {
           <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Display Name</Label>
-                <Input id="name" defaultValue={userName} />
+                <Input id="name" value={currentName} onChange={(e) => setCurrentName(e.target.value)} />
               </div>
 
                <div className="space-y-2">
@@ -72,6 +104,13 @@ export default function ProfilePage() {
                 </div>
               </div>
           </CardContent>
+           <CardFooter className="flex justify-between">
+              <Button type="submit">Save Changes</Button>
+               <Button variant="destructive" onClick={handleLogout} type="button">
+                <LogOut className="mr-2"/>
+                Logout
+              </Button>
+           </CardFooter>
         </form>
       </Card>
 
