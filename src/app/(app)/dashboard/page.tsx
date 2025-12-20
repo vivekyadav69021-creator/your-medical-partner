@@ -30,6 +30,7 @@ import {
   Smartphone,
   BedDouble,
   Flame,
+  User as UserIcon,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
@@ -39,7 +40,18 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Progress } from '@/components/ui/progress';
 import { HealthScoreDisplay } from '@/components/health-score-display';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
+type UserProfile = {
+  name: string;
+  age: string;
+  gender: string;
+  weight: string;
+  height: string;
+  bloodGroup: string;
+  conditions: string;
+  allergies: string;
+};
 
 const quickAccessItems = [
   {
@@ -133,54 +145,95 @@ const activeChallenge = {
 
 export default function DashboardPage() {
   const smartwatchImage = PlaceHolderImages.find(p => p.id === 'smartwatch-connect');
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedProfile = localStorage.getItem('userMedicalProfile');
+      if (savedProfile) {
+        setProfile(JSON.parse(savedProfile));
+      }
+    } catch (e) {
+      console.error("Failed to load profile from local storage", e);
+    }
+  }, []);
+  
+  const greetingName = profile?.name || 'Guest';
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Hi, Guest!
+          Hi, {greetingName}!
         </h1>
         <p className="text-muted-foreground">
           Welcome to your personal health dashboard.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Access</CardTitle>
-          <CardDescription>
-            Your healthcare tools, just a click away.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {quickAccessItems.map(item => (
-              <Card
-                key={item.title}
-                className="group hover:shadow-lg transition-shadow duration-300"
-              >
-                <Link href={item.href} className="flex flex-col h-full">
-                  <CardHeader className="flex-row items-center gap-4 space-y-0 pb-2">
-                    <item.icon className="w-8 h-8 text-primary" />
-                    <CardTitle className="text-lg font-semibold">
-                      {item.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col justify-between pt-2">
-                    <p className="text-sm text-muted-foreground">
-                      {item.description}
-                    </p>
-                    <div className="flex items-center text-sm font-medium text-primary mt-4">
-                      <span>Go to {item.title}</span>
-                      <ArrowRight className="ml-2 h-4 w-4 transform transition-transform duration-300 group-hover:translate-x-1" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Quick Access</CardTitle>
+                <CardDescription>
+                    Your healthcare tools, just a click away.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {quickAccessItems.slice(0, 4).map(item => (
+                <Card
+                    key={item.title}
+                    className="group hover:shadow-lg transition-shadow duration-300"
+                >
+                    <Link href={item.href} className="flex flex-col h-full p-4 justify-between">
+                        <item.icon className="w-8 h-8 text-primary mb-2" />
+                        <div>
+                            <p className="text-md font-semibold">
+                            {item.title}
+                            </p>
+                             <p className="text-xs text-muted-foreground line-clamp-2">
+                                {item.description}
+                            </p>
+                        </div>
+                    </Link>
+                </Card>
+                ))}
+            </div>
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                    <span>Profile Summary</span>
+                    <UserIcon className="w-5 h-5 text-primary" />
+                </CardTitle>
+                <CardDescription>
+                    Your basic health information.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {profile && profile.name ? (
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span>Name:</span> <strong>{profile.name}</strong></div>
+                        <div className="flex justify-between"><span>Age:</span> <strong>{profile.age || 'N/A'}</strong></div>
+                        <div className="flex justify-between"><span>Weight:</span> <strong>{profile.weight ? `${profile.weight} kg` : 'N/A'}</strong></div>
+                        <div className="flex justify-between"><span>Blood Group:</span> <strong>{profile.bloodGroup || 'N/A'}</strong></div>
                     </div>
-                  </CardContent>
-                </Link>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">Your profile is not yet complete.</p>
+                )}
+            </CardContent>
+            <CardFooter>
+                 <Button asChild variant="secondary" className="w-full">
+                    <Link href="/profile">
+                        {profile?.name ? 'View or Edit Profile' : 'Complete Your Profile'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </CardFooter>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
