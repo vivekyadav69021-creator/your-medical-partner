@@ -23,6 +23,7 @@ import {
   Wind,
   Video,
   GraduationCap,
+  Settings,
 } from 'lucide-react';
 
 const mainNav = [
@@ -51,11 +52,15 @@ const learnNav = [
     { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
 ];
 
+const settingsNav = [
+    { href: '/profile', label: 'Settings', icon: Settings },
+];
+
 const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void}) => {
     const pathname = usePathname();
     return (
         <div className="px-3 py-2">
-            <h2 className="mb-2 px-2 text-sm font-semibold tracking-tight text-muted-foreground">
+            <h2 className="mb-2 px-2 text-sm font-semibold tracking-tight text-muted-foreground group-data-[state=collapsed]:hidden">
                 {title}
             </h2>
             <SidebarMenu>
@@ -69,7 +74,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
                     >
                         <Link href={item.href}>
                         <item.icon />
-                        <span>{item.label}</span>
+                        <span className="group-data-[state=expanded]:inline-flex">{item.label}</span>
                         </Link>
                     </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -83,7 +88,9 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
 export function SidebarNav() {
   const { setOpenMobile } = useSidebar();
   const handleLinkClick = () => {
-    setOpenMobile(false);
+    if (window.innerWidth < 768) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -92,6 +99,7 @@ export function SidebarNav() {
         <NavSection title="Smart Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
         <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />
         <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Configuration" items={settingsNav} onLinkClick={handleLinkClick} />
     </div>
   );
 }
