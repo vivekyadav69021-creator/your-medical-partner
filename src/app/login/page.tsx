@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -52,20 +51,9 @@ export default function LoginPage() {
         const password = formData.get('password') as string;
 
         try {
-            const userCredential = await authFn(auth, email, password);
-            
-            const idToken = await userCredential.user.getIdToken();
-
-            await fetch('/api/login', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ idToken }),
-            });
-
+            await authFn(auth, email, password);
             toast({ title: isSignup ? 'Signup Successful' : 'Login Successful', description: isSignup ? 'Welcome!' : 'Welcome back!' });
-            router.push('/dashboard');
+            router.push('/'); // Redirect to home, which will guard to dashboard
         } catch (error: any) {
             let errorMessage = 'An unknown error occurred.';
             if (error.code) {
