@@ -1,9 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
-import { useFormStatus } from 'react-dom';
-import { loginAction, signupAction } from './actions';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,17 +17,13 @@ import { HeartPulse, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from 'next/navigation';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { useFirebase } from '@/firebase';
 
-const initialLoginState = {
-  error: null,
-  success: false,
-};
-
-function SubmitButton({ children }: { children: React.ReactNode }) {
-    const { pending } = useFormStatus();
+function SubmitButton({ isPending, children }: { isPending: boolean; children: React.ReactNode }) {
     return (
-        <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {children}
         </Button>
     )
@@ -38,29 +32,68 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 export default function LoginPage() {
     const { toast } = useToast();
     const router = useRouter();
+    const { firebaseApp } = useFirebase();
+    const auth = getAuth(firebaseApp);
 
-    const [loginState, loginFormAction, isLoginPending] = useActionState(loginAction, initialLoginState);
-    const [signupState, signupFormAction, isSignupPending] = useActionState(signupAction, initialLoginState);
+    const [isLoginPending, setIsLoginPending] = useState(false);
+    const [isSignupPending, setIsSignupPending] = useState(false);
 
-    useEffect(() => {
-        if(loginState.error) {
-            toast({ variant: 'destructive', title: 'Login Failed', description: loginState.error });
-        }
-        if(loginState.success) {
-            toast({ title: 'Login Successful', description: 'Welcome back!' });
+    const handleAuth = async (
+      e: React.FormEvent<HTMLFormElement>,
+      authFn: typeof createUserWithEmailAndPassword | typeof signInWithEmailAndPassword,
+      setPending: React.Dispatch<React.SetStateAction<boolean>>,
+      isSignup: boolean
+    ) => {
+        e.preventDefault();
+        setPending(true);
+
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        try {
+            const userCredential = await authFn(auth, email, password);
+            
+            const idToken = await userCredential.user.getIdToken();
+
+            await fetch('/api/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ idToken }),
+            });
+
+            toast({ title: isSignup ? 'Signup Successful' : 'Login Successful', description: isSignup ? 'Welcome!' : 'Welcome back!' });
             router.push('/dashboard');
+        } catch (error: any) {
+            let errorMessage = 'An unknown error occurred.';
+            if (error.code) {
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'This email is already in use.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Please enter a valid email address.';
+                        break;
+                    case 'auth/wrong-password':
+                    case 'auth/user-not-found':
+                    case 'auth/invalid-credential':
+                        errorMessage = 'Invalid email or password.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many attempts. Please try again later.';
+                        break;
+                    default:
+                        errorMessage = error.message;
+                        break;
+                }
+            }
+            toast({ variant: 'destructive', title: isSignup ? 'Signup Failed' : 'Login Failed', description: errorMessage });
+        } finally {
+            setPending(false);
         }
-    }, [loginState, toast, router]);
-
-    useEffect(() => {
-        if(signupState.error) {
-            toast({ variant: 'destructive', title: 'Signup Failed', description: signupState.error });
-        }
-        if(signupState.success) {
-            toast({ title: 'Signup Successful', description: 'Welcome! Please complete your profile.' });
-            // The modal will handle the redirect after profile completion
-        }
-    }, [signupState, toast, router]);
+    };
 
 
   return (
@@ -79,7 +112,7 @@ export default function LoginPage() {
                         <CardTitle>Welcome Back</CardTitle>
                         <CardDescription>Sign in to access your health dashboard.</CardDescription>
                     </CardHeader>
-                    <form action={loginFormAction}>
+                    <form onSubmit={(e) => handleAuth(e, signInWithEmailAndPassword, setIsLoginPending, false)}>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="login-email">Email</Label>
@@ -91,7 +124,7 @@ export default function LoginPage() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <SubmitButton>Sign In</SubmitButton>
+                            <SubmitButton isPending={isLoginPending}>Sign In</SubmitButton>
                         </CardFooter>
                     </form>
                 </Card>
@@ -103,7 +136,7 @@ export default function LoginPage() {
                         <CardTitle>Create an Account</CardTitle>
                         <CardDescription>Join Your Medical Partner today.</CardDescription>
                     </CardHeader>
-                    <form action={signupFormAction}>
+                    <form onSubmit={(e) => handleAuth(e, createUserWithEmailAndPassword, setIsSignupPending, true)}>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="signup-email">Email</Label>
@@ -111,11 +144,11 @@ export default function LoginPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="signup-password">Password</Label>
-                                <Input id="signup-password" name="password" type="password" required />
+                                <Input id="signup-password" name="password" type="password" required minLength={6} />
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <SubmitButton>Sign Up</SubmitButton>
+                            <SubmitButton isPending={isSignupPending}>Sign Up</SubmitButton>
                         </CardFooter>
                     </form>
                 </Card>
@@ -124,4 +157,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

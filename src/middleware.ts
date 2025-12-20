@@ -7,7 +7,7 @@ const PUBLIC_PATHS = ['/login', '/signup', '/'];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
-    loginPath: '/api/login',
+    loginPath: '/login',
     logoutPath: '/api/logout',
     apiKey: firebaseConfig.apiKey,
     cookieName: 'token',
@@ -25,7 +25,10 @@ export async function middleware(request: NextRequest) {
       privateKey: process.env.FIREBASE_PRIVATE_KEY!,
     },
     handleInvalidToken: async () => {
-        return NextResponse.redirect(new URL('/login', request.url))
+        // This is the default behavior.
+        const response = NextResponse.redirect(new URL('/login', request.url))
+        response.cookies.delete('token');
+        return response;
     },
     handleValidToken: async ({ token, decodedToken }, headers) => {
         if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
@@ -40,11 +43,14 @@ export async function middleware(request: NextRequest) {
     },
     handleError: async (error) => {
         console.error('Auth Middleware Error:', error);
-        return NextResponse.redirect(new URL('/login', request.url));
+        // This is the default behavior.
+        const response = NextResponse.redirect(new URL('/login', request.url))
+        response.cookies.delete('token');
+        return response;
     }
   });
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|favicon.ico|api/auth|.*\\.).*)'],
+  matcher: ['/((?!_next/static|favicon.ico|api|.*\\.).*)'],
 };
