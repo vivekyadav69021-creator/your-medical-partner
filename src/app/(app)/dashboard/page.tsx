@@ -171,69 +171,37 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Quick Access</CardTitle>
-                <CardDescription>
-                    Your healthcare tools, just a click away.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {quickAccessItems.slice(0, 4).map(item => (
-                <Card
-                    key={item.title}
-                    className="group hover:shadow-lg transition-shadow duration-300"
-                >
-                    <Link href={item.href} className="flex flex-col h-full p-4 justify-between">
-                        <item.icon className="w-8 h-8 text-primary mb-2" />
-                        <div>
-                            <p className="text-md font-semibold">
-                            {item.title}
-                            </p>
-                             <p className="text-xs text-muted-foreground line-clamp-2">
-                                {item.description}
-                            </p>
-                        </div>
-                    </Link>
-                </Card>
-                ))}
-            </div>
-            </CardContent>
-        </Card>
-         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                    <span>Profile Summary</span>
-                    <UserIcon className="w-5 h-5 text-primary" />
-                </CardTitle>
-                <CardDescription>
-                    Your basic health information.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                 {profile && profile.name ? (
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span>Name:</span> <strong>{profile.name}</strong></div>
-                        <div className="flex justify-between"><span>Age:</span> <strong>{profile.age || 'N/A'}</strong></div>
-                        <div className="flex justify-between"><span>Weight:</span> <strong>{profile.weight ? `${profile.weight} kg` : 'N/A'}</strong></div>
-                        <div className="flex justify-between"><span>Blood Group:</span> <strong>{profile.bloodGroup || 'N/A'}</strong></div>
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">Your profile is not yet complete.</p>
-                )}
-            </CardContent>
-            <CardFooter>
-                 <Button asChild variant="secondary" className="w-full">
-                    <Link href="/profile">
-                        {profile?.name ? 'View or Edit Profile' : 'Complete Your Profile'}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
-            </CardFooter>
-        </Card>
-      </div>
+      <Card>
+          <CardHeader>
+              <CardTitle>Quick Access</CardTitle>
+              <CardDescription>
+                  Your healthcare tools, just a click away.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {quickAccessItems.map(item => (
+              <Card
+                  key={item.title}
+                  className="group hover:shadow-lg transition-shadow duration-300"
+              >
+                  <Link href={item.href} className="flex flex-col h-full p-4 justify-between">
+                      <item.icon className="w-8 h-8 text-primary mb-2" />
+                      <div>
+                          <p className="text-md font-semibold">
+                          {item.title}
+                          </p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {item.description}
+                          </p>
+                      </div>
+                  </Link>
+              </Card>
+              ))}
+          </div>
+          </CardContent>
+      </Card>
+     
 
       <Card>
         <CardHeader>

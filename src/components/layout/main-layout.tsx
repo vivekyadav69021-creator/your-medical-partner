@@ -10,7 +10,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
-import { HeartPulse, ShoppingCart } from 'lucide-react';
+import { HeartPulse, ShoppingCart, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
@@ -50,6 +50,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 )}
               </Link>
             </Button>
+             <Button variant="ghost" size="icon" asChild>
+                <Link href="/profile">
+                    <UserIcon />
+                    <span className="sr-only">Profile</span>
+                </Link>
+             </Button>
             <ThemeToggle />
           </div>
         </header>
