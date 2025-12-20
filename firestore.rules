@@ -1,0 +1,231 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership model. All data
+ * private to a user, such as their profile, appointments, and medical orders, is
+ * stored within a dedicated user-specific data tree. Access is granted only to the
+ * authenticated owner of that data. Publicly available information, like lists of
+ * doctors and medicines, is stored in separate top-level collections and is
+ * readable by anyone.
+ *
+ * Data Structure: The primary data structure is hierarchical and user-centric,
+ * organized under `/users/{userId}`. This path-based ownership is the cornerstone of
+ * the security model. Top-level collections like `/doctors` and `/medicines` are
+ * used for shared, publicly readable data.
+ *
+ * Key Security Decisions:
+ * - Strict User Isolation: A user can only access data under their own
+ *   `/users/{userId}` path. They cannot read, write, or even know about the
+ *   existence of data belonging to other users.
+ * - Public Read-Only Data: The `/doctors` and `/medicines` collections are
+ *   readable by any client, including unauthenticated ones, to facilitate browsing.
+ *   However, all client-side write operations to these collections are explicitly
+ *   denied, assuming they are managed by a trusted backend or admin SDK.
+ * - User Self-Creation: Users are permitted to create their own profile documents
+ *   and initial authentication records upon sign-up, but only if the document ID
+ *   matches their authenticated user ID (UID).
+ * - No User Listing: It is not possible for any client to list all users in the
+ *   database.
+ *
+ * Denormalization for Authorization: This ruleset relies on path-based
+ * authorization, where the user's UID is part of the document path (e.g.,
+ * `/users/{userId}`). For subcollection documents like appointments and orders, we
+ * enforce that a `userProfileId` field within the document matches the `userId` in
+ * the path upon creation. This creates a durable and verifiable link to the owner,
+ * ensuring data integrity without needing costly cross-document reads.
+ *
+ * Structural Segregation: The rules separate private user data from public data by
+ * placing them in different top-level collections (`/users` vs. `/doctors` and
+ * `/medicines`). This is a secure and performant pattern that prevents accidental
+ * data leakage and simplifies rules for list operations.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user's UID matches the provided userId.
+     * This is the primary function for enforcing data ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Ensures an operation is performed by the owner on an existing document.
+     * Crucial for secure update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates that the user is creating their own profile and that the
+     * document's internal 'id' field correctly matches the user's UID.
+     * Also checks that the path segments for userId and userProfileId are identical.
+     */
+    function isCreatingOwnProfile(userId, userProfileId) {
+      return isOwner(userId)
+        && userId == userProfileId
+        && request.resource.data.id == userId;
+    }
+
+    /**
+     * Validates that the 'id' field, which links the profile to the user,
+     * cannot be changed after the document is created.
+     */
+    function isProfileIdImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+    
+    /**
+     * Validates that a user is creating a document within their own data tree
+     * (e.g., an appointment) and that the document's internal 'userProfileId'
+     * correctly references their own user ID.
+     */
+    function isCreatingOwnedDocument(userId) {
+      return isOwner(userId) && request.resource.data.userProfileId == userId;
+    }
+
+    /**
+     * Validates that the 'userProfileId' field, which links a subcollection
+     * document to its owner, cannot be changed after creation.
+     */
+    function isOwnerLinkImmutable() {
+      return request.resource.data.userProfileId == resource.data.userProfileId;
+    }
+
+    // -------------------------------------------------------------------------
+    // User Data Collections (/users/{userId}/*)
+    // -------------------------------------------------------------------------
+
+    match /users/{userId} {
+      /**
+       * @description A user can only access their own data subtree. No access is
+       * granted to other users' data. Direct listing of users is denied.
+       * @path /users/{userId}
+       * @allow User 'abc' trying to read '/users/abc'.
+       * @deny User 'xyz' trying to read '/users/abc'.
+       * @principle Restricts access to a user's own data tree using path-based security.
+       */
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if false;
+
+      /**
+       * @description Manages a user's own profile document.
+       * @path /users/{userId}/userProfiles/{userProfileId}
+       * @allow (create) An authenticated user 'abc' creating their own profile at '/users/abc/userProfiles/abc'.
+       * @deny (create) A user 'abc' trying to create a profile at '/users/xyz/userProfiles/xyz'.
+       * @deny (update) A user trying to change the immutable 'id' field in their profile.
+       * @principle Enforces self-creation and ownership. The user's UID must match both path segments and an internal field.
+       */
+      match /userProfiles/{userProfileId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isCreatingOwnProfile(userId, userProfileId);
+        allow update: if isExistingOwner(userId) && isProfileIdImmutable();
+        allow delete: if false; // Profiles are generally not deletable by users.
+      }
+
+      /**
+       * @description Manages appointments, which are private to each user.
+       * @path /users/{userId}/appointments/{appointmentId}
+       * @allow (create) User 'abc' creating an appointment with 'userProfileId: "abc"'.
+       * @allow (delete) User 'abc' deleting their own existing appointment.
+       * @deny (create) User 'abc' creating an appointment with 'userProfileId: "xyz"'.
+       * @deny (update) User 'xyz' trying to update an appointment belonging to user 'abc'.
+       * @principle Enforces document ownership and validates relational integrity between the document and its owner.
+       */
+      match /appointments/{appointmentId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isCreatingOwnedDocument(userId);
+        allow update: if isExistingOwner(userId) && isOwnerLinkImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages medical orders, which are private to each user.
+       * @path /users/{userId}/medicalOrders/{medicalOrderId}
+       * @allow (create) User 'abc' creating an order with 'userProfileId: "abc"'.
+       * @allow (get) User 'abc' reading their own order details.
+       * @deny (list) User 'xyz' trying to list orders for user 'abc'.
+       * @deny (update) User 'abc' trying to change the 'userProfileId' on an existing order.
+       * @principle Enforces document ownership and validates relational integrity between the document and its owner.
+       */
+      match /medicalOrders/{medicalOrderId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isCreatingOwnedDocument(userId);
+        allow update: if isExistingOwner(userId) && isOwnerLinkImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Public Read-Only Collections
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Publicly readable list of doctors. Writes are disabled for clients.
+     * This collection should be managed by a trusted admin SDK.
+     * @path /doctors/{doctorId}
+     * @allow (get) Any user (authenticated or not) reading a doctor's profile.
+     * @deny (create) Any client trying to add a new doctor document.
+     * @principle Allows public read access for general app functionality but secures the data by disallowing all client writes.
+     */
+    match /doctors/{doctorId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Publicly readable list of medicines. Writes are disabled for clients.
+     * This collection should be managed by a trusted admin SDK.
+     * @path /medicines/{medicineId}
+     * @allow (list) Any user (authenticated or not) listing all available medicines.
+     * @deny (update) Any client trying to change the price of a medicine.
+     * @principle Allows public read access for general app functionality but secures the data by disallowing all client writes.
+     */
+    match /medicines/{medicineId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // -------------------------------------------------------------------------
+    // Authentication Data
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Allows a newly signed-up user to create their own auth record.
+     * This document is write-once and not readable or updatable by any client.
+     * @path /auth/{userId}
+     * @allow (create) A new user 'abc' creating their auth document at '/auth/abc'.
+     * @deny (create) User 'abc' trying to create an auth document for 'xyz'.
+     * @deny (get) Any user trying to read any auth document.
+     * @principle Secures sensitive bootstrap data by making it write-once by the owner and denying all subsequent access.
+     */
+    match /auth/{userId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

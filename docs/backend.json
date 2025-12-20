@@ -1,29 +1,32 @@
-
 {
   "entities": {
     "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile information.",
+      "description": "Represents a user's profile within the MediMate application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the UserProfile entity, matches Firebase Auth UID."
+          "description": "Unique identifier for the UserProfile entity."
         },
         "name": {
           "type": "string",
-          "description": "The user's full name."
+          "description": "The user's display name."
         },
         "email": {
-            "type": "string",
-            "format": "email",
-            "description": "The user's email address."
-        },
-        "createdAt": {
           "type": "string",
-          "description": "The date and time the user profile was created.",
-          "format": "date-time"
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "profilePicture": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "themePreference": {
+          "type": "string",
+          "description": "The user's preferred theme (e.g., 'light', 'dark')."
         }
       },
       "required": [
@@ -44,38 +47,35 @@
         },
         "name": {
           "type": "string",
-          "description": "The doctor's full name."
+          "description": "The doctor's name."
         },
-        "specialty": {
+        "specialization": {
           "type": "string",
-          "description": "The doctor's medical specialty."
+          "description": "The doctor's area of specialization."
         },
         "location": {
           "type": "string",
-          "description": "The doctor's location (e.g., city, country)."
-        },
-        "isIndianDoctor": {
-          "type": "boolean",
-          "description": "Indicates if the doctor is an Indian Doctor or not."
+          "description": "The doctor's location (e.g., 'Indian Doctor', 'Foreign Doctor')."
         }
       },
       "required": [
         "id",
         "name",
-        "specialty"
+        "specialization",
+        "location"
       ]
     },
     "Appointment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Appointment",
       "type": "object",
-      "description": "Represents a scheduled appointment with a doctor.",
+      "description": "Represents a scheduled appointment between a user and a doctor.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Appointment entity."
         },
-        "userId": {
+        "userProfileId": {
           "type": "string",
           "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Appointment)"
         },
@@ -88,14 +88,14 @@
           "description": "The date and time of the appointment.",
           "format": "date-time"
         },
-        "notes": {
-          "type": "string",
-          "description": "Additional notes for the appointment."
+        "reminderSet": {
+          "type": "boolean",
+          "description": "Indicates whether a reminder is set for the appointment."
         }
       },
       "required": [
         "id",
-        "userId",
+        "userProfileId",
         "doctorId",
         "dateTime"
       ]
@@ -116,7 +116,7 @@
         },
         "description": {
           "type": "string",
-          "description": "A description of the medicine."
+          "description": "A brief description of the medicine."
         },
         "category": {
           "type": "string",
@@ -135,23 +135,23 @@
         "price"
       ]
     },
-    "Order": {
+    "MedicalOrder": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Order",
+      "title": "MedicalOrder",
       "type": "object",
-      "description": "Represents an order placed for medicines.",
+      "description": "Represents an order for medicine placed by a user.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Order entity."
+          "description": "Unique identifier for the MedicalOrder entity."
         },
-        "userId": {
+        "userProfileId": {
           "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Order)"
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N MedicalOrder)"
         },
         "medicineIds": {
           "type": "array",
-          "description": "References to Medicines. (Relationship: Order 1:N Medicine)",
+          "description": "References to Medicines. (Relationship: MedicalOrder 1:N Medicines)",
           "items": {
             "type": "string"
           }
@@ -168,61 +168,107 @@
       },
       "required": [
         "id",
-        "userId",
+        "userProfileId",
         "medicineIds",
         "orderDate",
         "totalAmount"
       ]
     },
-    "HealthScore": {
+    "Auth": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "HealthScore",
+      "title": "Auth",
       "type": "object",
-      "description": "Represents a user's health score.",
+      "description": "Represents authentication information for a user. Note: This entity does not store sensitive information such as passwords. Authentication is assumed to be handled by an external system.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the HealthScore entity."
+          "description": "Unique identifier for the Auth entity."
         },
-        "userId": {
+        "userProfileId": {
           "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 HealthScore)"
+          "description": "Reference to UserProfile. (Relationship: Auth 1:1 UserProfile). This should be the same as UserProfile.id for a 1:1 relationship."
         },
-        "score": {
-          "type": "number",
-          "description": "The user's health score."
-        },
-        "lastUpdated": {
+        "authProvider": {
           "type": "string",
-          "description": "The date and time the score was last updated.",
-          "format": "date-time"
+          "description": "The authentication provider used (e.g., 'Google', 'Facebook', 'Email')."
+        },
+        "providerUserId": {
+          "type": "string",
+          "description": "The user ID provided by the authentication provider."
         }
       },
       "required": [
         "id",
-        "userId",
-        "score",
-        "lastUpdated"
+        "userProfileId",
+        "authProvider",
+        "providerUserId"
       ]
     }
   },
   "auth": {
-    "providers": []
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}",
+        "path": "/users/{userId}/userProfiles/{userProfileId}",
         "definition": {
           "entityName": "UserProfile",
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information. Since auth is removed, this is not used.",
+          "description": "Stores user profile data. Each user has their own profile document. 'userId' and 'userProfileId' will be same for a 1:1 relationship.",
           "params": [
             {
               "name": "userId",
               "description": "The unique identifier for the user."
+            },
+            {
+              "name": "userProfileId",
+              "description": "The unique identifier for the user profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Stores appointment data for each user. 'userId' is the owner.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "appointmentId",
+              "description": "The unique identifier for the appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/medicalOrders/{medicalOrderId}",
+        "definition": {
+          "entityName": "MedicalOrder",
+          "schema": {
+            "$ref": "#/backend/entities/MedicalOrder"
+          },
+          "description": "Stores medical order data for each user. 'userId' is the owner.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "medicalOrderId",
+              "description": "The unique identifier for the medical order."
             }
           ]
         }
@@ -234,7 +280,7 @@
           "schema": {
             "$ref": "#/backend/entities/Doctor"
           },
-          "description": "Stores doctor information. Accessible to all users.",
+          "description": "Stores doctor data.",
           "params": [
             {
               "name": "doctorId",
@@ -250,7 +296,7 @@
           "schema": {
             "$ref": "#/backend/entities/Medicine"
           },
-          "description": "Stores medicine information. Accessible to all users.",
+          "description": "Stores medicine data.",
           "params": [
             {
               "name": "medicineId",
@@ -258,8 +304,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/auth/{userId}",
+        "definition": {
+          "entityName": "Auth",
+          "schema": {
+            "$ref": "#/backend/entities/Auth"
+          },
+          "description": "Stores authentication data. 'userId' is the authentication id.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the auth."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "With authentication removed, the data structure is simplified. User-specific collections like appointments, orders, and health scores are no longer relevant as there's no concept of a logged-in user. The remaining public collections for doctors and medicines are kept as they are globally accessible."
+    "reasoning": "The Firestore data structure is designed to ensure authorization independence, clarity, and scalability. User profiles and their related data (appointments, medical orders) are stored under the `/users/{userId}` path, enabling path-based ownership for private data. The `Auth` entity is placed in a separate `/auth/{userId}` collection. Doctors and Medicines are placed in root-level collections.  This structure avoids hierarchical authorization dependencies, supports atomic operations, and simplifies security rules. Appointments and MedicalOrders are stored as subcollections under the user's document, ensuring clear ownership and straightforward security rules based on the user's ID."
   }
 }
