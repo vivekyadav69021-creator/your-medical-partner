@@ -640,6 +640,18 @@ function ChatInterface({
           }
         }
     }, [messages, isPending]);
+    
+    const renderMarkdown = (text: string) => {
+        return (
+            <ReactMarkdown
+                components={{
+                    a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80" />
+                }}
+            >
+                {text}
+            </ReactMarkdown>
+        )
+    }
 
     return (
          <div className="flex-grow flex flex-col">
@@ -679,7 +691,7 @@ function ChatInterface({
                             )}
                             {message.role === 'assistant' ? (
                             <>
-                                <article className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></article>
+                                <article className="prose prose-sm dark:prose-invert max-w-none">{renderMarkdown(message.content)}</article>
                                 {index === messages.length - 1 && !isPending && (
                                 <FeedbackActions messageContent={message.content} />
                                 )}
