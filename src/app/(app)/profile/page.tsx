@@ -15,11 +15,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Laptop, Save, User as UserIcon } from 'lucide-react';
+import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
+import { useUser, useAuth } from '@/firebase';
+import { updateProfile } from 'firebase/auth';
 
 type UserProfileData = {
   name: string;
@@ -36,7 +38,10 @@ type UserProfileData = {
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { user } = useUser();
+  const auth = useAuth();
   const { userName, userImage, setUserName, setUserImage } = useUserProfile();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [profile, setProfile] = useState<UserProfileData>({
     name: '',
@@ -53,20 +58,21 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!user) return;
     try {
-      const savedProfile = localStorage.getItem('userMedicalProfile');
+      const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
         setProfile(parsedProfile);
-        setUserName(parsedProfile.name || 'Guest');
-        setUserImage(parsedProfile.image || 'https://picsum.photos/seed/user/100/100');
+        setUserName(parsedProfile.name || user.displayName || 'Guest');
+        setUserImage(parsedProfile.image || user.photoURL || 'https://picsum.photos/seed/user/100/100');
       } else {
-         setProfile(prev => ({...prev, name: userName, image: userImage}));
+         setProfile(prev => ({...prev, name: user.displayName || '', image: user.photoURL || 'https://picsum.photos/seed/user/100/100'}));
       }
     } catch (e) {
       console.error("Failed to load profile from local storage", e);
     }
-  }, []);
+  }, [user, setUserName, setUserImage]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -89,21 +95,39 @@ export default function ProfilePage() {
       }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Not Authenticated", description: "You must be logged in to save your profile." });
+        return;
+    }
+    setIsSaving(true);
     try {
-      localStorage.setItem('userMedicalProfile', JSON.stringify(profile));
+      // Update Firebase Auth profile if name changed
+      if (user.displayName !== profile.name) {
+          await updateProfile(user, { displayName: profile.name });
+      }
+      
+      // We don't save the image to Firebase Auth `photoURL` as it requires storage.
+      // We'll keep it in local storage.
+
+      localStorage.setItem(`userMedicalProfile_${user.uid}`, JSON.stringify(profile));
+      
+      // Update context
       setUserName(profile.name || 'Guest');
       setUserImage(profile.image);
+      
       toast({
         title: "Profile Saved",
-        description: "Your information has been saved locally on this device.",
+        description: "Your information has been successfully updated.",
       });
-    } catch (e) {
+    } catch (e: any) {
       toast({
         variant: "destructive",
         title: "Save Failed",
-        description: "Could not save your profile. Your browser storage might be full or disabled.",
+        description: e.message || "Could not save your profile. Please try again.",
       });
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -128,7 +152,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
-                    <AvatarImage src={profile.image} alt={profile.name || 'User'} data-ai-hint="person face" />
+                    <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
                     <AvatarFallback>
                         <UserIcon className="h-12 w-12" />
                     </AvatarFallback>
@@ -187,9 +211,9 @@ export default function ProfilePage() {
             </div>
         </CardContent>
          <CardFooter>
-            <Button onClick={handleSaveProfile}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Profile
+            <Button onClick={handleSaveProfile} disabled={isSaving}>
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSaving ? 'Saving...' : 'Save Profile'}
             </Button>
         </CardFooter>
       </Card>

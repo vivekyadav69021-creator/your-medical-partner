@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -17,12 +18,14 @@ import { useAuth } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { HeartPulse, Loader2 } from 'lucide-react';
+import { Loader2, HeartPulse } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,33 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Logged in successfully!' });
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        if (!name) {
+          toast({
+            variant: 'destructive',
+            title: 'Name is required',
+            description: 'Please enter your name to sign up.',
+          });
+          setLoading(false);
+          return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+        
+        // Save basic profile to local storage on sign up
+        const profileData = {
+          name: name,
+          email: email,
+          image: 'https://picsum.photos/seed/user/100/100',
+          age: '',
+          gender: 'not-specified',
+          weight: '',
+          height: '',
+          bloodGroup: '',
+          conditions: '',
+          allergies: '',
+        };
+        localStorage.setItem(`userMedicalProfile_${userCredential.user.uid}`, JSON.stringify(profileData));
+
         toast({ title: 'Account created successfully!' });
       }
       router.push('/dashboard');
@@ -108,6 +137,16 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="signup-name">Name</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your Name"
+                />
+              </div>
               <div className="space-y-1">
                 <Label htmlFor="signup-email">Email</Label>
                 <Input
