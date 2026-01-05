@@ -17,7 +17,6 @@ const HealthAssistantInputSchema = z.object({
   photoDataUri: z.string().optional().describe(
       "An optional photo of a health concern (e.g., rash, pill), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. This is not currently used in the prompt but is here for future functionality."
     ),
-   language: z.enum(['en', 'hi']).optional().default('en').describe("The language for the response, 'en' for English, 'hi' for Hindi. This is determined by the app's UI."),
 });
 export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 
@@ -131,7 +130,6 @@ BEHAVIOR CONSTRAINTS:
 Your goal is to reduce user confusion in one single response while maintaining medical responsibility.
 
 User query to process: {{{query}}}
-Language to respond in: {{{language}}}
 `,
 });
 

@@ -1,3 +1,4 @@
+
 'use server';
 
 import { healthAssistant } from '@/ai/flows/health-assistant-flow';
@@ -9,7 +10,6 @@ import { aiDoctorChat } from '@/ai/flows/ai-doctor-chat-flow';
 const healthAssistantSchema = z.object({
   query: z.string().min(1, 'Please ask a detailed question.'),
   photoDataUri: z.string().optional(),
-  language: z.enum(['en', 'hi']).optional(),
 });
 
 export async function healthAssistantAction(
@@ -19,7 +19,6 @@ export async function healthAssistantAction(
   const validatedFields = healthAssistantSchema.safeParse({
     query: formData.get('query'),
     photoDataUri: formData.get('photoDataUri') || undefined,
-    language: formData.get('language') || 'en'
   });
 
   if (!validatedFields.success) {
