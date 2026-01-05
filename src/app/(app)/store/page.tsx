@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useActionState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Upload, Sparkles, X, Camera, CameraOff } from 'lucide-react';
+import { Search, Upload, Loader2, X, Camera, CameraOff } from 'lucide-react';
 import { medicines, categories } from '@/lib/medicine-data';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ function AnalyzeButton() {
     <Button type="submit" disabled={pending}>
       {pending ? (
         <>
-          <Sparkles className="mr-2 h-4 w-4 animate-pulse" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Analyzing...
         </>
       ) : (

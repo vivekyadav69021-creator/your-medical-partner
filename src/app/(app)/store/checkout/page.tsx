@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, CreditCard, Sparkles } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
@@ -116,7 +116,7 @@ export default function CheckoutPage() {
                 <CardContent>
                     <Button form="checkout-form" type="submit" className="w-full" size="lg" disabled={isProcessing}>
                        {isProcessing ? (
-                           <><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Processing...</>
+                           <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
                        ) : (
                            <>
                             <Image src="https://storage.googleapis.com/studiopaas-test-assets/project-assets/upi-icon.png" alt="UPI" width={24} height={24} className="mr-2" />

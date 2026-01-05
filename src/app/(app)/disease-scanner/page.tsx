@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Scan, Sparkles, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download, CircleDot, Bot, FileHeart } from 'lucide-react';
+import { Scan, Loader2, X, Camera, CameraOff, AlertTriangle, Hospital, FileText, Image as ImageIcon, SwitchCamera, Upload, Download, CircleDot, Bot, FileHeart } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -278,7 +278,7 @@ function SkinFaceScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en})
                             <SwitchCamera />
                         </Button>
                         <Button type="submit" disabled={!preview || isAnalyzing}>
-                            {isAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>) : <>{t.analyzeImage}</>}
+                            {isAnalyzing ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t.analyzing}</>) : <>{t.analyzeImage}</>}
                         </Button>
                         <Button type="button" variant="outline" onClick={handleClear}>{t.clear}</Button>
                     </div>
@@ -303,7 +303,7 @@ function SkinFaceScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en})
              <CardFooter className="flex-col items-start gap-4">
                 {isAnalyzing && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         <span>{t.analyzing}</span>
                     </div>
                 )}
@@ -489,7 +489,7 @@ function XRayScanner({t}: {t: typeof labels.en}) {
             <Button type="submit" disabled={isAnalyzing || !selectedFile}>
               {isAnalyzing ? (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4 animate-pulse" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {t.analyzing}
                 </>
               ) : (
@@ -523,7 +523,7 @@ function XRayScanner({t}: {t: typeof labels.en}) {
        <CardFooter className="flex-col items-start gap-4">
           {isAnalyzing && (
             <div className="flex items-center gap-2 text-muted-foreground">
-                <Sparkles className="h-4 w-4 animate-pulse" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 <span>{t.xrayStatusAnalyzing}</span>
             </div>
           )}
@@ -658,14 +658,14 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                         </div>
                     )}
                     <Button type="submit" disabled={!imagePreview || isImageAnalyzing}>
-                        {isImageAnalyzing ? (<><Sparkles className="mr-2 h-4 w-4 animate-pulse"/>{t.analyzing}</>) : <><Upload className="mr-2 h-4 w-4"/>{t.analyzeReportImage}</>}
+                        {isImageAnalyzing ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin"/>{t.analyzing}</>) : <><Upload className="mr-2 h-4 w-4"/>{t.analyzeReportImage}</>}
                     </Button>
                 </form>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
                  {isImageAnalyzing && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         <span>{t.analyzing}</span>
                     </div>
                  )}
@@ -864,7 +864,7 @@ function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) 
                     <div className="flex items-center gap-2">
                         <Button type="submit" disabled={isAnalyzing}>
                             {isAnalyzing ? (
-                                <><Sparkles className="mr-2 h-4 w-4 animate-pulse" /> {t.analyzing}</>
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t.analyzing}</>
                             ) : (
                                 <><Scan className="mr-2" />{t.analyzeInjury}</>
                             )}
@@ -874,7 +874,7 @@ function InjuryScanner({ lang, t }: { lang: 'en' | 'hi', t: typeof labels.en }) 
 
                     {isAnalyzing && (
                         <div className="flex items-center gap-2 text-muted-foreground pt-4">
-                            <Sparkles className="h-4 w-4 animate-pulse" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             <span>{t.analyzing}</span>
                         </div>
                     )}

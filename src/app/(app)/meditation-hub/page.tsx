@@ -18,7 +18,7 @@ import {
   BarChart2,
   PlusCircle,
   Zap,
-  Sparkles,
+  Loader2,
   Heart,
   Footprints,
   Wind,
@@ -84,7 +84,7 @@ function SuggestionButton() {
     const { pending } = useFormStatus();
     return (
         <Button type="submit" disabled={pending}>
-            {pending ? <Sparkles className="mr-2 h-4 w-4 animate-pulse" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
             Get Suggestion
         </Button>
     );

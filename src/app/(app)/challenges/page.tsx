@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Check, Trophy, Star, Sparkles, Zap, Activity, Smile, Bot, Terminal, Save, Download, CheckCircle, Flame } from 'lucide-react';
+import { Check, Trophy, Star, Bot, Zap, Activity, Smile, Terminal, Save, Download, CheckCircle, Flame, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
@@ -376,7 +376,7 @@ function HealthPlanner() {
                 </div>
             </CardContent>
             <CardFooter className="flex flex-wrap items-center gap-4">
-                <Button onClick={generatePlanner}><Sparkles className="mr-2 h-4 w-4" />{t.generate}</Button>
+                <Button onClick={generatePlanner}><Bot className="mr-2 h-4 w-4" />{t.generate}</Button>
                 <Button variant="outline" onClick={savePlanner} disabled={!planner || status === t.statusSaving}><Save className="mr-2 h-4 w-4" />{status === t.statusSaving ? t.statusSaving : t.save}</Button>
                 <Button variant="outline" onClick={downloadPdf} disabled={!planner}><Download className="mr-2 h-4 w-4" />{t.download}</Button>
                 <p className="text-sm text-muted-foreground">{status}</p>
@@ -464,7 +464,7 @@ export default function ChallengesPage() {
       <Tabs defaultValue="community">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="community">Community Challenges</TabsTrigger>
-          <TabsTrigger value="ai-planner"><Sparkles className="mr-2 h-4 w-4"/>AI Health Planner</TabsTrigger>
+          <TabsTrigger value="ai-planner"><Bot className="mr-2 h-4 w-4"/>AI Health Planner</TabsTrigger>
           <TabsTrigger value="analysis">Health Analysis</TabsTrigger>
         </TabsList>
         

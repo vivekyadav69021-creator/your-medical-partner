@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Sparkles, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit } from 'lucide-react';
+import { Send, User, Bot, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -81,7 +81,7 @@ function SubmitButton() {
   return (
     <Button type="submit" size="icon" disabled={pending} id="sendBtn">
       {pending ? (
-        <Sparkles className="h-5 w-5 animate-pulse" />
+        <Loader2 className="h-5 w-5 animate-spin" />
       ) : (
         <Send className="h-5 w-5" />
       )}
@@ -299,8 +299,7 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
                     onClick={isRecording ? stopRecording : startRecording} 
                     disabled={isTranscribing}
                 >
-                  {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                  {isTranscribing && <Sparkles className="h-5 w-5 animate-pulse" />}
+                  {isTranscribing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />)}
                 </Button>
                 <Label className="text-sm text-muted-foreground">{isRecording ? "Recording..." : (isTranscribing ? "Transcribing...": "Microphone")}</Label>
             </div>
@@ -704,7 +703,7 @@ function ChatInterface({
                             <AvatarFallback>AI</AvatarFallback>
                         </Avatar>
                         <div className="max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 bg-muted flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 animate-pulse" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="text-sm italic">Assistant is typing...</span>
                         </div>
                         </div>
