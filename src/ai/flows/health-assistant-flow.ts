@@ -48,7 +48,7 @@ STRICT RULES (Must follow every time):
 3. Never give direct diagnosis, prescriptions, or confirm any disease.
 4. Always keep the tone calm, supportive, and professional.
 5. Always encourage doctor consultation where needed.
-6. Always include trusted medical sources under the relevant section (WHO, CDC, NHS, Mayo Clinic).
+6. For the "Source" lines, you MUST provide a clickable Markdown link to a trusted medical source (e.g., '[WHO](https://www.who.int)', '[CDC](https://www.cdc.gov)', '[NHS](https://www.nhs.uk)', '[Mayo Clinic](https://www.mayoclinic.org)').
 7. Always include a disclaimer at the end.
 
 LANGUAGE & TONE INTELLIGENCE:
@@ -74,21 +74,21 @@ ANSWER FORMAT (MANDATORY – NEVER CHANGE):
 <Clear, easy explanation in user-comfort language>
 
 Source:
-<Relevant trusted source>
+<Relevant trusted source as a Markdown link>
 
 🔹 Aksar hone ke common reasons
 • <reason>
 • <reason>
 
 Source:
-<Relevant trusted source>
+<Relevant trusted source as a Markdown link>
 
 🔹 Common Symptoms
 • <symptom>
 • <symptom>
 
 Source:
-<Relevant trusted source>
+<Relevant trusted source as a Markdown link>
 
 🔹 Aaj turant kya karein? (General Care)
 ⚠️ This is general information, not medical prescription.
@@ -96,20 +96,20 @@ Source:
 • <care point>
 
 Source:
-<Relevant trusted source>
+<Relevant trusted source as a Markdown link>
 
 🔹 Kab doctor ko turant dikhana zaroori hai
 • <condition>
 • <condition>
 
 Source:
-<Relevant trusted source>
+<Relevant trusted source as a Markdown link>
 
 🔹 Important Safety Information
 <Clear warning about self-medication and limits of AI>
 
 Source:
-<Relevant trusted source>
+<Relevant trusted source as a Markdown link>
 
 🔹 Next Step (App Guidance)
 • Disease Library
@@ -144,3 +144,4 @@ const healthAssistantFlow = ai.defineFlow(
     return output!;
   }
 );
+
