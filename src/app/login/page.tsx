@@ -19,7 +19,7 @@ import {
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { HeartPulse, Sparkles } from 'lucide-react';
+import { HeartPulse, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -94,7 +94,7 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter>
               <Button onClick={() => handleAuthAction('login')} disabled={loading} className="w-full">
-                {loading ? <Sparkles className="animate-pulse" /> : 'Login'}
+                {loading ? <Loader2 className="animate-spin" /> : 'Login'}
               </Button>
             </CardFooter>
           </Card>
@@ -131,7 +131,7 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter>
               <Button onClick={() => handleAuthAction('signup')} disabled={loading} className="w-full">
-                 {loading ? <Sparkles className="animate-pulse" /> : 'Create Account'}
+                 {loading ? <Loader2 className="animate-spin" /> : 'Create Account'}
               </Button>
             </CardFooter>
           </Card>
