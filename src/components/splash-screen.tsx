@@ -1,20 +1,8 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { HeartPulse } from 'lucide-react';
 
 export function SplashScreen() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.push('/dashboard');
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [router]);
-
   return (
     <div className="flex flex-col items-center justify-center h-screen w-full overflow-hidden bg-gradient-to-br from-[#E3F2FD] to-[#BBDEFB] dark:from-[#0D1117] dark:to-[#161B22] bg-pan-subtle bg-[length:200%_200%]">
       <div className="relative flex flex-col items-center justify-center text-center">
