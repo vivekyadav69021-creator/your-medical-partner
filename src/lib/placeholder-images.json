@@ -74,9 +74,9 @@
     },
     {
       "id": "med01",
-      "description": "Box of Paracetamol tablets",
-      "imageUrl": "https://storage.googleapis.com/studiopaas-test-assets/project-assets/56f76c36-d419-4886-ac15-131737e466d6",
-      "imageHint": "medicine box"
+      "description": "Blister pack of Paracetamol 500mg tablets",
+      "imageUrl": "https://i.ibb.co/fQ3sCjD/paracetamol-500mg.jpg",
+      "imageHint": "paracetamol pills"
     },
     {
       "id": "med02",
