@@ -26,6 +26,8 @@ import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import ReactMarkdown from 'react-markdown';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 
 const initialXrayState = {
@@ -677,27 +679,36 @@ function LabReportAnalyzer({lang, t}: {lang: 'en' | 'hi', t: typeof labels.en}) 
                             <h5 className="font-semibold text-lg">Overall Summary</h5>
                             <p className="text-sm">{imageState.result.summary}</p>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-muted">
-                                    <tr>
-                                        <th className="p-2">Test</th>
-                                        <th className="p-2">Value</th>
-                                        <th className="p-2">Standard Range</th>
-                                        <th className="p-2">Interpretation</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {imageState.result.interpretations.map((item: any, idx: number) => (
-                                        <tr key={idx} className="border-b">
-                                            <td className="p-2 font-medium">{item.test}</td>
-                                            <td className="p-2">{item.value}</td>
-                                            <td className="p-2">{item.range || 'N/A'}</td>
-                                            <td className="p-2">{item.note}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="overflow-x-auto rounded-lg border">
+                           <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Test</TableHead>
+                                        <TableHead>Value</TableHead>
+                                        <TableHead>Standard Range</TableHead>
+                                        <TableHead>Interpretation</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {imageState.result.interpretations.map((item: any, idx: number) => {
+                                        const statusClass = {
+                                            high: 'bg-destructive/10 hover:bg-destructive/15',
+                                            low: 'bg-destructive/10 hover:bg-destructive/15',
+                                            borderline: 'bg-yellow-400/20 hover:bg-yellow-400/25 dark:bg-yellow-600/20 dark:hover:bg-yellow-600/25',
+                                            normal: ''
+                                        }[item.status] || '';
+
+                                        return (
+                                            <TableRow key={idx} className={cn(statusClass)}>
+                                                <TableCell className="font-medium">{item.test}</TableCell>
+                                                <TableCell>{item.value}</TableCell>
+                                                <TableCell>{item.range || 'N/A'}</TableCell>
+                                                <TableCell>{item.note}</TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
                         </div>
                          <div>
                             <h5 className="font-semibold text-lg">Recommendations</h5>

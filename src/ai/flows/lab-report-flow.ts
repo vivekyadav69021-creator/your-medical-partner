@@ -21,7 +21,8 @@ const LabFindingSchema = z.object({
   test: z.string().describe('The name of the lab test (e.g., "Hemoglobin", "Glucose, Fasting").'),
   value: z.string().describe('The measured value of the test result, including units (e.g., "14.2 g/dL", "110 mg/dL").'),
   range: z.string().optional().describe('The standard reference range for the test, if provided on the report (e.g., "13.5-17.5 g/dL").'),
-  note: z.string().describe('A brief, one-sentence interpretation of the value (e.g., "Normal", "Slightly High", "Low").'),
+  note: z.string().describe('A brief, one-sentence interpretation of the value in simple language (e.g., "This value is within the normal range.", "This is slightly higher than the normal range.").'),
+  status: z.enum(['normal', 'high', 'low', 'borderline']).describe('A machine-readable status for the finding: normal, high, low, or borderline.'),
 });
 
 const LabReportInputSchema = z.object({
@@ -48,16 +49,21 @@ const prompt = ai.definePrompt({
   name: 'labReportAnalyzerPrompt',
   input: { schema: LabReportInputSchema },
   output: { schema: LabReportOutputSchema },
-  prompt: `You are a specialized AI Lab Report Analyzer. Your primary function is to meticulously read the provided medical lab report image, extract all key information, and present it in a structured, clear, and educational format.
+  prompt: `You are a specialized AI Lab Report Analyzer. Your primary function is to meticulously read the provided medical lab report image, extract all key information, and present it in a structured, clear, and easy-to-understand format for a non-medical person.
 
   **Critical Instructions:**
-  1.  **Language:** The entire response—including summaries, notes, and recommendations—MUST be in the specified language: \`'{{language}}'\`. If \`'hi'\`, use Hindi. Otherwise, use English.
-  2.  **Analyze the Image:** Carefully scan the entire lab report. Identify patient information (name, age, date) if present. Extract every single lab test listed, its corresponding value, units, and the reference range.
-  3.  **Extract Patient Details:** If patient details are visible, populate the \`patientDetails\` object. If not, leave it empty. Do not guess or invent information.
-  4.  **Extract All Test Values:** For every test result you can identify (e.g., Hemoglobin, Platelet Count, LDL Cholesterol, Glucose), create an entry in the \`interpretations\` array.
-  5.  **Interpret Each Value:** For each test, provide a simple, clear note in the specified language (e.g., "Normal," "High," "Low," "Borderline high" or "सामान्य," "अधिक," "कम," "सीमा पर").
-  6.  **Formulate Summary:** Write a concise, one- or two-sentence summary of the most important findings in the specified language.
-  7.  **Formulate Recommendation:** Based on the findings, provide a general, non-prescriptive recommendation.
+  1.  **Language:** The entire response—including summaries, notes, and recommendations—MUST be in the specified language: \`'{{language}}'\`. If \`'hi'\`, use Hindi. Otherwise, use simple English.
+  2.  **Simplicity is Key:** Use simple, non-technical language. Avoid medical jargon. Explain things as you would to a patient who has no medical background.
+  3.  **Analyze the Image:** Carefully scan the entire lab report. Identify patient information (name, age, date) if present. Extract every single lab test listed, its corresponding value, units, and the reference range.
+  4.  **Extract Patient Details:** If patient details are visible, populate the \`patientDetails\` object. If not, leave it empty.
+  5.  **Create Interpretations:** For every test result you identify, create an entry in the \`interpretations\` array.
+      - **\`test\`:** The name of the test.
+      - **\`value\`:** The result value with units.
+      - **\`range\`:** The reference range if available.
+      - **\`note\`:** A simple, one-sentence explanation of what the result means (e.g., "This value is normal.", "This is slightly high and may indicate...").
+      - **\`status\`:** Based on the value and range, classify the result as one of: \`normal\`, \`high\`, \`low\`, or \`borderline\`. This is very important for the UI.
+  6.  **Formulate Summary:** Write a concise, one- or two-sentence summary of the most important findings in simple language.
+  7.  **Formulate Recommendation:** Based on the findings, provide a general, non-prescriptive recommendation in paragraph form.
   8.  **Mandatory Disclaimer:** Your recommendation MUST ALWAYS conclude with the following disclaimer, translated into the correct language:
       - **English:** "This is an automated interpretation for educational purposes only and not a medical diagnosis. Please consult a qualified physician for a complete evaluation and treatment plan."
       - **Hindi:** "यह केवल शैक्षिक उद्देश्यों के लिए एक स्वचालित व्याख्या है और यह चिकित्सा निदान नहीं है। कृपया पूर्ण मूल्यांकन और उपचार योजना के लिए एक योग्य चिकित्सक से परामर्श करें।"
@@ -93,5 +99,3 @@ const labReportAnalyzerFlow = ai.defineFlow(
     }
   }
 );
-
-    
