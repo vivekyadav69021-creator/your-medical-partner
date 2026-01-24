@@ -87,15 +87,13 @@ const labReportAnalyzerFlow = ai.defineFlow(
         throw new Error("The AI model did not return a valid analysis.");
       }
       return output;
-    } catch(e: any) {
-        console.error("Lab report analysis flow error:", e);
-        // Ensure a valid, structured error response is always returned.
-        const errorMessage = e.message || 'An unexpected error occurred during analysis.';
-        return { 
-            summary: 'Analysis Failed', 
-            interpretations: [], 
-            recommendation: `Error: ${errorMessage}. Please check the uploaded image or try again.` 
-        };
+    } catch (e: any) {
+      console.error("Lab report analysis flow error:", e);
+      // Re-throw a user-friendly error to be caught by the calling action.
+      // This standardizes error handling at the action level.
+      throw new Error(
+        'The AI model could not analyze the report. This may be due to an invalid image, poor quality, or a temporary issue. Please try again with a clear image.'
+      );
     }
   }
 );
