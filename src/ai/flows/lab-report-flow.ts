@@ -49,26 +49,25 @@ const prompt = ai.definePrompt({
   name: 'labReportAnalyzerPrompt',
   input: { schema: LabReportInputSchema },
   output: { schema: LabReportOutputSchema },
-  prompt: `You are a specialized AI Lab Report Analyzer. Your primary function is to meticulously read the provided medical lab report image, extract all key information, and present it in a structured, clear, and easy-to-understand format for a non-medical person.
+  prompt: `You are an AI data extractor for medical lab reports. Your task is to analyze the provided image and output a structured JSON object.
 
-  **Critical Instructions:**
-  1.  **Language:** The entire response—including summaries, notes, and recommendations—MUST be in the specified language: \`'{{language}}'\`. If \`'hi'\`, use Hindi. Otherwise, use simple English.
-  2.  **Simplicity is Key:** Use simple, non-technical language. Avoid medical jargon. Explain things as you would to a patient who has no medical background.
-  3.  **Analyze the Image:** Carefully scan the entire lab report. Identify patient information (name, age, date) if present. Extract every single lab test listed, its corresponding value, units, and the reference range.
-  4.  **Extract Patient Details:** If patient details are visible, populate the \`patientDetails\` object. If not, leave it empty.
-  5.  **Create Interpretations:** For every test result you identify, create an entry in the \`interpretations\` array.
-      - **\`test\`:** The name of the test.
-      - **\`value\`:** The result value with units.
-      - **\`range\`:** The reference range if available.
-      - **\`note\`:** A simple, one-sentence explanation of what the result means (e.g., "This value is normal.", "This is slightly high and may indicate...").
-      - **\`status\`:** Based on the value and range, classify the result as one of: \`normal\`, \`high\`, \`low\`, or \`borderline\`. This is very important for the UI.
-  6.  **Formulate Summary:** Write a concise, one- or two-sentence summary of the most important findings in simple language.
-  7.  **Formulate Recommendation:** Based on the findings, provide a general, non-prescriptive recommendation in paragraph form.
-  8.  **Mandatory Disclaimer:** Your recommendation MUST ALWAYS conclude with the following disclaimer, translated into the correct language:
+  **CRITICAL INSTRUCTIONS:**
+  1.  **LANGUAGE:** The entire JSON output, including all notes and summaries, MUST be in the specified language: \`'{{language}}'\`.
+  2.  **EXTRACT & INTERPRET:**
+      - Scan the image for all lab tests.
+      - For each test, extract its name, the measured value (with units), and the reference range.
+      - Compare the value to the range to determine the 'status' ('normal', 'high', 'low', 'borderline').
+      - Write a simple, one-sentence 'note' explaining the status in non-technical language.
+  3.  **SUMMARIZE:**
+      - Extract patient details if visible.
+      - Write a 1-2 sentence overall summary of the findings.
+      - Write a general recommendation that MUST conclude with the mandatory disclaimer below.
+  4.  **ACCURACY:** Do not guess. If a value or range is unreadable, omit that test from the \`interpretations\` array.
+  5.  **DISCLAIMER (MANDATORY):**
       - **English:** "This is an automated interpretation for educational purposes only and not a medical diagnosis. Please consult a qualified physician for a complete evaluation and treatment plan."
       - **Hindi:** "यह केवल शैक्षिक उद्देश्यों के लिए एक स्वचालित व्याख्या है और यह चिकित्सा निदान नहीं है। कृपया पूर्ण मूल्यांकन और उपचार योजना के लिए एक योग्य चिकित्सक से परामर्श करें।"
 
-  Now, analyze this lab report image:
+  Analyze this lab report image:
   {{media url=imageDataUri}}
   `,
 });
@@ -89,10 +88,8 @@ const labReportAnalyzerFlow = ai.defineFlow(
       return output;
     } catch (e: any) {
       console.error("Lab report analysis flow error:", e);
-      // Re-throw a user-friendly error to be caught by the calling action.
-      // This standardizes error handling at the action level.
       throw new Error(
-        'The AI model could not analyze the report. This may be due to an invalid image, poor quality, or a temporary issue. Please try again with a clear image.'
+        'The AI model took too long to respond or could not analyze the report. This can happen with poor quality images or during high server load. Please try again with a clear image.'
       );
     }
   }
