@@ -49,25 +49,23 @@ const prompt = ai.definePrompt({
   name: 'labReportAnalyzerPrompt',
   input: { schema: LabReportInputSchema },
   output: { schema: LabReportOutputSchema },
-  prompt: `You are an AI data extractor for medical lab reports. Your task is to analyze the provided image and output a structured JSON object.
+  prompt: `You are an AI assistant that extracts data from medical lab reports. Your only job is to analyze the image and populate the requested JSON fields accurately.
 
-  **CRITICAL INSTRUCTIONS:**
-  1.  **LANGUAGE:** The entire JSON output, including all notes and summaries, MUST be in the specified language: \`'{{language}}'\`.
-  2.  **EXTRACT & INTERPRET:**
-      - Scan the image for all lab tests.
-      - For each test, extract its name, the measured value (with units), and the reference range.
-      - Compare the value to the range to determine the 'status' ('normal', 'high', 'low', 'borderline').
-      - Write a simple, one-sentence 'note' explaining the status in non-technical language.
-  3.  **SUMMARIZE:**
-      - Extract patient details if visible.
-      - Write a 1-2 sentence overall summary of the findings.
-      - Write a general recommendation that MUST conclude with the mandatory disclaimer below.
-  4.  **ACCURACY:** Do not guess. If a value or range is unreadable, omit that test from the \`interpretations\` array.
-  5.  **DISCLAIMER (MANDATORY):**
-      - **English:** "This is an automated interpretation for educational purposes only and not a medical diagnosis. Please consult a qualified physician for a complete evaluation and treatment plan."
-      - **Hindi:** "यह केवल शैक्षिक उद्देश्यों के लिए एक स्वचालित व्याख्या है और यह चिकित्सा निदान नहीं है। कृपया पूर्ण मूल्यांकन और उपचार योजना के लिए एक योग्य चिकित्सक से परामर्श करें।"
-
-  Analyze this lab report image:
+  **Priority 1: Extract Test Results**
+  - Go through the image line by line.
+  - For each lab test you find, extract the 'test' name, 'value', and 'range'.
+  - Based on the value and range, set the 'status' to 'high', 'low', 'normal', or 'borderline'.
+  - Write a very simple, one-sentence 'note' in the specified language ('{{language}}'). Example: "This is slightly high."
+  - If you can't read a test, skip it. Do not guess.
+  
+  **Priority 2: Summarize**
+  - After extracting all tests, write a one-sentence summary about the most important findings (e.g., "Lipid profile is high, other values are normal.").
+  - Extract patient name and date if visible.
+  
+  **Priority 3: Recommendation (IMPORTANT)**
+  - The 'recommendation' field MUST ALWAYS contain this exact text, translated to the target language ('{{language}}'): "This is an automated interpretation and not a medical diagnosis. Please consult a qualified physician for a complete evaluation."
+  
+  Analyze this image now. Language: {{language}}.
   {{media url=imageDataUri}}
   `,
 });
