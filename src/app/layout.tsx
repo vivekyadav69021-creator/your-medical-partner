@@ -19,39 +19,38 @@ export default function RootLayout({
 
   const layoutFixScript = `
 (function(){
-  function applyFix(){
-    const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,div,span'));
-    const targetHeading = headings.find(h => {
-      const text = (h.textContent||'').trim().toLowerCase();
-      return text.includes('chat with health assistant') || text.includes('chat with your ai companion');
-    });
-    if(!targetHeading) return false;
+  const processedCards = new Set();
 
-    let card = targetHeading.closest('div[class*="card"]');
-    if(!card) card = document.body;
+  function adjustAllChatCardHeights() {
+    try {
+      const vh = Math.max(window.innerHeight || 600, document.documentElement.clientHeight);
+      const newH = (window.innerWidth <= 720) ? Math.floor(vh*0.72) : Math.floor(vh*0.78);
+      document.querySelectorAll('.ymp-expand-card').forEach(card => {
+        card.style.height = newH + 'px';
+      });
+    } catch(e) {}
+  }
 
-    if(card.dataset.ympExpandApplied === '1') return true;
-    card.dataset.ympExpandApplied = '1';
+  function fixCard(card) {
+    if (!card || processedCards.has(card)) return;
+    processedCards.add(card);
+
+    card.classList.add('ymp-expand-card');
     
     let history = card.querySelector('[class*="h-full"]');
-    let footer = card.querySelector('form');
+    let footer = card.querySelector('form, footer, .card-footer');
 
     if (!history) {
         let candidates = Array.from(card.children).filter(ch => ch.offsetHeight > 20);
         candidates.sort((a,b)=> b.offsetHeight - a.offsetHeight);
         history = candidates[0] || card;
     }
-     if (!footer) {
-        footer = card.querySelector('form, footer, .card-footer');
-    }
-
-    card.classList.add('ymp-expand-card');
-
-    const flexWrap = document.createElement('div');
-    flexWrap.className = 'ymp-expand-fit';
     
     const cardContent = history.parentElement;
     if(cardContent && cardContent.parentElement === card) {
+       const flexWrap = document.createElement('div');
+       flexWrap.className = 'ymp-expand-fit';
+
        Array.from(cardContent.childNodes).forEach(node => {
          if (node !== footer && node.parentElement !== footer) {
             flexWrap.appendChild(node);
@@ -67,34 +66,20 @@ export default function RootLayout({
        }
     }
 
-
-    const msgs = card.querySelectorAll('div[class*="max-w-"]');
-    msgs.forEach(m => {
-      const txt = (m.textContent||'').trim().toLowerCase();
-      if(!txt) return;
-      m.classList.add('ymp-expand-msg');
-      if (m.parentElement?.classList.contains('justify-end')) {
-         m.classList.add('ymp-expand-user');
-      } else {
-         m.classList.add('ymp-expand-bot');
-      }
-    });
-
-    function adjustHeights(){
-      try{
-        const vh = Math.max(window.innerHeight || 600, document.documentElement.clientHeight);
-        const newH = (window.innerWidth <= 720) ? Math.floor(vh*0.72) : Math.floor(vh*0.78);
-        card.style.height = newH + 'px';
-      }catch(e){}
-    }
-    adjustHeights();
-    window.addEventListener('resize', adjustHeights);
-
     setTimeout(()=> { if(history) history.scrollTop = history.scrollHeight; }, 150);
+  }
+
+  function applyFix() {
+    const cards = document.querySelectorAll('[data-chat-card="true"]');
+    if (cards.length === 0) return false;
+    cards.forEach(fixCard);
+    adjustAllChatCardHeights(); // Adjust height after fixing
     return true;
   }
 
   if (typeof window !== 'undefined') {
+      window.addEventListener('resize', adjustAllChatCardHeights); // Add one listener for all
+      
       document.addEventListener('DOMContentLoaded', () => {
           applyFix();
           setTimeout(applyFix, 400);

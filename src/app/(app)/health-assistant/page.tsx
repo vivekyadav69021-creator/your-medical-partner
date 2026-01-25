@@ -656,7 +656,7 @@ function ChatInterface({
     return (
          <div className="flex-grow flex flex-col">
             {children}
-            <Card className="flex-1 flex flex-col">
+            <Card className="flex-1 flex flex-col" data-chat-card="true">
                 <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Icon />{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>

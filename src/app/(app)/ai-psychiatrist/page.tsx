@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -346,7 +345,7 @@ export default function AIPsychiatristPage() {
         </p>
       </div>
       <VoiceWidget lastAssistantMessage={lastAssistantMessage} />
-      <Card className="flex-1 flex flex-col">
+      <Card className="flex-1 flex flex-col" data-chat-card="true">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BrainCircuit />
