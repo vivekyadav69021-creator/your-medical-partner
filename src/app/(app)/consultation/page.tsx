@@ -156,7 +156,7 @@ export default function ConsultationPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2500); 
+    }, 4000); 
 
     return () => clearTimeout(timer);
   }, []);
