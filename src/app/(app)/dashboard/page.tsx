@@ -39,12 +39,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Progress } from '@/components/ui/progress';
-import { HealthScoreDisplay } from '@/components/health-score-display';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { OnboardingModal } from '@/components/onboarding-modal';
 import { useUser } from '@/firebase';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 type UserProfile = {
   name: string;
@@ -154,6 +152,8 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  
+  const dashboardHeroImage = PlaceHolderImages.find(p => p.id === 'dashboard-hero');
 
 
   useEffect(() => {
@@ -201,18 +201,35 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingClose} />
-      {showProfilePrompt && (
-        <Card className="mb-6 bg-secondary border-primary/50">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Rocket className="text-primary"/> Personalize Your Health Journey!</CardTitle>
-                <CardDescription>Complete your profile to enable Advanced AI Insights and custom-tailored Diet Plans.</CardDescription>
+      
+      {showProfilePrompt && dashboardHeroImage && (
+        <Card className="relative mb-6 overflow-hidden text-white bg-slate-900 shadow-lg">
+          <Image
+            src={dashboardHeroImage.imageUrl}
+            alt={dashboardHeroImage.description}
+            fill
+            className="object-cover z-0 opacity-30"
+            data-ai-hint={dashboardHeroImage.imageHint}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/50 to-slate-900/80 z-10" />
+          <div className="relative z-20 p-6">
+            <CardHeader className="p-0">
+              <CardTitle className="flex items-center gap-3 text-2xl font-bold text-white">
+                <Rocket /> Personalize Your Health Journey!
+              </CardTitle>
+              <CardDescription className="text-slate-300 pt-1">
+                Complete your profile to unlock Advanced AI Insights and custom-tailored health plans.
+              </CardDescription>
             </CardHeader>
-            <CardFooter className="flex-wrap gap-4">
-                <Button asChild>
-                    <Link href="/profile">Update Profile Now</Link>
-                </Button>
-                <Button variant="link" onClick={() => setShowProfilePrompt(false)}>Maybe Later</Button>
+            <CardFooter className="p-0 pt-4 flex-wrap gap-4">
+              <Button asChild className="bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 text-white shadow-md">
+                <Link href="/profile">Update Profile Now</Link>
+              </Button>
+              <Button variant="link" className="text-slate-300 hover:text-white" onClick={() => { setShowProfilePrompt(false); localStorage.setItem('hideProfileReminders', 'true'); }}>
+                Maybe Later
+              </Button>
             </CardFooter>
+          </div>
         </Card>
       )}
 
@@ -226,34 +243,26 @@ export default function DashboardPage() {
       </div>
 
       <Card>
-          <CardHeader>
-              <CardTitle>Quick Access</CardTitle>
-              <CardDescription>
-                  Your healthcare tools, just a click away.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <CardHeader>
+            <CardTitle>Quick Access</CardTitle>
+            <CardDescription>
+                Your healthcare tools, just a click away.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
               {quickAccessItems.map(item => (
-              <Card
-                  key={item.title}
-                  className="group hover:shadow-lg transition-shadow duration-300"
-              >
-                  <Link href={item.href} className="flex flex-col h-full p-4 justify-between">
-                      <item.icon className="w-8 h-8 text-primary mb-2" />
-                      <div>
-                          <p className="text-md font-semibold">
-                          {item.title}
-                          </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {item.description}
-                          </p>
-                      </div>
-                  </Link>
-              </Card>
+                  <div key={item.title} className="snap-start flex-shrink-0">
+                      <Card className="w-36 h-36 group hover:shadow-lg transition-shadow duration-300">
+                          <Link href={item.href} className="flex flex-col h-full p-4 items-center text-center justify-center">
+                              <item.icon className="w-8 h-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                              <p className="text-sm font-semibold leading-tight">{item.title}</p>
+                          </Link>
+                      </Card>
+                  </div>
               ))}
-          </div>
-          </CardContent>
+            </div>
+        </CardContent>
       </Card>
      
 
