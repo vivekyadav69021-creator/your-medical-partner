@@ -488,7 +488,7 @@ export default function HealthAssistantPage() {
   const userImage = 'https://picsum.photos/seed/user/100/100';
 
   return (
-    <div className="flex h-[calc(100vh-6.5rem)] gap-4">
+    <div className="flex h-full gap-4">
         {/* Chat History Sidebar */}
         <Card className="hidden md:flex md:w-1/4 flex-col">
             <CardHeader className="flex-row items-center justify-between">

@@ -337,7 +337,7 @@ export default function AIPsychiatristPage() {
   const userImage = "https://picsum.photos/seed/user/100/100";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)]">
+    <div className="flex flex-col h-full">
       <div className="mb-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline">AI Psychiatrist</h1>
         <p className="text-muted-foreground">
