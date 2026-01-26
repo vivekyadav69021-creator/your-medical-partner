@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -67,8 +68,14 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     });
   }, [api]);
 
+  const handleClose = () => {
+    if (agreed) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <Carousel setApi={setApi} className="w-full">
           <CarouselContent>
@@ -106,7 +113,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                     I have read the information and I understand that this app is for informational purposes and not a substitute for professional medical advice.
                 </Label>
             </div>
-            <Button type="button" className="w-full" onClick={onClose} disabled={!agreed}>
+            <Button type="button" className="w-full" onClick={handleClose} disabled={!agreed}>
                 Get Started
             </Button>
         </DialogFooter>

@@ -31,6 +31,7 @@ import {
   BedDouble,
   Flame,
   User as UserIcon,
+  Rocket,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
@@ -42,6 +43,8 @@ import { HealthScoreDisplay } from '@/components/health-score-display';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { OnboardingModal } from '@/components/onboarding-modal';
+import { useUser } from '@/firebase';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 type UserProfile = {
   name: string;
@@ -52,6 +55,8 @@ type UserProfile = {
   bloodGroup: string;
   conditions: string;
   allergies: string;
+  lifestyle: string;
+  dietaryPreference: string;
 };
 
 const quickAccessItems = [
@@ -145,14 +150,32 @@ const activeChallenge = {
 
 
 export default function DashboardPage() {
+  const { user } = useUser();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+
 
   useEffect(() => {
+    if (!user) return;
+
     try {
-      const savedProfile = localStorage.getItem('userMedicalProfile');
+      const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
       if (savedProfile) {
-        setProfile(JSON.parse(savedProfile));
+        const p = JSON.parse(savedProfile);
+        setProfile(p);
+        const isComplete = p.height && p.weight && p.bloodGroup && p.lifestyle && p.dietaryPreference;
+        const remindersHidden = localStorage.getItem('hideProfileReminders') === 'true';
+        if (!isComplete && !remindersHidden) {
+            setShowProfilePrompt(true);
+        } else {
+            setShowProfilePrompt(false);
+        }
+      } else {
+        const remindersHidden = localStorage.getItem('hideProfileReminders') === 'true';
+        if (!remindersHidden) {
+            setShowProfilePrompt(true);
+        }
       }
 
       const hasOnboarded = localStorage.getItem('hasOnboarded');
@@ -161,24 +184,38 @@ export default function DashboardPage() {
       }
     } catch (e) {
       console.error("Failed to load profile from local storage", e);
-      // If there's an error, assume they haven't onboarded
       const hasOnboarded = localStorage.getItem('hasOnboarded');
       if (!hasOnboarded) {
         setShowOnboarding(true);
       }
     }
-  }, []);
+  }, [user]);
 
   const handleOnboardingClose = () => {
     localStorage.setItem('hasOnboarded', 'true');
     setShowOnboarding(false);
   };
   
-  const greetingName = profile?.name || 'Guest';
+  const greetingName = profile?.name || user?.displayName || 'Guest';
 
   return (
     <div className="space-y-8">
       <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingClose} />
+      {showProfilePrompt && (
+        <Card className="mb-6 bg-secondary border-primary/50">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Rocket className="text-primary"/> Personalize Your Health Journey!</CardTitle>
+                <CardDescription>Complete your profile to enable Advanced AI Insights and custom-tailored Diet Plans.</CardDescription>
+            </CardHeader>
+            <CardFooter className="flex-wrap gap-4">
+                <Button asChild>
+                    <Link href="/profile">Update Profile Now</Link>
+                </Button>
+                <Button variant="link" onClick={() => setShowProfilePrompt(false)}>Maybe Later</Button>
+            </CardFooter>
+        </Card>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">
           Hi, {greetingName}!
