@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -27,6 +28,7 @@ import {
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Player } from '@lottiefiles/react-lottie-player';
 
 const indianDoctors = [
   { id: 'dr-shivam-yadav', name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2', fees: '₹500', experience: '8 years', location: 'Delhi, India', bio: 'Compassionate general physician with expertise in managing chronic diseases and acute illnesses.', education: 'MBBS, MD (General Medicine)', reviews: [{user: 'Rohan S.', rating: 5, comment: "Very helpful and listens patiently."}] },
@@ -133,18 +135,46 @@ const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, re
   );
 };
 
+const ConsultationLoader = () => (
+    <div className="flex flex-col items-center justify-center h-[60vh]">
+      <Player
+        autoplay
+        loop
+        src="https://lottie.host/efe3b4c2-3647-4301-b7da-8e0c97cb4bf2/SEE6sVMw1W.json"
+        style={{ height: '300px', width: '300px' }}
+      />
+      <p className="text-lg text-muted-foreground mt-4 animate-pulse">Connecting to doctors...</p>
+    </div>
+  );
+
 
 export default function ConsultationPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load appointments from localStorage on component mount
-    const savedAppointments = localStorage.getItem('appointments');
-    if (savedAppointments) {
-      setAppointments(JSON.parse(savedAppointments));
-    }
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500); 
+
+    return () => clearTimeout(timer);
   }, []);
+
+
+  useEffect(() => {
+    if(!isLoading) {
+        // Load appointments from localStorage on component mount
+        const savedAppointments = localStorage.getItem('appointments');
+        if (savedAppointments) {
+            setAppointments(JSON.parse(savedAppointments));
+        }
+    }
+  }, [isLoading]);
+
+  if (isLoading) {
+    return <ConsultationLoader />;
+  }
 
   return (
     <div className="space-y-8">
