@@ -140,7 +140,7 @@ const ConsultationLoader = () => (
       <Player
         autoplay
         loop
-        src="https://lottie.host/efe3b4c2-3647-4301-b7da-8e0c97cb4bf2/SEE6sVMw1W.json"
+        src="https://assets3.lottiefiles.com/packages/lf20_UJNc2t.json"
         style={{ height: '300px', width: '300px' }}
       />
       <p className="text-lg text-muted-foreground mt-4 animate-pulse">Connecting to doctors...</p>
