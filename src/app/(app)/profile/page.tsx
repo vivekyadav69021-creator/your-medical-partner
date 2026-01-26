@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -73,7 +72,7 @@ export default function ProfilePage() {
       const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
-        setProfile(parsedProfile);
+        setProfile(prev => ({ ...prev, ...parsedProfile }));
         setUserName(parsedProfile.name || user.displayName || 'Guest');
         setUserImage(parsedProfile.image || user.photoURL || 'https://picsum.photos/seed/user/100/100');
       } else {
@@ -112,8 +111,8 @@ export default function ProfilePage() {
   const handleGoalChange = (goal: string, checked: boolean | 'indeterminate') => {
       setProfile(prev => {
           const newGoals = checked
-              ? [...prev.goals, goal]
-              : prev.goals.filter(g => g !== goal);
+              ? [...(prev.goals || []), goal]
+              : (prev.goals || []).filter(g => g !== goal);
           return { ...prev, goals: newGoals };
       });
   };
@@ -261,7 +260,7 @@ export default function ProfilePage() {
                             <div key={goal} className="flex items-center gap-2">
                                 <Checkbox
                                     id={`goal-${goal.toLowerCase().replace(' ', '-')}`}
-                                    checked={profile.goals.includes(goal)}
+                                    checked={(profile.goals || []).includes(goal)}
                                     onCheckedChange={(checked) => handleGoalChange(goal, checked)}
                                 />
                                 <Label htmlFor={`goal-${goal.toLowerCase().replace(' ', '-')}`}>{goal}</Label>
