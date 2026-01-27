@@ -432,6 +432,8 @@ export default function HealthAssistantPage() {
     });
   };
   
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+
   const handleFormAction = (formData: FormData) => {
     const query = formData.get('query') as string;
     if (!query && !attachedImage) return;
@@ -451,9 +453,10 @@ export default function HealthAssistantPage() {
       return s;
     }));
     
+    formData.set('history', JSON.stringify(activeSession?.messages || []));
+    
     if (activeMode === 'doctor') {
       formData.set('specialty', specialty);
-      formData.set('history', JSON.stringify(activeSession?.messages || []));
       doctorFormAction(formData);
     } else {
       generalFormAction(formData);
@@ -480,7 +483,6 @@ export default function HealthAssistantPage() {
     }
   }
   
-  const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession?.messages || [];
   const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop()?.content || '';
 

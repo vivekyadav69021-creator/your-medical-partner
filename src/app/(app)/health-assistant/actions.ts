@@ -10,15 +10,23 @@ import { aiDoctorChat } from '@/ai/flows/ai-doctor-chat-flow';
 const healthAssistantSchema = z.object({
   query: z.string().min(1, 'Please ask a detailed question.'),
   photoDataUri: z.string().optional(),
+  history: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+  })).optional(),
 });
 
 export async function healthAssistantAction(
   prevState: any,
   formData: FormData
 ) {
+  const historyString = formData.get('history') as string;
+  const history = historyString ? JSON.parse(historyString) : [];
+
   const validatedFields = healthAssistantSchema.safeParse({
     query: formData.get('query'),
     photoDataUri: formData.get('photoDataUri') || undefined,
+    history: history,
   });
 
   if (!validatedFields.success) {

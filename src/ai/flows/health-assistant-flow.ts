@@ -17,6 +17,10 @@ const HealthAssistantInputSchema = z.object({
   photoDataUri: z.string().optional().describe(
       "An optional photo of a health concern (e.g., rash, pill), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. This is not currently used in the prompt but is here for future functionality."
     ),
+  history: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+  })).optional().describe('The chat history between the user and the AI assistant.'),
 });
 export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 
@@ -42,6 +46,8 @@ const prompt = ai.definePrompt({
   prompt: `You are "Your Medical Partner – AI Health Assistant".
 
 Your purpose is to provide safe, accurate, and trustworthy health information. You are NOT a doctor and you do NOT give diagnoses or prescriptions. You help users understand health topics and decide their next steps.
+
+Analyze the user's query and the chat history to provide a relevant and helpful response.
 
 ────────────────────────
 SOURCE & TRUST RULES
@@ -105,7 +111,12 @@ SAFETY & FOLLOW-UP RULES
         - "What are the long-term complications?"
 
 ---
-User's Query: {{{query}}}
+Chat History:
+{{#each history}}
+{{role}}: {{{content}}}
+{{/each}}
+
+User's latest message: {{{query}}}
 `,
 });
 
