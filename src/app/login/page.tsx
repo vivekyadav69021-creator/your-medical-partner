@@ -54,20 +54,6 @@ export default function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
         
-        const profileData = {
-          name: name,
-          email: email,
-          image: 'https://picsum.photos/seed/user/100/100',
-          age: '',
-          gender: 'not-specified',
-          weight: '',
-          height: '',
-          bloodGroup: '',
-          conditions: '',
-          allergies: '',
-        };
-        localStorage.setItem(`userMedicalProfile_${userCredential.user.uid}`, JSON.stringify(profileData));
-
         toast({ title: 'Account created successfully!' });
       }
       router.push('/dashboard');

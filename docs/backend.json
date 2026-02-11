@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -27,6 +28,10 @@
         "themePreference": {
           "type": "string",
           "description": "The user's preferred theme (e.g., 'light', 'dark')."
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Indicates if the user has completed the initial onboarding flow."
         }
       },
       "required": [
