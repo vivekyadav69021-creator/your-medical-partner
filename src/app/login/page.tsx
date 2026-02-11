@@ -47,10 +47,22 @@ export default function LoginPage() {
             title: 'Name is required',
             description: 'Please enter your name to sign up.',
           });
-          return; // Exit early
+          setLoading(false);
+          return;
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: name });
+        const user = userCredential.user;
+        await updateProfile(user, { displayName: name });
+
+        // Create the user profile document in Firestore immediately
+        const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
+        await setDoc(userProfileRef, {
+          id: user.uid,
+          name: name,
+          email: user.email,
+          onboardingCompleted: false, // Explicitly set to false for new users
+          createdAt: serverTimestamp(),
+        });
         
         toast({ title: 'Account created successfully!', description: "Let's get you set up." });
         router.push('/onboarding'); // Redirect to onboarding
@@ -67,7 +79,9 @@ export default function LoginPage() {
         description: error.message,
       });
     } finally {
-      setLoading(false);
+      if (!isSignUp) {
+        setLoading(false);
+      }
     }
   };
 

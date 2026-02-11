@@ -124,14 +124,10 @@ export default function OnboardingPage() {
     }
     try {
       const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
-      // Create the initial user profile document with onboarding completed.
+      // Update the existing document, setting onboarding to complete.
       await setDoc(userProfileRef, {
-        id: user.uid,
-        name: user.displayName || 'New User',
-        email: user.email,
         onboardingCompleted: true,
-        createdAt: serverTimestamp(),
-      });
+      }, { merge: true });
       toast({ title: 'Welcome to Your Medical Partner!' });
       router.push('/dashboard');
     } catch (error) {
