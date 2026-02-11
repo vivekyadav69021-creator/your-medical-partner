@@ -27,7 +27,7 @@ import {
   UserCog,
 } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { SplashScreen } from '@/components/splash-screen';
@@ -124,7 +124,14 @@ export default function OnboardingPage() {
     }
     try {
       const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
-      await setDoc(userProfileRef, { onboardingCompleted: true, id: user.uid }, { merge: true });
+      // Create the initial user profile document with onboarding completed.
+      await setDoc(userProfileRef, {
+        id: user.uid,
+        name: user.displayName || 'New User',
+        email: user.email,
+        onboardingCompleted: true,
+        createdAt: serverTimestamp(),
+      });
       toast({ title: 'Welcome to Your Medical Partner!' });
       router.push('/dashboard');
     } catch (error) {

@@ -38,38 +38,28 @@ export default function LoginPage() {
 
   const handleAuthAction = async () => {
     setLoading(true);
-    const action = isSignUp ? 'signup' : 'login';
     try {
-      if (action === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: 'Logged in successfully!' });
-      } else {
+      if (isSignUp) {
+        // Handle Sign Up
         if (!name) {
           toast({
             variant: 'destructive',
             title: 'Name is required',
             description: 'Please enter your name to sign up.',
           });
-          setLoading(false);
-          return;
+          return; // Exit early
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
         
-        // Create the user profile document in Firestore
-        const user = userCredential.user;
-        const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
-        await setDoc(userProfileRef, {
-            id: user.uid,
-            name: name,
-            email: user.email,
-            onboardingCompleted: false, // Set to false for new users
-            createdAt: serverTimestamp(),
-        });
-        
-        toast({ title: 'Account created successfully!' });
+        toast({ title: 'Account created successfully!', description: "Let's get you set up." });
+        router.push('/onboarding'); // Redirect to onboarding
+      } else {
+        // Handle Login
+        await signInWithEmailAndPassword(auth, email, password);
+        toast({ title: 'Logged in successfully!' });
+        router.push('/dashboard'); // Redirect to dashboard
       }
-      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
