@@ -76,6 +76,7 @@ const onboardingSteps = [
       { text: 'X-ray analysis', icon: Scan },
       { text: 'Report upload & review', icon: Scan },
     ],
+    id: 'scanner',
   },
   {
     icon: ShieldCheck,
@@ -123,7 +124,7 @@ export default function OnboardingPage() {
     }
     try {
       const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
-      await setDoc(userProfileRef, { onboardingCompleted: true }, { merge: true });
+      await setDoc(userProfileRef, { onboardingCompleted: true, id: user.uid }, { merge: true });
       toast({ title: 'Welcome to Your Medical Partner!' });
       router.push('/dashboard');
     } catch (error) {
@@ -175,7 +176,7 @@ export default function OnboardingPage() {
                     )}
 
                     {step.tagline && (
-                      <p className={cn("text-xs text-muted-foreground pt-4", step.id === 'scanner' && "italic")}>
+                      <p className={cn("text-xs text-muted-foreground pt-4", (step as any).id === 'scanner' && "italic")}>
                         {step.tagline}
                       </p>
                     )}
