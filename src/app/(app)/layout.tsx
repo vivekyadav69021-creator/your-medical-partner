@@ -38,13 +38,15 @@ export default function AppLayout({
     }
 
     if (user) {
-        if (!userProfile || userProfile.onboardingCompleted !== true) {
+        // If the profile document doesn't exist, they haven't completed onboarding.
+        // This avoids a race condition where the onboardingCompleted flag might be stale from the cache.
+        if (!userProfile) {
             router.replace('/onboarding');
         }
     }
   }, [user, isUserLoading, userProfile, isProfileLoading, router]);
 
-  const shouldShowSplash = isUserLoading || !user || isProfileLoading || (user && (!userProfile || userProfile.onboardingCompleted !== true));
+  const shouldShowSplash = isUserLoading || !user || isProfileLoading || (user && !userProfile);
 
   if (shouldShowSplash) {
     return <SplashScreen />;
