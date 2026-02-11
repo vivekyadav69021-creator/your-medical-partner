@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,7 +8,7 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
@@ -25,13 +24,16 @@ import {
   FileText,
   Lock,
   UserCog,
+  CheckCircle,
 } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { SplashScreen } from '@/components/splash-screen';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
+
 
 const onboardingSteps = [
   {
@@ -96,6 +98,7 @@ export default function OnboardingPage() {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [agreed, setAgreed] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -124,12 +127,11 @@ export default function OnboardingPage() {
     }
     try {
       const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
-      // Update the existing document, setting onboarding to complete.
       await setDoc(userProfileRef, {
         onboardingCompleted: true,
       }, { merge: true });
-      toast({ title: 'Welcome to Your Medical Partner!' });
-      router.push('/dashboard');
+      toast({ title: 'Setup Complete!', description: 'Welcome to Your Medical Partner!' });
+      setIsCompleted(true);
     } catch (error) {
       console.error('Failed to save onboarding status:', error);
       toast({ variant: 'destructive', title: 'Setup Failed', description: 'Could not save your setup progress. Please try again.' });
@@ -143,6 +145,27 @@ export default function OnboardingPage() {
   if (!isUserLoading && !user) {
     router.replace('/login');
     return <SplashScreen />;
+  }
+
+  if (isCompleted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-blue-950 p-4">
+        <Card className="w-full max-w-md mx-auto shadow-2xl rounded-2xl overflow-hidden">
+          <CardHeader className="text-center p-8">
+            <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-fit mx-auto">
+                <CheckCircle className="w-16 h-16 text-green-600 dark:text-green-400" />
+            </div>
+            <CardTitle className="text-2xl font-bold font-headline mt-4">All Set!</CardTitle>
+            <CardDescription>Your profile is ready. Let's explore your personalized health dashboard.</CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button asChild className="w-full" size="lg">
+              <Link href="/dashboard">Go to Dashboard</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
   }
 
   const isLastSlide = current === onboardingSteps.length - 1;
