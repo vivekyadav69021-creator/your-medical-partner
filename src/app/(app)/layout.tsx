@@ -1,14 +1,12 @@
-
 'use client';
 
 import MainLayout from '@/components/layout/main-layout';
 import { CartProvider } from '@/context/cart-context';
 import { UserProfileProvider } from '@/context/user-profile-context';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SplashScreen } from '@/components/splash-screen';
-import { doc } from 'firebase/firestore';
 
 export default function AppLayout({
   children,
@@ -17,14 +15,6 @@ export default function AppLayout({
 }>) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
-
-  const userProfileRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'users', user.uid, 'userProfiles', user.uid) : null),
-    [user, firestore]
-  );
-
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ onboardingCompleted?: boolean }>(userProfileRef);
 
   useEffect(() => {
     // Wait for initial user loading to complete.
@@ -35,31 +25,15 @@ export default function AppLayout({
     // If no user is logged in, redirect to the login page.
     if (!user) {
       router.replace('/login');
-      return;
     }
-    
-    // If user is authenticated, but we are still loading their profile, wait.
-    if (isProfileLoading) {
-        return;
-    }
+  }, [user, isUserLoading, router]);
 
-    // Once profile is loaded, check the onboarding status.
-    // If onboarding is not completed (or the profile doesn't exist yet), redirect.
-    if (!userProfile?.onboardingCompleted) {
-      router.replace('/onboarding');
-    }
-
-  }, [user, isUserLoading, userProfile, isProfileLoading, router]);
-
-  // Determine if we are in a state to render the main app content.
-  const canRenderContent = user && userProfile?.onboardingCompleted;
-
-  // While loading or redirecting, show the splash screen to prevent UI flickering.
-  if (!canRenderContent) {
+  // While loading or if there's no user, show a splash screen.
+  if (isUserLoading || !user) {
     return <SplashScreen />;
   }
   
-  // Once everything is loaded and verified, render the main application layout.
+  // Once user is confirmed, render the main application layout.
   return (
     <UserProfileProvider>
       <CartProvider>

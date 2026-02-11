@@ -42,7 +42,10 @@ import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { OnboardingModal } from '@/components/onboarding-modal';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { SplashScreen } from '@/components/splash-screen';
+import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
 
 type UserProfile = {
   name: string;
@@ -150,7 +153,6 @@ const activeChallenge = {
 export default function DashboardPage() {
   const { user } = useUser();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   
   const dashboardHeroImage = PlaceHolderImages.find(p => p.id === 'dashboard-hero');
@@ -177,30 +179,15 @@ export default function DashboardPage() {
             setShowProfilePrompt(true);
         }
       }
-
-      const hasOnboarded = localStorage.getItem('hasOnboarded');
-      if (!hasOnboarded) {
-        setShowOnboarding(true);
-      }
     } catch (e) {
       console.error("Failed to load profile from local storage", e);
-      const hasOnboarded = localStorage.getItem('hasOnboarded');
-      if (!hasOnboarded) {
-        setShowOnboarding(true);
-      }
     }
   }, [user]);
-
-  const handleOnboardingClose = () => {
-    localStorage.setItem('hasOnboarded', 'true');
-    setShowOnboarding(false);
-  };
   
   const greetingName = profile?.name || user?.displayName || 'Guest';
 
   return (
     <div className="space-y-8">
-      <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingClose} />
       
       {showProfilePrompt && dashboardHeroImage && (
         <Card className="relative mb-6 overflow-hidden text-white bg-slate-900 shadow-lg">
@@ -472,6 +459,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AssistantSheet />
     </div>
   );
 }

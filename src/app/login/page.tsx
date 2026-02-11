@@ -60,12 +60,12 @@ export default function LoginPage() {
           id: user.uid,
           name: name,
           email: user.email,
-          onboardingCompleted: false, // Explicitly set to false for new users
+          onboardingCompleted: true, // Onboarding is now skipped
           createdAt: serverTimestamp(),
         });
         
-        toast({ title: 'Account created successfully!', description: "Let's get you set up." });
-        router.push('/onboarding'); // Redirect to onboarding
+        toast({ title: 'Account created successfully!', description: "Welcome to Your Medical Partner!" });
+        router.push('/dashboard'); // Redirect directly to dashboard
       } else {
         // Handle Login
         await signInWithEmailAndPassword(auth, email, password);
@@ -79,9 +79,7 @@ export default function LoginPage() {
         description: error.message,
       });
     } finally {
-      if (!isSignUp) {
         setLoading(false);
-      }
     }
   };
 

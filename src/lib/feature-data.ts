@@ -36,6 +36,34 @@ export const features: Feature[] = [
     content_en: 'Analyze medical images like X-rays and lab reports. Upload an image to get an AI-powered analysis and preliminary findings.', 
     content_hi: 'एक्स-रे और लैब रिपोर्ट जैसी मेडिकल छवियों का विश्लेषण करें। एआई-संचालित विश्लेषण और प्रारंभिक निष्कर्ष प्राप्त करने के लिए एक छवि अपलोड करें।' 
   },
+   { 
+    id: 'face-scanner', 
+    title: 'Face Scanner', 
+    path: '/disease-scanner?tab=image-scanner', 
+    content_en: 'The Face Scanner in the Disease Scanner feature analyzes a photo of your face for common skin concerns.', 
+    content_hi: 'डिजीज स्कैनर सुविधा में फेस स्कैनर आम त्वचा संबंधी चिंताओं के लिए आपके चेहरे की तस्वीर का विश्लेषण करता है।' 
+  },
+    { 
+    id: 'injury-scanner', 
+    title: 'Injury Scanner', 
+    path: '/disease-scanner?tab=injury-scanner', 
+    content_en: 'The Injury Scanner in the Disease Scanner feature analyzes a description or photo of an injury to provide guidance.', 
+    content_hi: 'डिजीज स्कैनर सुविधा में इंजरी स्कैनर मार्गदर्शन प्रदान करने के लिए चोट के विवरण या तस्वीर का विश्लेषण करता है।' 
+  },
+    { 
+    id: 'xray-scanner', 
+    title: 'X-ray Scanner', 
+    path: '/disease-scanner?tab=xray-scanner', 
+    content_en: 'The X-ray Scanner in the Disease Scanner feature provides a preliminary analysis of radiology images.', 
+    content_hi: 'डिजीज स्कैनर सुविधा में एक्स-रे स्कैनर रेडियोलॉजी छवियों का प्रारंभिक विश्लेषण प्रदान करता है।' 
+  },
+    { 
+    id: 'lab-report-scanner', 
+    title: 'Lab Report Scanner', 
+    path: '/disease-scanner?tab=lab-scanner', 
+    content_en: 'The Lab Report Scanner in the Disease Scanner feature interprets values from an uploaded lab report image.', 
+    content_hi: 'डिजीज स्कैनर सुविधा में लैब रिपोर्ट स्कैनर अपलोड की गई लैब रिपोर्ट छवि से मूल्यों की व्याख्या करता है।' 
+  },
   { 
     id: 'consultation', 
     title: 'Doctor Consultation', 
