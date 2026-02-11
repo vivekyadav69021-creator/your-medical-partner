@@ -27,31 +27,39 @@ export default function AppLayout({
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ onboardingCompleted?: boolean }>(userProfileRef);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.replace('/login');
-    }
-  }, [user, isUserLoading, router]);
-
-  useEffect(() => {
-    if (isUserLoading || isProfileLoading) {
+    // Wait for initial user loading to complete.
+    if (isUserLoading) {
       return;
     }
 
-    if (user) {
-        // If the profile document doesn't exist, they haven't completed onboarding.
-        // This avoids a race condition where the onboardingCompleted flag might be stale from the cache.
-        if (!userProfile) {
-            router.replace('/onboarding');
-        }
+    // If no user is logged in, redirect to the login page.
+    if (!user) {
+      router.replace('/login');
+      return;
     }
+    
+    // If user is authenticated, but we are still loading their profile, wait.
+    if (isProfileLoading) {
+        return;
+    }
+
+    // Once profile is loaded, check the onboarding status.
+    // If onboarding is not completed (or the profile doesn't exist yet), redirect.
+    if (!userProfile?.onboardingCompleted) {
+      router.replace('/onboarding');
+    }
+
   }, [user, isUserLoading, userProfile, isProfileLoading, router]);
 
-  const shouldShowSplash = isUserLoading || !user || isProfileLoading || (user && !userProfile);
+  // Determine if we are in a state to render the main app content.
+  const canRenderContent = user && userProfile?.onboardingCompleted;
 
-  if (shouldShowSplash) {
+  // While loading or redirecting, show the splash screen to prevent UI flickering.
+  if (!canRenderContent) {
     return <SplashScreen />;
   }
-
+  
+  // Once everything is loaded and verified, render the main application layout.
   return (
     <UserProfileProvider>
       <CartProvider>

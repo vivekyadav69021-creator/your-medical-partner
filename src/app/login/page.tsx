@@ -14,12 +14,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, HeartPulse } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -53,6 +55,17 @@ export default function LoginPage() {
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
+        
+        // Create the user profile document in Firestore
+        const user = userCredential.user;
+        const userProfileRef = doc(firestore, 'users', user.uid, 'userProfiles', user.uid);
+        await setDoc(userProfileRef, {
+            id: user.uid,
+            name: name,
+            email: user.email,
+            onboardingCompleted: false, // Set to false for new users
+            createdAt: serverTimestamp(),
+        });
         
         toast({ title: 'Account created successfully!' });
       }
