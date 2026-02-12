@@ -1,6 +1,4 @@
 
-'use server';
-
 /**
  * @fileOverview A health assistant AI flow.
  *
