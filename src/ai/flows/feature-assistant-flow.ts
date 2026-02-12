@@ -10,9 +10,10 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { features } from '@/lib/feature-data';
-import { healthAssistant, HealthAssistantInput, HealthAssistantOutput, } from './health-assistant-flow';
+import { healthAssistant, HealthAssistantInputSchema, HealthAssistantOutputSchema } from './health-assistant-flow';
+import type { HealthAssistantInput, HealthAssistantOutput } from './health-assistant-flow';
 
 const FeatureAssistantInputSchema = z.object({
   query: z.string().describe("The user's question or voice command."),
@@ -39,9 +40,9 @@ const healthAssistantTool = ai.defineTool(
         name: 'healthAssistantTool',
         description: 'Use this tool for any medical or health-related questions. This includes inquiries about symptoms (e.g., "I have a headache"), diseases, medicines, treatments, or general health advice. Do not use this for navigation or simple feature questions.',
         inputSchema: HealthAssistantInputSchema,
-        outputSchema: HealthAssistantOutput,
+        outputSchema: HealthAssistantOutputSchema,
     },
-    async (input) => healthAssistant(input)
+    async (input: HealthAssistantInput) => healthAssistant(input)
 );
 
 export async function featureAssistant(

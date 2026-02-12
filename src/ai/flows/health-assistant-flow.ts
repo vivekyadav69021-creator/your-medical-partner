@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const HealthAssistantInputSchema = z.object({
+export const HealthAssistantInputSchema = z.object({
   query: z.string().describe('The user\'s question about health, medicine, or diseases.'),
   photoDataUri: z.string().optional().describe(
       "An optional photo of a health concern (e.g., rash, pill), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. This is not currently used in the prompt but is here for future functionality."
@@ -24,7 +24,7 @@ const HealthAssistantInputSchema = z.object({
 });
 export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 
-const HealthAssistantOutputSchema = z.object({
+export const HealthAssistantOutputSchema = z.object({
   response: z
     .string()
     .describe('The AI-generated response to the user\'s query, formatted in Markdown.'),
