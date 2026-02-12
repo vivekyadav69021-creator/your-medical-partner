@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useActionState } from 'react';
+import { useState, useRef, useEffect, useCallback, useActionState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Sheet,
@@ -107,7 +107,9 @@ export function AssistantSheet() {
           const base64Audio = reader.result as string;
           const formData = new FormData();
           formData.append('audioDataUri', base64Audio);
-          transcribeSpeech(formData);
+          startTransition(() => {
+            transcribeSpeech(formData);
+          });
         };
         stream.getTracks().forEach(track => track.stop());
       };
