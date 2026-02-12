@@ -1,24 +1,20 @@
-
 'use client';
 
-import { useState, useRef, useEffect, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useRef, useEffect, useCallback, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
-  SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bot, User, Send, Loader2, RefreshCw, X } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Bot, User, Loader2, RefreshCw, X, Mic } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FloatingButton } from './floating-button';
-import { featureAssistant } from '@/ai/flows/feature-assistant-flow';
+import { getAssistantResponseAction, speechToTextAction } from './actions';
+import { useToast } from '@/hooks/use-toast';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -27,76 +23,122 @@ type Message = {
 
 const welcomeMessage: Message = {
   role: 'assistant',
-  content: "Hi 👋 I'm your AI Flow Assistant. You can ask me to:\n- Book a doctor\n- Start a scan\n- Order medicine\n- Open any feature\n\nHow can I help you today?",
+  content: "Hi 👋 I'm your AI Flow Assistant. Tap the mic and tell me how I can help you today.",
 };
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" size="icon" disabled={pending} className="flex-shrink-0">
-      {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-    </Button>
-  );
-}
+const initialAssistantState = { result: null, error: null };
+const initialSpeechState = { transcript: null, error: null };
 
 export function AssistantSheet() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
-  const [isPending, setIsPending] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  
+  const [assistantState, getAssistantResponse, isAssistantPending] = useActionState(getAssistantResponseAction, initialAssistantState);
+  const [speechState, transcribeSpeech, isSttPending] = useActionState(speechToTextAction, initialSpeechState);
+  
   const router = useRouter();
+  const { toast } = useToast();
 
-  const handleFormAction = async (formData: FormData) => {
-    const query = formData.get('query') as string;
-    if (!query) return;
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-    const newMessages: Message[] = [...messages, { role: 'user', content: query }];
-    setMessages(newMessages);
-    setIsPending(true);
+  // Effect to handle transcription result
+  useEffect(() => {
+    if (speechState.transcript) {
+        const userMessage = { role: 'user', content: speechState.transcript };
+        setMessages(prev => [...prev, userMessage]);
+        
+        const formData = new FormData();
+        formData.append('query', speechState.transcript);
+        formData.append('history', JSON.stringify([...messages, userMessage]));
+        getAssistantResponse(formData);
+    }
+    if (speechState.error) {
+        toast({ variant: 'destructive', title: 'Transcription Failed', description: speechState.error });
+    }
+  }, [speechState, getAssistantResponse, messages, toast]);
 
-    try {
-      const result = await featureAssistant({ query });
-      
-      let assistantResponse = result.answer;
+  const speak = (text: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ''));
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+  }
 
-      if (result.path) {
-        // Navigate and then update the message
-        router.push(result.path);
-        setIsOpen(false); // Close the sheet on successful navigation
-      }
-      
-       if (query.toLowerCase().includes('what can you do')) {
-        assistantResponse = `I can help you navigate the app. You can ask me to:
-- Book doctors
-- Start disease scans
-- Open medical store
-- Show health tools
-- Help navigate features`;
-      } else if (result.path && !result.answer.includes('Navigating')) {
-         const feature = result.featureId ? `the ${result.featureId.replace(/-/g, ' ')} page` : 'that page';
-         assistantResponse = `Sure, navigating to ${feature} now.`;
-      } else if (!result.path && query.match(/(pain|fever|headache|sick|symptom)/i)) {
-         assistantResponse = "For medical questions, I recommend using the AI Health Assistant. Would you like me to open it for you?";
-         if (query.toLowerCase().includes('yes')) {
-            router.push('/health-assistant');
+  // Effect to handle AI assistant response
+  useEffect(() => {
+    if (assistantState.result) {
+        setMessages(prev => [...prev, { role: 'assistant', content: assistantState.result!.answer }]);
+        speak(assistantState.result!.answer);
+        if (assistantState.result!.path) {
+            router.push(assistantState.result!.path);
             setIsOpen(false);
-         }
-      }
+        }
+    }
+    if (assistantState.error) {
+        const errorMsg = "Sorry, I encountered an issue. Please try again.";
+        setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }]);
+        speak(errorMsg);
+    }
+  }, [assistantState, router]);
 
 
-      setMessages(prev => [...prev, { role: 'assistant', content: assistantResponse }]);
+  const startRecording = async () => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
 
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string;
+          const formData = new FormData();
+          formData.append('audioDataUri', base64Audio);
+          transcribeSpeech(formData);
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
     } catch (error) {
-      const errorMessage = "Sorry, I couldn't understand that. Please try rephrasing, or ask me to 'open challenges' or 'find a doctor'.";
-      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
-    } finally {
-      setIsPending(false);
-      formRef.current?.reset();
+      toast({ variant: 'destructive', title: 'Microphone Error', description: 'Could not access the microphone.' });
     }
   };
 
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+  
   const handleClearChat = () => {
     setMessages([welcomeMessage]);
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
   };
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -107,13 +149,15 @@ export function AssistantSheet() {
         viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [messages, isPending]);
+  }, [messages, isAssistantPending]);
+
+  const isProcessing = isSttPending || isAssistantPending;
 
   return (
     <>
       <FloatingButton onClick={() => setIsOpen(true)} />
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="bottom" className="h-4/5 flex flex-col p-0">
+        <SheetContent side="bottom" className="h-4/5 flex flex-col p-0" onInteractOutside={(e) => e.preventDefault()}>
           <SheetHeader className="p-4 border-b">
             <div className="flex justify-between items-center">
               <SheetTitle className="flex items-center gap-2">
@@ -156,7 +200,7 @@ export function AssistantSheet() {
                     )}
                   </div>
                 ))}
-                {isPending && (
+                {isProcessing && (
                   <div className="flex items-start gap-3">
                     <Avatar className="h-8 w-8">
                         <AvatarFallback><Bot /></AvatarFallback>
@@ -169,17 +213,19 @@ export function AssistantSheet() {
               </div>
             </ScrollArea>
           </div>
-          <SheetFooter className="p-4 border-t">
-            <form ref={formRef} action={handleFormAction} className="flex w-full items-center gap-2">
-              <Input
-                name="query"
-                placeholder="e.g., Book a doctor..."
-                autoComplete="off"
-                disabled={isPending}
-              />
-              <SubmitButton />
-            </form>
-          </SheetFooter>
+          <div className="p-4 border-t flex flex-col items-center justify-center gap-2">
+            <Button
+              size="icon"
+              className={`h-16 w-16 rounded-full transition-all duration-300 ${isRecording ? 'bg-red-500 hover:bg-red-600 scale-110' : 'bg-primary hover:bg-primary/90'}`}
+              onClick={handleMicClick}
+              disabled={isProcessing}
+            >
+              {isProcessing ? <Loader2 className="h-7 w-7 animate-spin" /> : <Mic className="h-7 w-7" />}
+            </Button>
+             <p className="text-xs text-muted-foreground">
+                {isRecording ? "Tap to stop recording" : (isProcessing ? "Processing..." : "Tap to speak")}
+            </p>
+          </div>
         </SheetContent>
       </Sheet>
     </>
