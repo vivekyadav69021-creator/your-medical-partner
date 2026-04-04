@@ -3,12 +3,10 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
   Dialog,
@@ -18,11 +16,17 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { videoTutorialsData, VideoTutorial } from '@/lib/video-data';
-import { PlayCircle, Video, Languages } from 'lucide-react';
+import { 
+  PlayCircle, 
+  ChevronLeft, 
+  Search, 
+  MessageCircle, 
+  Stethoscope,
+  Play
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function getYouTubeThumbnail(url: string) {
     try {
@@ -39,7 +43,6 @@ function getYouTubeThumbnail(url: string) {
         }
         return '';
     } catch (e) {
-        console.error('Invalid YouTube URL for thumbnail:', url);
         return '';
     }
 }
@@ -58,20 +61,16 @@ function getYouTubeEmbedUrl(url: string | null): string {
           return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1`;
         }
     } catch (e) {
-        // Fallback for non-standard URLs
         const match = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
         if (match && match[1]) {
            return `https://www.youtube.com/embed/${match[1]}?rel=0&autoplay=1`;
         }
     }
-    // If no ID is found, return the original URL assuming it might be a playlist
     return url;
 }
 
-
 export default function VideoTutorialsPage() {
   const [selectedVideo, setSelectedVideo] = useState<VideoTutorial | null>(null);
-  const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -80,7 +79,6 @@ export default function VideoTutorialsPage() {
   };
 
   const handleCloseDialog = () => {
-    // To stop video playback when closing
     const videoIframe = document.getElementById('youtube-iframe') as HTMLIFrameElement;
     if (videoIframe) {
       videoIframe.src = '';
@@ -88,128 +86,149 @@ export default function VideoTutorialsPage() {
     setSelectedVideo(null);
   };
   
-  const toggleLanguage = () => {
-    setLang(prev => prev === 'en' ? 'hi' : 'en');
-  }
-  
-  const allVideos = videoTutorialsData.flatMap(category => category.videos.map(video => ({...video, categoryId: category.id, categoryTitle: category.title})));
+  const allVideos = videoTutorialsData.flatMap(category => 
+    category.videos.map(video => ({
+        ...video, 
+        categoryId: category.id, 
+        categoryTitle: category.title.en 
+    }))
+  );
 
   const filteredVideos = allVideos
     .filter(video => selectedCategory === 'all' || video.categoryId === selectedCategory)
     .filter(video => {
-        const title = lang === 'en' ? video.title.en : video.title.hi;
-        return title.toLowerCase().includes(searchTerm.toLowerCase());
+        const title = video.title.en.toLowerCase();
+        return title.includes(searchTerm.toLowerCase());
     });
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">
-            {lang === 'en' ? 'Video Tutorials' : 'वीडियो ट्यूटोरियल'}
-          </h1>
-          <p className="text-muted-foreground">
-            {lang === 'en' ? 'Learn from experts on a variety of health and wellness topics.' : 'विभिन्न स्वास्थ्य और कल्याण विषयों पर विशेषज्ञों से सीखें।'}
-          </p>
+    <div className="min-h-full bg-white pb-24">
+      <div className="max-w-xl mx-auto px-6 pt-6 space-y-6">
+        
+        {/* Navigation & Title */}
+        <div className="space-y-4">
+          <Button variant="ghost" size="icon" asChild className="-ml-2 h-10 w-10 rounded-full">
+            <Link href="/dashboard"><ChevronLeft className="h-6 w-6 text-gray-800" /></Link>
+          </Button>
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 font-headline">Video Tutorials</h1>
         </div>
-        <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={toggleLanguage}>
-              <Languages className="mr-2 h-4 w-4" />
-              {lang === 'en' ? 'हिंदी में' : 'In English'}
-            </Button>
-        </div>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input 
-            placeholder={lang === 'en' ? "Search videos..." : "वीडियो खोजें..."}
-            className="pl-10" 
+            placeholder="Search for health videos..." 
+            className="pl-12 h-14 rounded-2xl border-none bg-gray-50 shadow-sm placeholder:text-gray-400 text-gray-700" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full md:w-[240px]">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{lang === 'en' ? 'All Categories' : 'सभी श्रेणियाँ'}</SelectItem>
-            {videoTutorialsData.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                    {lang === 'en' ? category.title.en : category.title.hi}
-                </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVideos.map(video => {
-            const thumbnailSrc = getYouTubeThumbnail(video.youtube_url);
-            return (
-              <Card
-                key={video.id}
-                className="cursor-pointer group hover:shadow-lg transition-shadow overflow-hidden"
-                onClick={() => handleVideoClick(video)}
-              >
-                <CardHeader className="p-0 relative">
-                  {thumbnailSrc ? (
-                    <>
-                      <Image
-                        src={thumbnailSrc}
-                        alt={lang === 'en' ? video.title.en : video.title.hi}
-                        width={400}
-                        height={225}
-                        className="aspect-video object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <PlayCircle className="w-16 h-16 text-white/70 transform transition-transform group-hover:scale-110" />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="aspect-video bg-secondary flex items-center justify-center">
-                      <Video className="w-12 h-12 text-muted-foreground" />
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className="p-4">
-                  <p className="text-xs font-semibold uppercase text-primary">{lang === 'en' ? video.categoryTitle.en : video.categoryTitle.hi}</p>
-                  <CardTitle className="text-base font-semibold line-clamp-2 mt-1">{lang === 'en' ? video.title.en : video.title.hi}</CardTitle>
-                  <CardDescription className="text-sm mt-1 line-clamp-2">{lang === 'en' ? video.description.en : video.description.hi}</CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
-           {filteredVideos.length === 0 && (
-                <p className="col-span-full text-center text-muted-foreground py-10">
-                    {lang === 'en' ? 'No videos found.' : 'कोई वीडियो नहीं मिला।'}
-                </p>
+        {/* Category Pills */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <Button 
+            variant={selectedCategory === 'all' ? 'default' : 'outline'}
+            className={cn(
+                "rounded-lg px-6 h-10 font-semibold transition-all whitespace-nowrap",
+                selectedCategory === 'all' ? "bg-primary text-white" : "border-gray-100 bg-white text-gray-500 hover:bg-gray-50"
             )}
+            onClick={() => setSelectedCategory('all')}
+          >
+            All
+          </Button>
+          {videoTutorialsData.map(category => (
+            <Button 
+              key={category.id}
+              variant={selectedCategory === category.id ? 'default' : 'outline'}
+              className={cn(
+                "rounded-lg px-6 h-10 font-semibold transition-all whitespace-nowrap",
+                selectedCategory === category.id ? "bg-primary text-white" : "border-gray-100 bg-white text-gray-500 hover:bg-gray-50"
+              )}
+              onClick={() => setSelectedCategory(category.id)}
+            >
+              {category.title.en}
+            </Button>
+          ))}
         </div>
 
+        {/* Recommended Videos Grid */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">Recommended Videos</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {filteredVideos.map(video => {
+              const thumbnailSrc = getYouTubeThumbnail(video.youtube_url);
+              return (
+                <div 
+                    key={video.id} 
+                    className="flex flex-col space-y-3 cursor-pointer group"
+                    onClick={() => handleVideoClick(video as VideoTutorial)}
+                >
+                  <div className="aspect-[4/3] relative rounded-3xl overflow-hidden bg-gray-100 shadow-sm border border-gray-50">
+                    {thumbnailSrc && (
+                      <Image
+                        src={thumbnailSrc}
+                        alt={video.title.en}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                            <Play className="h-6 w-6 text-white fill-white ml-1" />
+                        </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1 px-1">
+                    <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">{video.title.en}</h3>
+                    <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium">
+                        <span>10 min | {video.categoryTitle}</span>
+                        <span>10.3k</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {filteredVideos.length === 0 && (
+            <p className="text-center text-gray-400 py-10 italic">No videos found matching your search.</p>
+          )}
+        </div>
+
+        {/* Bottom Navigation Buttons (Fixed Style) */}
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-lg border-t border-gray-50 flex gap-4 max-w-xl mx-auto z-20">
+            <Button variant="outline" className="flex-1 h-14 rounded-full border-gray-100 bg-white text-gray-700 font-bold shadow-sm flex items-center justify-center gap-3">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Chat History
+            </Button>
+            <Button variant="outline" className="flex-1 h-14 rounded-full border-gray-100 bg-white text-gray-700 font-bold shadow-sm flex items-center justify-center gap-3">
+                <Stethoscope className="h-5 w-5 text-primary" />
+                Chat with AI Doctor
+            </Button>
+        </div>
+
+      </div>
 
       <Dialog open={!!selectedVideo} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
-        <DialogContent className="max-w-3xl w-full p-0 border-0">
+        <DialogContent className="max-w-3xl w-full p-0 border-0 overflow-hidden rounded-[2.5rem]">
             {selectedVideo && (
                 <>
-                    <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
+                    <div className="aspect-video bg-black overflow-hidden">
                         <iframe 
                             id="youtube-iframe"
                             src={getYouTubeEmbedUrl(selectedVideo.youtube_url)}
-                            title={lang === 'en' ? selectedVideo.title.en : selectedVideo.title.hi}
+                            title={selectedVideo.title.en}
                             frameBorder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowFullScreen
                             className="w-full h-full"
                         ></iframe>
                     </div>
-                    <div className="p-6 pt-2">
+                    <div className="p-8">
                         <DialogHeader>
-                            <DialogTitle>{lang === 'en' ? selectedVideo.title.en : selectedVideo.title.hi}</DialogTitle>
-                            <DialogDescription>{lang === 'en' ? selectedVideo.description.en : selectedVideo.description.hi}</DialogDescription>
+                            <DialogTitle className="text-2xl font-bold">{selectedVideo.title.en}</DialogTitle>
+                            <DialogDescription className="text-base text-gray-500 mt-2">
+                                {selectedVideo.description.en}
+                            </DialogDescription>
                         </DialogHeader>
                     </div>
                 </>
@@ -219,5 +238,3 @@ export default function VideoTutorialsPage() {
     </div>
   );
 }
-
-    
