@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -19,7 +18,8 @@ import {
   CheckCircle2,
   Clock,
   ShieldCheck,
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
