@@ -22,23 +22,26 @@ import {
   Search, 
   MessageCircle, 
   Stethoscope,
-  Play
+  Play,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+// Improved function to extract YouTube ID and get high-quality thumbnail
 function getYouTubeThumbnail(url: string) {
+    if (!url) return '';
     try {
-        const urlObject = new URL(url);
-        let videoId = urlObject.searchParams.get('v');
-        if (urlObject.hostname === 'youtu.be') {
-            videoId = urlObject.pathname.slice(1);
-        } else if (url.includes('embed/')) {
-            videoId = url.split('embed/')[1];
+        let videoId = '';
+        // Handle various YouTube URL formats
+        const match = url.match(/(?:v=|youtu\.be\/|embed\/|v\/|shorts\/)([A-Za-z0-9_-]{11})/);
+        if (match && match[1]) {
+            videoId = match[1];
         }
         
         if (videoId) {
+            // Using maxresdefault for better quality, fallback to hqdefault
             return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
         }
         return '';
@@ -50,22 +53,11 @@ function getYouTubeThumbnail(url: string) {
 function getYouTubeEmbedUrl(url: string | null): string {
     if (!url) return '';
     try {
-        const urlObject = new URL(url);
-        let videoId = urlObject.searchParams.get('v');
-         if (urlObject.hostname === 'youtu.be') {
-            videoId = urlObject.pathname.slice(1);
-        } else if (url.includes('embed/')) {
-            videoId = url.split('embed/')[1];
-        }
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1`;
-        }
-    } catch (e) {
-        const match = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+        const match = url.match(/(?:v=|youtu\.be\/|embed\/|v\/|shorts\/)([A-Za-z0-9_-]{11})/);
         if (match && match[1]) {
            return `https://www.youtube.com/embed/${match[1]}?rel=0&autoplay=1`;
         }
-    }
+    } catch (e) {}
     return url;
 }
 
@@ -102,15 +94,18 @@ export default function VideoTutorialsPage() {
     });
 
   return (
-    <div className="min-h-full bg-white pb-24">
+    <div className="min-h-full bg-white dark:bg-slate-950 pb-32">
       <div className="max-w-xl mx-auto px-6 pt-6 space-y-6">
         
         {/* Navigation & Title */}
-        <div className="space-y-4">
-          <Button variant="ghost" size="icon" asChild className="-ml-2 h-10 w-10 rounded-full">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="icon" asChild className="h-10 w-10 rounded-full bg-gray-50 border border-gray-100">
             <Link href="/dashboard"><ChevronLeft className="h-6 w-6 text-gray-800" /></Link>
           </Button>
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 font-headline">Video Tutorials</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white font-headline">Video Tutorials</h1>
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-gray-50 border border-gray-100">
+            <Share2 className="h-5 w-5 text-gray-600" />
+          </Button>
         </div>
 
         {/* Search Bar */}
@@ -118,19 +113,19 @@ export default function VideoTutorialsPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input 
             placeholder="Search for health videos..." 
-            className="pl-12 h-14 rounded-2xl border-none bg-gray-50 shadow-sm placeholder:text-gray-400 text-gray-700" 
+            className="pl-12 h-14 rounded-[1.5rem] border-none bg-gray-50 dark:bg-slate-900 shadow-sm placeholder:text-gray-400 text-gray-700 dark:text-gray-200" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         {/* Category Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <Button 
             variant={selectedCategory === 'all' ? 'default' : 'outline'}
             className={cn(
-                "rounded-lg px-6 h-10 font-semibold transition-all whitespace-nowrap",
-                selectedCategory === 'all' ? "bg-primary text-white" : "border-gray-100 bg-white text-gray-500 hover:bg-gray-50"
+                "rounded-full px-6 h-10 font-semibold transition-all whitespace-nowrap border-none",
+                selectedCategory === 'all' ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-slate-900"
             )}
             onClick={() => setSelectedCategory('all')}
           >
@@ -141,8 +136,8 @@ export default function VideoTutorialsPage() {
               key={category.id}
               variant={selectedCategory === category.id ? 'default' : 'outline'}
               className={cn(
-                "rounded-lg px-6 h-10 font-semibold transition-all whitespace-nowrap",
-                selectedCategory === category.id ? "bg-primary text-white" : "border-gray-100 bg-white text-gray-500 hover:bg-gray-50"
+                "rounded-full px-6 h-10 font-semibold transition-all whitespace-nowrap border-none",
+                selectedCategory === category.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-slate-900"
               )}
               onClick={() => setSelectedCategory(category.id)}
             >
@@ -153,8 +148,8 @@ export default function VideoTutorialsPage() {
 
         {/* Recommended Videos Grid */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">Recommended Videos</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white px-1">Recommended Videos</h2>
+          <div className="grid grid-cols-2 gap-5">
             {filteredVideos.map(video => {
               const thumbnailSrc = getYouTubeThumbnail(video.youtube_url);
               return (
@@ -163,26 +158,35 @@ export default function VideoTutorialsPage() {
                     className="flex flex-col space-y-3 cursor-pointer group"
                     onClick={() => handleVideoClick(video as VideoTutorial)}
                 >
-                  <div className="aspect-[4/3] relative rounded-3xl overflow-hidden bg-gray-100 shadow-sm border border-gray-50">
-                    {thumbnailSrc && (
+                  <div className="aspect-[4/3] relative rounded-[2rem] overflow-hidden bg-gray-100 dark:bg-slate-800 shadow-sm border border-gray-50 dark:border-slate-800">
+                    {thumbnailSrc ? (
                       <Image
                         src={thumbnailSrc}
                         alt={video.title.en}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        sizes="(max-width: 768px) 50vw, 30vw"
+                        unoptimized // YouTube images sometimes block optimized requests
                       />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <PlayCircle className="w-8 h-8 text-gray-400" />
+                        </div>
                     )}
-                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                        <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                            <Play className="h-6 w-6 text-white fill-white ml-1" />
+                    <div className="absolute inset-0 bg-black/5 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40 shadow-xl transform group-hover:scale-110 transition-transform">
+                            <Play className="h-5 w-5 text-white fill-white ml-1" />
                         </div>
                     </div>
                   </div>
-                  <div className="space-y-1 px-1">
-                    <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">{video.title.en}</h3>
+                  <div className="space-y-1 px-2">
+                    <h3 className="text-[13px] font-bold text-gray-800 dark:text-gray-200 line-clamp-2 leading-snug group-hover:text-primary transition-colors">{video.title.en}</h3>
                     <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium">
                         <span>10 min | {video.categoryTitle}</span>
-                        <span>10.3k</span>
+                        <div className="flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-gray-300" />
+                            <span>10.3k views</span>
+                        </div>
                     </div>
                   </div>
                 </div>
@@ -194,22 +198,28 @@ export default function VideoTutorialsPage() {
           )}
         </div>
 
-        {/* Bottom Navigation Buttons (Fixed Style) */}
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-lg border-t border-gray-50 flex gap-4 max-w-xl mx-auto z-20">
-            <Button variant="outline" className="flex-1 h-14 rounded-full border-gray-100 bg-white text-gray-700 font-bold shadow-sm flex items-center justify-center gap-3">
-                <MessageCircle className="h-5 w-5 text-primary" />
-                Chat History
-            </Button>
-            <Button variant="outline" className="flex-1 h-14 rounded-full border-gray-100 bg-white text-gray-700 font-bold shadow-sm flex items-center justify-center gap-3">
-                <Stethoscope className="h-5 w-5 text-primary" />
-                Chat with AI Doctor
-            </Button>
+        {/* Bottom Navigation Buttons (Floating style as per image) */}
+        <div className="fixed bottom-6 left-0 right-0 px-6 z-20 pointer-events-none">
+            <div className="max-w-xl mx-auto flex gap-4 pointer-events-auto">
+                <Button variant="outline" className="flex-1 h-14 rounded-full border-none bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-200 font-bold shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-transform">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <MessageCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    History
+                </Button>
+                <Button variant="outline" className="flex-1 h-14 rounded-full border-none bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-200 font-bold shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-transform">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Stethoscope className="h-4 w-4 text-primary" />
+                    </div>
+                    AI Doctor
+                </Button>
+            </div>
         </div>
 
       </div>
 
       <Dialog open={!!selectedVideo} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
-        <DialogContent className="max-w-3xl w-full p-0 border-0 overflow-hidden rounded-[2.5rem]">
+        <DialogContent className="max-w-3xl w-full p-0 border-0 overflow-hidden rounded-[2.5rem] bg-white dark:bg-slate-900">
             {selectedVideo && (
                 <>
                     <div className="aspect-video bg-black overflow-hidden">
