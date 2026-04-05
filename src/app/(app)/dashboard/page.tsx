@@ -17,8 +17,6 @@ import {
   Calendar,
   ChevronRight,
   User as UserIcon,
-  Search,
-  FileText,
   LayoutGrid,
   BrainCircuit,
   PhoneCall,
@@ -26,6 +24,8 @@ import {
   CheckCircle2,
   Bell,
   MoreHorizontal,
+  Trophy,
+  Hospital,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, ResponsiveContainer } from 'recharts';
@@ -92,62 +92,67 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Feature Grid 2x2 */}
-      <div className="grid grid-cols-2 gap-5 px-4">
-        <FeatureCard
-          title="AI Health Assistant"
-          icon={<Bot className="w-10 h-10 text-[#4A90E2]" />}
-          href="/health-assistant"
-          btnText="Ask away"
-          btnColor="bg-[#E6F0FF] text-[#4A90E2]"
-        />
-        <FeatureCard
-          title="Doctor Consult"
-          icon={<Stethoscope className="w-10 h-10 text-[#FF85A1]" />}
-          href="/consultation"
-          btnText="Book appointment"
-          btnColor="bg-[#FFF0F5] text-[#FF85A1]"
-        />
-        <FeatureCard
-          title="Medical Store"
-          icon={<Store className="w-10 h-10 text-[#9D50BB]" />}
-          href="/store"
-          btnText="Order medicine"
-          btnColor="bg-[#F3E8FF] text-[#9D50BB]"
-        />
-        <FeatureCard
-          title="Disease Scanner"
-          icon={<Scan className="w-10 h-10 text-[#20B2AA]" />}
-          href="/disease-scanner"
-          btnText="Scan health"
-          btnColor="bg-[#E0FDF4] text-[#20B2AA]"
-        />
-      </div>
-
-      {/* Quick Access Tools (Horizontal Scroll) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-6">
-          <h3 className="font-black text-[13px] text-slate-400 uppercase tracking-widest">Quick Access</h3>
-          <Button variant="ghost" size="sm" className="text-primary text-[10px] font-bold">View all</Button>
+      {/* Main Feature Grid 2x4 (All features in consistent large card style) */}
+      <div className="px-4">
+        <div className="flex items-center justify-between mb-4 px-2">
+          <h3 className="font-black text-[13px] text-slate-400 uppercase tracking-widest">Main Features</h3>
         </div>
-        <div className="flex gap-4 overflow-x-auto px-6 pb-2 scrollbar-hide">
-          <QuickToolLink 
-            icon={<BrainCircuit className="w-5 h-5" />} 
-            label="AI Psychiatrist" 
-            href="/ai-psychiatrist" 
-            color="bg-indigo-500"
+        <div className="grid grid-cols-2 gap-5">
+          <FeatureCard
+            title="AI Health Assistant"
+            icon={<Bot className="w-10 h-10 text-[#4A90E2]" />}
+            href="/health-assistant"
+            btnText="Ask away"
+            btnColor="bg-[#E6F0FF] text-[#4A90E2]"
           />
-          <QuickToolLink 
-            icon={<PhoneCall className="w-5 h-5" />} 
-            label="Emergency Doctor" 
-            href="tel:112" 
-            color="bg-red-500"
+          <FeatureCard
+            title="Doctor Consult"
+            icon={<Stethoscope className="w-10 h-10 text-[#FF85A1]" />}
+            href="/consultation"
+            btnText="Book appointment"
+            btnColor="bg-[#FFF0F5] text-[#FF85A1]"
           />
-          <QuickToolLink 
-            icon={<LayoutGrid className="w-5 h-5" />} 
-            label="More Tools" 
-            href="/challenges" 
-            color="bg-slate-800"
+          <FeatureCard
+            title="Medical Store"
+            icon={<Store className="w-10 h-10 text-[#9D50BB]" />}
+            href="/store"
+            btnText="Order medicine"
+            btnColor="bg-[#F3E8FF] text-[#9D50BB]"
+          />
+          <FeatureCard
+            title="Disease Scanner"
+            icon={<Scan className="w-10 h-10 text-[#20B2AA]" />}
+            href="/disease-scanner"
+            btnText="Scan health"
+            btnColor="bg-[#E0FDF4] text-[#20B2AA]"
+          />
+          <FeatureCard
+            title="AI Psychiatrist"
+            icon={<BrainCircuit className="w-10 h-10 text-[#6366F1]" />}
+            href="/ai-psychiatrist"
+            btnText="Talk to AI"
+            btnColor="bg-[#EEF2FF] text-[#6366F1]"
+          />
+          <FeatureCard
+            title="Emergency Doctor"
+            icon={<PhoneCall className="w-10 h-10 text-[#EF4444]" />}
+            href="tel:112"
+            btnText="Call Now"
+            btnColor="bg-[#FEF2F2] text-[#EF4444]"
+          />
+          <FeatureCard
+            title="Health Challenges"
+            icon={<Trophy className="w-10 h-10 text-[#F59E0B]" />}
+            href="/challenges"
+            btnText="Join Now"
+            btnColor="bg-[#FFFBEB] text-[#F59E0B]"
+          />
+          <FeatureCard
+            title="Nearby Hospital"
+            icon={<Hospital className="w-10 h-10 text-[#10B981]" />}
+            href="/nearby-hospital"
+            btnText="Find Near Me"
+            btnColor="bg-[#ECFDF5] text-[#10B981]"
           />
         </div>
       </div>
@@ -250,19 +255,6 @@ function FeatureCard({ title, icon, href, btnText, btnColor }: { title: string, 
         </div>
       </Link>
     </Card>
-  );
-}
-
-function QuickToolLink({ icon, label, href, color }: { icon: any, label: string, href: string, color: string }) {
-  return (
-    <Link href={href} className="flex-shrink-0 group">
-      <div className="flex flex-col items-center gap-2">
-        <div className={cn("h-14 w-14 rounded-[1.25rem] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all", color)}>
-          {icon}
-        </div>
-        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">{label}</span>
-      </div>
-    </Link>
   );
 }
 
