@@ -94,21 +94,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#F0F7FF] flex flex-col items-center justify-center p-6 overflow-hidden relative font-body">
-      {/* Decorative Background Elements for a Premium Feel */}
+      {/* Decorative Background Elements */}
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-400/10 rounded-full blur-[100px]" />
 
       <div className="w-full max-w-md space-y-12 flex flex-col items-center relative z-10">
         
-        {/* Unique Brand Typography Design */}
+        {/* Brand Typography Design */}
         <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000">
           <div className="inline-flex items-center justify-center p-4 bg-white rounded-[2rem] shadow-xl shadow-blue-100 mb-2 transform hover:scale-110 transition-transform duration-500">
             <HeartPulse className="h-14 w-14 text-primary animate-pulse" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-5xl font-black tracking-tighter text-slate-900 font-headline leading-none">
-              YOUR MEDICAL <br />
-              <span className="text-primary bg-clip-text">PARTNER</span>
+            <h1 className="text-5xl font-black tracking-tighter text-slate-900 font-headline leading-none uppercase">
+              Your Medical <br />
+              <span className="text-primary">Partner</span>
             </h1>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em] pt-2">
               Digital Health Companion
@@ -118,7 +118,6 @@ export default function LoginPage() {
 
         {view === 'welcome' ? (
           <div className="w-full space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
-            {/* Buttons Section with modern layout */}
             <div className="w-full space-y-5 px-2">
               <Button 
                 onClick={() => setView('signup')}
@@ -147,14 +146,13 @@ export default function LoginPage() {
             </div>
           </div>
         ) : (
-          /* Form View (Login or Signup) with Glassmorphism */
-          <Card className="w-full rounded-[3rem] border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] bg-white/90 backdrop-blur-xl p-2 animate-in zoom-in-95 duration-500">
+          <Card className="w-full rounded-[3rem] border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] bg-white/95 backdrop-blur-xl p-2 animate-in zoom-in-95 duration-500">
             <CardContent className="p-8 space-y-8">
               <div className="flex items-center gap-4">
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="rounded-full bg-slate-50 hover:bg-slate-100" 
+                  className="rounded-full bg-slate-200 hover:bg-slate-300 text-slate-900 transition-colors" 
                   onClick={() => setView('welcome')}
                 >
                   <ArrowLeft className="h-5 w-5" />
@@ -167,11 +165,11 @@ export default function LoginPage() {
               <form onSubmit={handleAuthAction} className="space-y-6">
                 {view === 'signup' && (
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Full Name</Label>
+                    <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Full Name</Label>
                     <Input 
                       id="name" 
                       placeholder="e.g. Rohan Kumar" 
-                      className="h-14 rounded-2xl bg-slate-50 border-none focus-visible:ring-primary text-lg px-6 shadow-inner"
+                      className="h-14 rounded-2xl bg-slate-100 border-none focus-visible:ring-primary text-slate-900 text-lg px-6 shadow-inner"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
@@ -179,24 +177,24 @@ export default function LoginPage() {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Email Address</Label>
+                  <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Email Address</Label>
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="name@email.com" 
-                    className="h-14 rounded-2xl bg-slate-50 border-none focus-visible:ring-primary text-lg px-6 shadow-inner"
+                    className="h-14 rounded-2xl bg-slate-100 border-none focus-visible:ring-primary text-slate-900 text-lg px-6 shadow-inner"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Secure Password</Label>
+                  <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Secure Password</Label>
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder="••••••••" 
-                    className="h-14 rounded-2xl bg-slate-50 border-none focus-visible:ring-primary text-lg px-6 shadow-inner"
+                    className="h-14 rounded-2xl bg-slate-100 border-none focus-visible:ring-primary text-slate-900 text-lg px-6 shadow-inner"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -217,7 +215,6 @@ export default function LoginPage() {
           </Card>
         )}
 
-        {/* Professional Social Login Section */}
         <div className="w-full pt-4 flex flex-col items-center space-y-8 animate-in fade-in duration-1000 delay-500">
           <div className="flex items-center w-full gap-6 px-8">
             <div className="h-px bg-slate-200 flex-1" />
