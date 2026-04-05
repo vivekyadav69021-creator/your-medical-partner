@@ -16,7 +16,6 @@ import {
   Store,
   Calendar,
   ChevronRight,
-  User as UserIcon,
   LayoutGrid,
   BrainCircuit,
   PhoneCall,
@@ -66,7 +65,6 @@ export default function DashboardPage() {
   }, [user]);
 
   const greetingName = profile?.name || user?.displayName || 'Guest';
-  const userAvatar = profile?.image || user?.photoURL || 'https://picsum.photos/seed/user/100/100';
 
   return (
     <div className="max-w-xl mx-auto space-y-8 pb-32 animate-in fade-in duration-700 bg-background min-h-screen pt-6">
@@ -79,20 +77,16 @@ export default function DashboardPage() {
             <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em]">Medical Partner</p>
           </div>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white font-headline leading-none">
-            Hello, <br />
-            <span className="text-primary">{greetingName.split(' ')[0]}</span>
+            Welcome, <br />
+            <span className="text-primary border-b-4 border-primary/20 inline-block pb-1">
+              {greetingName.split(' ')[0]}
+            </span>
           </h1>
         </div>
-        <div className="relative">
-          <Avatar className="h-16 w-16 border-4 border-white shadow-xl">
-            <AvatarImage src={userAvatar} alt={greetingName} data-ai-hint="person face" />
-            <AvatarFallback><UserIcon className="h-8 w-8" /></AvatarFallback>
-          </Avatar>
-          <div className="absolute -bottom-1 -right-1 bg-green-500 h-5 w-5 rounded-full border-4 border-white shadow-sm" />
-        </div>
+        {/* Secondary profile icon removed from here as per request */}
       </div>
 
-      {/* Main Feature Grid 2x4 (All features in consistent large card style) */}
+      {/* Main Feature Grid 2x3 (6 Essential features) */}
       <div className="px-4">
         <div className="flex items-center justify-between mb-4 px-2">
           <h3 className="font-black text-[13px] text-slate-400 uppercase tracking-widest">Main Features</h3>
@@ -139,20 +133,6 @@ export default function DashboardPage() {
             href="tel:112"
             btnText="Call Now"
             btnColor="bg-[#FEF2F2] text-[#EF4444]"
-          />
-          <FeatureCard
-            title="Health Challenges"
-            icon={<Trophy className="w-10 h-10 text-[#F59E0B]" />}
-            href="/challenges"
-            btnText="Join Now"
-            btnColor="bg-[#FFFBEB] text-[#F59E0B]"
-          />
-          <FeatureCard
-            title="Nearby Hospital"
-            icon={<Hospital className="w-10 h-10 text-[#10B981]" />}
-            href="/nearby-hospital"
-            btnText="Find Near Me"
-            btnColor="bg-[#ECFDF5] text-[#10B981]"
           />
         </div>
       </div>
