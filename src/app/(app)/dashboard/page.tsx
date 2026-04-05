@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -8,459 +7,213 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight,
   Bot,
   Stethoscope,
-  Hospital,
-  BookHeart,
-  BrainCircuit,
-  Calendar,
-  Clock,
-  Check,
-  ListTodo,
-  Trophy,
   Scan,
   Store,
-  HeartPulse,
-  Activity,
-  Smartphone,
-  BedDouble,
-  Flame,
+  Calendar,
+  ChevronRight,
   User as UserIcon,
-  Rocket,
+  Search,
+  Activity,
+  BedDouble,
+  FileText,
+  LayoutGrid,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Progress } from '@/components/ui/progress';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { OnboardingModal } from '@/components/onboarding-modal';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { SplashScreen } from '@/components/splash-screen';
+import { useUser } from '@/firebase';
 import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
+import { cn } from '@/lib/utils';
 
 type UserProfile = {
   name: string;
-  age: string;
-  gender: string;
-  weight: string;
-  height: string;
-  bloodGroup: string;
-  conditions: string;
-  allergies: string;
-  lifestyle: string;
-  dietaryPreference: string;
+  image: string;
 };
 
-const quickAccessItems = [
-  {
-    title: 'AI Health Assistant',
-    description: 'Ask our AI anything about health.',
-    href: '/health-assistant',
-    icon: Bot,
-  },
-  {
-    title: 'AI Psychiatrist',
-    description: 'Talk about your mental health.',
-    href: '/ai-psychiatrist',
-    icon: BrainCircuit,
-  },
-  {
-    title: 'Disease Scanner',
-    description: 'Analyze X-rays, lab reports & more.',
-    href: '/disease-scanner',
-    icon: Scan,
-  },
-  {
-    title: 'Doctor Consult',
-    description: 'Book an appointment with a doctor.',
-    href: '/consultation',
-    icon: Stethoscope,
-  },
-  {
-    title: 'Medical Store',
-    description: 'Order medicines and products.',
-    href: '/store',
-    icon: Store,
-  },
-  {
-    title: 'Nearby Hospital',
-    description: 'Find clinics and hospitals near you.',
-    href: '/nearby-hospital',
-    icon: Hospital,
-  },
-  {
-    title: 'Disease Library',
-    description: 'Browse diseases and conditions.',
-    href: '/disease-library',
-    icon: BookHeart,
-  },
+const healthChartData = [
+  { day: '20', bpt: 40, asb: 20 },
+  { day: '01', bpt: 60, asb: 30 },
+  { day: '02', bpt: 45, asb: 45 },
+  { day: '23', bpt: 70, asb: 25 },
+  { day: 'Today', bpt: 55, asb: 50 },
 ];
-
-const sleepData = [
-  { day: 'Mon', hours: 7.5 },
-  { day: 'Tue', hours: 6.8 },
-  { day: 'Wed', hours: 8.2 },
-  { day: 'Thu', hours: 7.1 },
-  { day: 'Fri', hours: 6.5 },
-  { day: 'Sat', hours: 9.0 },
-  { day: 'Sun', hours: 8.5 },
-];
-
-const upcomingAppointments = [
-  {
-    doctorName: 'Dr. Priya Patel',
-    specialty: 'Pediatrician',
-    date: 'Dec 15, 2024',
-    time: '11:30 AM',
-    imageId: 'doctor-3',
-  },
-  {
-    doctorName: 'Dr. John Smith',
-    specialty: 'General Physician',
-    date: 'Dec 18, 2024',
-    time: '02:00 PM',
-    imageId: 'doctor-5',
-  },
-];
-
-const plannerTasks = [
-  { id: 'task-1', task: 'Take morning medication', completed: true },
-  { id: 'task-2', task: 'Go for a 30-minute walk', completed: false },
-  { id: 'task-3', task: 'Drink 8 glasses of water', completed: false },
-  { id: 'task-4', task: 'Evening meditation', completed: false },
-];
-
-const activeChallenge = {
-    title: '7-Day Walking Challenge',
-    progress: 4,
-    total: 7,
-    tasks: [
-      { name: 'Day 5: 8,000 steps', completed: false },
-      { name: 'Day 6: 8,000 steps', completed: false },
-    ],
-};
-
 
 export default function DashboardPage() {
   const { user } = useUser();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
-  
-  const dashboardHeroImage = PlaceHolderImages.find(p => p.id === 'dashboard-hero');
-
 
   useEffect(() => {
     if (!user) return;
-
     try {
       const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
       if (savedProfile) {
-        const p = JSON.parse(savedProfile);
-        setProfile(p);
-        const isComplete = p.height && p.weight && p.bloodGroup && p.lifestyle && p.dietaryPreference;
-        const remindersHidden = localStorage.getItem('hideProfileReminders') === 'true';
-        if (!isComplete && !remindersHidden) {
-            setShowProfilePrompt(true);
-        } else {
-            setShowProfilePrompt(false);
-        }
-      } else {
-        const remindersHidden = localStorage.getItem('hideProfileReminders') === 'true';
-        if (!remindersHidden) {
-            setShowProfilePrompt(true);
-        }
+        setProfile(JSON.parse(savedProfile));
       }
     } catch (e) {
-      console.error("Failed to load profile from local storage", e);
+      console.error("Failed to load profile", e);
     }
   }, [user]);
-  
+
   const greetingName = profile?.name || user?.displayName || 'Guest';
+  const userAvatar = profile?.image || user?.photoURL || 'https://picsum.photos/seed/user/100/100';
 
   return (
-    <div className="space-y-8">
-      
-      {showProfilePrompt && dashboardHeroImage && (
-        <Card className="relative mb-6 overflow-hidden text-white bg-slate-900 shadow-lg">
-          <Image
-            src={dashboardHeroImage.imageUrl}
-            alt={dashboardHeroImage.description}
-            fill
-            className="object-cover z-0 opacity-30"
-            data-ai-hint={dashboardHeroImage.imageHint}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/50 to-slate-900/80 z-10" />
-          <div className="relative z-20 p-6">
-            <CardHeader className="p-0">
-              <CardTitle className="flex items-center gap-3 text-2xl font-bold text-white">
-                <Rocket /> Personalize Your Health Journey!
-              </CardTitle>
-              <CardDescription className="text-slate-300 pt-1">
-                Complete your profile to unlock Advanced AI Insights and custom-tailored health plans.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="p-0 pt-4 flex-wrap gap-4">
-              <Button asChild className="bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 text-white shadow-md">
-                <Link href="/profile">Update Profile Now</Link>
-              </Button>
-              <Button variant="link" className="text-slate-300 hover:text-white" onClick={() => { setShowProfilePrompt(false); localStorage.setItem('hideProfileReminders', 'true'); }}>
-                Maybe Later
-              </Button>
-            </CardFooter>
-          </div>
-        </Card>
-      )}
-
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Hi, {greetingName}!
-        </h1>
-        <p className="text-muted-foreground">
-          Welcome to your personal health dashboard.
-        </p>
+    <div className="max-w-xl mx-auto space-y-8 pb-32 animate-in fade-in duration-700">
+      {/* Header Section */}
+      <div className="flex items-center justify-between px-1">
+        <div className="space-y-1">
+          <p className="text-slate-400 text-lg font-medium">Welcome back!</p>
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white font-headline">
+            {greetingName}
+          </h1>
+        </div>
+        <Avatar className="h-16 w-16 border-4 border-white shadow-sm">
+          <AvatarImage src={userAvatar} alt={greetingName} data-ai-hint="person face" />
+          <AvatarFallback><UserIcon className="h-8 w-8" /></AvatarFallback>
+        </Avatar>
       </div>
 
-      <Card>
-        <CardHeader>
-            <CardTitle>Quick Access</CardTitle>
-            <CardDescription>
-                Your healthcare tools, just a click away.
-            </CardDescription>
+      {/* Main Feature Grid 2x2 */}
+      <div className="grid grid-cols-2 gap-5">
+        {/* AI Health Assistant */}
+        <FeatureCard
+          title="AI Health Assistant"
+          icon={<Bot className="w-12 h-12 text-blue-500" />}
+          href="/health-assistant"
+          btnText="Ask away"
+          btnColor="bg-[#E6F0FF] text-[#4A90E2]"
+        />
+        {/* Doctor Consult */}
+        <FeatureCard
+          title="Doctor Consult"
+          icon={<Stethoscope className="w-12 h-12 text-pink-500" />}
+          href="/consultation"
+          btnText="Book appointment"
+          btnColor="bg-[#FFF0F5] text-[#FF85A1]"
+        />
+        {/* Medical Store */}
+        <FeatureCard
+          title="Medical Store"
+          icon={<Store className="w-12 h-12 text-purple-500" />}
+          href="/store"
+          btnText="Order medicine"
+          btnColor="bg-[#F3E8FF] text-[#9D50BB]"
+        />
+        {/* Disease Scanner */}
+        <FeatureCard
+          title="Disease Scanner"
+          icon={<Scan className="w-12 h-12 text-teal-500" />}
+          href="/disease-scanner"
+          btnText="Scan health"
+          btnColor="bg-[#E0FDF4] text-[#20B2AA]"
+        />
+      </div>
+
+      {/* Health Plan Large Card */}
+      <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-100">Health Plan</CardTitle>
+          <Button variant="ghost" size="sm" className="text-slate-400 gap-1 rounded-full bg-slate-50 px-3">
+            <Search className="w-4 h-4" />
+            <span className="text-xs">Today</span>
+          </Button>
         </CardHeader>
-        <CardContent>
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-              {quickAccessItems.map(item => (
-                  <div key={item.title} className="snap-start flex-shrink-0">
-                      <Card className="w-36 h-36 group hover:shadow-lg transition-shadow duration-300">
-                          <Link href={item.href} className="flex flex-col h-full p-4 items-center text-center justify-center">
-                              <item.icon className="w-8 h-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                              <p className="text-sm font-semibold leading-tight">{item.title}</p>
-                          </Link>
-                      </Card>
-                  </div>
-              ))}
-            </div>
-        </CardContent>
-      </Card>
-     
-
-      <Card>
-        <CardHeader>
-            <CardTitle>Connect Your Smartwatch</CardTitle>
-            <CardDescription>Sync your health data for real-time tracking and a personalized health score.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <Card className="p-4">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-4xl font-bold">78</CardTitle>
-                        <CardDescription className="flex items-center justify-center gap-1"><HeartPulse className="w-4 h-4"/> Heart Rate</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className="text-xs text-muted-foreground">bpm (real-time)</p>
-                    </CardContent>
-                </Card>
-                 <Card className="p-4">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-4xl font-bold">6,521</CardTitle>
-                        <CardDescription className="flex items-center justify-center gap-1"><Activity className="w-4 h-4" /> Steps</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className="text-xs text-muted-foreground">Today</p>
-                    </CardContent>
-                </Card>
-                 <Card className="p-4">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-4xl font-bold">7h 15m</CardTitle>
-                        <CardDescription className="flex items-center justify-center gap-1"><BedDouble className="w-4 h-4" /> Sleep</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className="text-xs text-muted-foreground">Last night</p>
-                    </CardContent>
-                </Card>
-                 <Card className="p-4">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-4xl font-bold">340</CardTitle>
-                        <CardDescription className="flex items-center justify-center gap-1"><Flame className="w-4 h-4" /> Calories</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className="text-xs text-muted-foreground">Active kcal</p>
-                    </CardContent>
-                </Card>
-            </div>
-        </CardContent>
-        <CardFooter>
-            <Button>
-                <Smartphone className="mr-2 h-4 w-4" />
-                Connect Device
-            </Button>
-        </CardFooter>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Active Challenge</span>
-              <Trophy className="w-5 h-5 text-yellow-500" />
-            </CardTitle>
-            <CardDescription>{activeChallenge.title}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-                <div className="flex justify-between items-center mb-1">
-                    <p className="text-sm font-medium">Progress</p>
-                    <p className="text-sm text-muted-foreground">{activeChallenge.progress} / {activeChallenge.total} days</p>
-                  </div>
-                <Progress value={(activeChallenge.progress / activeChallenge.total) * 100} className="h-2"/>
-            </div>
-            <div className="space-y-2">
-                <p className="text-sm font-medium">Next Tasks</p>
-                {activeChallenge.tasks.map((task, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                        <Checkbox id={`challenge-task-${index}`} checked={task.completed} />
-                        <label htmlFor={`challenge-task-${index}`} className="text-sm">{task.name}</label>
-                    </div>
-                ))}
-            </div>
-             <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/challenges">
-                    View All Challenges
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Weekly Sleep Pattern</CardTitle>
-            <CardDescription>
-              Your sleep duration over the last 7 days.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[200px] w-full">
+        <CardContent className="space-y-6">
+          {/* Chart placeholder style */}
+          <div className="h-32 w-full mt-2">
+            <ChartContainer config={{}} className="h-full w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sleepData}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="day"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <YAxis
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <Bar
-                    dataKey="hours"
-                    fill="hsl(var(--primary))"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
+                <AreaChart data={healthChartData}>
+                  <defs>
+                    <linearGradient id="colorBpt" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4A90E2" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4A90E2" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="bpt" stroke="#4A90E2" strokeWidth={3} fillOpacity={1} fill="url(#colorBpt)" />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
+                </AreaChart>
               </ResponsiveContainer>
             </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Appointments</CardTitle>
-            <CardDescription>Your scheduled consultations.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {upcomingAppointments.map((appt, index) => {
-              const image = PlaceHolderImages.find(
-                img => img.id === appt.imageId
-              );
-              return (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 p-2 rounded-lg bg-secondary/50"
-                >
-                  {image && (
-                    <Avatar>
-                      <AvatarImage
-                        src={image.imageUrl}
-                        alt={appt.doctorName}
-                        data-ai-hint={image.imageHint}
-                      />
-                      <AvatarFallback>
-                        {appt.doctorName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className="flex-1">
-                    <p className="font-semibold">{appt.doctorName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {appt.specialty}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>{appt.date}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm mt-1">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>{appt.time}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Your Planner</CardTitle>
-              <CardDescription>
-                Today's health tasks and reminders.
-              </CardDescription>
-            </div>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/planner">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {plannerTasks.slice(0, 4).map(task => (
-              <div key={task.id} className="flex items-center gap-3">
-                <Checkbox
-                  id={`dashboard-${task.id}`}
-                  checked={task.completed}
-                />
-                <label
-                  htmlFor={`dashboard-${task.id}`}
-                  className={`flex-1 text-sm ${
-                    task.completed ? 'line-through text-muted-foreground' : ''
-                  }`}
-                >
-                  {task.task}
-                </label>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Steps Metric */}
+            <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-teal-400" />
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Steps</p>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold">7,550 <span className="text-xs text-slate-400 font-normal">8,000</span></p>
+                <Progress value={94} className="h-1.5 bg-slate-200" />
+              </div>
+            </div>
+            {/* Sleep Metric */}
+            <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sleep</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <ChevronRight className="w-5 h-5 text-indigo-500" />
+                <p className="text-2xl font-bold">7 <span className="text-xs text-slate-400 font-normal">hours</span></p>
+              </div>
+              <Progress value={70} className="h-1.5 bg-slate-200" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bottom Dock style Navigation */}
+      <div className="flex justify-between items-center gap-4 px-2">
+        <DockButton icon={<Calendar className="w-6 h-6 text-orange-400" />} label="Planner" href="/planner" />
+        <DockButton icon={<FileText className="w-6 h-6 text-cyan-400" />} label="Reports" href="/analysis" />
+        <DockButton icon={<LayoutGrid className="w-6 h-6 text-slate-400" />} label="More" href="/challenges" />
       </div>
 
       <AssistantSheet />
     </div>
+  );
+}
+
+// Sub-components for cleaner structure
+function FeatureCard({ title, icon, href, btnText, btnColor }: { title: string, icon: any, href: string, btnText: string, btnColor: string }) {
+  return (
+    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white dark:bg-slate-900 group hover:scale-[1.02] transition-all">
+      <Link href={href} className="p-6 flex flex-col h-full space-y-4">
+        <div className="p-2 w-fit rounded-2xl bg-slate-50 dark:bg-slate-800">
+          {icon}
+        </div>
+        <CardTitle className="text-lg font-bold leading-tight pr-4">{title}</CardTitle>
+        <div className={cn("mt-auto py-2 px-4 rounded-full flex items-center justify-between text-xs font-bold transition-opacity group-hover:opacity-90", btnColor)}>
+          {btnText}
+          <ChevronRight className="w-4 h-4" />
+        </div>
+      </Link>
+    </Card>
+  );
+}
+
+function DockButton({ icon, label, href }: { icon: any, label: string, href: string }) {
+  return (
+    <Link href={href} className="flex-1">
+      <Card className="rounded-3xl border-none shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-slate-900">
+        <CardContent className="p-4 flex flex-col items-center justify-center gap-2">
+          <div className="p-2 rounded-2xl bg-slate-50 dark:bg-slate-800">
+            {icon}
+          </div>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
