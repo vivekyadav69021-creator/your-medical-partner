@@ -77,12 +77,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <div className="flex-shrink-0">
-          <Avatar className="h-20 w-20 border-4 border-white dark:border-slate-800 shadow-xl">
-            <AvatarImage src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=200&h=200&auto=format&fit=crop" data-ai-hint="male doctor illustration" />
-            <AvatarFallback className="bg-blue-100 text-[#2488E8]"><Zap /></AvatarFallback>
-          </Avatar>
-        </div>
       </div>
 
       <div className="max-w-xl mx-auto space-y-8 px-4">
