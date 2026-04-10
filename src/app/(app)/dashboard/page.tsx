@@ -74,16 +74,18 @@ export default function DashboardPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-8 rounded-full bg-primary/40 animate-pulse" />
-            <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em]">Medical Partner</p>
+            <div className="relative inline-block">
+              <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em]">Your Medical Partner</p>
+              <div className="absolute -bottom-1.5 left-0 w-full h-[2px] bg-primary/60 shadow-[0_0_10px_#4A90E2] rounded-full animate-pulse" />
+            </div>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white font-headline leading-none">
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white font-headline leading-none mt-4">
             Welcome, <br />
             <span className="text-primary border-b-4 border-primary/20 inline-block pb-1">
               {greetingName.split(' ')[0]}
             </span>
           </h1>
         </div>
-        {/* Secondary profile icon removed from here as per request */}
       </div>
 
       {/* Main Feature Grid 2x3 (6 Essential features) */}
