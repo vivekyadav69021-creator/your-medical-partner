@@ -81,13 +81,10 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Welcome Back!', description: 'Logged in successfully.' });
       }
-      
-      // Navigation is handled by the useEffect watching the 'user' state
     } catch (error: any) {
       console.error("Auth Error:", error);
       let message = error.message;
       
-      // User-friendly error messages
       if (error.code === 'auth/email-already-in-use') message = 'This email is already registered.';
       if (error.code === 'auth/invalid-email') message = 'Please enter a valid email address.';
       if (error.code === 'auth/weak-password') message = 'The password is too weak.';
@@ -113,7 +110,15 @@ export default function LoginPage() {
       toast({ title: 'Logged in as Guest' });
     } catch (error: any) {
       console.error("Guest Sign-in Error:", error);
-      toast({ variant: 'destructive', title: 'Guest Sign-in Failed', description: error.message });
+      let message = error.message;
+      if (error.message.includes('identity-toolkit-api')) {
+        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console link provided in the console error.";
+      }
+      toast({ 
+        variant: 'destructive', 
+        title: 'Guest Sign-in Failed', 
+        description: message 
+      });
     } finally {
       setLoading(false);
     }
