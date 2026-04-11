@@ -20,12 +20,12 @@ import {
   Scan,
   BrainCircuit,
   PhoneCall,
+  Sparkles,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
-import { useUser } from '@/firebase';
 import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/context/user-profile-context';
@@ -45,14 +45,24 @@ export default function DashboardPage() {
     <div className="animate-in fade-in duration-500 space-y-8">
       
       {/* Header Section */}
-      <div className="max-w-xl mx-auto flex items-center justify-between">
-        <div className="space-y-4 flex-1">
-          <div className="space-y-1">
-            <p className="text-[#2488E8] text-[10px] font-black uppercase tracking-[0.3em]">Your Digital Health Companion</p>
-            <div className="inline-block glowing-underline pb-1 pr-4">
-              <h1 className="text-4xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline leading-none">
+      <div className="max-w-xl mx-auto px-2">
+        <div className="space-y-4">
+          <div className="space-y-3">
+            {/* Attractive Tagline Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 dark:border-blue-800/50 backdrop-blur-sm shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-[#2488E8] animate-pulse" />
+              <p className="text-[#2488E8] text-[10px] font-black uppercase tracking-widest">Your Digital Health Companion</p>
+            </div>
+            
+            <div className="space-y-1">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#2D3A5D] dark:text-slate-100 font-headline leading-tight">
                 Welcome, <br />
-                <span className="text-[#2488E8]">{userName.split(' ')[0]}</span>
+                <span className="relative inline-block">
+                  <span className="text-[#2488E8]">{userName.split(' ')[0]}</span>
+                  {/* Premium Glowing Gradient Underline */}
+                  <div className="absolute -bottom-2 left-0 w-full h-1.5 bg-[#2488E8]/10 rounded-full blur-[2px]" />
+                  <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#2488E8] via-[#14CFBD] to-transparent rounded-full shadow-[0_2px_8px_rgba(36,136,232,0.3)]" />
+                </span>
               </h1>
             </div>
           </div>
