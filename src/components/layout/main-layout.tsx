@@ -23,7 +23,6 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -56,7 +55,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild title="Cart">
               <Link href="/store/cart" className="relative">
                 <ShoppingCart />
                 {itemCount > 0 && (
@@ -67,7 +66,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                 <Button variant="ghost" className="relative h-10 w-10 rounded-full" title="Settings">
                   <Avatar>
                       <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
                       <AvatarFallback>
@@ -79,7 +78,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <DropdownMenuContent align="end">
                  <DropdownMenuItem asChild>
                    <Link href="/profile">
-                    Profile
+                    My Profile
                    </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSub>

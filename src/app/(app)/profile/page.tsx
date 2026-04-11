@@ -14,13 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2, BellOff, Settings } from 'lucide-react';
+import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
-import { useUser } from '@/firebase';
-import { updateProfile } from 'firebase/auth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 
@@ -44,7 +42,6 @@ type UserProfileData = {
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { user } = useUser();
   const { userName, userImage, setUserName, setUserImage } = useUserProfile();
   const [isSaving, setIsSaving] = useState(false);
   const [hideReminders, setHideReminders] = useState(false);
@@ -67,16 +64,13 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!user) return;
     try {
-      const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
+      const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
         setProfile(prev => ({ ...prev, ...parsedProfile }));
-        setUserName(parsedProfile.name || user.displayName || 'Guest');
-        setUserImage(parsedProfile.image || user.photoURL || 'https://picsum.photos/seed/user/100/100');
       } else {
-         setProfile(prev => ({...prev, name: user.displayName || '', image: user.photoURL || 'https://picsum.photos/seed/user/100/100'}));
+         setProfile(prev => ({...prev, name: userName, image: userImage}));
       }
       
       const remindersHidden = localStorage.getItem('hideProfileReminders') === 'true';
@@ -85,7 +79,7 @@ export default function ProfilePage() {
     } catch (e) {
       console.error("Failed to load profile from local storage", e);
     }
-  }, [user, setUserName, setUserImage]);
+  }, [userName, userImage]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -127,31 +121,23 @@ export default function ProfilePage() {
     });
   };
 
-  const handleSaveProfile = async () => {
-    if (!user) {
-        toast({ variant: "destructive", title: "Not Authenticated", description: "You must be logged in to save your profile." });
-        return;
-    }
+  const handleSaveProfile = () => {
     setIsSaving(true);
     try {
-      if (user.displayName !== profile.name || user.photoURL !== profile.image) {
-          await updateProfile(user, { displayName: profile.name, photoURL: profile.image });
-      }
-
-      localStorage.setItem(`userMedicalProfile_${user.uid}`, JSON.stringify(profile));
+      localStorage.setItem(`userMedicalProfile_local`, JSON.stringify(profile));
       
       setUserName(profile.name || 'Guest');
       setUserImage(profile.image);
       
       toast({
-        title: "Profile Saved",
-        description: "Your information has been successfully updated.",
+        title: "Profile Saved Locally",
+        description: "Your information has been successfully updated on this device.",
       });
     } catch (e: any) {
       toast({
         variant: "destructive",
         title: "Save Failed",
-        description: e.message || "Could not save your profile. Please try again.",
+        description: "Could not save your profile. Please try again.",
       });
     } finally {
         setIsSaving(false);
@@ -171,22 +157,22 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Medical Profile</CardTitle>
+          <CardTitle>Local Medical Profile</CardTitle>
           <CardDescription>
-            Your data is encrypted and remains under your control, stored locally on your device.
+            Your data is stored locally on this device.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
-                    <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
+                    <AvatarImage src={profile.image} alt={profile.name} data-ai-hint="person face" />
                     <AvatarFallback>
                         <UserIcon className="h-12 w-12" />
                     </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
                     <Button onClick={() => fileInputRef.current?.click()}>Change Photo</Button>
-                    <Input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
+                    <input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
                     <p className="text-xs text-muted-foreground">Recommended: Square image (e.g., 400x400px)</p>
                 </div>
             </div>
@@ -281,7 +267,7 @@ export default function ProfilePage() {
          <CardFooter>
             <Button onClick={handleSaveProfile} disabled={isSaving}>
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {isSaving ? 'Saving...' : 'Save Profile'}
+              {isSaving ? 'Saving...' : 'Save Locally'}
             </Button>
         </CardFooter>
       </Card>
@@ -290,7 +276,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>Settings</CardTitle>
           <CardDescription>
-            Customize the look and feel and notification preferences.
+            Customize look and feel.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -321,14 +307,11 @@ export default function ProfilePage() {
             </div>
           </div>
            <div className="space-y-2">
-            <h3 className="font-semibold">Notifications</h3>
+            <h3 className="font-semibold">Preferences</h3>
              <div className="flex items-center space-x-2 p-4 border rounded-md">
                 <Switch id="reminders-switch" checked={!hideReminders} onCheckedChange={handleReminderChange} />
-                <Label htmlFor="reminders-switch">Show profile completion reminders on dashboard</Label>
+                <Label htmlFor="reminders-switch">Show profile reminders on dashboard</Label>
              </div>
-             <p className="text-xs text-muted-foreground">
-                Prefer not to share? No problem. You can disable profile reminders here anytime.
-             </p>
           </div>
         </CardContent>
       </Card>

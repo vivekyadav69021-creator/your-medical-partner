@@ -1,8 +1,6 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useUser } from '@/firebase';
 
 type UserProfileContextType = {
   userName: string;
@@ -14,32 +12,23 @@ type UserProfileContextType = {
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
+  // Static Guest state by default
   const [userName, setUserNameState] = useState('Guest');
   const [userImage, setUserImageState] = useState('https://picsum.photos/seed/user/100/100');
 
   useEffect(() => {
-    if (!user) {
-        setUserNameState('Guest');
-        setUserImageState('https://picsum.photos/seed/user/100/100');
-        return;
-    };
-    // Prioritize Firebase auth profile
-    setUserNameState(user.displayName || 'Guest');
-    setUserImageState(user.photoURL || 'https://picsum.photos/seed/user/100/100');
-
     try {
-      // Then, check local storage for overrides
-      const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
+      // Load from local storage for local persistence without Auth
+      const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
         if (parsedProfile.name) setUserNameState(parsedProfile.name);
         if (parsedProfile.image) setUserImageState(parsedProfile.image);
       }
     } catch (e) {
-      console.error("Failed to load profile from localStorage in context", e);
+      console.error("Failed to load local profile", e);
     }
-  }, [user]);
+  }, []);
 
   const setUserName = (name: string) => {
       setUserNameState(name);

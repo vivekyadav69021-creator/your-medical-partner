@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -32,7 +31,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash, Pill, HeartPulse, Dumbbell, Calendar, Pencil, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-
 const categoryIcons = {
   Medication: <Pill className="w-4 h-4" />,
   Fitness: <Dumbbell className="w-4 h-4" />,
@@ -41,28 +39,63 @@ const categoryIcons = {
 };
 
 type Category = 'Medication' | 'Fitness' | 'General' | 'Appointment';
-type Task = { id: string; title: string; category: Category; completed: boolean; createdAt: any };
+type Task = { id: string; title: string; category: Category; completed: boolean; createdAt: number };
 
 export default function PlannerPage() {
   const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const handleTaskSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    // Load tasks from local storage
+    const saved = localStorage.getItem('guest_planner_tasks');
+    if (saved) {
+      setTasks(JSON.parse(saved));
+    }
+    setIsLoading(false);
+  }, []);
+
+  const saveTasks = (newTasks: Task[]) => {
+    setTasks(newTasks);
+    localStorage.setItem('guest_planner_tasks', JSON.stringify(newTasks));
+  };
+
+  const handleTaskSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to manage tasks.' });
+    const formData = new FormData(event.currentTarget);
+    const title = formData.get('title') as string;
+    const category = formData.get('category') as Category;
+
+    if (editingTask) {
+      const updated = tasks.map(t => t.id === editingTask.id ? { ...t, title, category } : t);
+      saveTasks(updated);
+      toast({ title: 'Task Updated' });
+    } else {
+      const newTask: Task = {
+        id: Math.random().toString(36).substr(2, 9),
+        title,
+        category,
+        completed: false,
+        createdAt: Date.now(),
+      };
+      saveTasks([newTask, ...tasks]);
+      toast({ title: 'Task Added' });
+    }
     setIsDialogOpen(false);
   };
 
-  const toggleTask = async (task: Task) => {
-    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to manage tasks.' });
+  const toggleTask = (task: Task) => {
+    const updated = tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
+    saveTasks(updated);
   };
   
-  const deleteTask = async (taskId: string) => {
-    toast({ variant: 'destructive', title: 'Login Required', description: 'You must be logged in to manage tasks.' });
+  const deleteTask = (taskId: string) => {
+    const updated = tasks.filter(t => t.id !== taskId);
+    saveTasks(updated);
+    toast({ title: 'Task Deleted' });
   };
   
   const handleEditClick = (task: Task) => {
@@ -75,8 +108,8 @@ export default function PlannerPage() {
     setIsDialogOpen(true);
   }
 
-  const completedTasks = useMemo(() => tasks?.filter(t => t.completed) || [], [tasks]);
-  const pendingTasks = useMemo(() => tasks?.filter(t => !t.completed) || [], [tasks]);
+  const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
+  const pendingTasks = useMemo(() => tasks.filter(t => !t.completed), [tasks]);
 
   return (
     <div className="space-y-8">
@@ -84,7 +117,7 @@ export default function PlannerPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-headline">My Planner</h1>
           <p className="text-muted-foreground">
-            Organize your health-related tasks and stay on track.
+            Organize your health-related tasks.
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
@@ -138,7 +171,6 @@ export default function PlannerPage() {
       {isLoading && <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div> }
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* PENDING TASKS */}
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>To-Do ({pendingTasks.length})</CardTitle>
@@ -174,13 +206,12 @@ export default function PlannerPage() {
               ))
             ) : (
               !isLoading && <p className="text-sm text-muted-foreground text-center py-8">
-                Log in to manage your tasks.
+                No pending tasks.
               </p>
             )}
           </CardContent>
         </Card>
 
-        {/* COMPLETED TASKS */}
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Completed ({completedTasks.length})</CardTitle>
