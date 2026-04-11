@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit, Activity, ShieldPulse } from 'lucide-react';
+import { Send, User, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit, Activity, ShieldPlus } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -575,7 +575,7 @@ export default function HealthAssistantPage() {
                         description="Ask about symptoms, meds or health tips"
                         placeholder="Ask me anything..."
                         initialMessage="Hi! I'm your AI partner. How can I help you today?"
-                        Icon={ShieldPulse}
+                        Icon={ShieldPlus}
                     />
                 </TabsContent>
                 
@@ -720,7 +720,7 @@ function ChatInterface({
                                     )}
                                     {message.role === 'assistant' ? (
                                         <>
-                                            <article className="prose prose-sm dark:prose-invert max-w-none text-inherit leading-relaxed font-medium">
+                                            <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium">
                                                 {renderMarkdown(message.content)}
                                             </article>
                                             {index === messages.length - 1 && !isPending && (

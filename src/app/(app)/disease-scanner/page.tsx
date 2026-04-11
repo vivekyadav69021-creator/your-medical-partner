@@ -23,7 +23,7 @@ import {
   AlertTriangle, 
   Hospital, 
   FileText, 
-  Image as ImageIcon, 
+  ImageIcon, 
   SwitchCamera, 
   Upload, 
   Download, 
@@ -38,13 +38,13 @@ import {
   Bandage,
   Bone,
   SearchCode,
-  ShieldPulse
+  ShieldPlus
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
@@ -192,7 +192,7 @@ export default function DiseaseScannerPage() {
                     <Card className="rounded-[2rem] bg-[#1A1A1A] text-white overflow-hidden border-none relative group cursor-pointer hover:shadow-lg transition-all" onClick={() => (window as any).openAssistant?.()}>
                         <CardContent className="p-5 flex items-center gap-4">
                             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-gray-600 shadow-inner">
-                                <ShieldPulse className="h-7 w-7 text-primary" />
+                                <ShieldPlus className="h-7 w-7 text-primary" />
                             </div>
                             <div className="flex-1 space-y-0.5">
                                 <h3 className="font-black text-lg flex items-center gap-2">
@@ -254,9 +254,6 @@ function ScannerCard({ title, icon, gradient, onClick, btnText }: { title: strin
         </Card>
     );
 }
-
-// Sub-scanners (Skin, Injury, Xray, Lab) use similar neumorphic polishing...
-// (Subsequent components omitted for brevity, keeping only the updated icons logic if any)
 
 function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
