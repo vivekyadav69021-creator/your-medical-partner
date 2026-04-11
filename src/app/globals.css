@@ -8,7 +8,7 @@ body {
 
 @layer base {
   :root {
-    --background: 210 100% 97.5%;
+    --background: 210 100% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -85,7 +85,7 @@ body {
 
 @layer utilities {
   .neumorphic-card {
-    @apply bg-card border border-border/50;
+    @apply bg-card border border-white/50 dark:border-slate-800/50;
     box-shadow: 6px 6px 16px rgba(163, 177, 198, 0.16), -6px -6px 16px rgba(255, 255, 255, 0.7);
   }
 

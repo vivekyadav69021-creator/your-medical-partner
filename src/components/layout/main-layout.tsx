@@ -51,9 +51,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <header className="flex h-16 items-center justify-between p-4 border-b">
+        <header className="flex h-16 items-center justify-between p-4 border-b bg-background/50 backdrop-blur-md sticky top-0 z-30">
           <SidebarTrigger className="md:hidden" />
-          <div className="flex-1" />
+          <div className="flex-1 px-4 hidden md:block">
+             <div className="inline-block glowing-underline pb-1 pr-4">
+                <span className="text-lg font-black tracking-tighter text-primary font-headline uppercase">Your Medical Partner</span>
+             </div>
+          </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild title="Cart">
               <Link href="/store/cart" className="relative">
@@ -107,8 +111,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
           </div>
         </header>
-        <main className="flex-1 p-4 overflow-y-auto md:p-6 lg:p-8 bg-secondary/50 dark:bg-background">
-          {children}
+        <main className="flex-1 overflow-y-auto" style={{ background: 'var(--dashboard-bg)' }}>
+          <div className="p-4 md:p-6 lg:p-8 min-h-full">
+            {children}
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>

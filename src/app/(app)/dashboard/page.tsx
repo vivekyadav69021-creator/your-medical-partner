@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -29,11 +28,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
 import { cn } from '@/lib/utils';
-
-type UserProfile = {
-  name: string;
-  image: string;
-};
+import { useUserProfile } from '@/context/user-profile-context';
 
 const healthChartData = [
   { day: '20', bpt: 40 },
@@ -44,42 +39,27 @@ const healthChartData = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useUser();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    try {
-      const savedProfile = localStorage.getItem(`userMedicalProfile_${user.uid}`);
-      if (savedProfile) {
-        setProfile(JSON.parse(savedProfile));
-      }
-    } catch (e) {
-      console.error("Failed to load profile", e);
-    }
-  }, [user]);
-
-  const greetingName = profile?.name || user?.displayName || 'Guest';
+  const { userName } = useUserProfile();
 
   return (
-    <div className="min-h-screen pb-32 animate-in fade-in duration-300 pt-6" style={{ background: 'var(--dashboard-bg)' }}>
+    <div className="animate-in fade-in duration-500 space-y-8">
       
       {/* Header Section */}
-      <div className="max-w-xl mx-auto px-6 mb-8 flex items-center justify-between">
+      <div className="max-w-xl mx-auto flex items-center justify-between">
         <div className="space-y-4 flex-1">
           <div className="space-y-1">
             <p className="text-[#2488E8] text-[10px] font-black uppercase tracking-[0.3em]">Your Digital Health Companion</p>
             <div className="inline-block glowing-underline pb-1 pr-4">
               <h1 className="text-4xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline leading-none">
                 Welcome, <br />
-                <span className="text-[#2488E8]">{greetingName.split(' ')[0]}</span>
+                <span className="text-[#2488E8]">{userName.split(' ')[0]}</span>
               </h1>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto space-y-8 px-4">
+      <div className="max-w-xl mx-auto space-y-8">
         
         {/* Main Feature Grid */}
         <div className="space-y-4">
@@ -142,7 +122,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Health Plan Large Card */}
+        {/* Daily Progress Card */}
         <Card className="rounded-[3rem] border-none shadow-sm neumorphic-card overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2 px-8 pt-8">
             <CardTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100">Daily Progress</CardTitle>
@@ -177,7 +157,7 @@ export default function DashboardPage() {
                     <Area 
                       type="monotone" 
                       dataKey="bpt" 
-                      stroke="url(#colorBpt)" 
+                      stroke="#2488E8" 
                       strokeWidth={4} 
                       fillOpacity={1} 
                       fill="url(#colorBpt)" 
@@ -196,48 +176,47 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Upcoming & Schedule */}
-        <div className="grid grid-cols-1 gap-8">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="font-black text-[13px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-widest">Upcoming Bookings</h3>
-              <Link href="/consultation">
-                <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0 hover:bg-white/50 dark:hover:bg-slate-800/50">
-                  <ChevronRight className="w-4 h-4 text-[#2D3A5D] dark:text-slate-100" />
-                </Button>
-              </Link>
-            </div>
-            <Card className="rounded-[2.5rem] border-none neumorphic-card overflow-hidden">
-              <CardContent className="p-6 space-y-4">
-                <BookingItem 
-                  name="Dr. Shivam Yadav" 
-                  time="Today, 04:30 PM" 
-                  type="Video Call" 
-                  image="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=100&h=100&auto=format&fit=crop" 
-                />
-                <div className="h-px bg-[#F0F7FF] dark:bg-slate-800 w-full" />
-                <BookingItem 
-                  name="Dr. Ananya Sharma" 
-                  time="Tomorrow, 10:00 AM" 
-                  type="In-Person" 
-                  image="https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=100&h=100&auto=format&fit=crop" 
-                />
-              </CardContent>
-            </Card>
+        {/* Upcoming Bookings */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="font-black text-[13px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-widest">Upcoming Bookings</h3>
+            <Link href="/consultation">
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0 hover:bg-white/50 dark:hover:bg-slate-800/50">
+                <ChevronRight className="w-4 h-4 text-[#2D3A5D] dark:text-slate-100" />
+              </Button>
+            </Link>
           </div>
+          <Card className="rounded-[2.5rem] border-none neumorphic-card overflow-hidden">
+            <CardContent className="p-6 space-y-4">
+              <BookingItem 
+                name="Dr. Shivam Yadav" 
+                time="Today, 04:30 PM" 
+                type="Video Call" 
+                image="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=100&h=100&auto=format&fit=crop" 
+              />
+              <div className="h-px bg-[#F0F7FF] dark:bg-slate-800 w-full" />
+              <BookingItem 
+                name="Dr. Ananya Sharma" 
+                time="Tomorrow, 10:00 AM" 
+                type="In-Person" 
+                image="https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=100&h=100&auto=format&fit=crop" 
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="font-black text-[13px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-widest">Today's Schedule</h3>
-              <Link href="/planner">
-                <Button variant="ghost" size="sm" className="text-[#2488E8] text-[10px] font-black uppercase tracking-wider">Manage</Button>
-              </Link>
-            </div>
-            <div className="space-y-3">
-              <PlannerTaskItem title="Take Vitamin C Tablet" category="Medication" time="09:00 AM" completed={true} />
-              <PlannerTaskItem title="Morning Jog (30 min)" category="Fitness" time="07:30 AM" completed={true} />
-              <PlannerTaskItem title="Drink 2L Water" category="General" time="Throughout day" completed={false} />
-            </div>
+        {/* Today's Schedule */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="font-black text-[13px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-widest">Today's Schedule</h3>
+            <Link href="/planner">
+              <Button variant="ghost" size="sm" className="text-[#2488E8] text-[10px] font-black uppercase tracking-wider">Manage</Button>
+            </Link>
+          </div>
+          <div className="space-y-3 pb-10">
+            <PlannerTaskItem title="Take Vitamin C Tablet" category="Medication" time="09:00 AM" completed={true} />
+            <PlannerTaskItem title="Morning Jog (30 min)" category="Fitness" time="07:30 AM" completed={true} />
+            <PlannerTaskItem title="Drink 2L Water" category="General" time="Throughout day" completed={false} />
           </div>
         </div>
       </div>
