@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useActionState, useRef, useEffect, useState, useCallback, useTransition } from 'react';
+import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit } from 'lucide-react';
+import { Send, User, Bot, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit, Sparkles } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -50,7 +50,7 @@ type Session = {
   title: string;
   messages: Message[];
   createdAt: number;
-  specialty?: string; // For doctor chats
+  specialty?: string;
 };
 
 const initialState = {
@@ -79,7 +79,7 @@ const doctorSpecialties = [
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="icon" disabled={pending} id="sendBtn">
+    <Button type="submit" size="icon" disabled={pending} className="rounded-full h-12 w-12 bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
       {pending ? (
         <Loader2 className="h-5 w-5 animate-spin" />
       ) : (
@@ -108,27 +108,26 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
     const formData = new FormData(event.currentTarget);
     const reason = formData.get('feedback-reason');
     const details = formData.get('feedback-details');
-    console.log('Dislike Feedback:', { reason, details, message: messageContent });
     toast({ title: 'Feedback received!', description: 'Thank you for your detailed feedback.' });
     setIsDialogOpen(false);
   };
 
   return (
     <div className="mt-2 flex items-center gap-2">
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleLike}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50" onClick={handleLike}>
         <ThumbsUp className="h-4 w-4" />
       </Button>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7">
+          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50">
             <ThumbsDown className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="rounded-[2rem] border-none shadow-2xl">
           <form onSubmit={handleDislikeSubmit}>
             <DialogHeader>
-              <DialogTitle>Provide Additional Feedback</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-xl font-black text-[#2D3A5D]">Provide Additional Feedback</DialogTitle>
+              <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                 Your feedback is valuable in helping us improve the AI.
               </DialogDescription>
             </DialogHeader>
@@ -136,26 +135,26 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
                <RadioGroup name="feedback-reason" defaultValue="not-helpful">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="not-helpful" id="r1" />
-                    <Label htmlFor="r1">Not helpful</Label>
+                    <Label htmlFor="r1" className="font-bold text-slate-600">Not helpful</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="incorrect" id="r2" />
-                    <Label htmlFor="r2">Factually incorrect</Label>
+                    <Label htmlFor="r2" className="font-bold text-slate-600">Factually incorrect</Label>
                   </div>
                    <div className="flex items-center space-x-2">
                     <RadioGroupItem value="offensive" id="r3" />
-                    <Label htmlFor="r3">Harmful or offensive</Label>
+                    <Label htmlFor="r3" className="font-bold text-slate-600">Harmful or offensive</Label>
                   </div>
                 </RadioGroup>
-                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." />
+                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-2xl bg-slate-50 border-none shadow-inner" />
             </div>
             <DialogFooter>
-              <Button type="submit">Submit Feedback</Button>
+              <Button type="submit" className="rounded-full w-full font-black uppercase text-[10px] tracking-widest">Submit Feedback</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50" onClick={handleCopy}>
         <Copy className="h-4 w-4" />
       </Button>
     </div>
@@ -187,13 +186,11 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
 
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
-    const handleVoicesChanged = () => {};
     if (synthRef.current) {
-        synthRef.current.addEventListener('voiceschanged', handleVoicesChanged);
+        synthRef.current.cancel();
     }
     return () => {
         if (synthRef.current) {
-            synthRef.current.removeEventListener('voiceschanged', handleVoicesChanged);
             synthRef.current.cancel();
         }
     };
@@ -270,38 +267,43 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
   };
   
   return (
-    <Card className="mb-4">
-        <CardContent className="p-4 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-                <Label>Voice</Label>
-                 <Select value={selectedLang} onValueChange={setSelectedLang}>
-                    <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="en-IN">English (India)</SelectItem>
-                        <SelectItem value="hi-IN">हिन्दी</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="flex items-center gap-2">
-                 <Button variant="outline" size="icon" onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
-                    <Volume2 className="h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={handleStopSpeaking} disabled={!isSpeaking}>
-                    <StopCircle className="h-5 w-5" />
-                </Button>
+    <Card className="rounded-[2rem] neumorphic-card border-none mb-4">
+        <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+                 <div className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50">
+                    <Select value={selectedLang} onValueChange={setSelectedLang}>
+                        <SelectTrigger className="w-[120px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-none shadow-xl">
+                            <SelectItem value="en-IN">English</SelectItem>
+                            <SelectItem value="hi-IN">हिन्दी</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full bg-white shadow-sm border border-blue-50", isSpeaking && "text-primary")} onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
+                        <Volume2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white shadow-sm border border-blue-50" onClick={handleStopSpeaking} disabled={!isSpeaking}>
+                        <StopCircle className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
              <div className="flex items-center gap-2">
                 <Button 
-                    variant={isRecording ? 'destructive' : 'outline'} 
-                    size="icon" 
+                    variant="ghost"
+                    size="sm"
                     onClick={isRecording ? stopRecording : startRecording} 
                     disabled={isTranscribing}
+                    className={cn(
+                        "rounded-full px-4 h-9 font-black text-[10px] uppercase tracking-widest border-none transition-all shadow-sm",
+                        isRecording ? "bg-red-500 text-white animate-pulse" : "bg-primary/10 text-primary hover:bg-primary/20"
+                    )}
                 >
-                  {isTranscribing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />)}
+                  {isTranscribing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : (isRecording ? <MicOff className="h-3 w-3 mr-2" /> : <Mic className="h-3 w-3 mr-2" />)}
+                  {isRecording ? "Stop" : (isTranscribing ? "Typing...": "Voice Input")}
                 </Button>
-                <Label className="text-sm text-muted-foreground">{isRecording ? "Recording..." : (isTranscribing ? "Transcribing...": "Microphone")}</Label>
             </div>
         </CardContent>
     </Card>
@@ -490,33 +492,33 @@ export default function HealthAssistantPage() {
   const userImage = 'https://picsum.photos/seed/user/100/100';
 
   return (
-    <div className="flex h-full gap-4">
+    <div className="flex h-[calc(100vh-120px)] gap-6 animate-in fade-in duration-500">
         {/* Chat History Sidebar */}
-        <Card className="hidden md:flex md:w-1/4 flex-col">
-            <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>Chat History</CardTitle>
-                <Button variant="ghost" size="icon" onClick={handleNewChat}>
-                    <PlusCircle className="h-5 w-5" />
+        <Card className="hidden md:flex md:w-1/4 flex-col rounded-[2.5rem] neumorphic-card border-none p-2">
+            <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
+                <CardTitle className="text-sm font-black text-[#2D3A5D] uppercase tracking-widest">History</CardTitle>
+                <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 border border-white/50" onClick={handleNewChat}>
+                    <PlusCircle className="h-5 w-5 text-primary" />
                 </Button>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-2">
-                <ScrollArea className="h-full">
-                    <div className="space-y-2">
+            <CardContent className="flex-1 overflow-hidden p-2">
+                <ScrollArea className="h-full px-2">
+                    <div className="space-y-3">
                         {sessions.map(session => (
                             <div 
                                 key={session.id} 
                                 className={cn(
-                                    "p-3 rounded-lg cursor-pointer group flex items-center justify-between",
-                                    activeSessionId === session.id ? "bg-primary/20" : "hover:bg-muted"
+                                    "p-4 rounded-[1.5rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
+                                    activeSessionId === session.id ? "bg-white shadow-sm border-blue-50" : "hover:bg-white/40"
                                 )}
                                 onClick={() => setActiveSessionId(session.id)}
                             >
                                 <div className="flex-1 overflow-hidden">
-                                  <p className="text-sm font-medium truncate">{session.title}</p>
-                                  <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
+                                  <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D]")}>{session.title}</p>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 rounded-full hover:bg-red-50 text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
+                                    <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
                         ))}
@@ -526,17 +528,39 @@ export default function HealthAssistantPage() {
         </Card>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full min-w-0">
           <Tabs defaultValue="general" value={activeMode} onValueChange={(value) => {
             setActiveMode(value as 'general' | 'doctor');
-          }} className="flex-grow flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="general">General Assistant</TabsTrigger>
-                <TabsTrigger value="doctor">Specialist Doctor</TabsTrigger>
-            </TabsList>
-            <div className="flex-grow flex flex-col mt-4">
+          }} className="flex-1 flex flex-col">
+            <div className="flex items-center justify-between gap-4 mb-4">
+                <TabsList className="grid grid-cols-2 w-[300px] h-12 p-1.5 bg-slate-100/50 rounded-full border border-white/50 backdrop-blur-sm">
+                    <TabsTrigger value="general" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Assistant</TabsTrigger>
+                    <TabsTrigger value="doctor" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Specialist</TabsTrigger>
+                </TabsList>
+                
+                {activeMode === 'doctor' && (
+                    <div className="flex-1 max-w-[240px]">
+                        <Select value={specialty} onValueChange={handleSpecialtyChange}>
+                            <SelectTrigger className="h-12 rounded-full bg-white/50 border-white/50 shadow-sm font-black text-[10px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2">
+                                    <BrainCircuit className="w-3.5 h-3.5 text-primary" />
+                                    <SelectValue placeholder="Select Specialty" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-none shadow-xl">
+                                {doctorSpecialties.map(spec => (
+                                    <SelectItem key={spec} value={spec} className="font-bold text-xs">{spec}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+            </div>
+
+            <div className="flex-1 flex flex-col min-h-0">
                 <VoiceWidget lastAssistantMessage={lastAssistantMessage} onTranscript={handleTranscript}/>
-                <TabsContent value="general" asChild>
+                
+                <TabsContent value="general" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0">
                     <ChatInterface 
                         key={`general-${activeSessionId}`}
                         messages={messages}
@@ -548,14 +572,15 @@ export default function HealthAssistantPage() {
                         setAttachedImage={setAttachedImage}
                         userImage={userImage}
                         assistantImage={assistantImage}
-                        title="AI Health Assistant"
-                        description="Ask me anything about health, medicines, or diseases."
-                        placeholder="Type your message..."
-                        initialMessage="Hello! I am your AI Health Assistant. How can I help you today?"
+                        title="Health Assistant"
+                        description="Ask about symptoms, meds or health tips"
+                        placeholder="Ask me anything..."
+                        initialMessage="Hi! I'm your AI partner. How can I help you today?"
                         Icon={Bot}
                     />
                 </TabsContent>
-                <TabsContent value="doctor" asChild>
+                
+                <TabsContent value="doctor" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0">
                      <ChatInterface 
                         key={`doctor-${activeSessionId}`}
                         messages={messages}
@@ -568,27 +593,11 @@ export default function HealthAssistantPage() {
                         userImage={userImage}
                         assistantImage={assistantImage}
                         title={`AI ${specialty}`}
-                        description="Chat with an AI specialist. This is not a substitute for real medical advice."
-                        placeholder={`Ask the AI ${specialty}...`}
-                        initialMessage={`Hello! I am your AI ${specialty}. How may I help you?`}
+                        description={`Consulting with your specialist`}
+                        placeholder={`Talk to the ${specialty}...`}
+                        initialMessage={`Greetings. I am your specialized AI ${specialty}. How may I assist you with your health concerns?`}
                         Icon={BrainCircuit}
-                    >
-                       <Card className="mb-4">
-                            <CardContent className="p-4">
-                               <Label htmlFor="specialty-select">Select a Specialty</Label>
-                               <Select value={specialty} onValueChange={handleSpecialtyChange}>
-                                <SelectTrigger id="specialty-select">
-                                    <SelectValue placeholder="Select a doctor specialty" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {doctorSpecialties.map(spec => (
-                                    <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                                </Select>
-                            </CardContent>
-                        </Card>
-                    </ChatInterface>
+                    />
                 </TabsContent>
             </div>
           </Tabs>
@@ -613,13 +622,12 @@ interface ChatInterfaceProps {
     placeholder: string;
     initialMessage: string;
     Icon: React.ElementType;
-    children?: React.ReactNode;
 }
 
 function ChatInterface({
     messages, isPending, onFormAction, formRef, queryInputRef,
     attachedImage, setAttachedImage, userImage, assistantImage, title, description, placeholder,
-    initialMessage, Icon, children
+    initialMessage, Icon
 }: ChatInterfaceProps) {
     
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -647,7 +655,7 @@ function ChatInterface({
         return (
             <ReactMarkdown
                 components={{
-                    a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80" />
+                    a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-primary font-bold underline hover:text-primary/80" />
                 }}
             >
                 {text}
@@ -656,124 +664,153 @@ function ChatInterface({
     }
 
     return (
-         <div className="flex-grow flex flex-col">
-            {children}
-            <Card className="flex-1 flex flex-col" data-chat-card="true">
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Icon />{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 overflow-hidden p-0">
-                <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
-                    <div className="space-y-4">
-                    {messages.length === 0 && !isPending && (
-                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
-                        <Icon className="w-16 h-16 mb-4" />
-                        <p className="text-lg font-medium">{initialMessage}</p>
-                        </div>
-                    )}
-                    {messages.map((message, index) => (
-                        <div
-                        key={index}
-                        className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
-                        >
-                        {message.role === 'assistant' && (
-                            <Avatar className="h-9 w-9">
-                            {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint}/>}
-                            <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
+        <Card className="flex-1 flex flex-col rounded-[2.5rem] neumorphic-card border-none overflow-hidden min-h-0" data-chat-card="true">
+            <CardHeader className="px-8 pt-8 pb-4">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-2xl">
+                        <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-lg font-black text-[#2D3A5D] tracking-tight">{title}</CardTitle>
+                        <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{description}</CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+            
+            <CardContent className="flex-1 overflow-hidden p-0 relative">
+                <ScrollArea className="h-full p-8" ref={scrollAreaRef}>
+                    <div className="space-y-6">
+                        {messages.length === 0 && !isPending && (
+                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
+                                <div className="p-6 bg-slate-50 rounded-[2.5rem]">
+                                    <Icon className="w-12 h-12 text-[#2D3A5D]" />
+                                </div>
+                                <p className="text-sm font-black text-[#2D3A5D] tracking-tight max-w-[200px]">{initialMessage}</p>
+                            </div>
                         )}
-                        <div
-                            className={`max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 ${
-                            message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                            }`}
-                        >
-                            {message.image && (
-                            <Image src={message.image} alt="User upload" width={200} height={200} className="rounded-md mb-2" />
-                            )}
-                            {message.role === 'assistant' ? (
-                            <>
-                                <article className="prose prose-sm dark:prose-invert max-w-none">{renderMarkdown(message.content)}</article>
-                                {index === messages.length - 1 && !isPending && (
-                                <FeedbackActions messageContent={message.content} />
-                                )}
-                            </>
-                            ) : (
-                            <p>{message.content}</p>
-                            )}
-                        </div>
-                        {message.role === 'user' && (
-                            <Avatar className="h-9 w-9">
-                            <AvatarImage src={userImage} alt="@user" data-ai-hint="person face" />
-                            <AvatarFallback><User /></AvatarFallback>
-                            </Avatar>
+                        {messages.map((message, index) => (
+                            <div
+                                key={index}
+                                className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
+                            >
+                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
+                                    {message.role === 'assistant' ? (
+                                        <>
+                                            {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
+                                            <AvatarFallback className="bg-primary text-white"><Bot className="w-5 h-5"/></AvatarFallback>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <AvatarImage src={userImage} alt="User" data-ai-hint="person face" />
+                                            <AvatarFallback className="bg-slate-200"><User className="w-5 h-5"/></AvatarFallback>
+                                        </>
+                                    )}
+                                </Avatar>
+                                <div
+                                    className={cn(
+                                        "max-w-[85%] rounded-[1.8rem] px-6 py-4 shadow-sm",
+                                        message.role === 'user' 
+                                            ? "bg-primary text-white rounded-tr-none" 
+                                            : "bg-slate-50 dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-white/50"
+                                    )}
+                                >
+                                    {message.image && (
+                                        <div className="mb-3 rounded-2xl overflow-hidden shadow-md border-2 border-white">
+                                            <Image src={message.image} alt="User upload" width={300} height={300} className="w-full h-auto" />
+                                        </div>
+                                    )}
+                                    {message.role === 'assistant' ? (
+                                        <>
+                                            <article className="prose prose-sm dark:prose-invert max-w-none text-inherit leading-relaxed font-medium">
+                                                {renderMarkdown(message.content)}
+                                            </article>
+                                            {index === messages.length - 1 && !isPending && (
+                                                <FeedbackActions messageContent={message.content} />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <p className="text-sm font-bold leading-relaxed">{message.content}</p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        {isPending && (
+                            <div className="flex items-start gap-4 animate-pulse">
+                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0 bg-primary/10">
+                                    <AvatarFallback className="bg-transparent"><Bot className="w-5 h-5 text-primary"/></AvatarFallback>
+                                </Avatar>
+                                <div className="bg-slate-50 rounded-[1.8rem] rounded-tl-none px-6 py-4 border border-white/50 flex items-center gap-3">
+                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is thinking...</span>
+                                </div>
+                            </div>
                         )}
-                        </div>
-                    ))}
-                    {isPending && (
-                        <div className="flex items-start gap-3">
-                        <Avatar className="h-9 w-9">
-                            {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI Assistant" data-ai-hint={assistantImage.imageHint} />}
-                            <AvatarFallback>AI</AvatarFallback>
-                        </Avatar>
-                        <div className="max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2 bg-muted flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm italic">Assistant is typing...</span>
-                        </div>
-                        </div>
-                    )}
                     </div>
                 </ScrollArea>
-                </CardContent>
-                <CardFooter className="flex-col items-start gap-2">
+            </CardContent>
+            
+            <CardFooter className="px-8 pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50">
                 {attachedImage && (
-                    <div className="relative p-2 border rounded-md">
-                    <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-md" />
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
-                        onClick={() => setAttachedImage(null)}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
+                    <div className="relative inline-block w-20 h-20 group">
+                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-2xl border-4 border-white shadow-lg object-cover h-full w-full" />
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg scale-0 group-hover:scale-100 transition-transform"
+                            onClick={() => setAttachedImage(null)}
+                        >
+                            <X className="h-3 w-3" />
+                        </Button>
                     </div>
                 )}
+                
                 <form
                     ref={formRef}
                     action={onFormAction}
-                    className="flex w-full items-center gap-2"
+                    className="flex w-full items-center gap-3"
                 >
-                    <Input
-                    id="chatInput"
-                    ref={queryInputRef}
-                    name="query"
-                    placeholder={placeholder}
-                    className="flex-1"
-                    autoComplete="off"
-                    disabled={isPending}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        formRef.current?.requestSubmit();
-                        }
-                    }}
-                    />
+                    <div className="flex-1 relative group">
+                        <Input
+                            id="chatInput"
+                            ref={queryInputRef}
+                            name="query"
+                            placeholder={placeholder}
+                            className="h-14 pl-6 pr-14 rounded-full border-none bg-white shadow-inner placeholder:text-slate-300 font-bold text-sm"
+                            autoComplete="off"
+                            disabled={isPending}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    formRef.current?.requestSubmit();
+                                }
+                            }}
+                        />
+                        <button 
+                            type="button" 
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isPending}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-slate-50 transition-colors text-slate-400 group-hover:text-primary"
+                        >
+                            <Paperclip className="h-5 w-5" />
+                        </button>
+                    </div>
+                    
                     <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/*"
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/*"
                     />
-                    <Button type="button" size="icon" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
-                    <Paperclip className="h-5 w-5" />
-                    <span className="sr-only">Attach file</span>
-                    </Button>
+                    
                     <SubmitButton />
                 </form>
-                </CardFooter>
-            </Card>
-        </div>
+                
+                <div className="flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    AI-powered health guidance
+                </div>
+            </CardFooter>
+        </Card>
     )
 }
