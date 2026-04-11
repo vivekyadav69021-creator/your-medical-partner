@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth, useFirestore, useUser } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -31,6 +30,7 @@ export default function LoginPage() {
   
   const auth = useAuth();
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -38,19 +38,34 @@ export default function LoginPage() {
     setIsMounted(true);
   }, []);
 
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (isMounted && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, isMounted, router]);
+
   const handleAuthAction = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
     try {
       if (view === 'signup') {
-        if (!name) {
-          toast({ variant: 'destructive', title: 'Name is required' });
-          setLoading(false);
-          return;
+        if (!name.trim()) {
+          throw new Error('Please enter your full name.');
         }
+        if (password.length < 6) {
+          throw new Error('Password should be at least 6 characters.');
+        }
+
+        // 1. Create User
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // 2. Update Auth Profile
         await updateProfile(userCredential.user, { displayName: name });
         
+        // 3. Create Firestore Profile
         const userProfileRef = doc(firestore, 'users', userCredential.user.uid, 'userProfiles', userCredential.user.uid);
         await setDoc(userProfileRef, {
           id: userCredential.user.uid,
@@ -60,17 +75,30 @@ export default function LoginPage() {
           createdAt: serverTimestamp(),
         });
         
-        toast({ title: 'Account created!', description: "Welcome to Your Medical Partner!" });
+        toast({ title: 'Welcome!', description: "Your account has been created successfully." });
       } else {
+        // Login
         await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: 'Logged in successfully!' });
+        toast({ title: 'Welcome Back!', description: 'Logged in successfully.' });
       }
-      router.push('/dashboard');
+      
+      // Navigation is handled by the useEffect watching the 'user' state
     } catch (error: any) {
+      console.error("Auth Error:", error);
+      let message = error.message;
+      
+      // User-friendly error messages
+      if (error.code === 'auth/email-already-in-use') message = 'This email is already registered.';
+      if (error.code === 'auth/invalid-email') message = 'Please enter a valid email address.';
+      if (error.code === 'auth/weak-password') message = 'The password is too weak.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'Invalid email or password.';
+      }
+
       toast({
         variant: 'destructive',
         title: 'Authentication Failed',
-        description: error.message,
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -78,12 +106,13 @@ export default function LoginPage() {
   };
 
   const handleGuestSignIn = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       await signInAnonymously(auth);
       toast({ title: 'Logged in as Guest' });
-      router.push('/dashboard');
     } catch (error: any) {
+      console.error("Guest Sign-in Error:", error);
       toast({ variant: 'destructive', title: 'Guest Sign-in Failed', description: error.message });
     } finally {
       setLoading(false);
@@ -93,7 +122,7 @@ export default function LoginPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F0F7FF] flex flex-col items-center justify-center p-6 overflow-hidden relative font-body">
+    <div className="min-h-screen bg-[#F0F7FF] dark:bg-slate-950 flex flex-col items-center justify-center p-6 overflow-hidden relative font-body">
       {/* Decorative Background Elements */}
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-400/10 rounded-full blur-[100px]" />
@@ -102,11 +131,11 @@ export default function LoginPage() {
         
         {/* Brand Typography Design */}
         <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000">
-          <div className="inline-flex items-center justify-center p-4 bg-white rounded-[2rem] shadow-xl shadow-blue-100 mb-2 transform hover:scale-110 transition-transform duration-500">
+          <div className="inline-flex items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl shadow-blue-100 dark:shadow-none mb-2 transform hover:scale-110 transition-transform duration-500">
             <HeartPulse className="h-14 w-14 text-primary animate-pulse" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-5xl font-black tracking-tighter text-slate-900 font-headline leading-none uppercase">
+            <h1 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white font-headline leading-none uppercase">
               Your Medical <br />
               <span className="text-primary">Partner</span>
             </h1>
@@ -121,7 +150,7 @@ export default function LoginPage() {
             <div className="w-full space-y-5 px-2">
               <Button 
                 onClick={() => setView('signup')}
-                className="w-full h-16 rounded-[1.5rem] text-lg font-bold bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:shadow-2xl hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-200 border-none transition-all duration-300 flex items-center justify-between px-8"
+                className="w-full h-16 rounded-[1.5rem] text-lg font-bold bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:shadow-2xl hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-200 dark:shadow-none border-none transition-all duration-300 flex items-center justify-between px-8"
               >
                 <span>Create Account</span>
                 <ChevronRight className="h-6 w-6 opacity-50" />
@@ -130,7 +159,7 @@ export default function LoginPage() {
               <Button 
                 onClick={() => setView('login')}
                 variant="outline"
-                className="w-full h-16 rounded-[1.5rem] text-lg font-bold bg-white border-none shadow-md text-slate-800 hover:bg-slate-50 hover:shadow-xl transition-all active:scale-95 duration-300"
+                className="w-full h-16 rounded-[1.5rem] text-lg font-bold bg-white dark:bg-slate-900 border-none shadow-md text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-xl transition-all active:scale-95 duration-300"
               >
                 Sign In
               </Button>
@@ -138,26 +167,28 @@ export default function LoginPage() {
               <div className="text-center pt-4">
                 <button 
                   onClick={handleGuestSignIn}
-                  className="text-slate-400 font-black text-xs hover:text-primary uppercase tracking-widest transition-colors"
+                  disabled={loading}
+                  className="text-slate-400 font-black text-xs hover:text-primary uppercase tracking-widest transition-colors disabled:opacity-50"
                 >
-                  Explore as Guest
+                  {loading ? 'Entering...' : 'Explore as Guest'}
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          <Card className="w-full rounded-[3rem] border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] bg-white/95 backdrop-blur-xl p-2 animate-in zoom-in-95 duration-500">
+          <Card className="w-full rounded-[3rem] border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-2 animate-in zoom-in-95 duration-500">
             <CardContent className="p-8 space-y-8">
               <div className="flex items-center gap-4">
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="rounded-full bg-slate-200 hover:bg-slate-300 text-slate-900 transition-colors" 
+                  className="rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white transition-colors" 
                   onClick={() => setView('welcome')}
+                  disabled={loading}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                   {view === 'login' ? 'Welcome Back' : 'Get Started'}
                 </h3>
               </div>
@@ -169,10 +200,11 @@ export default function LoginPage() {
                     <Input 
                       id="name" 
                       placeholder="e.g. Rohan Kumar" 
-                      className="h-14 rounded-2xl bg-slate-100 border-none focus-visible:ring-primary text-slate-900 text-lg px-6 shadow-inner"
+                      className="h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus-visible:ring-primary text-slate-900 dark:text-white text-lg px-6 shadow-inner"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                 )}
@@ -182,10 +214,11 @@ export default function LoginPage() {
                     id="email" 
                     type="email" 
                     placeholder="name@email.com" 
-                    className="h-14 rounded-2xl bg-slate-100 border-none focus-visible:ring-primary text-slate-900 text-lg px-6 shadow-inner"
+                    className="h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus-visible:ring-primary text-slate-900 dark:text-white text-lg px-6 shadow-inner"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -194,10 +227,11 @@ export default function LoginPage() {
                     id="password" 
                     type="password" 
                     placeholder="••••••••" 
-                    className="h-14 rounded-2xl bg-slate-100 border-none focus-visible:ring-primary text-slate-900 text-lg px-6 shadow-inner"
+                    className="h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus-visible:ring-primary text-slate-900 dark:text-white text-lg px-6 shadow-inner"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <Button 
@@ -217,15 +251,15 @@ export default function LoginPage() {
 
         <div className="w-full pt-4 flex flex-col items-center space-y-8 animate-in fade-in duration-1000 delay-500">
           <div className="flex items-center w-full gap-6 px-8">
-            <div className="h-px bg-slate-200 flex-1" />
+            <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Instant Access</span>
-            <div className="h-px bg-slate-200 flex-1" />
+            <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
           </div>
           
           <div className="flex items-center gap-8">
-            <SocialButton icon={<Chrome className="h-6 w-6 text-red-500" />} />
-            <SocialButton icon={<Apple className="h-6 w-6 text-slate-900" />} />
-            <SocialButton icon={<Facebook className="h-6 w-6 text-blue-600" />} />
+            <SocialButton icon={<Chrome className="h-6 w-6 text-red-500" />} disabled={loading} />
+            <SocialButton icon={<Apple className="h-6 w-6 text-slate-900 dark:text-white" />} disabled={loading} />
+            <SocialButton icon={<Facebook className="h-6 w-6 text-blue-600" />} disabled={loading} />
           </div>
         </div>
 
@@ -234,12 +268,15 @@ export default function LoginPage() {
   );
 }
 
-function SocialButton({ icon }: { icon: React.ReactNode }) {
+function SocialButton({ icon, disabled }: { icon: React.ReactNode, disabled?: boolean }) {
   return (
-    <div className="h-16 w-16 rounded-[1.5rem] bg-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 hover:shadow-2xl transition-all duration-300 border border-white group">
+    <button 
+      disabled={disabled}
+      className="h-16 w-16 rounded-[1.5rem] bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 hover:shadow-2xl transition-all duration-300 border border-white dark:border-slate-800 group disabled:opacity-50 disabled:cursor-not-allowed"
+    >
       <div className="group-hover:rotate-12 transition-transform duration-300">
         {icon}
       </div>
-    </div>
+    </button>
   );
 }
