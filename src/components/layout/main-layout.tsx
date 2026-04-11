@@ -50,27 +50,27 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarFooter className="group-data-[state=collapsed]:hidden">
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="flex flex-col">
-        <header className="flex h-16 items-center justify-between p-4 border-b bg-background/50 backdrop-blur-md sticky top-0 z-30">
+      <SidebarInset className="flex flex-col relative" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
+        <header className="flex h-16 items-center justify-between p-4 sticky top-0 z-30 bg-transparent transition-all">
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1 px-4 hidden md:block">
              <div className="inline-block glowing-underline pb-1 pr-4">
-                <span className="text-lg font-black tracking-tighter text-primary font-headline uppercase">Your Medical Partner</span>
+                <span className="text-lg font-black tracking-tighter text-[#2488E8] font-headline uppercase">Your Medical Partner</span>
              </div>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild title="Cart">
+            <Button variant="ghost" size="icon" asChild title="Cart" className="rounded-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-md shadow-sm border border-white/20">
               <Link href="/store/cart" className="relative">
-                <ShoppingCart />
+                <ShoppingCart className="w-5 h-5 text-[#2D3A5D] dark:text-slate-200" />
                 {itemCount > 0 && (
-                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{itemCount}</Badge>
+                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 text-[10px]">{itemCount}</Badge>
                 )}
               </Link>
             </Button>
             
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 rounded-full" title="Settings">
+                 <Button variant="ghost" className="relative h-10 w-10 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm" title="Settings">
                   <Avatar>
                       <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
                       <AvatarFallback>
@@ -79,27 +79,27 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                 <DropdownMenuItem asChild>
+              <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+                 <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
                    <Link href="/profile">
                     My Profile
                    </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger className="rounded-xl">
                     Theme
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => setTheme('light')}>
+                    <DropdownMenuSubContent className="rounded-2xl border-none shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+                      <DropdownMenuItem onClick={() => setTheme('light')} className="rounded-xl cursor-pointer">
                         <Sun className="mr-2 h-4 w-4" />
                         <span>Light</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme('dark')}>
+                      <DropdownMenuItem onClick={() => setTheme('dark')} className="rounded-xl cursor-pointer">
                         <Moon className="mr-2 h-4 w-4" />
                         <span>Dark</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme('system')}>
+                      <DropdownMenuItem onClick={() => setTheme('system')} className="rounded-xl cursor-pointer">
                         <Laptop className="mr-2 h-4 w-4" />
                         <span>System</span>
                       </DropdownMenuItem>
@@ -111,7 +111,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto" style={{ background: 'var(--dashboard-bg)' }}>
+        <main className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-6 lg:p-8 min-h-full">
             {children}
           </div>
