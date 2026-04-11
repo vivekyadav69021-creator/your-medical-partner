@@ -154,11 +154,8 @@ export default function ConsultationPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 4000); 
-
-    return () => clearTimeout(timer);
+    // Artificial delay removed for better performance
+    setIsLoading(false);
   }, []);
 
 
@@ -292,5 +289,3 @@ export const addDoctorReview = (doctorId: string, review: Review) => {
         doctor.rating = totalRating / doctor.reviews.length;
     }
 };
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +15,6 @@ import {
   CheckCircle2,
   MoreHorizontal,
   Calendar,
-  Zap,
   Bot,
   Stethoscope,
   Store,
@@ -62,7 +62,7 @@ export default function DashboardPage() {
   const greetingName = profile?.name || user?.displayName || 'Guest';
 
   return (
-    <div className="min-h-screen pb-32 animate-in fade-in duration-700 pt-6" style={{ background: 'var(--dashboard-bg)' }}>
+    <div className="min-h-screen pb-32 animate-in fade-in duration-300 pt-6" style={{ background: 'var(--dashboard-bg)' }}>
       
       {/* Header Section */}
       <div className="max-w-xl mx-auto px-6 mb-8 flex items-center justify-between">
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                       strokeWidth={4} 
                       fillOpacity={1} 
                       fill="url(#colorBpt)" 
-                      animationDuration={2000}
+                      animationDuration={1000}
                     />
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 900}} />
                   </AreaChart>
