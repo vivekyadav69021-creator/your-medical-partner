@@ -14,18 +14,17 @@ import {
   CheckCircle2,
   MoreHorizontal,
   Calendar,
-  Bot,
   Stethoscope,
   Store,
   Scan,
   BrainCircuit,
   PhoneCall,
-  Sparkles,
+  Activity,
+  HeartPulse,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState, useEffect } from 'react';
 import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/context/user-profile-context';
@@ -50,7 +49,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {/* Attractive Tagline Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 dark:border-blue-800/50 backdrop-blur-sm shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-[#2488E8] animate-pulse" />
+              <HeartPulse className="w-3.5 h-3.5 text-[#2488E8] animate-pulse" />
               <p className="text-[#2488E8] text-[10px] font-black uppercase tracking-widest">Your Digital Health Companion</p>
             </div>
             
@@ -78,7 +77,7 @@ export default function DashboardPage() {
             <FeatureCard
               title="AI Assistant"
               description="Symptom checker"
-              icon={Bot}
+              icon={BrainCircuit}
               iconColor="text-blue-500"
               href="/health-assistant"
               btnText="Ask away"

@@ -27,7 +27,7 @@ import {
   SwitchCamera, 
   Upload, 
   Download, 
-  Bot, 
+  BrainCircuit, 
   FileHeart, 
   ArrowLeft,
   ChevronRight,
@@ -191,7 +191,7 @@ export default function DiseaseScannerPage() {
                     <Card className="rounded-[2rem] bg-[#1A1A1A] text-white overflow-hidden border-none relative group cursor-pointer hover:shadow-lg transition-all" onClick={() => (window as any).openAssistant?.()}>
                         <CardContent className="p-5 flex items-center gap-4">
                             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-gray-600 shadow-inner">
-                                <Bot className="h-7 w-7 text-primary" />
+                                <BrainCircuit className="h-7 w-7 text-primary" />
                             </div>
                             <div className="flex-1 space-y-0.5">
                                 <h3 className="font-black text-lg flex items-center gap-2">
@@ -378,7 +378,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     {state.result && (
                         <div className="w-full space-y-4 animate-in slide-in-from-top-4">
                             <Alert className="rounded-2xl bg-pink-50/50 dark:bg-pink-900/10 border-pink-100 dark:border-pink-900/30">
-                                <Sparkles className="h-4 w-4 text-pink-500" />
+                                <Activity className="h-4 w-4 text-pink-500" />
                                 <AlertTitle className="font-black text-[#2D3A5D] dark:text-slate-100">AI Assessment</AlertTitle>
                                 <AlertDescription className="text-xs font-bold text-slate-500">{state.result.overallAssessment}</AlertDescription>
                             </Alert>

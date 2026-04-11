@@ -11,17 +11,17 @@ import {
   LayoutDashboard,
   Stethoscope,
   Store,
-  Bot,
+  BrainCircuit,
   HeartPulse,
   Hospital,
   BookHeart,
-  BrainCircuit,
   ListTodo,
   Trophy,
   Wind,
   Video,
   GraduationCap,
   Settings,
+  Scan,
 } from 'lucide-react';
 
 const mainNav = [
@@ -29,7 +29,7 @@ const mainNav = [
 ];
 
 const smartToolsNav = [
-    { href: '/health-assistant', label: 'AI Health Assistant', icon: Bot },
+    { href: '/health-assistant', label: 'AI Health Assistant', icon: BrainCircuit },
     { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
     { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
 ];
@@ -53,8 +53,6 @@ const learnNav = [
 const settingsNav = [
     { href: '/profile', label: 'Settings', icon: Settings },
 ];
-
-import { Scan } from 'lucide-react';
 
 const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void}) => {
     const pathname = usePathname();

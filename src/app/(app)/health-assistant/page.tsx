@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -14,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Bot, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit, Sparkles } from 'lucide-react';
+import { Send, User, Loader2, Paperclip, Mic, MicOff, X, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, BrainCircuit, Activity } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -576,7 +575,7 @@ export default function HealthAssistantPage() {
                         description="Ask about symptoms, meds or health tips"
                         placeholder="Ask me anything..."
                         initialMessage="Hi! I'm your AI partner. How can I help you today?"
-                        Icon={Bot}
+                        Icon={BrainCircuit}
                     />
                 </TabsContent>
                 
@@ -697,7 +696,7 @@ function ChatInterface({
                                     {message.role === 'assistant' ? (
                                         <>
                                             {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
-                                            <AvatarFallback className="bg-primary text-white"><Bot className="w-5 h-5"/></AvatarFallback>
+                                            <AvatarFallback className="bg-primary text-white"><BrainCircuit className="w-5 h-5"/></AvatarFallback>
                                         </>
                                     ) : (
                                         <>
@@ -737,7 +736,7 @@ function ChatInterface({
                         {isPending && (
                             <div className="flex items-start gap-4 animate-pulse">
                                 <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0 bg-primary/10">
-                                    <AvatarFallback className="bg-transparent"><Bot className="w-5 h-5 text-primary"/></AvatarFallback>
+                                    <AvatarFallback className="bg-transparent"><BrainCircuit className="w-5 h-5 text-primary"/></AvatarFallback>
                                 </Avatar>
                                 <div className="bg-slate-50 rounded-[1.8rem] rounded-tl-none px-6 py-4 border border-white/50 flex items-center gap-3">
                                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -807,7 +806,7 @@ function ChatInterface({
                 </form>
                 
                 <div className="flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    <Sparkles className="w-3 h-3 text-primary" />
+                    <Activity className="w-3 h-3 text-primary" />
                     AI-powered health guidance
                 </div>
             </CardFooter>
