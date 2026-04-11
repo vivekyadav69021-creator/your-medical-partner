@@ -21,6 +21,7 @@ import {
   PhoneCall,
   Activity,
   HeartPulse,
+  ShieldPulse,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -77,7 +78,7 @@ export default function DashboardPage() {
             <FeatureCard
               title="AI Assistant"
               description="Symptom checker"
-              icon={BrainCircuit}
+              icon={ShieldPulse}
               iconColor="text-blue-500"
               href="/health-assistant"
               btnText="Ask away"

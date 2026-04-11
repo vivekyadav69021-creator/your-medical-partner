@@ -22,6 +22,7 @@ import {
   GraduationCap,
   Settings,
   Scan,
+  ShieldPulse,
 } from 'lucide-react';
 
 const mainNav = [
@@ -29,7 +30,7 @@ const mainNav = [
 ];
 
 const smartToolsNav = [
-    { href: '/health-assistant', label: 'AI Health Assistant', icon: BrainCircuit },
+    { href: '/health-assistant', label: 'AI Health Assistant', icon: ShieldPulse },
     { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
     { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
 ];
