@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -116,7 +115,7 @@ export default function DiseaseScannerPage() {
                     {/* Header with Notification & Profile */}
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                            <h1 className="text-3xl font-bold tracking-tight font-headline">{t.greeting}</h1>
+                            <h1 className="text-3xl font-bold tracking-tight font-headline text-[#2D3A5D] dark:text-slate-100">{t.greeting}</h1>
                             <p className="text-muted-foreground">{t.subGreeting}</p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -131,89 +130,84 @@ export default function DiseaseScannerPage() {
                     </div>
 
                     {/* Quick Health Stats Card */}
-                    <Card className="bg-white/40 backdrop-blur-xl border-white/40 shadow-sm overflow-hidden">
+                    <Card className="neumorphic-card overflow-hidden">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-[#2D3A5D]/60 dark:text-slate-400">
                                 {t.statsTitle}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-3 gap-2">
                             <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">{t.lastScan}:</p>
-                                <p className="text-sm font-bold">2 days ago</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t.lastScan}:</p>
+                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">2 days ago</p>
                             </div>
                             <div className="space-y-1 border-x px-4 border-white/20">
-                                <p className="text-xs text-muted-foreground">{t.reports}:</p>
-                                <p className="text-sm font-bold">5</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t.reports}:</p>
+                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">5</p>
                             </div>
                             <div className="space-y-1 text-right">
-                                <p className="text-xs text-muted-foreground">{t.healthScore}:</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t.healthScore}:</p>
                                 <div className="flex items-center justify-end gap-1">
                                     <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                                    <p className="text-sm font-bold text-green-600">Good</p>
+                                    <p className="text-sm font-black text-green-600">Good</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Scanner Grid */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-5">
                         <ScannerCard 
                             title={t.skinTitle} 
-                            icon={<SearchCode className="w-12 h-12 text-pink-400" />} 
-                            gradient="bg-gradient-to-br from-pink-50/80 to-pink-100/80 border-pink-200/50"
-                            btnBg="bg-pink-200/50 hover:bg-pink-300/50"
+                            icon={<SearchCode className="w-10 h-10 text-pink-500" />} 
+                            gradient="from-[#FFF0F5] to-[#FFE1EB] dark:from-pink-900/40 dark:to-pink-800/40"
                             onClick={() => setView('skin')}
                             btnText={t.startBtn}
                         />
                         <ScannerCard 
                             title={t.injuryTitle} 
-                            icon={<Bandage className="w-12 h-12 text-orange-400" />} 
-                            gradient="bg-gradient-to-br from-orange-50/80 to-orange-100/80 border-orange-200/50"
-                            btnBg="bg-orange-200/50 hover:bg-orange-300/50"
+                            icon={<Bandage className="w-10 h-10 text-orange-500" />} 
+                            gradient="from-[#FFF7ED] to-[#FFEDD5] dark:from-orange-900/40 dark:to-orange-800/40"
                             onClick={() => setView('injury')}
                             btnText={t.startBtn}
                         />
                         <ScannerCard 
                             title={t.xrayTitle} 
-                            icon={<Bone className="w-12 h-12 text-blue-400" />} 
-                            gradient="bg-gradient-to-br from-blue-50/80 to-blue-100/80 border-blue-200/50"
-                            btnBg="bg-blue-200/50 hover:bg-blue-300/50"
+                            icon={<Bone className="w-10 h-10 text-blue-500" />} 
+                            gradient="from-[#E6F0FF] to-[#D1E4FF] dark:from-blue-900/40 dark:to-blue-800/40"
                             onClick={() => setView('xray')}
                             btnText={t.startBtn}
                         />
                         <ScannerCard 
                             title={t.reportTitle} 
-                            icon={<FileText className="w-12 h-12 text-green-400" />} 
-                            gradient="bg-gradient-to-br from-green-50/80 to-green-100/80 border-green-200/50"
-                            btnBg="bg-green-200/50 hover:bg-green-300/50"
+                            icon={<FileText className="w-10 h-10 text-green-500" />} 
+                            gradient="from-[#F0FDF4] to-[#DCFCE7] dark:from-green-900/40 dark:to-green-800/40"
                             onClick={() => setView('lab')}
                             btnText={t.startBtn}
                         />
                     </div>
 
                     {/* AI Assistant Banner */}
-                    <Card className="bg-[#1A1A1A] text-white overflow-hidden border-none relative group cursor-pointer hover:shadow-lg transition-all" onClick={() => (window as any).openAssistant?.()}>
+                    <Card className="rounded-[2rem] bg-[#1A1A1A] text-white overflow-hidden border-none relative group cursor-pointer hover:shadow-lg transition-all" onClick={() => (window as any).openAssistant?.()}>
                         <CardContent className="p-5 flex items-center gap-4">
                             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-gray-600 shadow-inner">
                                 <Bot className="h-7 w-7 text-primary" />
                             </div>
                             <div className="flex-1 space-y-0.5">
-                                <h3 className="font-bold text-lg flex items-center gap-2">
+                                <h3 className="font-black text-lg flex items-center gap-2">
                                     {t.aiAssistant}
                                 </h3>
-                                <p className="text-xs text-gray-400">{t.aiDesc}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.aiDesc}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
                         </CardContent>
-                        {/* Subtle glow effect */}
                         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
                     </Card>
 
                     {/* Language Selection */}
-                    <div className="flex justify-center pt-4">
+                    <div className="flex justify-center pt-4 pb-10">
                         <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
-                            <SelectTrigger className="w-[140px] bg-white/50 backdrop-blur-md rounded-full border-white/40">
+                            <SelectTrigger className="w-[140px] bg-white/50 backdrop-blur-md rounded-full border-white/40 shadow-sm">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -228,36 +222,40 @@ export default function DiseaseScannerPage() {
     };
 
     return (
-        <div className="min-h-full bg-gradient-to-b from-[#F0F7FF] to-[#E6EFFF] dark:from-slate-950 dark:to-slate-900 pb-10">
-            <div className="max-w-xl mx-auto px-4 pt-6 space-y-6">
+        <div className="animate-in fade-in duration-500 h-full">
+            <div className="max-w-xl mx-auto space-y-6">
                 {renderContent()}
             </div>
         </div>
     );
 }
 
-// Helper Components
-function ScannerCard({ title, icon, gradient, btnBg, onClick, btnText }: { title: string, icon: React.ReactNode, gradient: string, btnBg: string, onClick: () => void, btnText: string }) {
+function ScannerCard({ title, icon, gradient, onClick, btnText }: { title: string, icon: React.ReactNode, gradient: string, onClick: () => void, btnText: string }) {
     return (
-        <Card className={cn("border-2 border-transparent transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm", gradient)}>
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="p-3 bg-white/60 rounded-2xl shadow-sm backdrop-blur-md">
+        <Card className="rounded-[2.5rem] neumorphic-card group hover:scale-[1.03] transition-all duration-500 overflow-hidden border-none">
+            <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-3xl transform group-hover:rotate-6 transition-transform duration-500">
                     {icon}
                 </div>
-                <h3 className="font-bold text-sm text-gray-800">{title}</h3>
+                <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{title}</h3>
                 <Button 
                     onClick={onClick} 
-                    className={cn("w-full rounded-full text-xs font-bold text-gray-700 h-8 shadow-sm border border-white/40", btnBg)}
+                    className={cn(
+                        "mt-auto w-full py-2.5 rounded-2xl flex items-center justify-between text-[10px] font-black tracking-tight transition-all bg-gradient-to-r shadow-inner text-[#2D3A5D] dark:text-slate-100",
+                        gradient
+                    )}
                     variant="ghost"
                 >
                     {btnText}
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
                 </Button>
-            </CardContent>
+            </div>
         </Card>
     );
 }
 
-// --- Specific Scanners (Refactored to match new UI) ---
+// Sub-scanners (Skin, Injury, Xray, Lab) use similar neumorphic polishing...
+// (Code omitted for brevity, logic remains same but using rounded-[2.5rem] and neumorphic-card)
 
 function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
@@ -297,26 +295,26 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={onBack} className="rounded-full bg-white/50 backdrop-blur-md">
-                    <ArrowLeft className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
+                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-bold font-headline">Skin & Face Scanner</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Skin & Face Scanner</h2>
             </div>
 
-            <Card className="bg-white/60 backdrop-blur-xl border-white/40">
+            <Card className="rounded-[2.5rem] neumorphic-card border-none">
                 <CardHeader>
-                    <CardTitle className="text-lg">Face Analysis</CardTitle>
-                    <CardDescription>Upload or take a photo of your face for common skin concerns.</CardDescription>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Face Analysis</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload or take a photo of your face for common skin concerns.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <canvas ref={canvasRef} className="hidden"></canvas>
                     {!isCameraOpen && !preview && (
-                        <div className="border-2 border-dashed border-pink-200 rounded-3xl h-64 flex flex-col items-center justify-center bg-pink-50/30 space-y-4">
-                            <div className="p-4 bg-white rounded-full shadow-sm text-pink-400">
+                        <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4">
+                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-pink-400">
                                 <ImageIcon className="w-10 h-10" />
                             </div>
                             <div className="flex gap-2">
-                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="rounded-full">
+                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="rounded-full font-bold">
                                     <Upload className="mr-2 h-4 w-4" /> Upload
                                 </Button>
                                 <Button onClick={async () => {
@@ -328,7 +326,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                     } catch (e) {
                                         toast({ variant: 'destructive', title: "Camera Error", description: "Could not access camera." });
                                     }
-                                }} className="rounded-full bg-pink-400 hover:bg-pink-500">
+                                }} className="rounded-full bg-[#FFEDF2] text-pink-600 hover:bg-pink-100 font-bold border-none">
                                     <Camera className="mr-2 h-4 w-4" /> Camera
                                 </Button>
                             </div>
@@ -344,7 +342,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     )}
 
                     {isCameraOpen && (
-                        <div className="relative rounded-3xl overflow-hidden shadow-lg aspect-square bg-black">
+                        <div className="relative rounded-[2rem] overflow-hidden shadow-lg aspect-square bg-black">
                             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                             <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4">
                                 <Button onClick={takePicture} size="lg" className="rounded-full h-16 w-16 p-0 bg-white hover:bg-white/90 text-pink-500 border-4 border-pink-200">
@@ -353,7 +351,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 <Button variant="destructive" size="icon" onClick={() => {
                                     setIsCameraOpen(false);
                                     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-                                }} className="rounded-full">
+                                }} className="rounded-full shadow-lg">
                                     <X />
                                 </Button>
                             </div>
@@ -361,17 +359,17 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     )}
 
                     {preview && (
-                        <div className="relative rounded-3xl overflow-hidden shadow-lg border-4 border-white">
+                        <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
                             <Image src={preview} alt="Preview" width={500} height={500} className="w-full h-auto" />
-                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full" onClick={() => setPreview(null)}>
-                                <X />
+                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
+                                <X className="h-4 w-4" />
                             </Button>
                         </div>
                     )}
 
                     <form action={handleFormAction} className="space-y-4">
-                        <Textarea name="userQuery" placeholder="Optional: Describe your concern..." className="rounded-2xl bg-white/50 border-white/40" />
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-full bg-pink-400 hover:bg-pink-500 h-12 text-lg font-bold">
+                        <Textarea name="userQuery" placeholder="Optional: Describe your concern..." className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner" />
+                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-pink-400 to-pink-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
                             {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing...</> : "Analyze My Skin"}
                         </Button>
                     </form>
@@ -379,17 +377,17 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <CardFooter className="flex-col items-start gap-4">
                     {state.result && (
                         <div className="w-full space-y-4 animate-in slide-in-from-top-4">
-                            <Alert className="rounded-2xl bg-white/80 border-pink-200">
-                                <Sparkles className="h-4 w-4 text-pink-400" />
-                                <AlertTitle>AI Assessment</AlertTitle>
-                                <AlertDescription>{state.result.overallAssessment}</AlertDescription>
+                            <Alert className="rounded-2xl bg-pink-50/50 dark:bg-pink-900/10 border-pink-100 dark:border-pink-900/30">
+                                <Sparkles className="h-4 w-4 text-pink-500" />
+                                <AlertTitle className="font-black text-[#2D3A5D] dark:text-slate-100">AI Assessment</AlertTitle>
+                                <AlertDescription className="text-xs font-bold text-slate-500">{state.result.overallAssessment}</AlertDescription>
                             </Alert>
                             <div className="grid gap-3">
                                 {state.result.identifiedConditions?.map((c: any, i: number) => (
-                                    <div key={i} className="p-4 rounded-2xl bg-white/50 border border-white/40">
-                                        <p className="font-bold">{c.name}</p>
-                                        <Progress value={c.confidence * 100} className="h-1.5 my-2" />
-                                        <p className="text-xs text-muted-foreground">{c.description}</p>
+                                    <div key={i} className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-50 dark:border-slate-700/50">
+                                        <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-100 tracking-tight">{c.name}</p>
+                                        <Progress value={c.confidence * 100} className="h-1.5 my-3 bg-slate-100 dark:bg-slate-700" />
+                                        <p className="text-[10px] font-bold text-slate-400 leading-relaxed">{c.description}</p>
                                     </div>
                                 ))}
                             </div>
@@ -409,30 +407,30 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={onBack} className="rounded-full bg-white/50 backdrop-blur-md">
-                    <ArrowLeft className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
+                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-bold font-headline">Injury Scanner</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Injury Scanner</h2>
             </div>
 
-            <Card className="bg-white/60 backdrop-blur-xl border-white/40">
+            <Card className="rounded-[2.5rem] neumorphic-card border-none">
                 <CardHeader>
-                    <CardTitle className="text-lg">Describe or Photo</CardTitle>
-                    <CardDescription>Tell us about the injury or upload a photo for guidance.</CardDescription>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Describe or Photo</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tell us about the injury or upload a photo for guidance.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <form action={(formData) => {
                         if (preview) formData.set('photoDataUri', preview);
                         formAction(formData);
                     }} className="space-y-4">
-                        <Textarea name="query" placeholder="e.g., I cut my finger while chopping vegetables..." rows={4} className="rounded-2xl bg-white/50 border-white/40" required />
+                        <Textarea name="query" placeholder="e.g., I cut my finger while chopping vegetables..." rows={4} className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner" required />
                         
                         {!preview ? (
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-full border-orange-200 text-orange-600 bg-orange-50/30">
+                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-orange-100 text-orange-600 bg-orange-50/30 font-bold hover:bg-orange-50 transition-all">
                                 <ImageIcon className="mr-2 h-4 w-4" /> Add Photo (Optional)
                             </Button>
                         ) : (
-                            <div className="relative rounded-2xl overflow-hidden border-2 border-orange-200">
+                            <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-md">
                                 <Image src={preview} alt="Injury" width={400} height={400} className="w-full h-auto" />
                                 <Button size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
                                     <X className="h-4 w-4" />
@@ -448,14 +446,14 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             }
                         }} accept="image/*" />
 
-                        <Button type="submit" disabled={isAnalyzing} className="w-full rounded-full bg-orange-400 hover:bg-orange-500 h-12 text-lg font-bold">
+                        <Button type="submit" disabled={isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
                             {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing...</> : "Analyze Injury"}
                         </Button>
                     </form>
                 </CardContent>
                 {state.result && (
                     <CardFooter className="flex-col items-start gap-4">
-                        <div className="prose prose-sm dark:prose-invert max-w-full p-4 rounded-2xl bg-white/80 border border-orange-200">
+                        <div className="prose prose-sm dark:prose-invert max-w-full p-6 rounded-[2rem] bg-white dark:bg-slate-800 shadow-sm border border-slate-50 dark:border-slate-700/50">
                             <ReactMarkdown>{state.result.response}</ReactMarkdown>
                         </div>
                     </CardFooter>
@@ -474,30 +472,30 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={onBack} className="rounded-full bg-white/50 backdrop-blur-md">
-                    <ArrowLeft className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
+                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-bold font-headline">Radiology Scanner</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Radiology Scanner</h2>
             </div>
 
-            <Card className="bg-white/60 backdrop-blur-xl border-white/40">
+            <Card className="rounded-[2.5rem] neumorphic-card border-none">
                 <CardHeader>
-                    <CardTitle className="text-lg">X-ray Analysis</CardTitle>
-                    <CardDescription>Upload a clear image of an X-ray for AI interpretation.</CardDescription>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">X-ray Analysis</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload a clear image of an X-ray for AI interpretation.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {!preview ? (
-                        <div className="border-2 border-dashed border-blue-200 rounded-3xl h-64 flex flex-col items-center justify-center bg-blue-50/30 space-y-4 cursor-pointer hover:bg-blue-50/50 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-4 bg-white rounded-full shadow-sm text-blue-400">
+                        <div className="border-2 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-blue-50/20 space-y-4 cursor-pointer hover:bg-blue-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-blue-400">
                                 <Bone className="w-10 h-10" />
                             </div>
-                            <p className="text-sm font-semibold text-blue-600">Click to Upload X-ray</p>
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Click to Upload X-ray</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-3xl overflow-hidden shadow-lg border-4 border-white">
+                        <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
                             <Image src={preview} alt="X-ray" width={500} height={500} className="w-full h-auto" />
-                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full" onClick={() => setPreview(null)}>
-                                <X />
+                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
+                                <X className="h-4 w-4" />
                             </Button>
                         </div>
                     )}
@@ -518,26 +516,26 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                             formAction(formData);
                         }
                     }}>
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-full bg-blue-400 hover:bg-blue-500 h-12 text-lg font-bold">
+                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-blue-400 to-blue-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
                             {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Scanning X-ray...</> : "Scan X-ray"}
                         </Button>
                     </form>
                 </CardContent>
                 {state.result && (
                     <CardFooter className="flex-col items-start gap-4">
-                        <div className="w-full space-y-4 bg-white/80 p-5 rounded-2xl border border-blue-200 animate-in zoom-in-95">
-                            <h4 className="font-bold text-lg border-b pb-2">Findings</h4>
-                            <ul className="space-y-3">
+                        <div className="w-full space-y-4 bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-50 dark:border-slate-700/50 animate-in zoom-in-95">
+                            <h4 className="font-black text-lg text-[#2D3A5D] dark:text-slate-100 border-b border-slate-50 dark:border-slate-700 pb-3">Findings</h4>
+                            <ul className="space-y-4">
                                 {state.result.result.report?.findings.map((f: any, i: number) => (
                                     <li key={i} className="text-sm">
-                                        <p className="font-bold text-blue-700">{f.label}</p>
-                                        <p className="text-xs text-muted-foreground">{f.notes}</p>
+                                        <p className="font-black text-blue-600 tracking-tight">{f.label}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">{f.notes}</p>
                                     </li>
                                 ))}
                             </ul>
-                            <div className="pt-2">
-                                <p className="font-bold text-sm">Impression:</p>
-                                <p className="text-sm italic text-muted-foreground">"{state.result.result.report?.impression}"</p>
+                            <div className="pt-4 mt-2 border-t border-slate-50 dark:border-slate-700">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Impression:</p>
+                                <p className="text-sm font-bold italic text-[#2D3A5D] dark:text-slate-200 mt-1">"{state.result.result.report?.impression}"</p>
                             </div>
                         </div>
                     </CardFooter>
@@ -570,30 +568,30 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={onBack} className="rounded-full bg-white/50 backdrop-blur-md">
-                    <ArrowLeft className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
+                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-bold font-headline">Lab Report Analyzer</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Lab Report Analyzer</h2>
             </div>
 
-            <Card className="bg-white/60 backdrop-blur-xl border-white/40">
+            <Card className="rounded-[2.5rem] neumorphic-card border-none">
                 <CardHeader>
-                    <CardTitle className="text-lg">Report Analysis</CardTitle>
-                    <CardDescription>Upload an image of your physical lab report for a summary.</CardDescription>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Report Analysis</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload an image of your physical lab report for a summary.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {!preview ? (
-                        <div className="border-2 border-dashed border-green-200 rounded-3xl h-64 flex flex-col items-center justify-center bg-green-50/30 space-y-4 cursor-pointer hover:bg-green-50/50 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-4 bg-white rounded-full shadow-sm text-green-400">
+                        <div className="border-2 border-dashed border-green-100 dark:border-green-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-green-50/20 space-y-4 cursor-pointer hover:bg-green-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-green-400">
                                 <FileText className="w-10 h-10" />
                             </div>
-                            <p className="text-sm font-semibold text-green-600">Click to Upload Report</p>
+                            <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Click to Upload Report</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-3xl overflow-hidden shadow-lg border-4 border-white">
+                        <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
                             <Image src={preview} alt="Report" width={500} height={500} className="w-full h-auto" />
-                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full" onClick={() => setPreview(null)}>
-                                <X />
+                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
+                                <X className="h-4 w-4" />
                             </Button>
                         </div>
                     )}
@@ -613,31 +611,31 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             formAction(formData);
                         }
                     }}>
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-full bg-green-400 hover:bg-green-500 h-12 text-lg font-bold">
+                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
                             {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing Report...</> : "Analyze Report"}
                         </Button>
                     </form>
                 </CardContent>
                 {state.result && (
                     <CardFooter className="flex-col items-start gap-4">
-                        <div className="w-full space-y-4 bg-white/80 p-5 rounded-2xl border border-green-200 animate-in zoom-in-95">
-                            <div className="flex justify-between items-center">
-                                <h4 className="font-bold text-lg">Results</h4>
-                                <Button size="sm" onClick={() => downloadPdf(state.result.result)} className="rounded-full bg-green-600">
-                                    <Download className="h-4 w-4 mr-1" /> PDF
+                        <div className="w-full space-y-4 bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-50 dark:border-slate-700/50 animate-in zoom-in-95">
+                            <div className="flex justify-between items-center border-b border-slate-50 dark:border-slate-700 pb-3 mb-2">
+                                <h4 className="font-black text-lg text-[#2D3A5D] dark:text-slate-100">Results</h4>
+                                <Button size="sm" onClick={() => downloadPdf(state.result.result)} className="rounded-full bg-green-600 text-white font-bold h-8 px-4 text-[10px] uppercase">
+                                    <Download className="h-3 w-3 mr-1" /> PDF
                                 </Button>
                             </div>
-                            <p className="text-sm font-semibold">{state.result.result.summary}</p>
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                            <p className="text-xs font-bold text-slate-500 leading-relaxed mb-4">{state.result.result.summary}</p>
+                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                                 {state.result.result.interpretations.map((item: any, idx: number) => (
-                                    <div key={idx} className="p-3 rounded-xl bg-white/50 border border-green-100 flex justify-between gap-4">
+                                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 flex justify-between gap-4">
                                         <div className="flex-1">
-                                            <p className="text-xs font-bold text-green-800">{item.test}</p>
-                                            <p className="text-xs text-muted-foreground">{item.note}</p>
+                                            <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{item.test}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">{item.note}</p>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-bold">{item.value}</p>
-                                            <p className={cn("text-[10px] font-bold uppercase", 
+                                        <div className="text-right flex flex-col justify-center">
+                                            <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{item.value}</p>
+                                            <p className={cn("text-[8px] font-black uppercase mt-0.5", 
                                                 item.status === 'normal' ? 'text-green-500' : 'text-red-500'
                                             )}>{item.status}</p>
                                         </div>
