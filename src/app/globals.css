@@ -114,9 +114,9 @@ body {
   }
 
   .animate-ekg-infinite {
-    stroke-dasharray: 280, 720;
-    stroke-dashoffset: 1000;
-    animation: ekg-loop 2s linear infinite;
+    stroke-dasharray: 150, 250;
+    stroke-dashoffset: 800;
+    animation: ekg-loop 3s linear infinite;
   }
 
   @keyframes draw-line {
@@ -127,7 +127,7 @@ body {
 
   @keyframes ekg-loop {
     from {
-      stroke-dashoffset: 1000;
+      stroke-dashoffset: 800;
     }
     to {
       stroke-dashoffset: 0;
