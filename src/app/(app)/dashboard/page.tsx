@@ -82,7 +82,7 @@ export default function DashboardPage() {
               iconColor="text-blue-500"
               href="/health-assistant"
               btnText="Ask away"
-              btnGradient="from-[#E6F0FF] to-[#D1E4FF] dark:from-blue-900/40 dark:to-blue-800/40"
+              btnGradient="from-blue-500/20 to-blue-600/20"
             />
             <FeatureCard
               title="Doctor Consult"
@@ -91,7 +91,7 @@ export default function DashboardPage() {
               iconColor="text-pink-500"
               href="/consultation"
               btnText="Book Now"
-              btnGradient="from-[#FFF0F5] to-[#FFE1EB] dark:from-pink-900/40 dark:to-pink-800/40"
+              btnGradient="from-pink-500/20 to-pink-600/20"
             />
             <FeatureCard
               title="Medical Store"
@@ -100,7 +100,7 @@ export default function DashboardPage() {
               iconColor="text-purple-500"
               href="/store"
               btnText="Order Now"
-              btnGradient="from-[#F3E8FF] to-[#E9D5FF] dark:from-purple-900/40 dark:to-purple-800/40"
+              btnGradient="from-purple-500/20 to-purple-600/20"
             />
             <FeatureCard
               title="Disease Scanner"
@@ -109,7 +109,7 @@ export default function DashboardPage() {
               iconColor="text-teal-500"
               href="/disease-scanner"
               btnText="Scan Now"
-              btnGradient="from-[#E0FDF4] to-[#BBF7ED] dark:from-teal-900/40 dark:to-teal-800/40"
+              btnGradient="from-teal-500/20 to-teal-600/20"
             />
             <FeatureCard
               title="AI Psychiatrist"
@@ -118,7 +118,7 @@ export default function DashboardPage() {
               iconColor="text-indigo-500"
               href="/ai-psychiatrist"
               btnText="Talk to AI"
-              btnGradient="from-[#EEF2FF] to-[#E0E7FF] dark:from-indigo-900/40 dark:to-indigo-800/40"
+              btnGradient="from-indigo-500/20 to-indigo-600/20"
             />
             <FeatureCard
               title="Emergency"
@@ -127,7 +127,7 @@ export default function DashboardPage() {
               iconColor="text-red-500"
               href="tel:112"
               btnText="Call 112"
-              btnGradient="from-[#FEF2F2] to-[#FEE2E2] dark:from-red-900/40 dark:to-red-800/40"
+              btnGradient="from-red-500/20 to-red-600/20"
             />
           </div>
         </div>
@@ -239,9 +239,9 @@ export default function DashboardPage() {
 // Sub-components
 function FeatureCard({ title, description, icon: Icon, iconColor, href, btnText, btnGradient }: { title: string, description: string, icon: any, iconColor: string, href: string, btnText: string, btnGradient: string }) {
   return (
-    <Card className="rounded-[2.5rem] border-none neumorphic-card group hover:scale-[1.03] transition-all duration-500 overflow-hidden">
+    <Card className="rounded-[2.5rem] border border-white/20 dark:border-slate-800/20 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md group hover:scale-[1.03] transition-all duration-500 overflow-hidden shadow-lg shadow-blue-100/10 dark:shadow-none">
       <Link href={href} className="p-6 flex flex-col h-full space-y-4">
-        <div className="mx-auto transform group-hover:rotate-6 transition-transform duration-500 p-4 bg-slate-50 dark:bg-slate-800 rounded-3xl">
+        <div className="mx-auto transform group-hover:rotate-6 transition-transform duration-500 p-4 bg-white/50 dark:bg-slate-800/50 rounded-3xl shadow-inner border border-white/40 dark:border-slate-700/40">
           <Icon className={cn("w-10 h-10 drop-shadow-sm", iconColor)} />
         </div>
         <div className="space-y-1 text-center">
@@ -249,7 +249,7 @@ function FeatureCard({ title, description, icon: Icon, iconColor, href, btnText,
           <p className="text-[10px] text-slate-400 font-bold leading-tight">{description}</p>
         </div>
         <div className={cn(
-          "mt-auto py-2.5 px-4 rounded-2xl flex items-center justify-between text-[10px] font-black tracking-tight transition-all bg-gradient-to-r shadow-inner text-[#2D3A5D] dark:text-slate-100",
+          "mt-auto py-2.5 px-4 rounded-2xl flex items-center justify-between text-[10px] font-black tracking-tight transition-all bg-gradient-to-r shadow-md text-[#2D3A5D] dark:text-slate-100 border border-white/20 dark:border-slate-700/20",
           btnGradient
         )}>
           {btnText}
