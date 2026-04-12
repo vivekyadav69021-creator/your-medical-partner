@@ -45,15 +45,15 @@ export function SplashScreen() {
             </span>
           </div>
 
-          {/* Corrected EKG Line - Starts from the beginning of "Your" */}
-          <div className="w-full mt-4 px-2 opacity-0 animate-in fade-in duration-1000 fill-mode-forwards" style={{ animationDelay: '1000ms' }}>
+          {/* Continuous Heartbeat Line - Aligned from the start of "Your" */}
+          <div className="w-full mt-6 px-2 animate-in fade-in duration-1000 fill-mode-forwards" style={{ animationDelay: '1000ms' }}>
             <svg 
               width="100%" 
               height="40" 
               viewBox="0 0 400 40" 
               fill="none" 
               xmlns="http://www.w3.org/2000/svg"
-              className="w-full drop-shadow-[0_0_8px_rgba(36,136,232,0.3)]"
+              className="w-full drop-shadow-[0_0_12px_rgba(36,136,232,0.4)]"
               preserveAspectRatio="none"
             >
               <path 
