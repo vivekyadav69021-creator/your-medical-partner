@@ -107,30 +107,45 @@ body {
     scrollbar-width: none;
   }
 
-  .animate-draw-line {
+  /* EKG Line Animation Fix */
+  .animate-ekg-infinite {
     stroke-dasharray: 1000;
     stroke-dashoffset: 1000;
-    animation: draw-line 2s ease-out forwards;
+    animation: ekg-flow 4s linear infinite;
   }
 
-  .animate-ekg-infinite {
-    stroke-dasharray: 150, 250;
-    stroke-dashoffset: 800;
-    animation: ekg-loop 3s linear infinite;
-  }
-
-  @keyframes draw-line {
-    to {
+  @keyframes ekg-flow {
+    0% {
+      stroke-dashoffset: 1000;
+    }
+    100% {
       stroke-dashoffset: 0;
     }
   }
 
-  @keyframes ekg-loop {
-    from {
-      stroke-dashoffset: 800;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
+  @keyframes splash-pop-in {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
   }
+
+  @keyframes splash-slide-in-left {
+    0% { transform: translateX(-50px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes splash-slide-in-right {
+    0% { transform: translateX(50px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes splash-slide-in-bottom {
+    0% { transform: translateY(30px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  .animate-splash-pop-in { animation: splash-pop-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-splash-slide-in-left { animation: splash-slide-in-left 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-splash-slide-in-right { animation: splash-slide-in-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-splash-slide-in-bottom { animation: splash-slide-in-bottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 }
