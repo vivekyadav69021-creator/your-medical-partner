@@ -38,7 +38,7 @@ export function SplashScreen() {
             </div>
           </div>
 
-          {/* Animated Heartbeat Line Underline */}
+          {/* Infinite Heartbeat Line Underline */}
           <div className="flex justify-center pt-2">
             <svg 
               width="280" 
@@ -54,8 +54,8 @@ export function SplashScreen() {
                 strokeWidth="3" 
                 strokeLinecap="round" 
                 strokeLinejoin="round"
-                className="animate-draw-line"
-                style={{ animationDelay: '1200ms' }}
+                className="animate-ekg-infinite"
+                style={{ animationDelay: '1000ms' }}
               />
               <defs>
                 <linearGradient id="ekg-gradient" x1="0" y1="20" x2="280" y2="20" gradientUnits="userSpaceOnUse">

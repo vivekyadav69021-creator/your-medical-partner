@@ -113,7 +113,22 @@ body {
     animation: draw-line 2s ease-out forwards;
   }
 
+  .animate-ekg-infinite {
+    stroke-dasharray: 280, 720;
+    stroke-dashoffset: 1000;
+    animation: ekg-loop 2s linear infinite;
+  }
+
   @keyframes draw-line {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes ekg-loop {
+    from {
+      stroke-dashoffset: 1000;
+    }
     to {
       stroke-dashoffset: 0;
     }
