@@ -189,23 +189,6 @@ export default function DiseaseScannerPage() {
                         />
                     </div>
 
-                    {/* AI Assistant Banner */}
-                    <Card className="rounded-[2rem] bg-[#1A1A1A] text-white overflow-hidden border-none relative group cursor-pointer hover:shadow-lg transition-all" onClick={() => (window as any).openAssistant?.()}>
-                        <CardContent className="p-5 flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-gray-600 shadow-inner">
-                                <ShieldPlus className="h-7 w-7 text-primary" />
-                            </div>
-                            <div className="flex-1 space-y-0.5">
-                                <h3 className="font-black text-lg flex items-center gap-2">
-                                    {t.aiAssistant}
-                                </h3>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.aiDesc}</p>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
-                        </CardContent>
-                        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
-                    </Card>
-
                     {/* Language Selection */}
                     <div className="flex justify-center pt-4 pb-10">
                         <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
@@ -648,3 +631,4 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         </div>
     );
 }
+
