@@ -29,7 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
 import { cn } from '@/lib/utils';
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default function MainLayout({ children }: { children: React.Node }) {
   const { cart } = useCart();
   const { userImage, userName } = useUserProfile();
   const { setTheme } = useTheme();
@@ -116,7 +116,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm" title="Settings">
+                 <Button variant="ghost" className="relative h-12 w-12 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm overflow-hidden" title="Settings">
                   <Avatar className="h-full w-full">
                       <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
                       <AvatarFallback>
