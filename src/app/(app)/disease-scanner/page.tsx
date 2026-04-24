@@ -20,25 +20,17 @@ import {
   Loader2, 
   X, 
   Camera, 
-  CameraOff, 
   AlertTriangle, 
-  Hospital, 
   FileText, 
   ImageIcon, 
-  SwitchCamera, 
   Upload, 
   Download, 
   BrainCircuit, 
-  FileHeart, 
   ArrowLeft,
-  ChevronRight,
-  Sparkles,
-  Search,
   Bell,
   User as UserIcon,
   Bandage,
   Bone,
-  SearchCode,
   ShieldPlus,
   Activity
 } from 'lucide-react';
@@ -51,11 +43,9 @@ import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import ReactMarkdown from 'react-markdown';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -82,11 +72,8 @@ export default function DiseaseScannerPage() {
             xrayTitle: "X-ray Scanner",
             reportTitle: "Report Analyse",
             startBtn: "Start Scan",
-            aiAssistant: "AI Health Assistant 🤖",
-            aiDesc: "Ask symptoms & get suggestions",
             back: "Back to Home",
             analyzing: "Analyzing...",
-            analysisFailed: "Analysis Failed"
         },
         hi: {
             greeting: `नमस्ते ${userName.split(' ')[0]} 👋`,
@@ -100,11 +87,8 @@ export default function DiseaseScannerPage() {
             xrayTitle: "एक्स-रे स्कैनर",
             reportTitle: "रिपोर्ट विश्लेषण",
             startBtn: "स्कैन शुरू करें",
-            aiAssistant: "एआई स्वास्थ्य सहायक 🤖",
-            aiDesc: "लक्षण पूछें और सुझाव प्राप्त करें",
             back: "होम पर वापस जाएं",
             analyzing: "विश्लेषण हो रहा है...",
-            analysisFailed: "विश्लेषण विफल"
         }
     }[lang];
 
@@ -116,7 +100,6 @@ export default function DiseaseScannerPage() {
             case 'lab': return <LabReportAnalyzer lang={lang} onBack={() => setView('home')} />;
             default: return (
                 <div className="space-y-8 px-2">
-                    {/* Header with Notification & Profile */}
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
                             <h1 className="text-3xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline">{t.greeting}</h1>
@@ -133,7 +116,6 @@ export default function DiseaseScannerPage() {
                         </div>
                     </div>
 
-                    {/* Quick Health Stats Card */}
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
                         <CardHeader className="pb-3 pt-6 px-8">
                             <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -158,11 +140,10 @@ export default function DiseaseScannerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Scanner Grid with Realistic Icon Integration */}
                     <div className="grid grid-cols-2 gap-6">
                         <ScannerCard 
                             title={t.skinTitle} 
-                            imageId="scanner-skin"
+                            icon={Scan}
                             gradient="from-[#FFF1F6] to-[#FFE4EC]"
                             btnColor="bg-pink-500 text-white"
                             onClick={() => setView('skin')}
@@ -170,7 +151,7 @@ export default function DiseaseScannerPage() {
                         />
                         <ScannerCard 
                             title={t.injuryTitle} 
-                            imageId="scanner-injury"
+                            icon={Bandage}
                             gradient="from-[#FFF7ED] to-[#FFEDD5]"
                             btnColor="bg-orange-500 text-white"
                             onClick={() => setView('injury')}
@@ -178,7 +159,7 @@ export default function DiseaseScannerPage() {
                         />
                         <ScannerCard 
                             title={t.xrayTitle} 
-                            imageId="scanner-xray"
+                            icon={Bone}
                             gradient="from-[#E6F0FF] to-[#D1E4FF]"
                             btnColor="bg-blue-500 text-white"
                             onClick={() => setView('xray')}
@@ -186,7 +167,7 @@ export default function DiseaseScannerPage() {
                         />
                         <ScannerCard 
                             title={t.reportTitle} 
-                            imageId="scanner-report"
+                            icon={FileText}
                             gradient="from-[#F0FDF4] to-[#DCFCE7]"
                             btnColor="bg-green-500 text-white"
                             onClick={() => setView('lab')}
@@ -194,7 +175,6 @@ export default function DiseaseScannerPage() {
                         />
                     </div>
 
-                    {/* Language Selection */}
                     <div className="flex justify-center pt-4 pb-12">
                         <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
                             <SelectTrigger className="w-[140px] bg-white/60 backdrop-blur-md rounded-full border-white/40 shadow-sm font-black text-[10px] uppercase tracking-widest h-10">
@@ -220,9 +200,7 @@ export default function DiseaseScannerPage() {
     );
 }
 
-function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: { title: string, imageId: string, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
-    const imageData = PlaceHolderImages.find(img => img.id === imageId);
-    
+function ScannerCard({ title, icon: Icon, gradient, btnColor, onClick, btnText }: { title: string, icon: any, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
     return (
         <Card 
             className={cn(
@@ -232,21 +210,9 @@ function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: {
             onClick={onClick}
         >
             <div className="p-6 flex flex-col h-full items-center justify-between text-center space-y-4">
-                <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner bg-white/50 backdrop-blur-sm border border-white/40">
-                   {imageData ? (
-                       <Image 
-                        src={imageData.imageUrl} 
-                        alt={title} 
-                        fill 
-                        className="object-cover group-hover:scale-110 transition-transform duration-700" 
-                        data-ai-hint={imageData.imageHint}
-                       />
-                   ) : (
-                       <div className="w-full h-full flex items-center justify-center bg-white/40">
-                           <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
-                       </div>
-                   )}
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+                <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center">
+                   <Icon className="w-16 h-16 text-slate-700 opacity-80 group-hover:scale-110 transition-transform duration-500" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
                 </div>
                 <div className="space-y-3 w-full">
                     <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
