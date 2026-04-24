@@ -77,7 +77,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-5">
             <FeatureCard
               title="AI Assistant"
-              description="Symptom checker"
+              description="Ask the Your Medical problem"
               icon={ShieldPlus}
               iconColor="text-blue-500"
               href="/health-assistant"
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             />
             <FeatureCard
               title="Doctor Consult"
-              description="Expert video calls"
+              description="Book The Best Doctor"
               icon={Stethoscope}
               iconColor="text-pink-500"
               href="/consultation"
@@ -95,7 +95,7 @@ export default function DashboardPage() {
             />
             <FeatureCard
               title="Medical Store"
-              description="Pharmacy door"
+              description="Order the Medicine"
               icon={Store}
               iconColor="text-purple-500"
               href="/store"
@@ -104,7 +104,7 @@ export default function DashboardPage() {
             />
             <FeatureCard
               title="Disease Scanner"
-              description="X-ray & Reports"
+              description="Scan Your Problem"
               icon={Scan}
               iconColor="text-teal-500"
               href="/disease-scanner"
@@ -113,7 +113,7 @@ export default function DashboardPage() {
             />
             <FeatureCard
               title="AI Psychiatrist"
-              description="Mental wellbeing"
+              description="talk Your Psychiatrist"
               icon={BrainCircuit}
               iconColor="text-indigo-500"
               href="/ai-psychiatrist"
@@ -122,7 +122,7 @@ export default function DashboardPage() {
             />
             <FeatureCard
               title="Emergency"
-              description="24/7 Medical support"
+              description="Save Your Life One call"
               icon={PhoneCall}
               iconColor="text-red-500"
               href="tel:112"
