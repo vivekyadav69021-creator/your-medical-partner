@@ -85,10 +85,16 @@ export default function LoginPage() {
       console.error("Auth Error:", error);
       let message = error.message;
       
-      if (error.code === 'auth/email-already-in-use') message = 'This email is already registered.';
-      if (error.code === 'auth/invalid-email') message = 'Please enter a valid email address.';
-      if (error.code === 'auth/weak-password') message = 'The password is too weak.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      // Handle project-level errors more gracefully
+      if (error.message.includes('identity-toolkit-api')) {
+        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console (check browser console for link).";
+      } else if (error.code === 'auth/email-already-in-use') {
+        message = 'This email is already registered.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/weak-password') {
+        message = 'The password is too weak.';
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         message = 'Invalid email or password.';
       }
 
@@ -112,7 +118,7 @@ export default function LoginPage() {
       console.error("Guest Sign-in Error:", error);
       let message = error.message;
       if (error.message.includes('identity-toolkit-api')) {
-        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console link provided in the console error.";
+        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console.";
       }
       toast({ 
         variant: 'destructive', 
