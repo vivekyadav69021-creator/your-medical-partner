@@ -108,16 +108,16 @@ body {
     scrollbar-width: none;
   }
 
-  /* EKG Line Animation - Fixed Infinite Flow */
+  /* EKG Heartbeat Animation - Improved for visibility */
   .animate-ekg-infinite {
-    stroke-dasharray: 400;
-    stroke-dashoffset: 400;
-    animation: ekg-flow 3s linear infinite;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: ekg-pulse 3s linear infinite;
   }
 
-  @keyframes ekg-flow {
+  @keyframes ekg-pulse {
     0% {
-      stroke-dashoffset: 400;
+      stroke-dashoffset: 1000;
     }
     100% {
       stroke-dashoffset: 0;
