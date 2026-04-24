@@ -45,15 +45,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       
       const currentScrollY = mainRef.current.scrollTop;
       
-      // Minimum scroll threshold to avoid flickering
-      if (Math.abs(currentScrollY - lastScrollY.current) < 10) return;
+      // Determine scroll direction
+      const isScrollingDown = currentScrollY > lastScrollY.current;
+      const scrollDistance = Math.abs(currentScrollY - lastScrollY.current);
 
-      if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
-        // Scrolling Down - Hide Header
-        setHeaderVisible(false);
-      } else {
-        // Scrolling Up - Show Header
-        setHeaderVisible(true);
+      // Only toggle if scroll distance is significant to prevent jitter
+      if (scrollDistance > 5) {
+        if (isScrollingDown && currentScrollY > 80) {
+          // Scrolling Down - Hide Header
+          setHeaderVisible(false);
+        } else {
+          // Scrolling Up - Show Header
+          setHeaderVisible(true);
+        }
       }
       
       lastScrollY.current = currentScrollY;
@@ -61,7 +65,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     const mainElement = mainRef.current;
     if (mainElement) {
-      mainElement.addEventListener('scroll', handleScroll);
+      mainElement.addEventListener('scroll', handleScroll, { passive: true });
     }
 
     return () => {
