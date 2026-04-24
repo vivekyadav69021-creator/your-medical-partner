@@ -58,7 +58,7 @@ export default function ProfilePage() {
     bloodGroup: '',
     conditions: '',
     allergies: '',
-    image: 'https://picsum.photos/seed/user/100/100',
+    image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop',
     lifestyle: 'sedentary',
     dietaryPreference: 'non-veg',
     goals: [],
@@ -131,14 +131,14 @@ export default function ProfilePage() {
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
           displayName: profile.name,
-          photoURL: profile.image.startsWith('data:') ? undefined : profile.image // photoURL usually needs a real link, we use local for dataURI
+          photoURL: profile.image.startsWith('data:') ? undefined : profile.image
         });
       }
 
-      // 2. Save complete data to local storage
+      // 2. Save complete data to local storage (Source of truth for session)
       localStorage.setItem(`userMedicalProfile_local`, JSON.stringify(profile));
       
-      // 3. Update global context states
+      // 3. Update global context states for immediate reflection
       setUserName(profile.name || 'Guest');
       setUserImage(profile.image);
       
@@ -311,7 +311,7 @@ export default function ProfilePage() {
                 onClick={() => setTheme('light')}
                 className="rounded-full h-11 px-6 font-bold"
               >
-                <Sun className="mr-2 h-4 w-4" /> Light
+                < Sun className="mr-2 h-4 w-4" /> Light
               </Button>
               <Button
                 variant={theme === 'dark' ? 'default' : 'outline'}

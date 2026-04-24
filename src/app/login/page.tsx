@@ -62,10 +62,19 @@ export default function LoginPage() {
         // 1. Create User
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         
-        // 2. Update Auth Profile
-        await updateProfile(userCredential.user, { displayName: name });
+        // 2. Update Auth Profile - DO THIS FIRST before any redirection
+        await updateProfile(userCredential.user, { 
+          displayName: name,
+          photoURL: `https://picsum.photos/seed/${userCredential.user.uid}/400/400`
+        });
+
+        // 3. Store name locally for instant persistence in context
+        localStorage.setItem('userMedicalProfile_local', JSON.stringify({
+            name: name,
+            image: `https://picsum.photos/seed/${userCredential.user.uid}/400/400`
+        }));
         
-        // 3. Create Firestore Profile
+        // 4. Create Firestore Profile
         const userProfileRef = doc(firestore, 'users', userCredential.user.uid, 'userProfiles', userCredential.user.uid);
         await setDoc(userProfileRef, {
           id: userCredential.user.uid,
@@ -78,16 +87,17 @@ export default function LoginPage() {
         toast({ title: 'Welcome!', description: "Your account has been created successfully." });
       } else {
         // Login
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // Clear old local data to fetch fresh from server
+        localStorage.removeItem('userMedicalProfile_local');
         toast({ title: 'Welcome Back!', description: 'Logged in successfully.' });
       }
     } catch (error: any) {
       console.error("Auth Error:", error);
       let message = error.message;
       
-      // Handle project-level errors more gracefully
       if (error.message.includes('identity-toolkit-api')) {
-        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console (check browser console for link).";
+        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console.";
       } else if (error.code === 'auth/email-already-in-use') {
         message = 'This email is already registered.';
       } else if (error.code === 'auth/invalid-email') {

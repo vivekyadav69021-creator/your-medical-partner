@@ -15,26 +15,47 @@ const UserProfileContext = createContext<UserProfileContextType | undefined>(und
 export function UserProfileProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [userName, setUserNameState] = useState('Guest');
-  const [userImage, setUserImageState] = useState('https://picsum.photos/seed/user/100/100');
+  const [userImage, setUserImageState] = useState('https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop');
 
   useEffect(() => {
-    // Priority 1: Use Firebase Auth metadata (Freshest data)
-    if (user) {
-      setUserNameState(user.displayName || (user.isAnonymous ? 'Guest User' : user.email?.split('@')[0] || 'User'));
-      if (user.photoURL) setUserImageState(user.photoURL);
-    }
-    
-    // Priority 2: Override with local settings if they exist
-    try {
-      const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
-      if (savedProfile) {
-        const parsedProfile = JSON.parse(savedProfile);
-        if (parsedProfile.name) setUserNameState(parsedProfile.name);
-        if (parsedProfile.image) setUserImageState(parsedProfile.image);
+    // Logic to determine the best name and image
+    const updateProfile = () => {
+      let finalName = 'Guest';
+      let finalImage = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop';
+
+      // 1. Check Local Storage First (Fastest, handles fresh signup redirect)
+      try {
+        const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
+        if (savedProfile) {
+          const parsed = JSON.parse(savedProfile);
+          if (parsed.name) finalName = parsed.name;
+          if (parsed.image) finalImage = parsed.image;
+        }
+      } catch (e) {
+        console.error("Local profile parse error", e);
       }
-    } catch (e) {
-      console.error("Failed to load local profile", e);
-    }
+
+      // 2. If Auth user exists, use it as the source of truth if local is empty
+      if (user) {
+        // Only override if local name is still default or we are logged in as someone else
+        if (finalName === 'Guest' || finalName === 'Guest User') {
+           finalName = user.displayName || (user.isAnonymous ? 'Guest User' : user.email?.split('@')[0] || 'User');
+        }
+        if (user.photoURL && (finalImage.includes('unsplash') || finalImage.includes('picsum'))) {
+            finalImage = user.photoURL;
+        }
+      }
+
+      setUserNameState(finalName);
+      setUserImageState(finalImage);
+    };
+
+    updateProfile();
+    
+    // Set a small interval to re-check if name has propagated from Firebase (rare edge case)
+    const timer = setTimeout(updateProfile, 1000);
+    return () => clearTimeout(timer);
+
   }, [user]);
 
   const setUserName = (name: string) => {
