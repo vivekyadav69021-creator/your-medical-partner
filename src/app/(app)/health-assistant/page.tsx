@@ -138,19 +138,19 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
 
   return (
     <div className="mt-2 flex items-center gap-2">
-      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50" onClick={handleLike}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50" onClick={handleLike}>
         <ThumbsUp className="h-4 w-4" />
       </Button>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50">
+          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50">
             <ThumbsDown className="h-4 w-4" />
           </Button>
         </DialogTrigger>
         <DialogContent className="rounded-[2rem] border-none shadow-2xl">
           <form onSubmit={handleDislikeSubmit}>
             <DialogHeader>
-              <DialogTitle className="text-xl font-black text-[#2D3A5D]">Provide Additional Feedback</DialogTitle>
+              <DialogTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100">Provide Additional Feedback</DialogTitle>
               <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                 Your feedback is valuable in helping us improve the AI.
               </DialogDescription>
@@ -159,18 +159,18 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
                <RadioGroup name="feedback-reason" defaultValue="not-helpful">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="not-helpful" id="r1" />
-                    <Label htmlFor="r1" className="font-bold text-slate-600">Not helpful</Label>
+                    <Label htmlFor="r1" className="font-bold text-slate-600 dark:text-slate-300">Not helpful</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="incorrect" id="r2" />
-                    <Label htmlFor="r2" className="font-bold text-slate-600">Factually incorrect</Label>
+                    <Label htmlFor="r2" className="font-bold text-slate-600 dark:text-slate-300">Factually incorrect</Label>
                   </div>
                    <div className="flex items-center space-x-2">
                     <RadioGroupItem value="offensive" id="r3" />
-                    <Label htmlFor="r3" className="font-bold text-slate-600">Harmful or offensive</Label>
+                    <Label htmlFor="r3" className="font-bold text-slate-600 dark:text-slate-300">Harmful or offensive</Label>
                   </div>
                 </RadioGroup>
-                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-2xl bg-slate-50 border-none shadow-inner" />
+                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner" />
             </div>
             <DialogFooter>
               <Button type="submit" className="rounded-full w-full font-black uppercase text-[10px] tracking-widest">Submit Feedback</Button>
@@ -178,7 +178,7 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
           </form>
         </DialogContent>
       </Dialog>
-      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50" onClick={handleCopy}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50" onClick={handleCopy}>
         <Copy className="h-4 w-4" />
       </Button>
     </div>
@@ -269,7 +269,7 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
     <Card className="rounded-[2rem] neumorphic-card border-none mb-4">
         <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-                 <div className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50">
+                 <div className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50 dark:border-slate-700/50">
                     <Select value={selectedLang} onValueChange={setSelectedLang}>
                         <SelectTrigger className="w-[120px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
                             <SelectValue />
@@ -281,10 +281,10 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
                     </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full bg-white shadow-sm border border-blue-50", isSpeaking && "text-primary")} onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
+                    <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700", isSpeaking && "text-primary")} onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
                         <Volume2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white shadow-sm border border-blue-50" onClick={handleStopSpeaking} disabled={!isSpeaking}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700" onClick={handleStopSpeaking} disabled={!isSpeaking}>
                         <StopCircle className="h-4 w-4" />
                     </Button>
                 </div>
@@ -454,8 +454,8 @@ export default function HealthAssistantPage() {
         {/* Chat History Sidebar */}
         <Card className="hidden md:flex md:w-1/4 flex-col rounded-[2.5rem] neumorphic-card border-none p-2">
             <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
-                <CardTitle className="text-sm font-black text-[#2D3A5D] uppercase tracking-widest">History</CardTitle>
-                <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 border border-white/50" onClick={handleNewChat}>
+                <CardTitle className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest">History</CardTitle>
+                <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 dark:bg-slate-800 border border-white/50 dark:border-slate-700/50" onClick={handleNewChat}>
                     <PlusCircle className="h-5 w-5 text-primary" />
                 </Button>
             </CardHeader>
@@ -467,15 +467,15 @@ export default function HealthAssistantPage() {
                                 key={session.id} 
                                 className={cn(
                                     "p-4 rounded-[1.5rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
-                                    activeSessionId === session.id ? "bg-white shadow-sm border-blue-50" : "hover:bg-white/40"
+                                    activeSessionId === session.id ? "bg-white dark:bg-slate-800 shadow-sm border-blue-50 dark:border-slate-700" : "hover:bg-white/40 dark:hover:bg-slate-700/40"
                                 )}
                                 onClick={() => setActiveSessionId(session.id)}
                             >
                                 <div className="flex-1 overflow-hidden">
-                                  <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D]")}>{session.title}</p>
+                                  <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
                                   <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 rounded-full hover:bg-red-50 text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
                                     <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
@@ -489,15 +489,15 @@ export default function HealthAssistantPage() {
       <div className="flex-1 flex flex-col h-full min-w-0">
           <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col">
             <div className="flex items-center justify-between gap-4 mb-4">
-                <TabsList className="grid grid-cols-2 w-[300px] h-12 p-1.5 bg-slate-100/50 rounded-full border border-white/50 backdrop-blur-sm">
-                    <TabsTrigger value="general" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Assistant</TabsTrigger>
-                    <TabsTrigger value="doctor" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-sm">Specialist</TabsTrigger>
+                <TabsList className="grid grid-cols-2 w-[300px] h-12 p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-full border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
+                    <TabsTrigger value="general" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Assistant</TabsTrigger>
+                    <TabsTrigger value="doctor" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
                 </TabsList>
                 
                 {activeMode === 'doctor' && (
                     <div className="flex-1 max-w-[240px]">
                         <Select value={specialty} onValueChange={setSpecialty}>
-                            <SelectTrigger className="h-12 rounded-full bg-white/50 border-white/50 shadow-sm font-black text-[10px] uppercase tracking-widest">
+                            <SelectTrigger className="h-12 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[10px] uppercase tracking-widest">
                                 <div className="flex items-center gap-2">
                                     <BrainCircuit className="w-3.5 h-3.5 text-primary" />
                                     <SelectValue placeholder="Select Specialty" />
@@ -616,7 +616,7 @@ function ChatInterface({
                             <Icon className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="text-lg font-black text-[#2D3A5D] tracking-tight">{title}</CardTitle>
+                            <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{title}</CardTitle>
                             <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{description}</CardDescription>
                         </div>
                     </div>
@@ -628,10 +628,10 @@ function ChatInterface({
                     <div className="space-y-6">
                         {messages.length === 0 && !isPending && (
                             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
-                                <div className="p-6 bg-slate-50 rounded-[2.5rem]">
-                                    <Icon className="w-12 h-12 text-[#2D3A5D]" />
+                                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem]">
+                                    <Icon className="w-12 h-12 text-[#2D3A5D] dark:text-slate-400" />
                                 </div>
-                                <p className="text-sm font-black text-[#2D3A5D] tracking-tight max-w-[200px]">{initialMessage}</p>
+                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-400 tracking-tight max-w-[200px]">{initialMessage}</p>
                             </div>
                         )}
                         {messages.map((message, index) => (
@@ -639,7 +639,7 @@ function ChatInterface({
                                 key={index}
                                 className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
                             >
-                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
+                                <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0">
                                     {message.role === 'assistant' ? (
                                         <>
                                             {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
@@ -657,11 +657,11 @@ function ChatInterface({
                                         "max-w-[85%] rounded-[1.8rem] px-6 py-4 shadow-sm",
                                         message.role === 'user' 
                                             ? "bg-primary text-white rounded-tr-none" 
-                                            : "bg-slate-50 dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-white/50"
+                                            : "bg-slate-50 dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-white/50 dark:border-slate-700/50"
                                     )}
                                 >
                                     {message.image && (
-                                        <div className="mb-3 rounded-2xl overflow-hidden shadow-md border-2 border-white">
+                                        <div className="mb-3 rounded-2xl overflow-hidden shadow-md border-2 border-white dark:border-slate-700">
                                             <Image src={message.image} alt="User upload" width={300} height={300} className="w-full h-auto" />
                                         </div>
                                     )}
@@ -682,10 +682,10 @@ function ChatInterface({
                         ))}
                         {isPending && (
                             <div className="flex items-start gap-4 animate-pulse">
-                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0 bg-primary/10">
+                                <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 bg-primary/10">
                                     <AvatarFallback className="bg-transparent"><Icon className="w-5 h-5 text-primary"/></AvatarFallback>
                                 </Avatar>
-                                <div className="bg-slate-50 rounded-[1.8rem] rounded-tl-none px-6 py-4 border border-white/50 flex items-center gap-3">
+                                <div className="bg-slate-50 dark:bg-slate-800 rounded-[1.8rem] rounded-tl-none px-6 py-4 border border-white/50 dark:border-slate-700/50 flex items-center gap-3">
                                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is thinking...</span>
                                 </div>
@@ -695,7 +695,7 @@ function ChatInterface({
                 </ScrollArea>
             </CardContent>
             
-            <CardFooter className="px-8 pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50">
+            <CardFooter className="px-8 pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50">
                 {/* Active Mode Indicator Above Input */}
                 {pulseMode && pulseMode !== 'standard' && (
                     <div className="flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">
@@ -708,7 +708,7 @@ function ChatInterface({
 
                 {attachedImage && (
                     <div className="relative inline-block w-20 h-20 group">
-                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-2xl border-4 border-white shadow-lg object-cover h-full w-full" />
+                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-2xl border-4 border-white dark:border-slate-700 shadow-lg object-cover h-full w-full" />
                         <Button
                             variant="destructive"
                             size="icon"
@@ -729,13 +729,13 @@ function ChatInterface({
                     {setPulseMode && (
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-2xl h-14 w-14 bg-white shadow-sm border border-slate-100 hover:bg-slate-50 transition-all shrink-0">
+                                <Button variant="ghost" size="icon" className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0">
                                     <PlusCircle className="h-7 w-7 text-primary" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64 rounded-[2rem] border-none shadow-2xl p-4" side="top" align="start">
+                            <PopoverContent className="w-64 rounded-[2rem] border-none shadow-2xl p-4 dark:bg-slate-900" side="top" align="start">
                                 <div className="space-y-4">
-                                    <h4 className="font-black text-xs text-[#2D3A5D] uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
+                                    <h4 className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
                                     <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
                                         <PulseModeItem value="standard" label="Standard" desc="General health advice" icon={<ShieldPlus className="w-4 h-4"/>} />
                                         <PulseModeItem value="websearch" label="Web Search" desc="Search latest medical databases" icon={<Search className="w-4 h-4"/>} />
@@ -747,13 +747,13 @@ function ChatInterface({
                         </Popover>
                     )}
 
-                    <div className="flex-1 relative flex items-center bg-white rounded-2xl px-2 shadow-inner h-14 overflow-hidden border border-slate-100">
+                    <div className="flex-1 relative flex items-center bg-white dark:bg-slate-800 rounded-2xl px-2 shadow-inner h-14 overflow-hidden border border-slate-100 dark:border-slate-700">
                         <Input
                             id="chatInput"
                             ref={queryInputRef}
                             name="query"
                             placeholder={placeholder}
-                            className="flex-1 h-full border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-sm px-4"
+                            className="flex-1 h-full border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-sm px-4 dark:text-slate-100"
                             autoComplete="off"
                             disabled={isPending}
                             onKeyDown={(e) => {
@@ -768,7 +768,7 @@ function ChatInterface({
                             type="button" 
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isPending}
-                            className="p-2 rounded-full hover:bg-slate-50 transition-colors text-slate-400 shrink-0 mr-1"
+                            className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-400 shrink-0 mr-1"
                         >
                             <Paperclip className="h-5 w-5" />
                         </button>
@@ -787,13 +787,13 @@ function ChatInterface({
 
 function PulseModeItem({ value, label, desc, icon }: { value: PulseMode, label: string, desc: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center space-x-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group">
+        <div className="flex items-center space-x-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group">
             <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2 rounded-xl bg-white shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
                 {icon}
             </div>
             <Label htmlFor={value} className="flex-1 cursor-pointer">
-                <p className="font-black text-xs text-[#2D3A5D] leading-none">{label}</p>
+                <p className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 leading-none">{label}</p>
                 <p className="text-[10px] font-bold text-slate-400 mt-1">{desc}</p>
             </Label>
         </div>
