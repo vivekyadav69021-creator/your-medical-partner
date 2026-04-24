@@ -54,6 +54,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -156,11 +157,11 @@ export default function DiseaseScannerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Scanner Grid */}
+                    {/* Scanner Grid with 3D Icons */}
                     <div className="grid grid-cols-2 gap-6">
                         <ScannerCard 
                             title={t.skinTitle} 
-                            icon={<SearchCode className="w-12 h-12 text-pink-500 drop-shadow-md" />} 
+                            imageId="scanner-skin"
                             gradient="from-[#FFF1F6] to-[#FFE4EC]"
                             btnColor="bg-[#FFEDF2] text-pink-500"
                             onClick={() => setView('skin')}
@@ -168,7 +169,7 @@ export default function DiseaseScannerPage() {
                         />
                         <ScannerCard 
                             title={t.injuryTitle} 
-                            icon={<Bandage className="w-12 h-12 text-orange-500 drop-shadow-md" />} 
+                            imageId="scanner-injury"
                             gradient="from-[#FFF7ED] to-[#FFEDD5]"
                             btnColor="bg-[#FFF4ED] text-orange-500"
                             onClick={() => setView('injury')}
@@ -176,7 +177,7 @@ export default function DiseaseScannerPage() {
                         />
                         <ScannerCard 
                             title={t.xrayTitle} 
-                            icon={<Bone className="w-12 h-12 text-blue-500 drop-shadow-md" />} 
+                            imageId="scanner-xray"
                             gradient="from-[#E6F0FF] to-[#D1E4FF]"
                             btnColor="bg-[#EDF5FF] text-blue-500"
                             onClick={() => setView('xray')}
@@ -184,7 +185,7 @@ export default function DiseaseScannerPage() {
                         />
                         <ScannerCard 
                             title={t.reportTitle} 
-                            icon={<FileText className="w-12 h-12 text-green-500 drop-shadow-md" />} 
+                            imageId="scanner-report"
                             gradient="from-[#F0FDF4] to-[#DCFCE7]"
                             btnColor="bg-[#F0FFF7] text-green-500"
                             onClick={() => setView('lab')}
@@ -218,7 +219,9 @@ export default function DiseaseScannerPage() {
     );
 }
 
-function ScannerCard({ title, icon, gradient, btnColor, onClick, btnText }: { title: string, icon: React.ReactNode, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
+function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: { title: string, imageId: string, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
+    const imageData = PlaceHolderImages.find(img => img.id === imageId);
+    
     return (
         <Card 
             className={cn(
@@ -227,9 +230,17 @@ function ScannerCard({ title, icon, gradient, btnColor, onClick, btnText }: { ti
             )}
             onClick={onClick}
         >
-            <div className="p-8 flex flex-col items-center justify-center text-center space-y-6">
-                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-[2rem] shadow-inner transform group-hover:rotate-6 transition-transform duration-500 border border-white/40">
-                    {icon}
+            <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="relative w-28 h-28 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-xl">
+                   {imageData && (
+                       <Image 
+                        src={imageData.imageUrl} 
+                        alt={title} 
+                        fill 
+                        className="object-contain" 
+                        data-ai-hint={imageData.imageHint}
+                       />
+                   )}
                 </div>
                 <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
                 <Button 
