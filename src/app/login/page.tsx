@@ -134,18 +134,21 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md space-y-12 flex flex-col items-center relative z-10">
         
-        {/* Brand Typography Design */}
+        {/* Unique Brand Typography Design */}
         <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000">
-          <div className="inline-flex items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl shadow-blue-100 dark:shadow-none mb-2 transform hover:scale-110 transition-transform duration-500">
-            <HeartPulse className="h-14 w-14 text-primary animate-pulse" />
+          <div className="inline-flex items-center justify-center p-5 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-blue-100 dark:shadow-none mb-4 transform hover:rotate-6 transition-transform duration-500">
+            <HeartPulse className="h-16 w-16 text-[#2488E8] animate-pulse" />
           </div>
-          <div className="space-y-1">
-            <h1 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white font-headline leading-none uppercase">
-              Your Medical <br />
-              <span className="text-primary">Partner</span>
+          <div className="flex flex-col items-center">
+            <h1 className="text-6xl font-black tracking-tighter font-headline leading-[0.8] uppercase flex flex-col">
+              <span className="text-[#1A365D] dark:text-slate-300 self-start ml-2 opacity-80 text-3xl">Your</span>
+              <span className="text-[#2488E8] -mt-1 text-7xl">Medical</span>
+              <span className="text-[#1A365D] dark:text-slate-300 self-end mr-2 -mt-1 text-4xl">Partner</span>
             </h1>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em] pt-2">
+            <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.5em] pt-6 flex items-center gap-2">
+              <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
               Digital Health Companion
+              <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
             </p>
           </div>
         </div>
