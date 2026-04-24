@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -102,7 +101,7 @@ export default function VideoTutorialsPage() {
           <Button variant="ghost" size="icon" asChild className="h-10 w-10 rounded-full bg-gray-50 border border-gray-100">
             <Link href="/dashboard"><ChevronLeft className="h-6 w-6 text-gray-800" /></Link>
           </Button>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white font-headline">Video Tutorials</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white font-headline">Video Library</h1>
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-gray-50 border border-gray-100">
             <Share2 className="h-5 w-5 text-gray-600" />
           </Button>

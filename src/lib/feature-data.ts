@@ -115,7 +115,7 @@ export const features: Feature[] = [
   },
   { 
     id: 'video-tutorials', 
-    title: 'Video Tutorials', 
+    title: 'Video Library', 
     path: '/video-tutorials', 
     content_en: 'Watch expert videos on various health topics, including hygiene, first aid, mental health, and nutrition.', 
     content_hi: 'स्वच्छता, प्राथमिक चिकित्सा, मानसिक स्वास्थ्य और पोषण सहित विभिन्न स्वास्थ्य विषयों पर विशेषज्ञ वीडियो देखें।' 

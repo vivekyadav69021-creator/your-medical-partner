@@ -47,7 +47,7 @@ const learnNav = [
     { href: '/challenges', label: 'Health Challenges', icon: Trophy },
     { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
     { href: '/yoga-library', label: 'Yoga Library', icon: Wind },
-    { href: '/video-tutorials', label: 'Video Tutorials', icon: Video },
+    { href: '/video-tutorials', label: 'Video Library', icon: Video },
     { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
 ];
 
