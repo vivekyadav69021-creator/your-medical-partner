@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -39,7 +40,7 @@
     {
       "id": "doctor-7",
       "description": "Portrait of Dr. Sameer Khan",
-      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "doctor portrait"
     },
     {
@@ -51,7 +52,7 @@
     {
       "id": "doctor-9",
       "description": "Portrait of Dr. Olivia Chen",
-      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "doctor portrait"
     },
     {
@@ -266,27 +267,27 @@
     },
     {
       "id": "scanner-skin",
-      "description": "3D Skin Scan Icon",
-      "imageUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/skin-analysis-10113554-8225579.png",
-      "imageHint": "3d skin scan"
+      "description": "Realistic Skin Analysis Illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=400&h=400&auto=format&fit=crop",
+      "imageHint": "dermatology skin"
     },
     {
       "id": "scanner-injury",
-      "description": "3D Injury Bandage Icon",
-      "imageUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/bandage-8575001-6785121.png",
-      "imageHint": "3d medical bandage"
+      "description": "Realistic Medical Bandage Illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1605634591465-b3e64d7f57a3?q=80&w=400&h=400&auto=format&fit=crop",
+      "imageHint": "medical bandage"
     },
     {
       "id": "scanner-xray",
-      "description": "3D X-ray Hand Icon",
-      "imageUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/x-ray-hand-11116248-8902500.png",
-      "imageHint": "3d xray hand"
+      "description": "Realistic X-ray Scan Image",
+      "imageUrl": "https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=400&h=400&auto=format&fit=crop",
+      "imageHint": "x-ray scan"
     },
     {
       "id": "scanner-report",
-      "description": "3D Medical Report Icon",
-      "imageUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/medical-report-4940562-4119330.png",
-      "imageHint": "3d medical report"
+      "description": "Realistic Medical Report Illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1581056771107-24ca5f033842?q=80&w=400&h=400&auto=format&fit=crop",
+      "imageHint": "medical clipboard"
     }
   ]
 }

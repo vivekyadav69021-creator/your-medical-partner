@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -157,13 +158,13 @@ export default function DiseaseScannerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Scanner Grid with 3D Icons */}
+                    {/* Scanner Grid with Realistic Theme-Matching Icons */}
                     <div className="grid grid-cols-2 gap-6">
                         <ScannerCard 
                             title={t.skinTitle} 
                             imageId="scanner-skin"
                             gradient="from-[#FFF1F6] to-[#FFE4EC]"
-                            btnColor="bg-[#FFEDF2] text-pink-500"
+                            btnColor="bg-pink-500 text-white"
                             onClick={() => setView('skin')}
                             btnText={t.startBtn}
                         />
@@ -171,7 +172,7 @@ export default function DiseaseScannerPage() {
                             title={t.injuryTitle} 
                             imageId="scanner-injury"
                             gradient="from-[#FFF7ED] to-[#FFEDD5]"
-                            btnColor="bg-[#FFF4ED] text-orange-500"
+                            btnColor="bg-orange-500 text-white"
                             onClick={() => setView('injury')}
                             btnText={t.startBtn}
                         />
@@ -179,7 +180,7 @@ export default function DiseaseScannerPage() {
                             title={t.xrayTitle} 
                             imageId="scanner-xray"
                             gradient="from-[#E6F0FF] to-[#D1E4FF]"
-                            btnColor="bg-[#EDF5FF] text-blue-500"
+                            btnColor="bg-blue-500 text-white"
                             onClick={() => setView('xray')}
                             btnText={t.startBtn}
                         />
@@ -187,7 +188,7 @@ export default function DiseaseScannerPage() {
                             title={t.reportTitle} 
                             imageId="scanner-report"
                             gradient="from-[#F0FDF4] to-[#DCFCE7]"
-                            btnColor="bg-[#F0FFF7] text-green-500"
+                            btnColor="bg-green-500 text-white"
                             onClick={() => setView('lab')}
                             btnText={t.startBtn}
                         />
@@ -225,32 +226,36 @@ function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: {
     return (
         <Card 
             className={cn(
-                "rounded-[3rem] border-none shadow-sm group hover:scale-[1.03] transition-all duration-500 overflow-hidden cursor-pointer bg-gradient-to-br",
+                "rounded-[3rem] border-none shadow-md group hover:scale-[1.03] transition-all duration-500 overflow-hidden cursor-pointer bg-gradient-to-br",
                 gradient
             )}
             onClick={onClick}
         >
-            <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="relative w-28 h-28 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-xl">
+            <div className="p-6 flex flex-col h-full items-center justify-between text-center space-y-4">
+                <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner bg-white/50 backdrop-blur-sm border border-white/40">
                    {imageData && (
                        <Image 
                         src={imageData.imageUrl} 
                         alt={title} 
                         fill 
-                        className="object-contain" 
+                        className="object-cover group-hover:scale-105 transition-transform duration-700" 
                         data-ai-hint={imageData.imageHint}
                        />
                    )}
+                   {/* Subtle Overlay to make text pop */}
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
                 </div>
-                <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
-                <Button 
-                    className={cn(
-                        "w-full rounded-2xl h-10 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all border-none hover:opacity-80",
-                        btnColor
-                    )}
-                >
-                    {btnText}
-                </Button>
+                <div className="space-y-3 w-full">
+                    <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
+                    <Button 
+                        className={cn(
+                            "w-full rounded-2xl h-10 text-[10px] font-black uppercase tracking-widest shadow-lg transition-all border-none hover:brightness-110",
+                            btnColor
+                        )}
+                    >
+                        {btnText}
+                    </Button>
+                </div>
             </div>
         </Card>
     );
