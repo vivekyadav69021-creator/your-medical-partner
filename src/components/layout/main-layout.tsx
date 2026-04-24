@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sidebar,
   SidebarProvider,
@@ -27,13 +27,49 @@ import {
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
+import { cn } from '@/lib/utils';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();
   const { userImage, userName } = useUserProfile();
   const { setTheme } = useTheme();
+  const [showHeader, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const mainRef = useRef<HTMLDivElement>(null);
 
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!mainRef.current) return;
+      
+      const currentScrollY = mainRef.current.scrollTop;
+      
+      // Minimum scroll threshold to avoid flickering
+      if (Math.abs(currentScrollY - lastScrollY.current) < 10) return;
+
+      if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
+        // Scrolling Down - Hide Header
+        setHeaderVisible(false);
+      } else {
+        // Scrolling Up - Show Header
+        setHeaderVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    const mainElement = mainRef.current;
+    if (mainElement) {
+      mainElement.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
 
   return (
     <SidebarProvider>
@@ -51,7 +87,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col relative" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
-        <header className="flex h-16 items-center justify-between p-4 sticky top-0 z-30 bg-transparent transition-all">
+        {/* Animated Auto-hiding Header */}
+        <header 
+          className={cn(
+            "flex h-16 items-center justify-between p-4 sticky top-0 z-40 bg-white/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ease-in-out",
+            showHeader ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          )}
+        >
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1 px-4 hidden md:block">
              <div className="inline-block glowing-underline pb-1 pr-4">
@@ -71,7 +113,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-10 w-10 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm" title="Settings">
-                  <Avatar>
+                  <Avatar className="h-full w-full">
                       <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
                       <AvatarFallback>
                           <UserIcon />
@@ -111,8 +153,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-6 lg:p-8 min-h-full">
+        
+        {/* Main Content Area */}
+        <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
+          <div className="p-4 md:p-6 lg:p-8 min-h-full pb-20">
             {children}
           </div>
         </main>
