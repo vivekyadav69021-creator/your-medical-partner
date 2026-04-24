@@ -31,7 +31,7 @@ export function SplashScreen() {
           <div className="font-headline flex flex-wrap items-center justify-center gap-x-2 text-4xl md:text-6xl font-black tracking-tight uppercase relative pb-4">
             <span 
               className="opacity-0 animate-splash-slide-in-left"
-              style={{ animationDelay: '200ms', color: '#2D3A5D' }}
+              style={{ animationDelay: '200ms', color: '#1A365D' }}
             >
               Your
             </span>
@@ -43,12 +43,12 @@ export function SplashScreen() {
             </span>
             <span 
               className="opacity-0 animate-splash-slide-in-right"
-              style={{ animationDelay: '600ms', color: '#2D3A5D' }}
+              style={{ animationDelay: '600ms', color: '#1A365D' }}
             >
               Partner
             </span>
 
-            {/* Continuous Heartbeat Line Underline - Positioned precisely at the bottom of the text */}
+            {/* Continuous Heartbeat Line Underline */}
             <div className="absolute bottom-0 left-0 w-full px-1 opacity-0 animate-in fade-in duration-1000 fill-mode-forwards" style={{ animationDelay: '1000ms' }}>
               <div className="w-full overflow-hidden">
                   <svg 
