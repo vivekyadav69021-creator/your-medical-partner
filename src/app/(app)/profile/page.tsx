@@ -21,6 +21,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { updateProfile } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 const healthGoals = ["Weight Loss", "Muscle Gain", "Improve Fitness", "Boost Immunity", "Manage Stress"];
 
@@ -42,6 +44,7 @@ type UserProfileData = {
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const auth = useAuth();
   const { userName, userImage, setUserName, setUserImage } = useUserProfile();
   const [isSaving, setIsSaving] = useState(false);
   const [hideReminders, setHideReminders] = useState(false);
@@ -121,23 +124,34 @@ export default function ProfilePage() {
     });
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
+      // 1. Sync with Firebase Auth for real-time global availability
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: profile.name,
+          photoURL: profile.image.startsWith('data:') ? undefined : profile.image // photoURL usually needs a real link, we use local for dataURI
+        });
+      }
+
+      // 2. Save complete data to local storage
       localStorage.setItem(`userMedicalProfile_local`, JSON.stringify(profile));
       
+      // 3. Update global context states
       setUserName(profile.name || 'Guest');
       setUserImage(profile.image);
       
       toast({
-        title: "Profile Saved Locally",
-        description: "Your information has been successfully updated on this device.",
+        title: "Profile Synced!",
+        description: "Your details have been updated across the application.",
       });
     } catch (e: any) {
+      console.error(e);
       toast({
         variant: "destructive",
         title: "Save Failed",
-        description: "Could not save your profile. Please try again.",
+        description: "Could not sync your profile. Please check your connection.",
       });
     } finally {
         setIsSaving(false);
@@ -157,13 +171,12 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Local Medical Profile</CardTitle>
+          <CardTitle>Medical Profile</CardTitle>
           <CardDescription>
-            Your data is stored locally on this device.
+            Your information is used to personalize your health reports.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-            {/* Enhanced Profile Image Section */}
             <div className="flex flex-col md:flex-row items-center gap-8 border-b pb-8 border-slate-100 dark:border-slate-800">
                 <Avatar className="h-40 w-40 border-4 border-white dark:border-slate-800 shadow-xl">
                     <AvatarImage src={profile.image} alt={profile.name} className="object-cover" data-ai-hint="person face" />
@@ -174,7 +187,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col items-center md:items-start gap-3">
                     <div className="space-y-1 text-center md:text-left">
                       <h3 className="text-xl font-bold text-[#2D3A5D] dark:text-slate-100">{profile.name || 'Guest User'}</h3>
-                      <p className="text-sm text-slate-400 font-medium">Click below to update your profile picture</p>
+                      <p className="text-sm text-slate-400 font-medium">Your profile name is visible on Dashboard</p>
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={() => fileInputRef.current?.click()} className="rounded-full px-6 font-bold shadow-md">
@@ -277,7 +290,7 @@ export default function ProfilePage() {
          <CardFooter className="bg-slate-50/50 dark:bg-slate-800/20 p-6">
             <Button onClick={handleSaveProfile} disabled={isSaving} className="w-full md:w-auto rounded-full px-10 h-12 font-bold shadow-lg shadow-primary/20">
               {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-              {isSaving ? 'Saving...' : 'Save Profile Locally'}
+              {isSaving ? 'Saving...' : 'Sync & Save Profile'}
             </Button>
         </CardFooter>
       </Card>

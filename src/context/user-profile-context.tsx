@@ -18,11 +18,13 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const [userImage, setUserImageState] = useState('https://picsum.photos/seed/user/100/100');
 
   useEffect(() => {
+    // Priority 1: Use Firebase Auth metadata (Freshest data)
     if (user) {
       setUserNameState(user.displayName || (user.isAnonymous ? 'Guest User' : user.email?.split('@')[0] || 'User'));
-      setUserImageState(user.photoURL || 'https://picsum.photos/seed/user/100/100');
+      if (user.photoURL) setUserImageState(user.photoURL);
     }
     
+    // Priority 2: Override with local settings if they exist
     try {
       const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
       if (savedProfile) {

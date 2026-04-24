@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -29,6 +30,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/context/user-profile-context';
+import { useToast } from '@/hooks/use-toast';
 
 const healthChartData = [
   { day: '20', bpt: 40 },
@@ -40,6 +42,20 @@ const healthChartData = [
 
 export default function DashboardPage() {
   const { userName } = useUserProfile();
+  const { toast } = useToast();
+
+  // Show welcome toast on initial entry
+  useEffect(() => {
+    const hasGreeted = sessionStorage.getItem('hasGreeted');
+    if (!hasGreeted && userName !== 'Guest') {
+      toast({
+        title: `Welcome, ${userName.split(' ')[0]}! 👋`,
+        description: "Your health journey starts here. Explore our AI tools and expert consultations.",
+        duration: 5000, // Disappears in 5 seconds
+      });
+      sessionStorage.setItem('hasGreeted', 'true');
+    }
+  }, [userName, toast]);
 
   return (
     <div className="animate-in fade-in duration-500 space-y-8">

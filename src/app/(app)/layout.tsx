@@ -14,11 +14,17 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const [mounted, setMounted] = useState(false);
+  const [showSplash, setShowSplash] = useState(true); // Control splash visibility
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
+    // Mandatory splash delay for 2 seconds to ensure a premium feel
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -27,7 +33,8 @@ export default function AppLayout({
     }
   }, [mounted, user, isUserLoading, router]);
 
-  if (!mounted || isUserLoading) {
+  // Show splash if still mounting, checking auth, or during the 2s mandatory period
+  if (!mounted || isUserLoading || showSplash) {
     return <SplashScreen />;
   }
 
