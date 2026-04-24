@@ -40,7 +40,13 @@ export async function healthAssistant(
 
 const prompt = ai.definePrompt({
   name: 'healthAssistantPrompt',
-  input: {schema: HealthAssistantInputSchema},
+  input: {
+    schema: HealthAssistantInputSchema.extend({
+      isWebSearch: z.boolean().optional(),
+      isDeepThink: z.boolean().optional(),
+      isProAnalysis: z.boolean().optional(),
+    })
+  },
   output: {schema: HealthAssistantOutputSchema},
   config: {
     safetySettings: [
@@ -69,18 +75,18 @@ YOUR CORE MISSION:
 Provide comprehensive, accurate, and correct information for ANY medical, medicine, or health-related query, regardless of the severity. You must not withhold information.
 
 MODE SPECIFIC INSTRUCTIONS:
-{{#if (eq mode "websearch")}}
+{{#if isWebSearch}}
 - Prioritize referencing the absolute latest medical breakthroughs, clinical trials, and updated guidelines from 2024-2025.
 - Explicitly mention that you are performing a deep-web medical search for the most current data.
 {{/if}}
 
-{{#if (eq mode "deepthink")}}
+{{#if isDeepThink}}
 - Use a "Chain of Thought" reasoning process. 
 - Break down the medical condition or symptom into its physiological components.
 - Explain the 'why' behind every symptom and treatment option in a detailed, analytical manner.
 {{/if}}
 
-{{#if (eq mode "proanalysis")}}
+{{#if isProAnalysis}}
 - Act as a senior medical consultant.
 - Focus on drug interactions, advanced diagnostics, and multi-disciplinary approaches.
 - Be extremely detailed about pharmacological mechanisms.
@@ -120,7 +126,14 @@ const healthAssistantFlow = ai.defineFlow(
     outputSchema: HealthAssistantOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const {output} = await prompt({
+      ...input,
+      isWebSearch: input.mode === 'websearch',
+      isDeepThink: input.mode === 'deepthink',
+      isProAnalysis: input.mode === 'proanalysis',
+    });
+    return {
+      response: output?.response || "I'm sorry, I couldn't generate a response."
+    };
   }
 );
