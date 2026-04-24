@@ -1,4 +1,3 @@
-
 "use client";
 
 import { HeartPulse } from 'lucide-react';
@@ -28,7 +27,7 @@ export function SplashScreen() {
         
         {/* Premium Brand Typography Container */}
         <div className="relative flex flex-col items-center">
-          <div className="font-headline flex flex-wrap items-center justify-center gap-x-2 text-4xl md:text-6xl font-black tracking-tight uppercase relative pb-4">
+          <div className="font-headline flex flex-wrap items-center justify-center gap-x-2 text-4xl md:text-6xl font-black tracking-tight uppercase relative pb-6">
             <span 
               className="opacity-0 animate-splash-slide-in-left"
               style={{ animationDelay: '200ms', color: '#1A365D' }}
@@ -48,16 +47,16 @@ export function SplashScreen() {
               Partner
             </span>
 
-            {/* Continuous Heartbeat Line Underline */}
-            <div className="absolute bottom-0 left-0 w-full px-1 opacity-0 animate-in fade-in duration-1000 fill-mode-forwards" style={{ animationDelay: '1000ms' }}>
+            {/* Heartbeat (EKG) Line Animation - Positioned perfectly under the brand name */}
+            <div className="absolute -bottom-2 left-0 w-full px-1 opacity-0 animate-in fade-in duration-1000 fill-mode-forwards" style={{ animationDelay: '800ms' }}>
               <div className="w-full overflow-hidden">
                   <svg 
                     width="100%" 
-                    height="30" 
+                    height="40" 
                     viewBox="0 0 400 40" 
                     fill="none" 
                     xmlns="http://www.w3.org/2000/svg"
-                    className="w-full drop-shadow-[0_0_8px_rgba(36,136,232,0.6)]"
+                    className="w-full drop-shadow-[0_0_10px_rgba(36,136,232,0.6)]"
                     preserveAspectRatio="none"
                   >
                     <path 
@@ -82,7 +81,7 @@ export function SplashScreen() {
         </div>
 
         {/* Dynamic Tagline */}
-        <p className="mt-8 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 opacity-0 animate-in fade-in slide-in-from-bottom-2 duration-1000 fill-mode-forwards" style={{ animationDelay: '1800ms' }}>
+        <p className="mt-12 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 opacity-0 animate-in fade-in slide-in-from-bottom-2 duration-1000 fill-mode-forwards" style={{ animationDelay: '1800ms' }}>
           Your Reliable Digital Health Companion
         </p>
       </div>
