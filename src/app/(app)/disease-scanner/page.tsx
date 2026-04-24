@@ -38,7 +38,8 @@ import {
   Bandage,
   Bone,
   SearchCode,
-  ShieldPlus
+  ShieldPlus,
+  Activity
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -307,7 +308,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <CardContent className="space-y-4">
                     <canvas ref={canvasRef} className="hidden"></canvas>
                     {!isCameraOpen && !preview && (
-                        <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4">
+                        <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4 space-y-4">
                             <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-pink-400">
                                 <ImageIcon className="w-10 h-10" />
                             </div>
