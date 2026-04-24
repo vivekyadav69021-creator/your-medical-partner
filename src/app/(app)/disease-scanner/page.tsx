@@ -113,18 +113,18 @@ export default function DiseaseScannerPage() {
             case 'xray': return <XRayScanner lang={lang} onBack={() => setView('home')} />;
             case 'lab': return <LabReportAnalyzer lang={lang} onBack={() => setView('home')} />;
             default: return (
-                <div className="space-y-6">
+                <div className="space-y-8 px-2">
                     {/* Header with Notification & Profile */}
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                            <h1 className="text-3xl font-bold tracking-tight font-headline text-[#2D3A5D] dark:text-slate-100">{t.greeting}</h1>
-                            <p className="text-muted-foreground">{t.subGreeting}</p>
+                            <h1 className="text-3xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline">{t.greeting}</h1>
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t.subGreeting}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-white/50 backdrop-blur-md">
-                                <Bell className="h-5 w-5" />
+                            <Button variant="outline" size="icon" className="rounded-full h-12 w-12 bg-white/60 backdrop-blur-md shadow-sm border-white/40">
+                                <Bell className="h-5 w-5 text-slate-600" />
                             </Button>
-                            <Avatar className="h-10 w-10 border-2 border-white shadow-sm overflow-hidden">
+                            <Avatar className="h-12 w-12 border-2 border-white shadow-md overflow-hidden">
                                 <AvatarImage src={userImage} className="object-cover" />
                                 <AvatarFallback><UserIcon /></AvatarFallback>
                             </Avatar>
@@ -132,72 +132,75 @@ export default function DiseaseScannerPage() {
                     </div>
 
                     {/* Quick Health Stats Card */}
-                    <Card className="neumorphic-card overflow-hidden">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-black uppercase tracking-wider text-[#2D3A5D]/60 dark:text-slate-400">
+                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
+                        <CardHeader className="pb-3 pt-6 px-8">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                                 {t.statsTitle}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-2">
+                        <CardContent className="grid grid-cols-3 gap-4 px-8 pb-6">
                             <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t.lastScan}:</p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.lastScan}:</p>
                                 <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">2 days ago</p>
                             </div>
-                            <div className="space-y-1 border-x px-4 border-white/20">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t.reports}:</p>
+                            <div className="space-y-1 border-x px-4 border-slate-100 dark:border-slate-800">
+                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.reports}:</p>
                                 <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">5</p>
                             </div>
                             <div className="space-y-1 text-right">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t.healthScore}:</p>
-                                <div className="flex items-center justify-end gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                                    <p className="text-sm font-black text-green-600">Good</p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.healthScore}:</p>
+                                <div className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-black uppercase">
+                                    Good
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Scanner Grid */}
-                    <div className="grid grid-cols-2 gap-5">
+                    <div className="grid grid-cols-2 gap-6">
                         <ScannerCard 
                             title={t.skinTitle} 
-                            icon={<SearchCode className="w-10 h-10 text-pink-500" />} 
-                            gradient="from-[#FFF0F5] to-[#FFE1EB] dark:from-pink-900/40 dark:to-pink-800/40"
+                            icon={<SearchCode className="w-12 h-12 text-pink-500 drop-shadow-md" />} 
+                            gradient="from-[#FFF1F6] to-[#FFE4EC]"
+                            btnColor="bg-[#FFEDF2] text-pink-500"
                             onClick={() => setView('skin')}
                             btnText={t.startBtn}
                         />
                         <ScannerCard 
                             title={t.injuryTitle} 
-                            icon={<Bandage className="w-10 h-10 text-orange-500" />} 
-                            gradient="from-[#FFF7ED] to-[#FFEDD5] dark:from-orange-900/40 dark:to-orange-800/40"
+                            icon={<Bandage className="w-12 h-12 text-orange-500 drop-shadow-md" />} 
+                            gradient="from-[#FFF7ED] to-[#FFEDD5]"
+                            btnColor="bg-[#FFF4ED] text-orange-500"
                             onClick={() => setView('injury')}
                             btnText={t.startBtn}
                         />
                         <ScannerCard 
                             title={t.xrayTitle} 
-                            icon={<Bone className="w-10 h-10 text-blue-500" />} 
-                            gradient="from-[#E6F0FF] to-[#D1E4FF] dark:from-blue-900/40 dark:to-blue-800/40"
+                            icon={<Bone className="w-12 h-12 text-blue-500 drop-shadow-md" />} 
+                            gradient="from-[#E6F0FF] to-[#D1E4FF]"
+                            btnColor="bg-[#EDF5FF] text-blue-500"
                             onClick={() => setView('xray')}
                             btnText={t.startBtn}
                         />
                         <ScannerCard 
                             title={t.reportTitle} 
-                            icon={<FileText className="w-10 h-10 text-green-500" />} 
-                            gradient="from-[#F0FDF4] to-[#DCFCE7] dark:from-green-900/40 dark:to-green-800/40"
+                            icon={<FileText className="w-12 h-12 text-green-500 drop-shadow-md" />} 
+                            gradient="from-[#F0FDF4] to-[#DCFCE7]"
+                            btnColor="bg-[#F0FFF7] text-green-500"
                             onClick={() => setView('lab')}
                             btnText={t.startBtn}
                         />
                     </div>
 
                     {/* Language Selection */}
-                    <div className="flex justify-center pt-4 pb-10">
+                    <div className="flex justify-center pt-4 pb-12">
                         <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
-                            <SelectTrigger className="w-[140px] bg-white/50 backdrop-blur-md rounded-full border-white/40 shadow-sm">
+                            <SelectTrigger className="w-[140px] bg-white/60 backdrop-blur-md rounded-full border-white/40 shadow-sm font-black text-[10px] uppercase tracking-widest h-10">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="en">English</SelectItem>
-                                <SelectItem value="hi">हिन्दी</SelectItem>
+                            <SelectContent className="rounded-2xl border-none shadow-xl">
+                                <SelectItem value="en" className="font-bold text-xs">English</SelectItem>
+                                <SelectItem value="hi" className="font-bold text-xs">हिन्दी</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -208,31 +211,34 @@ export default function DiseaseScannerPage() {
 
     return (
         <div className="animate-in fade-in duration-500 h-full">
-            <div className="max-w-xl mx-auto space-y-6">
+            <div className="max-w-xl mx-auto">
                 {renderContent()}
             </div>
         </div>
     );
 }
 
-function ScannerCard({ title, icon, gradient, onClick, btnText }: { title: string, icon: React.ReactNode, gradient: string, onClick: () => void, btnText: string }) {
+function ScannerCard({ title, icon, gradient, btnColor, onClick, btnText }: { title: string, icon: React.ReactNode, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
     return (
-        <Card className="rounded-[2.5rem] neumorphic-card group hover:scale-[1.03] transition-all duration-500 overflow-hidden border-none">
-            <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-3xl transform group-hover:rotate-6 transition-transform duration-500">
+        <Card 
+            className={cn(
+                "rounded-[3rem] border-none shadow-sm group hover:scale-[1.03] transition-all duration-500 overflow-hidden cursor-pointer bg-gradient-to-br",
+                gradient
+            )}
+            onClick={onClick}
+        >
+            <div className="p-8 flex flex-col items-center justify-center text-center space-y-6">
+                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-[2rem] shadow-inner transform group-hover:rotate-6 transition-transform duration-500 border border-white/40">
                     {icon}
                 </div>
-                <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{title}</h3>
+                <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
                 <Button 
-                    onClick={onClick} 
                     className={cn(
-                        "mt-auto w-full py-2.5 rounded-2xl flex items-center justify-between text-[10px] font-black tracking-tight transition-all bg-gradient-to-r shadow-inner text-[#2D3A5D] dark:text-slate-100",
-                        gradient
+                        "w-full rounded-2xl h-10 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all border-none hover:opacity-80",
+                        btnColor
                     )}
-                    variant="ghost"
                 >
                     {btnText}
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
                 </Button>
             </div>
         </Card>
@@ -275,7 +281,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
@@ -291,12 +297,12 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <CardContent className="space-y-4">
                     <canvas ref={canvasRef} className="hidden"></canvas>
                     {!isCameraOpen && !preview && (
-                        <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4 space-y-4">
+                        <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4">
                             <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-pink-400">
                                 <ImageIcon className="w-10 h-10" />
                             </div>
                             <div className="flex gap-2">
-                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="rounded-full font-bold">
+                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="rounded-full font-bold h-10 px-6">
                                     <Upload className="mr-2 h-4 w-4" /> Upload
                                 </Button>
                                 <Button onClick={async () => {
@@ -308,7 +314,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                     } catch (e) {
                                         toast({ variant: 'destructive', title: "Camera Error", description: "Could not access camera." });
                                     }
-                                }} className="rounded-full bg-[#FFEDF2] text-pink-600 hover:bg-pink-100 font-bold border-none">
+                                }} className="rounded-full bg-[#FFEDF2] text-pink-600 hover:bg-pink-100 font-bold border-none h-10 px-6">
                                     <Camera className="mr-2 h-4 w-4" /> Camera
                                 </Button>
                             </div>
@@ -387,7 +393,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
@@ -408,7 +414,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         <Textarea name="query" placeholder="e.g., I cut my finger while chopping vegetables..." rows={4} className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner" required />
                         
                         {!preview ? (
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-orange-100 text-orange-600 bg-orange-50/30 font-bold hover:bg-orange-50 transition-all">
+                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-orange-100 text-orange-600 bg-orange-50/30 font-bold hover:bg-orange-50 transition-all h-10">
                                 <ImageIcon className="mr-2 h-4 w-4" /> Add Photo (Optional)
                             </Button>
                         ) : (
@@ -452,7 +458,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
@@ -548,7 +554,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
@@ -631,4 +637,3 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         </div>
     );
 }
-
