@@ -158,7 +158,7 @@ export default function DiseaseScannerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Scanner Grid with Consistent Icon Management */}
+                    {/* Scanner Grid with Realistic Icon Integration */}
                     <div className="grid grid-cols-2 gap-6">
                         <ScannerCard 
                             title={t.skinTitle} 
@@ -238,7 +238,7 @@ function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: {
                         src={imageData.imageUrl} 
                         alt={title} 
                         fill 
-                        className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                        className="object-cover group-hover:scale-110 transition-transform duration-700" 
                         data-ai-hint={imageData.imageHint}
                        />
                    ) : (
