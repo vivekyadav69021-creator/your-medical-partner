@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useUser } from '@/firebase';
 
 type UserProfileContextType = {
   userName: string;
@@ -12,13 +13,17 @@ type UserProfileContextType = {
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
-  // Static Guest state by default
+  const { user } = useUser();
   const [userName, setUserNameState] = useState('Guest');
   const [userImage, setUserImageState] = useState('https://picsum.photos/seed/user/100/100');
 
   useEffect(() => {
+    if (user) {
+      setUserNameState(user.displayName || (user.isAnonymous ? 'Guest User' : user.email?.split('@')[0] || 'User'));
+      setUserImageState(user.photoURL || 'https://picsum.photos/seed/user/100/100');
+    }
+    
     try {
-      // Load from local storage for local persistence without Auth
       const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
@@ -28,7 +33,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Failed to load local profile", e);
     }
-  }, []);
+  }, [user]);
 
   const setUserName = (name: string) => {
       setUserNameState(name);

@@ -9,7 +9,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
-import { HeartPulse, ShoppingCart, User as UserIcon, Moon, Sun, Laptop } from 'lucide-react';
+import { HeartPulse, ShoppingCart, User as UserIcon, Moon, Sun, Laptop, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
@@ -28,11 +28,14 @@ import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
 import { cn } from '@/lib/utils';
+import { signOut } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
-export default function MainLayout({ children }: { children: React.Node }) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();
   const { userImage, userName } = useUserProfile();
   const { setTheme } = useTheme();
+  const auth = useAuth();
   const [showHeader, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -44,18 +47,13 @@ export default function MainLayout({ children }: { children: React.Node }) {
       if (!mainRef.current) return;
       
       const currentScrollY = mainRef.current.scrollTop;
-      
-      // Determine scroll direction
       const isScrollingDown = currentScrollY > lastScrollY.current;
       const scrollDistance = Math.abs(currentScrollY - lastScrollY.current);
 
-      // Only toggle if scroll distance is significant to prevent jitter
       if (scrollDistance > 5) {
         if (isScrollingDown && currentScrollY > 80) {
-          // Scrolling Down - Hide Header
           setHeaderVisible(false);
         } else {
-          // Scrolling Up - Show Header
           setHeaderVisible(true);
         }
       }
@@ -75,6 +73,14 @@ export default function MainLayout({ children }: { children: React.Node }) {
     };
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  };
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -91,7 +97,6 @@ export default function MainLayout({ children }: { children: React.Node }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col relative" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
-        {/* Animated Auto-hiding Header */}
         <header 
           className={cn(
             "flex h-16 items-center justify-between p-4 sticky top-0 z-40 bg-white/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ease-in-out",
@@ -125,9 +130,10 @@ export default function MainLayout({ children }: { children: React.Node }) {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl border-none shadow-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
-                   <Link href="/profile">
+                   <Link href="/profile" className="flex items-center gap-2">
+                    <UserIcon className="w-4 h-4" />
                     My Profile
                    </Link>
                 </DropdownMenuItem>
@@ -152,13 +158,19 @@ export default function MainLayout({ children }: { children: React.Node }) {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
+                <DropdownMenuItem 
+                  onClick={handleSignOut} 
+                  className="rounded-xl cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/30 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
           </div>
         </header>
         
-        {/* Main Content Area */}
         <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
           <div className="p-4 md:p-6 lg:p-8 min-h-full pb-20">
             {children}
