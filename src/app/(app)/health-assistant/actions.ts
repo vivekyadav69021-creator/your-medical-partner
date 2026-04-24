@@ -10,6 +10,7 @@ import { aiDoctorChat } from '@/ai/flows/ai-doctor-chat-flow';
 const healthAssistantSchema = z.object({
   query: z.string().min(1, 'Please ask a detailed question.'),
   photoDataUri: z.string().optional(),
+  mode: z.enum(['standard', 'websearch', 'deepthink', 'proanalysis']).default('standard'),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
@@ -26,6 +27,7 @@ export async function healthAssistantAction(
   const validatedFields = healthAssistantSchema.safeParse({
     query: formData.get('query'),
     photoDataUri: formData.get('photoDataUri') || undefined,
+    mode: formData.get('mode') || 'standard',
     history: history,
   });
 
