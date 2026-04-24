@@ -4,97 +4,97 @@
     {
       "id": "doctor-1",
       "description": "Portrait of Dr. Ananya Sharma",
-      "imageUrl": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc1/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-2",
       "description": "Portrait of Dr. Vikram Singh",
-      "imageUrl": "https://images.unsplash.com/photo-1730597842283-943c7986ee2c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc2/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-3",
       "description": "Portrait of Dr. Priya Patel",
-      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZG9jdG9yJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzODczMjE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc3/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-4",
       "description": "Portrait of Dr. Arjun Gupta",
-      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjYzODM5MjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc4/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-5",
       "description": "Portrait of Dr. John Smith",
-      "imageUrl": "https://images.unsplash.com/photo-1642541724244-83d49288a86b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc5/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-6",
       "description": "Portrait of Dr. Emily Williams",
-      "imageUrl": "https://images.unsplash.com/photo-1612349316228-5942a9b489c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc6/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-7",
       "description": "Portrait of Dr. Sameer Khan",
-      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc7/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-8",
       "description": "Portrait of Dr. Meera Iyer",
-      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZG9jdG9yJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzODczMjE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc8/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-9",
       "description": "Portrait of Dr. Olivia Chen",
-      "imageUrl": "https://images.unsplash.com/photo-1550831107-1553da8c8464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc9/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "doctor-10",
       "description": "Portrait of Dr. Michael Brown",
-      "imageUrl": "https://images.unsplash.com/photo-1642541724244-83d49288a86b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NzMyMTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/doc10/1080/1080",
       "imageHint": "doctor portrait"
     },
     {
       "id": "meditation-hero",
-      "description": "A colorful informational poster with a yellow circular shape and various abstract and nature-inspired elements",
-      "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1820&auto=format&fit=crop",
+      "description": "Yoga and meditation hero image",
+      "imageUrl": "https://picsum.photos/seed/meditation/1820/800",
       "imageHint": "yoga meditation"
     },
     {
       "id": "scanner-skin",
-      "description": "Realistic Skin Scan Close-up",
-      "imageUrl": "https://images.unsplash.com/photo-1584515933487-78271bee27b8?q=80&w=400&h=400&auto=format&fit=crop",
+      "description": "Realistic Dermatology Skin Scan Analysis",
+      "imageUrl": "https://picsum.photos/seed/skin-scan-real/600/600",
       "imageHint": "dermatology skin"
     },
     {
       "id": "scanner-injury",
-      "description": "Realistic Medical Bandage Illustration",
-      "imageUrl": "https://images.unsplash.com/photo-1605634591465-b3e64d7f57a3?q=80&w=400&h=400&auto=format&fit=crop",
+      "description": "Realistic Medical Injury Bandage",
+      "imageUrl": "https://picsum.photos/seed/injury-real/600/600",
       "imageHint": "medical bandage"
     },
     {
       "id": "scanner-xray",
-      "description": "Realistic X-ray Scan Image",
-      "imageUrl": "https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=400&h=400&auto=format&fit=crop",
+      "description": "Realistic Medical X-ray Scan Plate",
+      "imageUrl": "https://picsum.photos/seed/xray-real/600/600",
       "imageHint": "x-ray scan"
     },
     {
       "id": "scanner-report",
-      "description": "Realistic Medical Report Illustration",
-      "imageUrl": "https://images.unsplash.com/photo-1581056771107-24ca5f033842?q=80&w=400&h=400&auto=format&fit=crop",
+      "description": "Realistic Medical Laboratory Report Clipboard",
+      "imageUrl": "https://picsum.photos/seed/report-real/600/600",
       "imageHint": "medical clipboard"
     },
     {
       "id": "assistant-avatar",
       "description": "AI assistant avatar",
-      "imageUrl": "https://images.unsplash.com/photo-1599058882438-58c8b964273f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb2JvdCUyMGF2YXRhcnxlbnwwfHx8fDE3NjQ0NjQzMzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/ai-bot/400/400",
       "imageHint": "robot avatar"
     }
   ]
