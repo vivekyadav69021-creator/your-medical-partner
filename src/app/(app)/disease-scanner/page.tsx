@@ -158,7 +158,7 @@ export default function DiseaseScannerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Scanner Grid with Realistic Theme-Matching Icons */}
+                    {/* Scanner Grid with Consistent Icon Management */}
                     <div className="grid grid-cols-2 gap-6">
                         <ScannerCard 
                             title={t.skinTitle} 
@@ -233,7 +233,7 @@ function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: {
         >
             <div className="p-6 flex flex-col h-full items-center justify-between text-center space-y-4">
                 <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner bg-white/50 backdrop-blur-sm border border-white/40">
-                   {imageData && (
+                   {imageData ? (
                        <Image 
                         src={imageData.imageUrl} 
                         alt={title} 
@@ -241,8 +241,11 @@ function ScannerCard({ title, imageId, gradient, btnColor, onClick, btnText }: {
                         className="object-cover group-hover:scale-105 transition-transform duration-700" 
                         data-ai-hint={imageData.imageHint}
                        />
+                   ) : (
+                       <div className="w-full h-full flex items-center justify-center bg-white/40">
+                           <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                       </div>
                    )}
-                   {/* Subtle Overlay to make text pop */}
                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
                 </div>
                 <div className="space-y-3 w-full">
