@@ -34,7 +34,6 @@ import {
     ShieldPlus,
     Search,
     Zap,
-    Stethoscope,
     HeartPulse,
     Plus
 } from 'lucide-react';
@@ -106,11 +105,11 @@ type PulseMode = 'standard' | 'websearch' | 'deepthink' | 'proanalysis';
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="icon" disabled={pending} className="rounded-full h-12 w-12 bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
+    <Button type="submit" disabled={pending} className="rounded-2xl h-14 w-14 bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
       {pending ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin" />
       ) : (
-        <Send className="h-5 w-5" />
+        <Send className="h-6 w-6" />
       )}
       <span className="sr-only">Send message</span>
     </Button>
@@ -697,6 +696,16 @@ function ChatInterface({
             </CardContent>
             
             <CardFooter className="px-8 pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50">
+                {/* Active Mode Indicator Above Input */}
+                {pulseMode && pulseMode !== 'standard' && (
+                    <div className="flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 shadow-sm">
+                            <HeartPulse className="w-3.5 h-3.5 text-primary animate-pulse" />
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{pulseMode} Mode Active</span>
+                        </div>
+                    </div>
+                )}
+
                 {attachedImage && (
                     <div className="relative inline-block w-20 h-20 group">
                         <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-2xl border-4 border-white shadow-lg object-cover h-full w-full" />
@@ -716,35 +725,29 @@ function ChatInterface({
                     action={onFormAction}
                     className="flex w-full items-center gap-3"
                 >
-                    <div className="flex-1 relative group flex items-center bg-white rounded-full px-2 shadow-inner h-14 overflow-hidden">
-                        {setPulseMode && (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 text-slate-400 hover:text-primary transition-colors shrink-0 ml-1">
-                                        <PlusCircle className="h-6 w-6" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-64 rounded-[2rem] border-none shadow-2xl p-4" side="top" align="start">
-                                    <div className="space-y-4">
-                                        <h4 className="font-black text-xs text-[#2D3A5D] uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
-                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
-                                            <PulseModeItem value="standard" label="Standard" desc="General health advice" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                            <PulseModeItem value="websearch" label="Web Search" desc="Search latest medical databases" icon={<Search className="w-4 h-4"/>} />
-                                            <PulseModeItem value="deepthink" label="Deep Medical Think" desc="Analytical medical reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                            <PulseModeItem value="proanalysis" label="Pro Analysis" desc="Complex drug & report checks" icon={<Zap className="w-4 h-4"/>} />
-                                        </RadioGroup>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        )}
-                        
-                        {pulseMode && pulseMode !== 'standard' && (
-                           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 rounded-full animate-in zoom-in-95 duration-200">
-                               <HeartPulse className="w-3 h-3 text-primary animate-pulse" />
-                               <span className="text-[9px] font-black text-primary uppercase">{pulseMode}</span>
-                           </div>
-                        )}
+                    {/* Independent Mode Selector Button */}
+                    {setPulseMode && (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="rounded-2xl h-14 w-14 bg-white shadow-sm border border-slate-100 hover:bg-slate-50 transition-all shrink-0">
+                                    <PlusCircle className="h-7 w-7 text-primary" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 rounded-[2rem] border-none shadow-2xl p-4" side="top" align="start">
+                                <div className="space-y-4">
+                                    <h4 className="font-black text-xs text-[#2D3A5D] uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
+                                    <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
+                                        <PulseModeItem value="standard" label="Standard" desc="General health advice" icon={<ShieldPlus className="w-4 h-4"/>} />
+                                        <PulseModeItem value="websearch" label="Web Search" desc="Search latest medical databases" icon={<Search className="w-4 h-4"/>} />
+                                        <PulseModeItem value="deepthink" label="Deep Medical Think" desc="Analytical medical reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
+                                        <PulseModeItem value="proanalysis" label="Pro Analysis" desc="Complex drug & report checks" icon={<Zap className="w-4 h-4"/>} />
+                                    </RadioGroup>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    )}
 
+                    <div className="flex-1 relative flex items-center bg-white rounded-2xl px-2 shadow-inner h-14 overflow-hidden border border-slate-100">
                         <Input
                             id="chatInput"
                             ref={queryInputRef}
@@ -765,7 +768,7 @@ function ChatInterface({
                             type="button" 
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isPending}
-                            className="p-2 rounded-full hover:bg-slate-50 transition-colors text-slate-400 group-hover:text-primary shrink-0 mr-1"
+                            className="p-2 rounded-full hover:bg-slate-50 transition-colors text-slate-400 shrink-0 mr-1"
                         >
                             <Paperclip className="h-5 w-5" />
                         </button>
