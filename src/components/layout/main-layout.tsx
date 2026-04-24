@@ -116,9 +116,9 @@ export default function MainLayout({ children }: { children: React.Node }) {
             
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-12 w-12 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm overflow-hidden" title="Settings">
+                 <Button variant="ghost" className="relative h-12 w-12 p-0 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm overflow-hidden flex items-center justify-center" title="Settings">
                   <Avatar className="h-full w-full">
-                      <AvatarImage src={userImage} alt={userName} data-ai-hint="person face" />
+                      <AvatarImage src={userImage} alt={userName} className="object-cover" data-ai-hint="person face" />
                       <AvatarFallback>
                           <UserIcon />
                       </AvatarFallback>

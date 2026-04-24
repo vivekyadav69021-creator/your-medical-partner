@@ -124,8 +124,8 @@ export default function DiseaseScannerPage() {
                             <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-white/50 backdrop-blur-md">
                                 <Bell className="h-5 w-5" />
                             </Button>
-                            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                                <AvatarImage src={userImage} />
+                            <Avatar className="h-10 w-10 border-2 border-white shadow-sm overflow-hidden">
+                                <AvatarImage src={userImage} className="object-cover" />
                                 <AvatarFallback><UserIcon /></AvatarFallback>
                             </Avatar>
                         </div>
@@ -359,7 +359,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
                     {preview && (
                         <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="Preview" width={500} height={500} className="w-full h-auto" />
+                            <Image src={preview} alt="Preview" width={500} height={500} className="w-full h-auto object-cover" />
                             <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
                                 <X className="h-4 w-4" />
                             </Button>
@@ -430,7 +430,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             </Button>
                         ) : (
                             <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-md">
-                                <Image src={preview} alt="Injury" width={400} height={400} className="w-full h-auto" />
+                                <Image src={preview} alt="Injury" width={400} height={400} className="w-full h-auto object-cover" />
                                 <Button size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
                                     <X className="h-4 w-4" />
                                 </Button>
@@ -492,7 +492,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                         </div>
                     ) : (
                         <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="X-ray" width={500} height={500} className="w-full h-auto" />
+                            <Image src={preview} alt="X-ray" width={500} height={500} className="w-full h-auto object-cover" />
                             <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
                                 <X className="h-4 w-4" />
                             </Button>
@@ -588,7 +588,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         </div>
                     ) : (
                         <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="Report" width={500} height={500} className="w-full h-auto" />
+                            <Image src={preview} alt="Report" width={500} height={500} className="w-full h-auto object-cover" />
                             <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
                                 <X className="h-4 w-4" />
                             </Button>
