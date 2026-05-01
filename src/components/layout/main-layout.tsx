@@ -50,6 +50,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       const isScrollingDown = currentScrollY > lastScrollY.current;
       const scrollDistance = Math.abs(currentScrollY - lastScrollY.current);
 
+      // Only toggle if scrolled more than a small threshold
       if (scrollDistance > 5) {
         if (isScrollingDown && currentScrollY > 80) {
           setHeaderVisible(false);

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -35,6 +34,7 @@ import {
     Search,
     Zap,
     HeartPulse,
+    History,
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,6 +53,13 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -492,23 +499,69 @@ export default function HealthAssistantPage() {
                     <TabsTrigger value="doctor" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
                 </TabsList>
                 
-                {activeMode === 'doctor' && (
-                    <div className="flex-1 max-w-[160px] md:max-w-[240px]">
-                        <Select value={specialty} onValueChange={setSpecialty}>
-                            <SelectTrigger className="h-11 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest">
-                                <div className="flex items-center gap-2 truncate">
-                                    <BrainCircuit className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary shrink-0" />
-                                    <SelectValue placeholder="Specialty" />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-none shadow-xl">
-                                {doctorSpecialties.map(spec => (
-                                    <SelectItem key={spec} value={spec} className="font-bold text-xs">{spec}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    {activeMode === 'doctor' && (
+                        <div className="flex-1 max-w-[140px] md:max-w-[240px]">
+                            <Select value={specialty} onValueChange={setSpecialty}>
+                                <SelectTrigger className="h-11 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest">
+                                    <div className="flex items-center gap-2 truncate">
+                                        <BrainCircuit className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary shrink-0" />
+                                        <SelectValue placeholder="Specialty" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-none shadow-xl">
+                                    {doctorSpecialties.map(spec => (
+                                        <SelectItem key={spec} value={spec} className="font-bold text-xs">{spec}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    
+                    {/* Mobile History Button */}
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" className="md:hidden rounded-full h-11 w-11 bg-white/50 dark:bg-slate-800/50 border-white/50 shadow-sm">
+                                <History className="h-5 w-5 text-primary" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 border-none rounded-l-[2rem]">
+                            <SheetHeader className="p-6 border-b">
+                                <SheetTitle className="text-lg font-black text-primary uppercase tracking-widest">Chat History</SheetTitle>
+                            </SheetHeader>
+                            <div className="flex-1 overflow-hidden h-[calc(100vh-80px)]">
+                                <ScrollArea className="h-full p-4">
+                                    <Button variant="outline" className="w-full rounded-2xl mb-6 font-bold" onClick={handleNewChat}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> New Chat
+                                    </Button>
+                                    <div className="space-y-4">
+                                        {sessions.map(session => (
+                                            <div 
+                                                key={session.id} 
+                                                className={cn(
+                                                    "p-4 rounded-2xl cursor-pointer group flex items-center justify-between transition-all border",
+                                                    activeSessionId === session.id ? "bg-primary/5 border-primary/20" : "bg-slate-50 dark:bg-slate-800/50 border-transparent"
+                                                )}
+                                                onClick={() => {
+                                                    setActiveSessionId(session.id);
+                                                    // Add any logic to close sheet if needed via state
+                                                }}
+                                            >
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
+                                                </div>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
             </div>
 
             <div className="flex-1 flex flex-col min-h-0 w-full">
@@ -652,10 +705,10 @@ function ChatInterface({
                                 </Avatar>
                                 <div
                                     className={cn(
-                                        "max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
+                                        "max-w-full md:max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
                                         message.role === 'user' 
                                             ? "bg-primary text-white rounded-tr-none" 
-                                            : "bg-slate-50 dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-white/50 dark:border-slate-700/50"
+                                            : "bg-white dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-blue-50/30 dark:border-slate-700/50"
                                     )}
                                 >
                                     {message.image && (
@@ -683,7 +736,7 @@ function ChatInterface({
                                 <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 bg-primary/10">
                                     <AvatarFallback className="bg-transparent"><Icon className="w-5 h-5 text-primary"/></AvatarFallback>
                                 </Avatar>
-                                <div className="bg-slate-50 dark:bg-slate-800 rounded-[1.2rem] rounded-tl-none px-4 md:px-6 py-3 md:py-4 border border-white/50 dark:border-slate-700/50 flex items-center gap-3">
+                                <div className="bg-white dark:bg-slate-800 rounded-[1.2rem] rounded-tl-none px-4 md:px-6 py-3 md:py-4 border border-blue-50/30 dark:border-slate-700/50 flex items-center gap-3">
                                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is thinking...</span>
                                 </div>
@@ -723,7 +776,7 @@ function ChatInterface({
                     action={onFormAction}
                     className="flex w-full items-end gap-2 md:gap-3"
                 >
-                    {/* Independent Mode Selector Button */}
+                    {/* Mode Selector Button - Independent */}
                     {setPulseMode && (
                         <Popover>
                             <PopoverTrigger asChild>
