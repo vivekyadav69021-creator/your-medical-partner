@@ -12,9 +12,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, User, Loader2, BrainCircuit, Mic, MicOff, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, ShieldPlus, Activity, Sparkles } from 'lucide-react';
+import { Send, User, Loader2, BrainCircuit, Mic, MicOff, Volume2, StopCircle, ThumbsUp, ThumbsDown, Copy, PlusCircle, Trash2, Activity } from 'lucide-react';
 import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -32,7 +32,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -61,7 +60,7 @@ const initialSpeechState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="icon" disabled={pending} className="rounded-full h-12 w-12 bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+    <Button type="submit" size="icon" disabled={pending} className="rounded-2xl h-12 w-12 bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
       {pending ? (
         <Loader2 className="h-5 w-5 animate-spin" />
       ) : (
@@ -103,7 +102,7 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
             <ThumbsDown className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="rounded-[2rem] border-none shadow-2xl">
+        <DialogContent className="rounded-[1rem] border-none shadow-2xl">
           <form onSubmit={handleDislikeSubmit}>
             <DialogHeader>
               <DialogTitle className="text-xl font-black text-[#2D3A5D]">Provide Additional Feedback</DialogTitle>
@@ -122,7 +121,7 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
                     <Label htmlFor="r2" className="font-bold text-slate-600">Factually incorrect</Label>
                   </div>
                 </RadioGroup>
-                <Textarea name="feedback-details" placeholder="Additional details..." className="rounded-2xl bg-slate-50 border-none shadow-inner" />
+                <Textarea name="feedback-details" placeholder="Additional details..." className="rounded-xl bg-slate-50 border-none shadow-inner" />
             </div>
             <DialogFooter>
               <Button type="submit" className="rounded-full w-full font-black uppercase text-[10px] tracking-widest">Submit Feedback</Button>
@@ -218,15 +217,15 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
   };
   
   return (
-    <Card className="rounded-[2rem] neumorphic-card border-none mb-4">
-        <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-                 <div className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50">
+    <Card className="rounded-[1rem] neumorphic-card border-none mb-4 w-full">
+        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50">
                     <Select value={selectedLang} onValueChange={setSelectedLang}>
-                        <SelectTrigger className="w-[120px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
+                        <SelectTrigger className="w-[100px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-none shadow-xl">
+                        <SelectContent className="rounded-xl border-none shadow-xl">
                             <SelectItem value="en-IN">English</SelectItem>
                             <SelectItem value="hi-IN">हिन्दी</SelectItem>
                         </SelectContent>
@@ -269,7 +268,7 @@ export default function AIPsychiatristPage() {
   
   const formRef = useRef<HTMLFormElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const queryInputRef = useRef<HTMLInputElement>(null);
+  const queryInputRef = useRef<HTMLTextAreaElement>(null);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession?.messages || [];
@@ -342,9 +341,9 @@ export default function AIPsychiatristPage() {
   const userImage = "https://picsum.photos/seed/user/100/100";
 
   return (
-    <div className="flex h-[calc(100vh-140px)] gap-6 animate-in fade-in duration-500">
-      {/* Sidebar */}
-      <Card className="hidden md:flex md:w-1/4 flex-col rounded-[2.5rem] neumorphic-card border-none p-2 overflow-hidden">
+    <div className="flex h-full w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
+      {/* Sidebar - Desktop Only */}
+      <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden">
           <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
               <CardTitle className="text-sm font-black text-[#2D3A5D] uppercase tracking-widest">History</CardTitle>
               <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 border border-white/50" onClick={handleNewChat}>
@@ -358,7 +357,7 @@ export default function AIPsychiatristPage() {
                           <div 
                               key={session.id} 
                               className={cn(
-                                  "p-4 rounded-[1.5rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
+                                  "p-4 rounded-[1rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
                                   activeSessionId === session.id ? "bg-white shadow-sm border-blue-50" : "hover:bg-white/40"
                               )}
                               onClick={() => setActiveSessionId(session.id)}
@@ -380,29 +379,29 @@ export default function AIPsychiatristPage() {
           </CardContent>
       </Card>
 
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0">
+      {/* Main Area - Full Width on Mobile */}
+      <div className="flex-1 flex flex-col h-full w-full min-w-0">
         <VoiceWidget lastAssistantMessage={lastAssistantMessage} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }} />
         
-        <Card className="flex-1 flex flex-col rounded-[2.5rem] neumorphic-card border-none overflow-hidden min-h-0">
-          <CardHeader className="px-8 pt-8 pb-4">
+        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full">
+          <CardHeader className="px-4 md:px-8 pt-6 pb-4">
               <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-50 dark:bg-slate-800 rounded-2xl">
+                  <div className="p-3 bg-indigo-50 dark:bg-slate-800 rounded-2xl shrink-0">
                       <BrainCircuit className="w-6 h-6 text-indigo-500" />
                   </div>
-                  <div>
-                      <CardTitle className="text-lg font-black text-[#2D3A5D] tracking-tight">AI Psychiatrist</CardTitle>
-                      <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Safe & Confidential Mental Health Companion</CardDescription>
+                  <div className="min-w-0">
+                      <CardTitle className="text-lg font-black text-[#2D3A5D] tracking-tight truncate">AI Psychiatrist</CardTitle>
+                      <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">Mental Health Companion</CardDescription>
                   </div>
               </div>
           </CardHeader>
           
           <CardContent className="flex-1 overflow-hidden p-0 relative">
-              <ScrollArea className="h-full p-8" ref={scrollAreaRef}>
+              <ScrollArea className="h-full px-4 md:px-8 pb-8" ref={scrollAreaRef}>
                   <div className="space-y-6">
                       {messages.length === 0 && !isPending && (
                           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
-                              <div className="p-6 bg-slate-50 rounded-[2.5rem]">
+                              <div className="p-6 bg-slate-50 rounded-[2rem]">
                                   <BrainCircuit className="w-12 h-12 text-[#2D3A5D]" />
                               </div>
                               <p className="text-sm font-black text-[#2D3A5D] tracking-tight max-w-[220px]">
@@ -413,30 +412,30 @@ export default function AIPsychiatristPage() {
                       {messages.map((message, index) => (
                           <div
                               key={index}
-                              className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
+                              className={cn("flex items-start gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
                           >
-                              <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
+                              <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white shadow-sm shrink-0">
                                   {message.role === 'assistant' ? (
                                       <>
                                           {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
-                                          <AvatarFallback className="bg-indigo-500 text-white"><BrainCircuit className="w-5 h-5"/></AvatarFallback>
+                                          <AvatarFallback className="bg-indigo-500 text-white"><BrainCircuit className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
                                       </>
                                   ) : (
                                       <>
                                           <AvatarImage src={userImage} alt="User" data-ai-hint="person face" />
-                                          <AvatarFallback className="bg-slate-200"><User className="w-5 h-5"/></AvatarFallback>
+                                          <AvatarFallback className="bg-slate-200"><User className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
                                       </>
                                   )}
                               </Avatar>
                               <div
                                   className={cn(
-                                      "max-w-[85%] rounded-[1.8rem] px-6 py-4 shadow-sm",
+                                      "max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
                                       message.role === 'user' 
                                           ? "bg-primary text-white rounded-tr-none" 
                                           : "bg-slate-50 dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-white/50"
                                   )}
                               >
-                                  <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium">
+                                  <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium text-base">
                                       <ReactMarkdown>{message.content}</ReactMarkdown>
                                   </article>
                                   {message.role === 'assistant' && index === messages.length - 1 && !isPending && (
@@ -447,10 +446,10 @@ export default function AIPsychiatristPage() {
                       ))}
                       {isPending && (
                           <div className="flex items-start gap-4 animate-pulse">
-                              <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0 bg-indigo-100">
+                              <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white shadow-sm shrink-0 bg-indigo-100">
                                   <AvatarFallback className="bg-transparent"><BrainCircuit className="w-5 h-5 text-indigo-500"/></AvatarFallback>
                               </Avatar>
-                              <div className="bg-slate-50 rounded-[1.8rem] rounded-tl-none px-6 py-4 border border-white/50 flex items-center gap-3">
+                              <div className="bg-slate-50 rounded-[1.2rem] rounded-tl-none px-4 md:px-6 py-3 md:py-4 border border-white/50 flex items-center gap-3">
                                   <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is listening...</span>
                               </div>
@@ -460,27 +459,35 @@ export default function AIPsychiatristPage() {
               </ScrollArea>
           </CardContent>
           
-          <CardFooter className="px-8 pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50">
+          <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50">
               <form
                   ref={formRef}
                   action={handleFormAction}
-                  className="flex w-full items-center gap-3"
+                  className="flex w-full items-end gap-3"
               >
-                  <Input
-                      id="chatInput"
-                      ref={queryInputRef}
-                      name="query"
-                      placeholder="Share your feelings here... (English or Hindi)"
-                      className="h-14 px-6 rounded-full border-none bg-white shadow-inner placeholder:text-slate-300 font-bold text-sm flex-1"
-                      autoComplete="off"
-                      disabled={isPending}
-                      onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              formRef.current?.requestSubmit();
-                          }
-                      }}
-                  />
+                  <div className="flex-1 bg-white rounded-2xl shadow-inner overflow-hidden border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
+                    <Textarea
+                        id="chatInput"
+                        ref={queryInputRef}
+                        name="query"
+                        placeholder="Share your feelings here..."
+                        className="w-full min-h-[56px] max-h-[150px] p-4 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-base resize-none"
+                        autoComplete="off"
+                        disabled={isPending}
+                        rows={1}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = `${target.scrollHeight}px`;
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                formRef.current?.requestSubmit();
+                            }
+                        }}
+                    />
+                  </div>
                   <SubmitButton />
               </form>
               <div className="flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">

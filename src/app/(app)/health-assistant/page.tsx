@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
     Send, 
@@ -35,7 +35,6 @@ import {
     Search,
     Zap,
     HeartPulse,
-    Plus
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -55,7 +54,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -147,7 +145,7 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
             <ThumbsDown className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="rounded-[2rem] border-none shadow-2xl">
+        <DialogContent className="rounded-[1rem] border-none shadow-2xl">
           <form onSubmit={handleDislikeSubmit}>
             <DialogHeader>
               <DialogTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100">Provide Additional Feedback</DialogTitle>
@@ -170,7 +168,7 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
                     <Label htmlFor="r3" className="font-bold text-slate-600 dark:text-slate-300">Harmful or offensive</Label>
                   </div>
                 </RadioGroup>
-                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner" />
+                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner" />
             </div>
             <DialogFooter>
               <Button type="submit" className="rounded-full w-full font-black uppercase text-[10px] tracking-widest">Submit Feedback</Button>
@@ -266,15 +264,15 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
   };
   
   return (
-    <Card className="rounded-[2rem] neumorphic-card border-none mb-4">
-        <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-                 <div className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50 dark:border-slate-700/50">
+    <Card className="rounded-[1rem] neumorphic-card border-none mb-4 w-full">
+        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50 dark:border-slate-700/50">
                     <Select value={selectedLang} onValueChange={setSelectedLang}>
-                        <SelectTrigger className="w-[120px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
+                        <SelectTrigger className="w-[100px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-none shadow-xl">
+                        <SelectContent className="rounded-xl border-none shadow-xl">
                             <SelectItem value="en-IN">English</SelectItem>
                             <SelectItem value="hi-IN">हिन्दी</SelectItem>
                         </SelectContent>
@@ -324,7 +322,7 @@ export default function HealthAssistantPage() {
   const [pulseMode, setPulseMode] = useState<PulseMode>('standard');
 
   const formRef = useRef<HTMLFormElement>(null);
-  const queryInputRef = useRef<HTMLInputElement>(null);
+  const queryInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   
@@ -450,9 +448,9 @@ export default function HealthAssistantPage() {
   const userImage = 'https://picsum.photos/seed/user/100/100';
 
   return (
-    <div className="flex h-[calc(100vh-120px)] gap-6 animate-in fade-in duration-500">
-        {/* Chat History Sidebar */}
-        <Card className="hidden md:flex md:w-1/4 flex-col rounded-[2.5rem] neumorphic-card border-none p-2">
+    <div className="flex h-full w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
+        {/* Chat History Sidebar - Desktop Only */}
+        <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden">
             <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
                 <CardTitle className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest">History</CardTitle>
                 <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 dark:bg-slate-800 border border-white/50 dark:border-slate-700/50" onClick={handleNewChat}>
@@ -466,7 +464,7 @@ export default function HealthAssistantPage() {
                             <div 
                                 key={session.id} 
                                 className={cn(
-                                    "p-4 rounded-[1.5rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
+                                    "p-4 rounded-[1rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
                                     activeSessionId === session.id ? "bg-white dark:bg-slate-800 shadow-sm border-blue-50 dark:border-slate-700" : "hover:bg-white/40 dark:hover:bg-slate-700/40"
                                 )}
                                 onClick={() => setActiveSessionId(session.id)}
@@ -486,24 +484,24 @@ export default function HealthAssistantPage() {
         </Card>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0">
-          <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between gap-4 mb-4">
-                <TabsList className="grid grid-cols-2 w-[300px] h-12 p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-full border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
-                    <TabsTrigger value="general" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Assistant</TabsTrigger>
-                    <TabsTrigger value="doctor" className="rounded-full font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
+      <div className="flex-1 flex flex-col h-full min-w-0 w-full">
+          <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col h-full w-full">
+            <div className="flex items-center justify-between gap-2 md:gap-4 mb-3 md:mb-4 px-1">
+                <TabsList className="grid grid-cols-2 w-[180px] md:w-[300px] h-11 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-full border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
+                    <TabsTrigger value="general" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Assistant</TabsTrigger>
+                    <TabsTrigger value="doctor" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
                 </TabsList>
                 
                 {activeMode === 'doctor' && (
-                    <div className="flex-1 max-w-[240px]">
+                    <div className="flex-1 max-w-[160px] md:max-w-[240px]">
                         <Select value={specialty} onValueChange={setSpecialty}>
-                            <SelectTrigger className="h-12 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[10px] uppercase tracking-widest">
-                                <div className="flex items-center gap-2">
-                                    <BrainCircuit className="w-3.5 h-3.5 text-primary" />
-                                    <SelectValue placeholder="Select Specialty" />
+                            <SelectTrigger className="h-11 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2 truncate">
+                                    <BrainCircuit className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary shrink-0" />
+                                    <SelectValue placeholder="Specialty" />
                                 </div>
                             </SelectTrigger>
-                            <SelectContent className="rounded-2xl border-none shadow-xl">
+                            <SelectContent className="rounded-xl border-none shadow-xl">
                                 {doctorSpecialties.map(spec => (
                                     <SelectItem key={spec} value={spec} className="font-bold text-xs">{spec}</SelectItem>
                                 ))}
@@ -513,10 +511,10 @@ export default function HealthAssistantPage() {
                 )}
             </div>
 
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0 w-full">
                 <VoiceWidget lastAssistantMessage={activeSession?.messages.filter(m => m.role === 'assistant').pop()?.content || ''} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }}/>
                 
-                <TabsContent value="general" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0">
+                <TabsContent value="general" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full">
                     <ChatInterface 
                         messages={activeSession?.messages || []}
                         isPending={isPending}
@@ -530,14 +528,14 @@ export default function HealthAssistantPage() {
                         pulseMode={pulseMode}
                         setPulseMode={setPulseMode}
                         title="Health Assistant"
-                        description="Ask about symptoms, meds or health tips"
+                        description="Symptoms, meds or health tips"
                         placeholder="Ask me anything..."
                         initialMessage="Hi! I'm your AI partner. How can I help you today?"
                         Icon={ShieldPlus}
                     />
                 </TabsContent>
                 
-                <TabsContent value="doctor" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0">
+                <TabsContent value="doctor" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full">
                      <ChatInterface 
                         messages={activeSession?.messages || []}
                         isPending={isPending}
@@ -549,7 +547,7 @@ export default function HealthAssistantPage() {
                         userImage={userImage}
                         assistantImage={assistantImage}
                         title={`AI ${specialty}`}
-                        description={`Consulting with your specialist`}
+                        description={`Specialized consultation`}
                         placeholder={`Talk to the ${specialty}...`}
                         initialMessage={`Greetings. I am your specialized AI ${specialty}. How may I assist you?`}
                         Icon={BrainCircuit}
@@ -568,7 +566,7 @@ interface ChatInterfaceProps {
     isPending: boolean;
     onFormAction: (formData: FormData) => void;
     formRef: React.RefObject<HTMLFormElement>;
-    queryInputRef: React.RefObject<HTMLInputElement>;
+    queryInputRef: React.RefObject<HTMLTextAreaElement>;
     attachedImage: string | null;
     setAttachedImage: (image: string | null) => void;
     userImage: string;
@@ -608,27 +606,27 @@ function ChatInterface({
     }, [messages, isPending]);
 
     return (
-        <Card className="flex-1 flex flex-col rounded-[2.5rem] neumorphic-card border-none overflow-hidden min-h-0">
-            <CardHeader className="px-8 pt-8 pb-4">
+        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full">
+            <CardHeader className="px-4 md:px-8 pt-6 pb-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-2xl">
+                        <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-2xl shrink-0">
                             <Icon className="w-6 h-6 text-primary" />
                         </div>
-                        <div>
-                            <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{title}</CardTitle>
-                            <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{description}</CardDescription>
+                        <div className="min-w-0">
+                            <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight truncate">{title}</CardTitle>
+                            <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{description}</CardDescription>
                         </div>
                     </div>
                 </div>
             </CardHeader>
             
             <CardContent className="flex-1 overflow-hidden p-0 relative">
-                <ScrollArea className="h-full p-8" ref={scrollAreaRef}>
+                <ScrollArea className="h-full px-4 md:px-8 pb-8" ref={scrollAreaRef}>
                     <div className="space-y-6">
                         {messages.length === 0 && !isPending && (
                             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
-                                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem]">
+                                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-[2rem]">
                                     <Icon className="w-12 h-12 text-[#2D3A5D] dark:text-slate-400" />
                                 </div>
                                 <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-400 tracking-tight max-w-[200px]">{initialMessage}</p>
@@ -637,31 +635,31 @@ function ChatInterface({
                         {messages.map((message, index) => (
                             <div
                                 key={index}
-                                className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
+                                className={cn("flex items-start gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
                             >
-                                <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0">
+                                <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0">
                                     {message.role === 'assistant' ? (
                                         <>
                                             {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
-                                            <AvatarFallback className="bg-primary text-white"><Icon className="w-5 h-5"/></AvatarFallback>
+                                            <AvatarFallback className="bg-primary text-white"><Icon className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
                                         </>
                                     ) : (
                                         <>
                                             <AvatarImage src={userImage} alt="User" data-ai-hint="person face" />
-                                            <AvatarFallback className="bg-slate-200"><User className="w-5 h-5"/></AvatarFallback>
+                                            <AvatarFallback className="bg-slate-200"><User className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
                                         </>
                                     )}
                                 </Avatar>
                                 <div
                                     className={cn(
-                                        "max-w-[85%] rounded-[1.8rem] px-6 py-4 shadow-sm",
+                                        "max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
                                         message.role === 'user' 
                                             ? "bg-primary text-white rounded-tr-none" 
                                             : "bg-slate-50 dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-white/50 dark:border-slate-700/50"
                                     )}
                                 >
                                     {message.image && (
-                                        <div className="mb-3 rounded-2xl overflow-hidden shadow-md border-2 border-white dark:border-slate-700">
+                                        <div className="mb-3 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-700">
                                             <Image src={message.image} alt="User upload" width={300} height={300} className="w-full h-auto" />
                                         </div>
                                     )}
@@ -671,7 +669,7 @@ function ChatInterface({
                                             <span className="text-[8px] font-black uppercase tracking-tighter">Mode: {message.mode}</span>
                                         </div>
                                     )}
-                                    <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium">
+                                    <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium text-base">
                                         <ReactMarkdown>{message.content}</ReactMarkdown>
                                     </article>
                                     {message.role === 'assistant' && index === messages.length - 1 && !isPending && (
@@ -681,11 +679,11 @@ function ChatInterface({
                             </div>
                         ))}
                         {isPending && (
-                            <div className="flex items-start gap-4 animate-pulse">
-                                <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 bg-primary/10">
+                            <div className="flex items-start gap-3 animate-pulse">
+                                <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 bg-primary/10">
                                     <AvatarFallback className="bg-transparent"><Icon className="w-5 h-5 text-primary"/></AvatarFallback>
                                 </Avatar>
-                                <div className="bg-slate-50 dark:bg-slate-800 rounded-[1.8rem] rounded-tl-none px-6 py-4 border border-white/50 dark:border-slate-700/50 flex items-center gap-3">
+                                <div className="bg-slate-50 dark:bg-slate-800 rounded-[1.2rem] rounded-tl-none px-4 md:px-6 py-3 md:py-4 border border-white/50 dark:border-slate-700/50 flex items-center gap-3">
                                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is thinking...</span>
                                 </div>
@@ -695,7 +693,7 @@ function ChatInterface({
                 </ScrollArea>
             </CardContent>
             
-            <CardFooter className="px-8 pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50">
+            <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50">
                 {/* Active Mode Indicator Above Input */}
                 {pulseMode && pulseMode !== 'standard' && (
                     <div className="flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">
@@ -708,7 +706,7 @@ function ChatInterface({
 
                 {attachedImage && (
                     <div className="relative inline-block w-20 h-20 group">
-                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-2xl border-4 border-white dark:border-slate-700 shadow-lg object-cover h-full w-full" />
+                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-xl border-4 border-white dark:border-slate-700 shadow-lg object-cover h-full w-full" />
                         <Button
                             variant="destructive"
                             size="icon"
@@ -723,7 +721,7 @@ function ChatInterface({
                 <form
                     ref={formRef}
                     action={onFormAction}
-                    className="flex w-full items-center gap-3"
+                    className="flex w-full items-end gap-2 md:gap-3"
                 >
                     {/* Independent Mode Selector Button */}
                     {setPulseMode && (
@@ -733,29 +731,35 @@ function ChatInterface({
                                     <PlusCircle className="h-7 w-7 text-primary" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64 rounded-[2rem] border-none shadow-2xl p-4 dark:bg-slate-900" side="top" align="start">
+                            <PopoverContent className="w-64 rounded-[1rem] border-none shadow-2xl p-4 dark:bg-slate-900" side="top" align="start">
                                 <div className="space-y-4">
                                     <h4 className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
                                     <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
                                         <PulseModeItem value="standard" label="Standard" desc="General health advice" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                        <PulseModeItem value="websearch" label="Web Search" desc="Search latest medical databases" icon={<Search className="w-4 h-4"/>} />
-                                        <PulseModeItem value="deepthink" label="Deep Medical Think" desc="Analytical medical reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                        <PulseModeItem value="proanalysis" label="Pro Analysis" desc="Complex drug & report checks" icon={<Zap className="w-4 h-4"/>} />
+                                        <PulseModeItem value="websearch" label="Web Search" desc="Latest medical databases" icon={<Search className="w-4 h-4"/>} />
+                                        <PulseModeItem value="deepthink" label="Deep Think" desc="Analytical reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
+                                        <PulseModeItem value="proanalysis" label="Pro Analysis" desc="Complex drug checks" icon={<Zap className="w-4 h-4"/>} />
                                     </RadioGroup>
                                 </div>
                             </PopoverContent>
                         </Popover>
                     )}
 
-                    <div className="flex-1 relative flex items-center bg-white dark:bg-slate-800 rounded-2xl px-2 shadow-inner h-14 overflow-hidden border border-slate-100 dark:border-slate-700">
-                        <Input
+                    <div className="flex-1 relative flex items-end bg-white dark:bg-slate-800 rounded-2xl px-2 shadow-inner min-h-[56px] overflow-hidden border border-slate-100 dark:border-slate-700">
+                        <Textarea
                             id="chatInput"
                             ref={queryInputRef}
                             name="query"
                             placeholder={placeholder}
-                            className="flex-1 h-full border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-sm px-4 dark:text-slate-100"
+                            className="flex-1 min-h-[56px] max-h-[150px] p-4 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-base resize-none dark:text-slate-100"
                             autoComplete="off"
                             disabled={isPending}
+                            rows={1}
+                            onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = `${target.scrollHeight}px`;
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
@@ -768,7 +772,7 @@ function ChatInterface({
                             type="button" 
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isPending}
-                            className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-400 shrink-0 mr-1"
+                            className="p-4 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-400 shrink-0"
                         >
                             <Paperclip className="h-5 w-5" />
                         </button>
@@ -787,7 +791,7 @@ function ChatInterface({
 
 function PulseModeItem({ value, label, desc, icon }: { value: PulseMode, label: string, desc: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center space-x-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group">
+        <div className="flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group">
             <RadioGroupItem value={value} id={value} className="sr-only" />
             <div className="p-2 rounded-xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
                 {icon}
