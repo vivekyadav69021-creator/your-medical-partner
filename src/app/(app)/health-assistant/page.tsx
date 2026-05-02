@@ -455,7 +455,7 @@ export default function HealthAssistantPage() {
   const userImage = 'https://picsum.photos/seed/user/100/100';
 
   return (
-    <div className="flex h-full w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
+    <div className="flex h-[calc(100vh-120px)] w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
         {/* Chat History Sidebar - Desktop Only */}
         <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden">
             <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
@@ -491,9 +491,9 @@ export default function HealthAssistantPage() {
         </Card>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0 w-full">
-          <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col h-full w-full">
-            <div className="flex items-center justify-between gap-2 md:gap-4 mb-3 md:mb-4 px-1">
+      <div className="flex-1 flex flex-col h-full min-w-0 w-full overflow-hidden">
+          <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col h-full w-full overflow-hidden">
+            <div className="flex items-center justify-between gap-2 md:gap-4 mb-3 md:mb-4 px-1 shrink-0">
                 <TabsList className="grid grid-cols-2 w-[180px] md:w-[300px] h-11 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-full border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
                     <TabsTrigger value="general" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Assistant</TabsTrigger>
                     <TabsTrigger value="doctor" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
@@ -521,7 +521,7 @@ export default function HealthAssistantPage() {
                     {/* Mobile History Button */}
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" className="md:hidden rounded-full h-11 w-11 bg-white/50 dark:bg-slate-800/50 border-white/50 shadow-sm">
+                            <Button variant="outline" size="icon" className="md:hidden rounded-full h-11 w-11 bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm">
                                 <History className="h-5 w-5 text-primary" />
                             </Button>
                         </SheetTrigger>
@@ -564,10 +564,12 @@ export default function HealthAssistantPage() {
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col min-h-0 w-full">
-                <VoiceWidget lastAssistantMessage={activeSession?.messages.filter(m => m.role === 'assistant').pop()?.content || ''} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }}/>
+            <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
+                <div className="shrink-0">
+                  <VoiceWidget lastAssistantMessage={activeSession?.messages.filter(m => m.role === 'assistant').pop()?.content || ''} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }}/>
+                </div>
                 
-                <TabsContent value="general" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full">
+                <TabsContent value="general" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full overflow-hidden">
                     <ChatInterface 
                         messages={activeSession?.messages || []}
                         isPending={isPending}
@@ -588,7 +590,7 @@ export default function HealthAssistantPage() {
                     />
                 </TabsContent>
                 
-                <TabsContent value="doctor" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full">
+                <TabsContent value="doctor" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full overflow-hidden">
                      <ChatInterface 
                         messages={activeSession?.messages || []}
                         isPending={isPending}
@@ -659,8 +661,8 @@ function ChatInterface({
     }, [messages, isPending]);
 
     return (
-        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full">
-            <CardHeader className="px-4 md:px-8 pt-6 pb-4">
+        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full h-full">
+            <CardHeader className="px-4 md:px-8 pt-6 pb-4 shrink-0">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-2xl shrink-0">
@@ -746,7 +748,7 @@ function ChatInterface({
                 </ScrollArea>
             </CardContent>
             
-            <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50">
+            <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50 shrink-0">
                 {/* Active Mode Indicator Above Input */}
                 {pulseMode && pulseMode !== 'standard' && (
                     <div className="flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">

@@ -347,9 +347,9 @@ export default function AIPsychiatristPage() {
   const userImage = "https://picsum.photos/seed/user/100/100";
 
   return (
-    <div className="flex h-full w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
+    <div className="flex h-[calc(100vh-120px)] w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
       {/* Sidebar - Desktop Only */}
-      <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden">
+      <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden shrink-0">
           <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
               <CardTitle className="text-sm font-black text-[#2D3A5D] uppercase tracking-widest">History</CardTitle>
               <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 border border-white/50" onClick={handleNewChat}>
@@ -386,11 +386,13 @@ export default function AIPsychiatristPage() {
       </Card>
 
       {/* Main Area - Full Width on Mobile */}
-      <div className="flex-1 flex flex-col h-full w-full min-w-0">
-        <VoiceWidget lastAssistantMessage={lastAssistantMessage} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }} />
+      <div className="flex-1 flex flex-col h-full w-full min-w-0 overflow-hidden">
+        <div className="shrink-0">
+          <VoiceWidget lastAssistantMessage={lastAssistantMessage} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }} />
+        </div>
         
-        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full">
-          <CardHeader className="px-4 md:px-8 pt-6 pb-4">
+        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full h-full">
+          <CardHeader className="px-4 md:px-8 pt-6 pb-4 shrink-0">
               <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                       <div className="p-3 bg-indigo-50 dark:bg-slate-800 rounded-2xl shrink-0">
@@ -508,7 +510,7 @@ export default function AIPsychiatristPage() {
               </ScrollArea>
           </CardContent>
           
-          <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50">
+          <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 backdrop-blur-md border-t border-white/50 shrink-0">
               <form
                   ref={formRef}
                   action={handleFormAction}
