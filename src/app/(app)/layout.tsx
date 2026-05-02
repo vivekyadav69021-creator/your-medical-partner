@@ -20,10 +20,10 @@ export default function AppLayout({
 
   useEffect(() => {
     setMounted(true);
-    // Increased splash delay to 4 seconds as per user request for a more premium experience
+    // Optimized splash delay to 2.5 seconds for a snappier yet premium feel
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 4000);
+    }, 2500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -33,7 +33,7 @@ export default function AppLayout({
     }
   }, [mounted, user, isUserLoading, router]);
 
-  // Show splash if still mounting, checking auth, or during the 4s mandatory period
+  // Show splash if still mounting, checking auth, or during the mandatory period
   if (!mounted || isUserLoading || showSplash) {
     return <SplashScreen />;
   }
