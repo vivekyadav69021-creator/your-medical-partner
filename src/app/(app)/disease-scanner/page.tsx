@@ -607,74 +607,135 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const [fileType, setFileType] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const handleFormAction = (formData: FormData) => {
+        if (preview) {
+            formData.set('photoDataUri', preview);
+            formData.set('contentType', fileType);
+            formData.set('language', lang);
+            formAction(formData);
+        }
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Radiology Scanner</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Radiology Specialist</h2>
             </div>
 
-            <Card className="rounded-[2.5rem] neumorphic-card border-none">
-                <CardHeader>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">X-ray Analysis</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload a clear image of an X-ray for AI interpretation.</CardDescription>
+            <Card className="rounded-[2.5rem] neumorphic-card border-none overflow-hidden">
+                <CardHeader className="bg-blue-50/30 dark:bg-blue-900/10 border-b border-blue-100/50">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Badge className="bg-blue-100 text-blue-600 border-none">Bone & Chest Analysis</Badge>
+                    </div>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Intelligent X-ray Scanner</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                        Multimodal structural analysis for skeletal anomalies and hairline fractures.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {!preview ? (
-                        <div className="border-2 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-blue-50/20 space-y-4 cursor-pointer hover:bg-blue-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-blue-400">
-                                <Bone className="w-10 h-10" />
+                <CardContent className="space-y-6 pt-6">
+                    <form action={handleFormAction} className="space-y-6">
+                        {!preview ? (
+                            <div className="border-2 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-blue-50/20 space-y-4 cursor-pointer hover:bg-blue-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                                <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-blue-400">
+                                    <Bone className="w-10 h-10" />
+                                </div>
+                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Upload X-ray Image</p>
                             </div>
-                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Click to Upload X-ray</p>
-                        </div>
-                    ) : (
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="X-ray" width={500} height={500} className="w-full h-auto object-cover" />
-                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    )}
-                    <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            setFileType(file.type);
-                            const reader = new FileReader();
-                            reader.onload = () => setPreview(reader.result as string);
-                            reader.readAsDataURL(file);
-                        }
-                    }} accept="image/*" />
+                        ) : (
+                            <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
+                                <Image src={preview} alt="X-ray" width={500} height={500} className="w-full h-auto object-cover" />
+                                <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                        <input type="file" ref={fileInputRef} hidden onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                setFileType(file.type);
+                                const reader = new FileReader();
+                                reader.onload = () => setPreview(reader.result as string);
+                                reader.readAsDataURL(file);
+                            }
+                        }} accept="image/*" />
 
-                    <form action={(formData) => {
-                        if (preview) {
-                            formData.set('photoDataUri', preview);
-                            formData.set('contentType', fileType);
-                            formAction(formData);
-                        }
-                    }}>
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-blue-400 to-blue-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Scanning X-ray...</> : "Scan X-ray"}
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mechanism of Injury / Context</Label>
+                            <Textarea 
+                                name="userQuery" 
+                                placeholder="Example: Severe pain in ankle after landing hard while playing basketball..." 
+                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[120px] text-base" 
+                            />
+                        </div>
+
+                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
+                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Performing Radiographic Scan...</> : "Start Structural Analysis"}
                         </Button>
                     </form>
                 </CardContent>
+
                 {state.result && (
-                    <CardFooter className="flex-col items-start gap-4">
-                        <div className="w-full space-y-4 bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-50 dark:border-slate-700/50 animate-in zoom-in-95">
-                            <h4 className="font-black text-lg text-[#2D3A5D] dark:text-slate-100 border-b border-slate-50 dark:border-slate-700 pb-3">Findings</h4>
-                            <ul className="space-y-4">
-                                {state.result.result.report?.findings.map((f: any, i: number) => (
-                                    <li key={i} className="text-sm">
-                                        <p className="font-black text-blue-600 tracking-tight">{f.label}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">{f.notes}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                            <div className="pt-4 mt-2 border-t border-slate-50 dark:border-slate-700">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Impression:</p>
-                                <p className="text-sm font-bold italic text-[#2D3A5D] dark:text-slate-200 mt-1">"{state.result.result.report?.impression}"</p>
+                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
+                        {state.result.interactionPrompt && (
+                             <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
+                                <Info className="h-4 w-4 text-indigo-500" />
+                                <AlertTitle className="font-black text-indigo-700">Follow-up Query</AlertTitle>
+                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="w-full space-y-6">
+                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100">
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Target Body Part</p>
+                                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{state.result.bodyPart}</p>
+                                </div>
+                                <Badge className="bg-blue-50 text-blue-600 border-none font-black uppercase text-[10px]">Pre-clinical</Badge>
                             </div>
+
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-blue-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Radiographic Observation</h4>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-white/50">
+                                    <p className="text-sm font-bold text-slate-600 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <BrainCircuit className="w-4 h-4 text-indigo-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biological Reasoning</h4>
+                                </div>
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed px-1">
+                                    {state.result.biologicalReasoning}
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-green-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Suggested Actions</h4>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {state.result.suggestedActions.map((action: string, i: number) => (
+                                        <Badge key={i} variant="outline" className="rounded-full px-4 py-1.5 border-green-100 text-green-600 font-bold text-[10px] bg-green-50/30">
+                                            {action}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <Alert className="rounded-2xl bg-amber-50 border-amber-100">
+                                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                <p className="text-[9px] font-bold text-amber-700 leading-relaxed">
+                                    {state.result.disclaimer}
+                                </p>
+                            </Alert>
                         </div>
                     </CardFooter>
                 )}

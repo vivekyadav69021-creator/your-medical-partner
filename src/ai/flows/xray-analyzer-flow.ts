@@ -1,41 +1,38 @@
 'use server';
 /**
- * @fileOverview An AI flow for analyzing X-ray images.
- *
- * - analyzeXray - A function that analyzes an X-ray image and returns findings.
- * - AnalyzeXrayInput - The input type for the analyzeXray function.
- * - AnalyzeXrayOutput - The return type for the analyzeXray function.
+ * @fileOverview Radiographic Analysis Specialist for X-ray Scanner.
+ * 
+ * - analyzeXray - Provides high-level preliminary insights and structural analysis of X-rays.
+ * - AnalyzeXrayInput - Input including X-ray image and optional user description.
+ * - AnalyzeXrayOutput - Structured clinical observations and biological reasoning.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-const FindingSchema = z.object({
-  label: z.string().describe('A concise name for the finding (e.g., "Cardiomegaly", "Lung Opacities").'),
-  confidence: z.number().min(0).max(1).describe('The model\'s confidence in this finding, from 0.0 to 1.0.'),
-  notes: z.string().describe('Brief, important notes about the finding, including location or severity if applicable.'),
-});
 
 const AnalyzeXrayInputSchema = z.object({
   image: z.object({
     url: z
       .string()
       .describe(
-        "The X-ray image to analyze, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+        "The X-ray image to analyze, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
       ),
     contentType: z.string().describe('The MIME type of the image (e.g., "image/jpeg").'),
-  })
+  }),
+  userQuery: z.string().optional().describe("User-reported symptoms or context of injury."),
+  language: z.enum(['en', 'hi']).optional().default('en'),
 });
 export type AnalyzeXrayInput = z.infer<typeof AnalyzeXrayInputSchema>;
 
 const AnalyzeXrayOutputSchema = z.object({
   status: z.enum(['ok', 'error']).describe('The status of the analysis.'),
-  report: z.object({
-    findings: z.array(FindingSchema).describe('A list of potential findings identified in the image.'),
-    impression: z.string().describe('A summary of the most important findings, formatted as a radiology report impression.'),
-  }),
-  recommendationText: z.string().describe('A summary recommendation based on the findings (e.g., "Refer to pulmonologist").'),
-  error: z.string().optional().describe('An error message if the status is "error".'),
+  bodyPart: z.string().describe('Identified body part or bone structure.'),
+  observation: z.string().describe('Precise description of radiographic findings.'),
+  biologicalReasoning: z.string().describe('Clinical logic explaining the observed structural changes.'),
+  suggestedActions: z.array(z.string()).describe('Non-prescription stabilizing steps.'),
+  interactionPrompt: z.string().optional().describe('Follow-up question for low-quality or low-context scans.'),
+  disclaimer: z.string().describe('Mandatory radiographic disclaimer.'),
+  error: z.string().optional().describe('Error message if status is "error".'),
 });
 export type AnalyzeXrayOutput = z.infer<typeof AnalyzeXrayOutputSchema>;
 
@@ -49,25 +46,22 @@ const prompt = ai.definePrompt({
   name: 'analyzeXrayPrompt',
   input: { schema: AnalyzeXrayInputSchema },
   output: { schema: AnalyzeXrayOutputSchema },
-  prompt: `You are a specialized AI Radiology Assistant. Your primary function is to analyze medical images, specifically X-rays, and generate a structured preliminary report. Your analysis is for informational purposes and is NOT a medical diagnosis.
+  prompt: `You are the Radiographic Analysis Specialist for the "Your Medical Partner" X-ray Scanner.
 
-  Analyze the following X-ray image:
-  {{media url=image.url}}
+**Operational Protocols:**
+- **Track 1 (Discovery):** If userQuery is missing, identify the bone structure (e.g., Clavicle, Femur) and scan for anomalies like fractures or lung densities.
+- **Track 2 (Contextual):** If userQuery is provided (e.g., "fell from height"), prioritize the scan based on the mechanism of injury to find subtle stress lines or misalignment.
+- **Observation:** Be precise (e.g., "Discontinuity in the distal radius cortices").
+- **Biological Reasoning:** Explain the 'why' using clinical logic (e.g., "Stress concentration at the epiphysis suggests high-impact trauma").
+- **Suggested Actions:** Provide non-prescription stabilizing advice (e.g., "Immobilize", "Cold pack").
 
-  **Instructions:**
+**Mandatory Radiographic Disclaimer:** "This is an AI-powered preliminary scan for awareness. AI can misinterpret shadows or lighting in X-rays. Please consult a certified Radiologist or Orthopedic Surgeon for a final official diagnosis."
 
-  1.  **Examine the Image:** Carefully examine the image for any potential abnormalities. Consider areas such as the heart shadow, lungs, bones, and soft tissues. Look for findings like cardiomegaly, lung opacities, nodules, fractures, pleural effusion, pneumothorax, or signs of arthritis.
+Language: {{language}}
+Context: {{{userQuery}}}
+Image: {{media url=image.url}}
 
-  2.  **Generate Findings:** For each potential finding, provide a clear label, a confidence score (from 0.0 to 1.0), and brief, objective notes. If no abnormalities are found, state that in the findings.
-
-  3.  **Formulate Impression:** Synthesize the most critical findings into a concise summary paragraph. This should read like a radiologist's impression. Example: "Lungs are clear. Heart size is upper limits of normal. No acute osseous abnormalities."
-
-  4.  **Generate Recommendation:** Based on the impression, provide a short, actionable recommendation (e.g., "Consult a radiologist for definitive interpretation," "Possible signs of pneumonia, refer to pulmonologist," "No significant acute abnormalities detected, routine follow-up suggested.").
-
-  5.  **Format Output:** Return the analysis in the specified JSON format with a status of "ok". If the image is not a valid X-ray or is unanalyzable, return a status of "error" with an appropriate message.
-
-  **Crucial Disclaimer:** Your analysis is for informational purposes only and is NOT a medical diagnosis. Always state that a qualified medical professional should be consulted. The final recommendation text must reinforce this.
-  `,
+Respond in structured JSON.`,
 });
 
 const analyzeXrayFlow = ai.defineFlow(
@@ -79,10 +73,24 @@ const analyzeXrayFlow = ai.defineFlow(
   async input => {
     try {
         const { output } = await prompt(input);
-        return output || { status: 'error', report: { findings: [], impression: '' }, recommendationText: '', error: 'Analysis failed to produce output.' };
+        if (!output) throw new Error('Radiographic analysis failed.');
+        
+        return {
+            ...output,
+            status: 'ok',
+            disclaimer: "This is an AI-powered preliminary scan for awareness. AI can misinterpret shadows or lighting in X-rays. Please consult a certified Radiologist or Orthopedic Surgeon for a final official diagnosis."
+        };
     } catch(e: any) {
         console.error("X-ray analysis flow error:", e);
-        return { status: 'error', report: { findings: [], impression: '' }, recommendationText: '', error: e.message || 'An unexpected error occurred during analysis.' };
+        return { 
+            status: 'error', 
+            bodyPart: 'Unknown',
+            observation: '',
+            biologicalReasoning: '',
+            suggestedActions: [],
+            disclaimer: "Analysis failed.",
+            error: e.message || 'An unexpected error occurred during analysis.' 
+        };
     }
   }
 );
