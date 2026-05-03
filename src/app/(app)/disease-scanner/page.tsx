@@ -34,7 +34,9 @@ import {
   Activity,
   HeartPulse,
   Sparkles,
-  Info
+  Info,
+  Navigation,
+  Siren
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -49,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -238,7 +241,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const { userName } = useUserProfile();
 
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -247,7 +249,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
     const handleFormAction = (formData: FormData) => {
         if (preview) {
-            // Include user profile context from local storage
             const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
             if (savedProfile) {
                 formData.set('userProfile', savedProfile);
@@ -371,7 +372,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 
                 {state.result && (
                     <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800">
-                        {/* Interaction Prompt from Architect */}
                         {state.result.interactionPrompt && !state.result.identifiedConditions?.length && (
                             <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
                                 <Info className="h-4 w-4 text-indigo-500" />
@@ -425,7 +425,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 ))}
                             </div>
 
-                            {/* Nutritional Support Section */}
                             {state.result.nutritionalSupport?.length > 0 && (
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
@@ -458,35 +457,49 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const handleFormAction = (formData: FormData) => {
+        if (preview) formData.set('imageDataUri', preview);
+        formData.set('language', lang);
+        formAction(formData);
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Injury Scanner</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Injury Specialist</h2>
             </div>
 
-            <Card className="rounded-[2.5rem] neumorphic-card border-none">
-                <CardHeader>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Describe or Photo</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tell us about the injury or upload a photo for guidance.</CardDescription>
+            <Card className="rounded-[2.5rem] neumorphic-card border-none overflow-hidden">
+                <CardHeader className="bg-orange-50/30 dark:bg-orange-900/10 border-b border-orange-100/50">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Badge className="bg-orange-100 text-orange-600 border-none">Emergency Response</Badge>
+                    </div>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Traumatic Injury Assessment</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Immediate risk assessment and first-aid guidance.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <form action={(formData) => {
-                        if (preview) formData.set('photoDataUri', preview);
-                        formAction(formData);
-                    }} className="space-y-4">
-                        <Textarea name="query" placeholder="e.g., I cut my finger while chopping vegetables..." rows={4} className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner" required />
+                <CardContent className="space-y-6 pt-6">
+                    <form action={handleFormAction} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Describe how it happened (e.g., "fell on road")</Label>
+                            <Textarea 
+                                name="userQuery" 
+                                placeholder="Tell us about the injury, pain level, or any numbness..." 
+                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[140px] text-base" 
+                                required 
+                            />
+                        </div>
                         
                         {!preview ? (
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-orange-100 text-orange-600 bg-orange-50/30 font-bold hover:bg-orange-50 transition-all h-10">
-                                <ImageIcon className="mr-2 h-4 w-4" /> Add Photo (Optional)
+                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-orange-200 text-orange-600 bg-white dark:bg-slate-800 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-50 transition-all h-12 shadow-sm">
+                                <ImageIcon className="mr-2 h-4 w-4" /> Add Clear Photo (Optional)
                             </Button>
                         ) : (
-                            <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-md">
-                                <Image src={preview} alt="Injury" width={400} height={400} className="w-full h-auto object-cover" />
-                                <Button size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
+                            <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-md aspect-video">
+                                <Image src={preview} alt="Injury" fill className="object-cover" />
+                                <Button size="icon" variant="destructive" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>
@@ -500,15 +513,86 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             }
                         }} accept="image/*" />
 
-                        <Button type="submit" disabled={isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing...</> : "Analyze Injury"}
+                        <Button type="submit" disabled={isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all transform active:scale-[0.98]">
+                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Assessing Injury...</> : "Start Emergency Analysis"}
                         </Button>
                     </form>
                 </CardContent>
+
                 {state.result && (
-                    <CardFooter className="flex-col items-start gap-4">
-                        <div className="prose prose-sm dark:prose-invert max-w-full p-6 rounded-[2rem] bg-white dark:bg-slate-800 shadow-sm border border-slate-50 dark:border-slate-700/50">
-                            <ReactMarkdown>{state.result.response}</ReactMarkdown>
+                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
+                        {state.result.interactionPrompt && (
+                             <Alert className="rounded-2xl bg-blue-50 border-blue-100">
+                                <Info className="h-4 w-4 text-blue-500" />
+                                <AlertTitle className="font-black text-blue-700">Additional Context Needed</AlertTitle>
+                                <AlertDescription className="text-xs font-bold text-blue-600">{state.result.interactionPrompt}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        {state.result.severity === 'high' && state.result.actionableAlert && (
+                            <Alert variant="destructive" className="rounded-2xl border-2 border-red-500 bg-red-50 animate-pulse">
+                                <AlertTriangle className="h-5 w-5" />
+                                <AlertTitle className="font-black uppercase tracking-widest">CRITICAL ALERT</AlertTitle>
+                                <AlertDescription className="font-bold text-sm leading-relaxed">
+                                    {state.result.actionableAlert}
+                                    <div className="mt-4 flex gap-2">
+                                        <Button variant="destructive" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest h-9" asChild>
+                                            <Link href="/nearby-hospital"><Navigation className="w-3 h-3 mr-1" /> Hospital Map</Link>
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest h-9 bg-white border-red-200 text-red-600" onClick={() => window.location.href = 'tel:112'}>
+                                            <Siren className="w-3 h-3 mr-1" /> Call 112
+                                        </Button>
+                                    </div>
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="w-full space-y-6">
+                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Classification</p>
+                                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{state.result.classification}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Severity</p>
+                                    <Badge className={cn("font-black uppercase text-[10px] border-none", 
+                                        state.result.severity === 'low' ? "bg-green-100 text-green-600" :
+                                        state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" :
+                                        "bg-red-100 text-red-600"
+                                    )}>
+                                        {state.result.severity}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <HeartPulse className="w-4 h-4 text-orange-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biological Logic</h4>
+                                </div>
+                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed bg-white/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-white/50">
+                                    {state.result.biologicalLogic}
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-blue-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Immediate First-Aid</h4>
+                                </div>
+                                <div className="space-y-3">
+                                    {state.result.firstAidSteps.map((step: string, i: number) => (
+                                        <div key={i} className="flex gap-3 items-start bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-50">
+                                            <div className="h-6 w-6 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-xs shrink-0">{i+1}</div>
+                                            <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{step}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] text-center pt-4 italic">
+                                "This is an AI-generated first-aid guide for immediate awareness. If the injury is severe, seek professional medical treatment immediately."
+                            </p>
                         </div>
                     </CardFooter>
                 )}
@@ -703,4 +787,3 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         </div>
     );
 }
-

@@ -4,6 +4,7 @@ import { analyzeXray, AnalyzeXrayInput } from '@/ai/flows/xray-analyzer-flow';
 import { healthAssistant } from '@/ai/flows/health-assistant-flow';
 import { analyzeLabReportImage } from '@/ai/flows/lab-report-flow';
 import { analyzeSkinImage } from '@/ai/flows/skin-analyzer-flow';
+import { analyzeInjury } from '@/ai/flows/injury-analyzer-flow';
 import { z } from 'zod';
 
 const xrayScannerSchema = z.object({
@@ -134,8 +135,8 @@ export async function analyzeLabReportImageAction(
 }
 
 const injuryAnalysisSchema = z.object({
-  photoDataUri: z.string().optional(),
-  query: z.string().min(1, 'Please describe your injury or symptom.'),
+  imageDataUri: z.string().optional(),
+  userQuery: z.string().min(1, 'Please describe your injury or symptom.'),
   language: z.enum(['en', 'hi']).optional(),
 });
 
@@ -144,8 +145,8 @@ export async function analyzeInjuryAction(
   formData: FormData
 ) {
   const validatedFields = injuryAnalysisSchema.safeParse({
-    photoDataUri: formData.get('photoDataUri') as string || undefined,
-    query: formData.get('query'),
+    imageDataUri: formData.get('imageDataUri') as string || undefined,
+    userQuery: formData.get('userQuery'),
     language: formData.get('language') || 'en',
   });
 
@@ -153,17 +154,18 @@ export async function analyzeInjuryAction(
     return {
       result: null,
       error:
-        validatedFields.error.flatten().fieldErrors.query?.[0] ?? 'Invalid input.',
+        validatedFields.error.flatten().fieldErrors.userQuery?.[0] ?? 'Invalid input.',
     };
   }
 
   try {
-    const result = await healthAssistant(validatedFields.data);
+    const result = await analyzeInjury(validatedFields.data);
     return {
       result,
       error: null,
     };
   } catch (e: any) {
+    console.error("Injury Action Error:", e);
     return {
       result: null,
       error: e.message || 'The AI model could not be reached. Please try again later.',
