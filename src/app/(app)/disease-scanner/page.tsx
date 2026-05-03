@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -32,7 +31,10 @@ import {
   Bandage,
   Bone,
   ShieldPlus,
-  Activity
+  Activity,
+  HeartPulse,
+  Sparkles,
+  Info
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -46,6 +48,7 @@ import ReactMarkdown from 'react-markdown';
 import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -235,6 +238,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const { userName } = useUserProfile();
 
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -243,6 +247,11 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
     const handleFormAction = (formData: FormData) => {
         if (preview) {
+            // Include user profile context from local storage
+            const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
+            if (savedProfile) {
+                formData.set('userProfile', savedProfile);
+            }
             formData.set('imageDataUri', preview);
             formAction(formData);
         }
@@ -271,15 +280,20 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Skin & Face Scanner</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Personalized Skin Architect</h2>
             </div>
 
             <Card className="rounded-[2.5rem] neumorphic-card border-none">
                 <CardHeader>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Face Analysis</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload or take a photo of your face for common skin concerns.</CardDescription>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Badge className="bg-pink-100 text-pink-600 hover:bg-pink-100 border-none px-3">Detect & Describe</Badge>
+                    </div>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Intelligent Face Analysis</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-relaxed">
+                        Our architect combines visual morphology with your symptoms to provide biological insights.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                     <canvas ref={canvasRef} className="hidden"></canvas>
                     {!isCameraOpen && !preview && (
                         <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4">
@@ -341,32 +355,99 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     )}
 
                     <form action={handleFormAction} className="space-y-4">
-                        <Textarea name="userQuery" placeholder="Optional: Describe your concern..." className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner" />
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-pink-400 to-pink-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing...</> : "Analyze My Skin"}
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Describe symptoms (Itching, duration, triggers...)</Label>
+                            <Textarea 
+                                name="userQuery" 
+                                placeholder="Example: These red spots appeared yesterday and they are itchy after using a new soap..." 
+                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[120px] text-base" 
+                            />
+                        </div>
+                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-pink-400 to-pink-500 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
+                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing Biological Patterns...</> : "Start Scientific Scan"}
                         </Button>
                     </form>
                 </CardContent>
-                <CardFooter className="flex-col items-start gap-4">
-                    {state.result && (
-                        <div className="w-full space-y-4 animate-in slide-in-from-top-4">
-                            <Alert className="rounded-2xl bg-pink-50/50 dark:bg-pink-900/10 border-pink-100 dark:border-pink-900/30">
-                                <Activity className="h-4 w-4 text-pink-500" />
-                                <AlertTitle className="font-black text-[#2D3A5D] dark:text-slate-100">AI Assessment</AlertTitle>
-                                <AlertDescription className="text-xs font-bold text-slate-500">{state.result.overallAssessment}</AlertDescription>
+                
+                {state.result && (
+                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800">
+                        {/* Interaction Prompt from Architect */}
+                        {state.result.interactionPrompt && !state.result.identifiedConditions?.length && (
+                            <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
+                                <Info className="h-4 w-4 text-indigo-500" />
+                                <AlertTitle className="font-black text-indigo-700">Follow-up Required</AlertTitle>
+                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
                             </Alert>
-                            <div className="grid gap-3">
-                                {state.result.identifiedConditions?.map((c: any, i: number) => (
-                                    <div key={i} className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-50 dark:border-slate-700/50">
-                                        <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-100 tracking-tight">{c.name}</p>
-                                        <Progress value={c.confidence * 100} className="h-1.5 my-3 bg-slate-100 dark:bg-slate-700" />
-                                        <p className="text-[10px] font-bold text-slate-400 leading-relaxed">{c.description}</p>
+                        )}
+
+                        <div className="w-full space-y-6 animate-in slide-in-from-top-4">
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-pink-500" />
+                                    <h4 className="font-black text-sm uppercase tracking-widest text-[#2D3A5D] dark:text-slate-100">Clinical Reasoning</h4>
+                                </div>
+                                <div className="p-5 rounded-[2rem] bg-pink-50/30 dark:bg-pink-900/10 border border-pink-100/50 dark:border-pink-900/30">
+                                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">{state.result.overallAssessment}</p>
+                                </div>
+                            </div>
+
+                            {state.result.comparativeAnalysis && (
+                                <div className="p-5 rounded-[2rem] bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Activity className="w-3.5 h-3.5 text-indigo-500" />
+                                        <p className="font-black text-[10px] uppercase tracking-widest text-indigo-600">Cross-Reference Analysis</p>
                                     </div>
+                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{state.result.comparativeAnalysis}</p>
+                                </div>
+                            )}
+
+                            <div className="grid gap-4">
+                                {state.result.identifiedConditions?.map((c: any, i: number) => (
+                                    <Card key={i} className="rounded-[2rem] border-none shadow-sm bg-white dark:bg-slate-800 border border-slate-50 dark:border-slate-700 overflow-hidden">
+                                        <div className="p-6 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-black text-base text-[#2D3A5D] dark:text-slate-100 tracking-tight">{c.name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Primary Finding</p>
+                                                </div>
+                                                <Badge className="bg-green-50 text-green-600 border-none font-black">{Math.round(c.confidence * 100)}% Match</Badge>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                                                    <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest">Biological Logic</p>
+                                                </div>
+                                                <p className="text-xs font-bold text-slate-500 leading-relaxed italic">"{c.biologicalLogic}"</p>
+                                            </div>
+                                            <p className="text-xs font-medium text-slate-400 leading-relaxed">{c.description}</p>
+                                        </div>
+                                    </Card>
                                 ))}
                             </div>
+
+                            {/* Nutritional Support Section */}
+                            {state.result.nutritionalSupport?.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <HeartPulse className="w-4 h-4 text-green-500" />
+                                        <h4 className="font-black text-sm uppercase tracking-widest text-[#2D3A5D] dark:text-slate-100">Physiological Support</h4>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {state.result.nutritionalSupport.map((item: string, idx: number) => (
+                                            <Badge key={idx} variant="outline" className="rounded-full px-4 py-1.5 border-green-100 text-green-600 font-bold text-[10px] bg-green-50/30">
+                                                {item}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] text-center pt-4">
+                                This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment.
+                            </p>
                         </div>
-                    )}
-                </CardFooter>
+                    </CardFooter>
+                )}
             </Card>
         </div>
     );
@@ -622,3 +703,4 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         </div>
     );
 }
+

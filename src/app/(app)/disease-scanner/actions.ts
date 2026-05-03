@@ -57,15 +57,24 @@ export async function analyzeXrayAction(
 const skinAnalysisSchema = z.object({
   imageDataUri: z.string().min(1, 'Please upload an image.'),
   userQuery: z.string().optional(),
+  userProfile: z.object({
+    age: z.string().optional(),
+    lifestyle: z.string().optional(),
+    dietaryPreference: z.string().optional(),
+  }).optional(),
 });
 
 export async function analyzeSkinImageAction(
   prevState: any,
   formData: FormData
 ) {
+  const profileString = formData.get('userProfile') as string;
+  const userProfile = profileString ? JSON.parse(profileString) : undefined;
+
   const validatedFields = skinAnalysisSchema.safeParse({
     imageDataUri: formData.get('imageDataUri'),
     userQuery: formData.get('userQuery') || undefined,
+    userProfile: userProfile,
   });
 
   if (!validatedFields.success) {
