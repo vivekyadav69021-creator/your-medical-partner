@@ -1,8 +1,6 @@
-
 'use client';
 
-import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
-import { useFormStatus } from 'react-dom';
+import React, { useActionState, useRef, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -12,7 +10,6 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
@@ -31,7 +28,6 @@ import {
   User as UserIcon,
   Bandage,
   Bone,
-  ShieldPlus,
   Activity,
   HeartPulse,
   Sparkles,
@@ -47,8 +43,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import ReactMarkdown from 'react-markdown';
 import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -527,7 +521,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                              <Alert className="rounded-2xl bg-blue-50 border-blue-100">
                                 <Info className="h-4 w-4 text-blue-500" />
                                 <AlertTitle className="font-black text-blue-700">Additional Context Needed</AlertTitle>
-                                <AlertDescription className="text-xs font-bold text-blue-600">{state.result.interactionPrompt}</AlertDescription>
+                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
                             </Alert>
                         )}
 
@@ -583,7 +577,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                                     <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Immediate First-Aid</h4>
                                 </div>
                                 <div className="space-y-3">
-                                    {state.result.firstAidSteps.map((step: string, i: number) => (
+                                    {state.result.firstAidSteps?.map((step: string, i: number) => (
                                         <div key={i} className="flex gap-3 items-start bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-50">
                                             <div className="h-6 w-6 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-xs shrink-0">{i+1}</div>
                                             <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{step}</p>
@@ -724,7 +718,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                     <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Suggested Actions</h4>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {state.result.suggestedActions.map((action: string, i: number) => (
+                                    {state.result.suggestedActions?.map((action: string, i: number) => (
                                         <Badge key={i} variant="outline" className="rounded-full px-4 py-1.5 border-green-100 text-green-600 font-bold text-[10px] bg-green-50/30">
                                             {action}
                                         </Badge>
@@ -757,10 +751,13 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
             formData.set('imageDataUri', preview);
             formData.set('language', lang);
             formAction(formData);
+        } else {
+            toast({ variant: 'destructive', title: "Image Required", description: "Please upload a lab report image first." });
         }
     };
 
     const downloadPdf = (report: any) => {
+        if (!report || !report.interpretations) return;
         const doc = new jsPDF();
         const patientName = report.patientDetails?.name || 'Guest';
         doc.setFontSize(18);
@@ -861,7 +858,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                     <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biomarker Analysis Table</h4>
                                 </div>
                                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-                                    {state.result.interpretations.map((item: any, idx: number) => (
+                                    {state.result.interpretations?.map((item: any, idx: number) => (
                                         <div key={idx} className="p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-50 flex justify-between gap-4 items-center">
                                             <div className="flex-1">
                                                 <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{item.test}</p>
@@ -894,7 +891,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                     <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Lifestyle Suggestions</h4>
                                 </div>
                                 <div className="grid gap-3">
-                                    {state.result.lifestyleSuggestions.map((suggestion: string, i: number) => (
+                                    {state.result.lifestyleSuggestions?.map((suggestion: string, i: number) => (
                                         <div key={i} className="flex gap-3 items-start bg-white/40 dark:bg-slate-800/40 p-3 rounded-2xl border border-white/50">
                                             <div className="h-5 w-5 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-[10px] shrink-0">{i+1}</div>
                                             <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{suggestion}</p>

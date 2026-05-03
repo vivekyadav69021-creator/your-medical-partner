@@ -1,7 +1,6 @@
 'use server';
 
-import { analyzeXray, AnalyzeXrayInput } from '@/ai/flows/xray-analyzer-flow';
-import { healthAssistant } from '@/ai/flows/health-assistant-flow';
+import { analyzeXray } from '@/ai/flows/xray-analyzer-flow';
 import { analyzeLabReportImage } from '@/ai/flows/lab-report-flow';
 import { analyzeSkinImage } from '@/ai/flows/skin-analyzer-flow';
 import { analyzeInjury } from '@/ai/flows/injury-analyzer-flow';
@@ -21,8 +20,8 @@ export async function analyzeXrayAction(
   const validatedFields = xrayScannerSchema.safeParse({
     photoDataUri: formData.get('photoDataUri'),
     contentType: formData.get('contentType'),
-    userQuery: formData.get('userQuery') || undefined,
-    language: formData.get('language') || 'en',
+    userQuery: (formData.get('userQuery') as string) || undefined,
+    language: (formData.get('language') as 'en' | 'hi') || 'en',
   });
 
   if (!validatedFields.success) {
@@ -80,7 +79,7 @@ export async function analyzeSkinImageAction(
 
   const validatedFields = skinAnalysisSchema.safeParse({
     imageDataUri: formData.get('imageDataUri'),
-    userQuery: formData.get('userQuery') || undefined,
+    userQuery: (formData.get('userQuery') as string) || undefined,
     userProfile: userProfile,
   });
 
@@ -109,6 +108,7 @@ export async function analyzeSkinImageAction(
 
 const labReportImageSchema = z.object({
   imageDataUri: z.string().min(1, 'Please upload an image.'),
+  userQuery: z.string().optional(),
   language: z.enum(['en', 'hi']).optional(),
 });
 
@@ -118,7 +118,8 @@ export async function analyzeLabReportImageAction(
 ) {
     const validatedFields = labReportImageSchema.safeParse({
         imageDataUri: formData.get('imageDataUri'),
-        language: formData.get('language') || 'en',
+        userQuery: (formData.get('userQuery') as string) || undefined,
+        language: (formData.get('language') as 'en' | 'hi') || 'en',
     });
 
     if (!validatedFields.success) {
@@ -151,9 +152,9 @@ export async function analyzeInjuryAction(
   formData: FormData
 ) {
   const validatedFields = injuryAnalysisSchema.safeParse({
-    imageDataUri: formData.get('imageDataUri') as string || undefined,
+    imageDataUri: (formData.get('imageDataUri') as string) || undefined,
     userQuery: formData.get('userQuery'),
-    language: formData.get('language') || 'en',
+    language: (formData.get('language') as 'en' | 'hi') || 'en',
   });
 
   if (!validatedFields.success) {
