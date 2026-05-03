@@ -24,7 +24,6 @@ import {
   Download, 
   BrainCircuit, 
   ArrowLeft,
-  Bell,
   User as UserIcon,
   Bandage,
   Bone,
@@ -45,9 +44,9 @@ import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -56,11 +55,35 @@ const initialInjuryState = { result: null, error: null };
 
 type ScannerView = 'home' | 'skin' | 'injury' | 'xray' | 'lab';
 
+// Helper to track scans in localStorage
+const updateScanStats = () => {
+    const stats = JSON.parse(localStorage.getItem('disease_scanner_stats') || '{"count": 0, "lastScan": null}');
+    const newStats = {
+        count: stats.count + 1,
+        lastScan: Date.now()
+    };
+    localStorage.setItem('disease_scanner_stats', JSON.stringify(newStats));
+    // Dispatch custom event to notify home view
+    window.dispatchEvent(new Event('scan-completed'));
+};
+
 export default function DiseaseScannerPage() {
     const [view, setView] = useState<ScannerView>('home');
-    const { userName, userImage } = useUserProfile();
+    const { userName } = useUserProfile();
     const [lang, setLang] = useState<'en' | 'hi'>('en');
+    const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
     
+    useEffect(() => {
+        const loadStats = () => {
+            const saved = localStorage.getItem('disease_scanner_stats');
+            if (saved) setScanStats(JSON.parse(saved));
+        };
+        
+        loadStats();
+        window.addEventListener('scan-completed', loadStats);
+        return () => window.removeEventListener('scan-completed', loadStats);
+    }, []);
+
     const t = {
         en: {
             greeting: `Hi ${userName.split(' ')[0]} 👋`,
@@ -76,6 +99,7 @@ export default function DiseaseScannerPage() {
             startBtn: "Start Scan",
             back: "Back to Home",
             analyzing: "Analyzing...",
+            noScans: "No scans yet"
         },
         hi: {
             greeting: `नमस्ते ${userName.split(' ')[0]} 👋`,
@@ -91,6 +115,7 @@ export default function DiseaseScannerPage() {
             startBtn: "स्कैन शुरू करें",
             back: "होम पर वापस जाएं",
             analyzing: "विश्लेषण हो रहा है...",
+            noScans: "अभी कोई स्कैन नहीं"
         }
     }[lang];
 
@@ -107,15 +132,6 @@ export default function DiseaseScannerPage() {
                             <h1 className="text-3xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline">{t.greeting}</h1>
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t.subGreeting}</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Button variant="outline" size="icon" className="rounded-full h-12 w-12 bg-white/60 backdrop-blur-md shadow-sm border-white/40">
-                                <Bell className="h-5 w-5 text-slate-600" />
-                            </Button>
-                            <Avatar className="h-12 w-12 border-2 border-white shadow-md overflow-hidden">
-                                <AvatarImage src={userImage} className="object-cover" />
-                                <AvatarFallback><UserIcon /></AvatarFallback>
-                            </Avatar>
-                        </div>
                     </div>
 
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
@@ -127,11 +143,13 @@ export default function DiseaseScannerPage() {
                         <CardContent className="grid grid-cols-3 gap-4 px-8 pb-6">
                             <div className="space-y-1">
                                 <p className="text-[9px] font-bold text-slate-400 uppercase">{t.lastScan}:</p>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">2 days ago</p>
+                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 truncate">
+                                    {scanStats.lastScan ? formatDistanceToNow(scanStats.lastScan, { addSuffix: true }) : t.noScans}
+                                </p>
                             </div>
-                            <div className="space-y-1 border-x px-4 border-slate-100 dark:border-slate-800">
+                            <div className="space-y-1 border-x px-4 border-slate-100 dark:border-slate-800 text-center">
                                 <p className="text-[9px] font-bold text-slate-400 uppercase">{t.reports}:</p>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">5</p>
+                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{scanStats.count}</p>
                             </div>
                             <div className="space-y-1 text-right">
                                 <p className="text-[9px] font-bold text-slate-400 uppercase">{t.healthScore}:</p>
@@ -242,6 +260,12 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
+
+    useEffect(() => {
+        if (state.result && !state.error) {
+            updateScanStats();
+        }
+    }, [state]);
 
     const handleFormAction = (formData: FormData) => {
         if (preview) {
@@ -453,6 +477,12 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (state.result && !state.error) {
+            updateScanStats();
+        }
+    }, [state]);
+
     const handleFormAction = (formData: FormData) => {
         if (preview) formData.set('imageDataUri', preview);
         formData.set('language', lang);
@@ -603,6 +633,12 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const [fileType, setFileType] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (state.result && !state.error) {
+            updateScanStats();
+        }
+    }, [state]);
+
     const handleFormAction = (formData: FormData) => {
         if (preview) {
             formData.set('photoDataUri', preview);
@@ -745,6 +781,12 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (state.result && !state.error) {
+            updateScanStats();
+        }
+    }, [state]);
 
     const handleFormAction = (formData: FormData) => {
         if (preview) {
@@ -913,3 +955,4 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         </div>
     );
 }
+
