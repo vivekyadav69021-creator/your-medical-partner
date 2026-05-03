@@ -1,11 +1,11 @@
 
 'use server';
 /**
- * @fileOverview An AI flow for analyzing lab report images.
+ * @fileOverview Clinical Data Analyst for Lab Report interpretation.
  *
- * - analyzeLabReportImage - A function that analyzes an image of a lab report.
- * - LabReportInput - The input type for the analyzeLabReportImage function.
- * - LabReportOutput - The return type for the analyzeLabReportImage function.
+ * - analyzeLabReportImage - Interprets lab reports into scientific and actionable insights.
+ * - LabReportInput - Image and user-provided symptom context.
+ * - LabReportOutput - Structured biomarkers, biological logic, and lifestyle suggestions.
  */
 
 import { ai } from '@/ai/genkit';
@@ -19,23 +19,26 @@ const PatientDetailsSchema = z.object({
 
 const LabFindingSchema = z.object({
   test: z.string().describe('The name of the lab test (e.g., "Hemoglobin", "Glucose, Fasting").'),
-  value: z.string().describe('The measured value of the test result, including units (e.g., "14.2 g/dL", "110 mg/dL").'),
-  range: z.string().optional().describe('The standard reference range for the test, if provided on the report (e.g., "13.5-17.5 g/dL").'),
-  note: z.string().describe('A brief, one-sentence interpretation of the value in simple language (e.g., "This value is within the normal range.", "This is slightly higher than the normal range.").'),
-  status: z.enum(['normal', 'high', 'low', 'borderline']).describe('A machine-readable status for the finding: normal, high, low, or borderline.'),
+  value: z.string().describe('The measured value of the test result, including units (e.g., "14.2 g/dL").'),
+  range: z.string().optional().describe('The standard reference range provided on the report.'),
+  status: z.enum(['normal', 'high', 'low', 'borderline']).describe('Status based on reference range.'),
 });
 
 const LabReportInputSchema = z.object({
-  imageDataUri: z.string().describe("An image of the lab report, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  imageDataUri: z.string().describe("An image of the lab report as a data URI."),
+  userQuery: z.string().optional().describe("User-reported symptoms or specific concerns (e.g., 'I feel tired')."),
   language: z.enum(['en', 'hi']).optional().default('en'),
 });
 export type LabReportInput = z.infer<typeof LabReportInputSchema>;
 
 const LabReportOutputSchema = z.object({
-  patientDetails: PatientDetailsSchema.optional().describe("Patient's demographic details from the report."),
-  summary: z.string().describe('A one or two-sentence high-level summary of the overall findings (e.g., "Lipid profile is elevated, suggesting a risk of high cholesterol. Other values are within normal limits.").'),
-  interpretations: z.array(LabFindingSchema).describe('A structured list of interpretations for each identified lab value.'),
-  recommendation: z.string().describe('A general recommendation based on the overall findings. MUST include a disclaimer to consult a doctor. Should be in paragraph form.'),
+  patientDetails: PatientDetailsSchema.optional(),
+  summary: z.string().describe('A high-level summary of the overall report findings.'),
+  interpretations: z.array(LabFindingSchema).describe('Structured list of biomarkers identified.'),
+  biologicalLogic: z.string().describe('Scientific explanation of the findings using clinical logic.'),
+  lifestyleSuggestions: z.array(z.string()).describe('Non-prescription actionable lifestyle or dietary adjustments.'),
+  interactionPrompt: z.string().optional().describe('Follow-up question if symptoms are missing or context is needed.'),
+  recommendation: z.string().describe('Mandatory clinical disclaimer in the target language.'),
 });
 export type LabReportOutput = z.infer<typeof LabReportOutputSchema>;
 
@@ -49,27 +52,22 @@ const prompt = ai.definePrompt({
   name: 'labReportAnalyzerPrompt',
   input: { schema: LabReportInputSchema },
   output: { schema: LabReportOutputSchema },
-  prompt: `You are an AI assistant that extracts data from medical lab reports. Your only job is to analyze the image and populate the requested JSON fields accurately.
+  prompt: `You are the Clinical Data Analyst for the "Your Medical Partner" Report Analysis module.
 
-  **Priority 1: Extract Test Results**
-  - Go through the image line by line.
-  - For each lab test you find, extract the 'test' name, 'value', and 'range'.
-  - Based on the value and range, set the 'status' to 'high', 'low', 'normal', or 'borderline'.
-  - Write a very simple, one-sentence 'note' in the specified language ('{{language}}'). Example: "This is slightly high."
-  - If you can't read a test, skip it. Do not guess.
-  
-  **Priority 2: Summarize**
-  - After extracting all tests, write a one-sentence summary about the most important findings (e.g., "Lipid profile is high, other values are normal.").
-  - Extract patient name and date if visible.
-  
-  **Priority 3: Recommendation (IMPORTANT)**
-  - The 'recommendation' field MUST ALWAYS contain this exact text, translated to the target language ('{{language}}'): "This is an automated interpretation and not a medical diagnosis. Please consult a qualified physician for a complete evaluation."
-  
-  Analyze this image now. Language: {{language}}.
-  {{media url=imageDataUri}}
-  `,
+**Operational Protocols:**
+- **Track 1 (Full Interpretation):** Extract biomarkers, values, and reference ranges. Identify any "Out of Range" values immediately.
+- **Track 2 (Targeted Query):** If userQuery is present (e.g., "{{{userQuery}}}"), correlate these symptoms with the biomarkers. If userQuery is missing, ask for context in 'interactionPrompt'.
+- **Biological Logic:** Explain the physiological significance (e.g., "Low Ferritin levels indicate depleted iron stores, which is often the cause of the reported fatigue").
+- **Lifestyle Suggestions:** Provide 3-4 evidence-based, non-prescription suggestions (diet, hydration, sleep).
+- **Mandatory Clinical Disclaimer:** 
+  - English: "This is an AI-generated interpretation of your lab data for informational purposes. AI can occasionally misread text or handwritten notes in reports. Please consult a qualified Physician for a formal diagnosis and treatment plan."
+  - Hindi: "यह आपके लैब डेटा का एआई-जनरेटेड विश्लेषण है जो केवल सूचनात्मक उद्देश्यों के लिए है। एआई कभी-कभी रिपोर्ट में टेक्स्ट या हाथ से लिखे नोट्स को गलत पढ़ सकता है। औपचारिक निदान और उपचार योजना के लिए कृपया एक योग्य चिकित्सक से परामर्श लें।"
+
+Analyze this image now. Language: {{language}}.
+User Context: {{{userQuery}}}
+Image: {{media url=imageDataUri}}
+`,
 });
-
 
 const labReportAnalyzerFlow = ai.defineFlow(
   {
@@ -80,15 +78,11 @@ const labReportAnalyzerFlow = ai.defineFlow(
   async (input) => {
     try {
       const { output } = await prompt(input);
-      if (!output) {
-        throw new Error("The AI model did not return a valid analysis.");
-      }
+      if (!output) throw new Error("The AI model did not return a valid analysis.");
       return output;
     } catch (e: any) {
       console.error("Lab report analysis flow error:", e);
-      throw new Error(
-        'The AI model took too long to respond or could not analyze the report. This can happen with poor quality images or during high server load. Please try again with a clear image.'
-      );
+      throw new Error('Analysis failed. Please try again with a clear image.');
     }
   }
 );

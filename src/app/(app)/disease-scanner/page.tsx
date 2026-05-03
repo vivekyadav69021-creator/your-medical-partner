@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, useCallback } from 'react';
@@ -36,7 +37,8 @@ import {
   Sparkles,
   Info,
   Navigation,
-  Siren
+  Siren,
+  Utensils
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -750,14 +752,22 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
+    const handleFormAction = (formData: FormData) => {
+        if (preview) {
+            formData.set('imageDataUri', preview);
+            formData.set('language', lang);
+            formAction(formData);
+        }
+    };
+
     const downloadPdf = (report: any) => {
         const doc = new jsPDF();
         const patientName = report.patientDetails?.name || 'Guest';
         doc.setFontSize(18);
-        doc.text("Lab Report Analysis", 105, 20, { align: 'center' });
+        doc.text("Clinical Lab Analysis", 105, 20, { align: 'center' });
         (doc as any).autoTable({
             startY: 40,
-            head: [['Test', 'Value', 'Range', 'Status']],
+            head: [['Biomarker', 'Value', 'Reference Range', 'Status']],
             body: report.interpretations.map((i: any) => [i.test, i.value, i.range || 'N/A', i.status]),
         });
         doc.save(`Analysis-${patientName}.pdf`);
@@ -770,77 +780,135 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
                     <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
                 </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Lab Report Analyzer</h2>
+                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Clinical Data Analyst</h2>
             </div>
 
-            <Card className="rounded-[2.5rem] neumorphic-card border-none">
-                <CardHeader>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Report Analysis</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload an image of your physical lab report for a summary.</CardDescription>
+            <Card className="rounded-[2.5rem] neumorphic-card border-none overflow-hidden">
+                <CardHeader className="bg-green-50/30 dark:bg-green-900/10 border-b border-green-100/50">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Badge className="bg-green-100 text-green-600 border-none">Multimodal OCR Interpretation</Badge>
+                    </div>
+                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Lab Report Analysis</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                        Extract biomarkers and identify values outside reference ranges automatically.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {!preview ? (
-                        <div className="border-2 border-dashed border-green-100 dark:border-green-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-green-50/20 space-y-4 cursor-pointer hover:bg-green-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-green-400">
-                                <FileText className="w-10 h-10" />
+                <CardContent className="space-y-6 pt-6">
+                    <form action={handleFormAction} className="space-y-6">
+                        {!preview ? (
+                            <div className="border-2 border-dashed border-green-100 dark:border-green-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-green-50/20 space-y-4 cursor-pointer hover:bg-green-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                                <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-green-400">
+                                    <FileText className="w-10 h-10" />
+                                </div>
+                                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Click to Upload Report</p>
                             </div>
-                            <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Click to Upload Report</p>
-                        </div>
-                    ) : (
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="Report" width={500} height={500} className="w-full h-auto object-cover" />
-                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    )}
-                    <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => setPreview(reader.result as string);
-                            reader.readAsDataURL(file);
-                        }
-                    }} accept="image/*" />
+                        ) : (
+                            <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
+                                <Image src={preview} alt="Report" width={500} height={500} className="w-full h-auto object-cover" />
+                                <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                        <input type="file" ref={fileInputRef} hidden onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = () => setPreview(reader.result as string);
+                                reader.readAsDataURL(file);
+                            }
+                        }} accept="image/*" />
 
-                    <form action={(formData) => {
-                        if (preview) {
-                            formData.set('imageDataUri', preview);
-                            formData.set('language', lang);
-                            formAction(formData);
-                        }
-                    }}>
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white h-12 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing Report...</> : "Analyze Report"}
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Describe symptoms (e.g., fatigue, pain, reason for test)</Label>
+                            <Textarea 
+                                name="userQuery" 
+                                placeholder="Example: I've been feeling extremely tired lately and have muscle aches..." 
+                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[120px] text-base" 
+                            />
+                        </div>
+
+                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
+                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Extracting Data...</> : "Start Clinical Interpretation"}
                         </Button>
                     </form>
                 </CardContent>
+
                 {state.result && (
-                    <CardFooter className="flex-col items-start gap-4">
-                        <div className="w-full space-y-4 bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-50 dark:border-slate-700/50 animate-in zoom-in-95">
-                            <div className="flex justify-between items-center border-b border-slate-50 dark:border-slate-700 pb-3 mb-2">
-                                <h4 className="font-black text-lg text-[#2D3A5D] dark:text-slate-100">Results</h4>
-                                <Button size="sm" onClick={() => downloadPdf(state.result.result)} className="rounded-full bg-green-600 text-white font-bold h-8 px-4 text-[10px] uppercase">
-                                    <Download className="h-3 w-3 mr-1" /> PDF
+                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
+                        {state.result.interactionPrompt && !state.result.interpretations?.length && (
+                            <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
+                                <Info className="h-4 w-4 text-indigo-500" />
+                                <AlertTitle className="font-black text-indigo-700">Additional Data Needed</AlertTitle>
+                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="w-full space-y-6">
+                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Key Findings Summary</p>
+                                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 leading-tight">{state.result.summary}</p>
+                                </div>
+                                <Button size="sm" onClick={() => downloadPdf(state.result)} className="rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 h-9 px-4 font-black text-[10px] uppercase">
+                                    <Download className="h-3.5 w-3.5 mr-1.5" /> PDF
                                 </Button>
                             </div>
-                            <p className="text-xs font-bold text-slate-500 leading-relaxed mb-4">{state.result.result.summary}</p>
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                                {state.result.result.interpretations.map((item: any, idx: number) => (
-                                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 flex justify-between gap-4">
-                                        <div className="flex-1">
-                                            <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{item.test}</p>
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">{item.note}</p>
+
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-emerald-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biomarker Analysis Table</h4>
+                                </div>
+                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+                                    {state.result.interpretations.map((item: any, idx: number) => (
+                                        <div key={idx} className="p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-50 flex justify-between gap-4 items-center">
+                                            <div className="flex-1">
+                                                <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{item.test}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">Range: {item.range || 'N/A'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{item.value}</p>
+                                                <Badge className={cn("mt-1 text-[8px] font-black uppercase border-none", 
+                                                    item.status === 'normal' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                                                )}>{item.status}</Badge>
+                                            </div>
                                         </div>
-                                        <div className="text-right flex flex-col justify-center">
-                                            <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{item.value}</p>
-                                            <p className={cn("text-[8px] font-black uppercase mt-0.5", 
-                                                item.status === 'normal' ? 'text-green-500' : 'text-red-500'
-                                            )}>{item.status}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
+
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <BrainCircuit className="w-4 h-4 text-indigo-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biological Logic</h4>
+                                </div>
+                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed bg-white/50 dark:bg-slate-800/50 p-5 rounded-2xl border border-white/50">
+                                    {state.result.biologicalLogic}
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Utensils className="w-4 h-4 text-orange-500" />
+                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Lifestyle Suggestions</h4>
+                                </div>
+                                <div className="grid gap-3">
+                                    {state.result.lifestyleSuggestions.map((suggestion: string, i: number) => (
+                                        <div key={i} className="flex gap-3 items-start bg-white/40 dark:bg-slate-800/40 p-3 rounded-2xl border border-white/50">
+                                            <div className="h-5 w-5 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-[10px] shrink-0">{i+1}</div>
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{suggestion}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <Alert className="rounded-2xl bg-amber-50 border-amber-100 mt-6">
+                                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                <p className="text-[10px] font-bold text-amber-700 leading-relaxed italic">
+                                    {state.result.recommendation}
+                                </p>
+                            </Alert>
                         </div>
                     </CardFooter>
                 )}
