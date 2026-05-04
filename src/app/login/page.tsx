@@ -96,16 +96,17 @@ export default function LoginPage() {
       console.error("Auth Error:", error);
       let message = error.message;
       
-      if (error.message.includes('identity-toolkit-api')) {
-        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console.";
-      } else if (error.code === 'auth/email-already-in-use') {
-        message = 'This email is already registered.';
+      // Handle Firebase specific error codes
+      if (error.code === 'auth/email-already-in-use') {
+        message = 'This email is already registered. Please sign in instead.';
       } else if (error.code === 'auth/invalid-email') {
         message = 'Please enter a valid email address.';
       } else if (error.code === 'auth/weak-password') {
-        message = 'The password is too weak.';
+        message = 'The password is too weak. Please use at least 6 characters.';
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        message = 'Invalid email or password.';
+        message = 'Invalid email or password. Please try again.';
+      } else if (error.message.includes('identity-toolkit-api')) {
+        message = "Authentication service is currently unavailable. Please try again later.";
       }
 
       toast({
@@ -128,7 +129,7 @@ export default function LoginPage() {
       console.error("Guest Sign-in Error:", error);
       let message = error.message;
       if (error.message.includes('identity-toolkit-api')) {
-        message = "Firebase Identity API is not enabled. Please enable it in the Google Cloud Console.";
+        message = "Guest mode is temporarily unavailable.";
       }
       toast({ 
         variant: 'destructive', 
