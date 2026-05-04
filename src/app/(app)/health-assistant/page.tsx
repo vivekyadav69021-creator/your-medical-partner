@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -800,6 +801,18 @@ function ChatInterface({
                         </Popover>
                     )}
 
+                    {/* Independent Attachment Button */}
+                    <Button 
+                        type="button" 
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isPending}
+                        className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0"
+                    >
+                        <Paperclip className="h-6 w-6 text-slate-400" />
+                    </Button>
+
                     <div className="flex-1 relative flex items-end bg-white dark:bg-slate-800 rounded-2xl px-2 shadow-inner min-h-[56px] overflow-hidden border border-slate-100 dark:border-slate-700">
                         <Textarea
                             id="chatInput"
@@ -822,15 +835,6 @@ function ChatInterface({
                                 }
                             }}
                         />
-                        
-                        <button 
-                            type="button" 
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isPending}
-                            className="p-4 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-400 shrink-0"
-                        >
-                            <Paperclip className="h-5 w-5" />
-                        </button>
                     </div>
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
                     <SubmitButton />
