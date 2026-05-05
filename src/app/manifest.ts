@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Your Medical Partner',
-    short_name: 'MediMate',
+    short_name: 'Medical Partner',
     description: 'Your Digital Health Companion with AI Insights',
     start_url: '/dashboard',
     display: 'standalone',
@@ -24,7 +24,6 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any'
       },
     ],
-    // Essential for Android App Banner to trigger
     categories: ['medical', 'health'],
     shortcuts: [
       {

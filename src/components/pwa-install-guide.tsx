@@ -10,16 +10,19 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Share, PlusSquare, Smartphone, Download, X, Sparkles } from 'lucide-react';
+import { Share, PlusSquare, Smartphone, Download, X, Sparkles, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export function PWAInstallGuide() {
   const [showBanner, setShowBanner] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>('other');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // 1. Check if already installed
+    // 1. Check if already installed (standalone mode)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
                          || (window.navigator as any).standalone === true;
 
@@ -37,39 +40,43 @@ export function PWAInstallGuide() {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowBanner(true); // Show banner as soon as browser is ready to install
+      setShowBanner(true);
+      console.log('Native install prompt is ready');
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // 4. Fallback: If no native prompt after 4 seconds (common on iOS or if event was missed)
+    // 4. Show banner anyway after 5 seconds if not standalone (for iOS instructions)
     const timer = setTimeout(() => {
-      if (!deferredPrompt && !isStandalone) {
+      if (!isStandalone) {
         setShowBanner(true);
       }
-    }, 4000);
+    }, 5000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
       clearTimeout(timer);
     };
-  }, [deferredPrompt]);
+  }, []);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // ANDROID / CHROME LOGIC: Direct one-click prompt
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setDeferredPrompt(null);
-        setShowBanner(false);
+      // ANDROID / CHROME NATIVE PROMPT
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setDeferredPrompt(null);
+          setShowBanner(false);
+          toast({ title: "Installing...", description: "Your Medical Partner is being added to your phone." });
+        }
+      } catch (err) {
+        console.error("Install prompt error:", err);
+        setShowInstructions(true); // Fallback to manual guide
       }
-    } else if (platform === 'ios') {
-      // IOS LOGIC: Show manual instructions as Apple blocks direct install
-      setShowInstructions(true);
     } else {
-      // OTHER: Basic instruction fallback
-      alert("To install: Use your browser's 'Add to Home Screen' option.");
+      // IOS or Android without direct prompt availability
+      setShowInstructions(true);
     }
   };
 
@@ -88,10 +95,10 @@ export function PWAInstallGuide() {
                 <Smartphone className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-black tracking-tight flex items-center gap-2">
-                  Install MediMate <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                <p className="text-sm font-black tracking-tight flex items-center gap-1">
+                  Get The App <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                 </p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Full Screen • Offline Access</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Full Screen • Faster Access</p>
               </div>
             </div>
 
@@ -99,9 +106,10 @@ export function PWAInstallGuide() {
               <Button 
                 size="sm" 
                 onClick={handleInstallClick} 
+                disabled={isPreparing}
                 className="rounded-full h-10 px-6 bg-white text-black hover:bg-slate-100 font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-xl"
               >
-                {deferredPrompt ? 'Install Now' : 'Get App'}
+                {isPreparing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Get App'}
               </Button>
               <button 
                 onClick={() => setShowBanner(false)} 
@@ -114,43 +122,58 @@ export function PWAInstallGuide() {
         </div>
       )}
 
-      {/* iOS Only Instructions (Apple limitation) */}
+      {/* Manual Instructions Dialog (For iOS and Fallback) */}
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
         <DialogContent className="sm:max-w-md rounded-[3rem] border-none p-8 overflow-hidden bg-white dark:bg-slate-900">
           <DialogHeader className="space-y-4">
             <div className="mx-auto bg-blue-50 dark:bg-blue-900/20 p-5 rounded-[2.5rem] w-fit">
                <Download className="w-10 h-10 text-primary animate-bounce" />
             </div>
-            <DialogTitle className="text-3xl font-black text-center text-[#2D3A5D] dark:text-slate-100 tracking-tight">Add to iPhone</DialogTitle>
+            <DialogTitle className="text-2xl font-black text-center text-[#2D3A5D] dark:text-slate-100 tracking-tight">
+              {platform === 'ios' ? 'Install on iPhone' : 'Add to Home Screen'}
+            </DialogTitle>
             <DialogDescription className="text-center font-bold text-slate-400 text-[10px] uppercase tracking-[0.2em] leading-relaxed">
-              Safari requires these 2 quick steps:
+              Follow these simple steps:
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-8 space-y-6">
-            <div className="flex items-center gap-5 p-5 rounded-[2rem] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-              <div className="bg-white dark:bg-slate-700 h-12 w-12 rounded-2xl flex items-center justify-center shadow-md shrink-0">
-                <Share className="w-6 h-6 text-blue-500" />
+          <div className="py-6 space-y-5">
+            {platform === 'ios' ? (
+              <>
+                <div className="flex items-center gap-5 p-5 rounded-[2rem] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                  <div className="bg-white dark:bg-slate-700 h-12 w-12 rounded-2xl flex items-center justify-center shadow-md shrink-0">
+                    <Share className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-200">1. Tap 'Share'</p>
+                    <p className="text-[11px] font-medium text-slate-400">At the bottom of Safari</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-5 p-5 rounded-[2rem] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                  <div className="bg-white dark:bg-slate-700 h-12 w-12 rounded-2xl flex items-center justify-center shadow-md shrink-0">
+                    <PlusSquare className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-200">2. 'Add to Home Screen'</p>
+                    <p className="text-[11px] font-medium text-slate-400">Find it in the share menu</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center text-center p-6 space-y-4">
+                <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center">
+                  <PlusSquare className="h-8 w-8 text-primary" />
+                </div>
+                <p className="text-sm font-bold text-slate-600 leading-relaxed">
+                  Tap the three dots (⋮) in your browser menu and select <b>"Install App"</b> or <b>"Add to Home Screen"</b> to continue.
+                </p>
               </div>
-              <div className="space-y-1">
-                <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-200">1. Tap 'Share'</p>
-                <p className="text-[11px] font-medium text-slate-400">Bottom center of Safari</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-5 p-5 rounded-[2rem] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-              <div className="bg-white dark:bg-slate-700 h-12 w-12 rounded-2xl flex items-center justify-center shadow-md shrink-0">
-                <PlusSquare className="w-6 h-6 text-blue-500" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-200">2. 'Add to Home Screen'</p>
-                <p className="text-[11px] font-medium text-slate-400">Scroll down to find this option</p>
-              </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button onClick={() => setShowInstructions(false)} className="w-full rounded-2xl h-14 bg-primary text-white font-black uppercase text-xs tracking-widest shadow-2xl">
-              Done, Open App
+              I'll do it
             </Button>
           </DialogFooter>
         </DialogContent>
