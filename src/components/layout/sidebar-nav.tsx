@@ -24,6 +24,7 @@ import {
   Scan,
   ShieldPlus,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const mainNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -59,26 +60,43 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
     const pathname = usePathname();
 
     return (
-        <div className="px-3 py-2">
-            <h2 className="mb-2 px-2 text-sm font-semibold tracking-tight text-muted-foreground group-data-[state=collapsed]:hidden">
+        <div className="px-3 py-4">
+            <h2 className={cn(
+                "mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#2488E8] opacity-50",
+                "group-data-[state=collapsed]:hidden"
+            )}>
                 {title}
             </h2>
             <SidebarMenu>
-                {items.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname.startsWith(item.href)}
-                        onClick={onLinkClick}
-                        tooltip={item.label}
-                    >
-                        <Link href={item.href}>
-                        <item.icon />
-                        <span className="group-data-[state=expanded]:inline-flex">{item.label}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
+                {items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                    return (
+                        <SidebarMenuItem key={item.href}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                onClick={onLinkClick}
+                                tooltip={item.label}
+                                className={cn(
+                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1",
+                                    isActive 
+                                        ? "bg-primary/10 text-primary shadow-sm border border-primary/20" 
+                                        : "hover:bg-primary/5 text-[#2D3A5D]/70 dark:text-slate-400"
+                                )}
+                            >
+                                <Link href={item.href} className="flex items-center gap-3">
+                                    <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-[#2D3A5D]/40 dark:text-slate-500")} />
+                                    <span className={cn(
+                                        "text-sm font-black tracking-tight",
+                                        "group-data-[state=collapsed]:hidden"
+                                    )}>
+                                        {item.label}
+                                    </span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    );
+                })}
             </SidebarMenu>
         </div>
     )
@@ -94,9 +112,9 @@ export function SidebarNav() {
   };
 
   return (
-    <div className="space-y-2 py-2">
+    <div className="space-y-1 pb-10">
         <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
-        <NavSection title="Smart Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
+        <NavSection title="Smart AI Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
         <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />
         <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} />
         <NavSection title="Configuration" items={settingsNav} onLinkClick={handleLinkClick} />
