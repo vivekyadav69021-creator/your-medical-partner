@@ -5,8 +5,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Your Medical Partner',
     short_name: 'MediMate',
     description: 'Your Digital Health Companion with AI Insights',
-    start_url: '/dashboard', // Direct users to dashboard after clicking app icon
-    display: 'standalone', // Removes the browser URL bar
+    start_url: '/dashboard',
+    display: 'standalone',
     background_color: '#FDFBFF',
     theme_color: '#2488E8',
     orientation: 'portrait',
@@ -24,5 +24,19 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any'
       },
     ],
+    // Essential for Android App Banner to trigger
+    categories: ['medical', 'health'],
+    shortcuts: [
+      {
+        name: 'AI Assistant',
+        url: '/health-assistant',
+        icons: [{ src: 'https://picsum.photos/seed/shortcut-ai/96/96', sizes: '96x96' }]
+      },
+      {
+        name: 'Scanner',
+        url: '/disease-scanner',
+        icons: [{ src: 'https://picsum.photos/seed/shortcut-scan/96/96', sizes: '96x96' }]
+      }
+    ]
   };
 }
