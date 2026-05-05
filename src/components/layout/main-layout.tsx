@@ -97,10 +97,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarFooter className="group-data-[state=collapsed]:hidden">
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="flex flex-col relative" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
+      <SidebarInset className="flex flex-col relative h-screen overflow-hidden" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
         <header 
           className={cn(
-            "flex h-16 items-center justify-between p-4 sticky top-0 z-40 bg-white/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ease-in-out",
+            "flex h-16 items-center justify-between p-4 sticky top-0 z-40 bg-white/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ease-in-out shrink-0",
             showHeader ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
           )}
         >
@@ -172,8 +172,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         
-        <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
-          <div className="p-4 md:p-6 lg:p-8 min-h-full pb-20">
+        <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth overscroll-none touch-pan-y">
+          <div className="p-4 md:p-6 lg:p-8 min-h-full pb-32">
             {children}
           </div>
         </main>

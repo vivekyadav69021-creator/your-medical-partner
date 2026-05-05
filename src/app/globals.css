@@ -4,6 +4,22 @@
 
 body {
   font-family: 'PT Sans', sans-serif;
+  /* Prevent pull-to-refresh and overscroll bounce */
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  /* Disable tap highlight color on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Disable text selection except for inputs to feel more like an app */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Smooth touch scrolling */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Allow text selection in specific elements */
+input, textarea, [contenteditable="true"], .prose {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 @layer base {
