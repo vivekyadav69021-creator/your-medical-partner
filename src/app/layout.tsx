@@ -17,14 +17,14 @@ export const metadata: Metadata = {
   },
 };
 
-// Strict viewport settings to prevent zooming and enable full-screen feel
+// Precise viewport settings for 100% app feel
 export const viewport: Viewport = {
   themeColor: '#2488E8',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover',
+  viewportFit: 'cover', // Ensures app uses the entire screen including the notch
 };
 
 export default function RootLayout({
@@ -34,18 +34,19 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" suppressHydrationWarning className="overflow-hidden">
+    <html lang="en" suppressHydrationWarning className="overflow-hidden bg-background">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossOrigin=""/>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin=""></script>
-        {/* iOS Web App Support */}
+        {/* Native App Meta Tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="font-body antialiased selection:bg-primary/20 overflow-hidden touch-none h-full w-full fixed">
+      <body className="antialiased selection:bg-primary/20 overflow-hidden touch-none h-[100dvh] w-screen fixed inset-0">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

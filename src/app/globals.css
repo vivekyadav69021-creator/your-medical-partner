@@ -2,101 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'PT Sans', sans-serif;
-  /* Prevent pull-to-refresh and overscroll bounce */
-  overscroll-behavior-y: none;
-  overscroll-behavior-x: none;
-  /* Disable tap highlight color on mobile */
+:root {
+  --background: 210 100% 98%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 212 92% 59%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 261 46% 63%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 212 92% 59%;
+  --radius: 1.5rem;
+  --dashboard-bg: linear-gradient(135deg, #E6F0FF 0%, #FDFBFF 50%, #FFE9F0 100%);
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 212 92% 59%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 261 46% 63%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212 92% 59%;
+  --dashboard-bg: linear-gradient(135deg, #0f172a 0%, #020617 50%, #1e1b4b 100%);
+}
+
+* {
+  @apply border-border;
   -webkit-tap-highlight-color: transparent;
-  /* Disable text selection except for inputs to feel more like an app */
-  -webkit-user-select: none;
   user-select: none;
-  /* Smooth touch scrolling */
-  -webkit-overflow-scrolling: touch;
 }
 
-/* Allow text selection in specific elements */
-input, textarea, [contenteditable="true"], .prose {
-  -webkit-user-select: text;
+html, body {
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  position: fixed;
+  overscroll-behavior-y: none;
+  font-family: 'PT Sans', sans-serif;
+}
+
+body {
+  @apply bg-background text-foreground;
+  /* Support for modern mobile browsers dynamic heights */
+  height: 100dvh;
+}
+
+/* Enable scrolling only where needed */
+main, .scroll-area, [data-radix-scroll-area-viewport] {
   user-select: text;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }
 
-@layer base {
-  :root {
-    --background: 210 100% 98%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 212 92% 59%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 261 46% 63%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 212 92% 59%;
-    --radius: 1.5rem;
-    --dashboard-bg: linear-gradient(135deg, #E6F0FF 0%, #FDFBFF 50%, #FFE9F0 100%);
-    
-    /* Sidebar colors for Light Mode */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-primary: 212 92% 59%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 84% 4.9%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 212 92% 59%;
-  }
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 212 92% 59%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 261 46% 63%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212 92% 59%;
-    --dashboard-bg: linear-gradient(135deg, #0f172a 0%, #020617 50%, #1e1b4b 100%);
-
-    /* Sidebar colors for Dark Mode */
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 212 92% 59%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 212 92% 59%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+input, textarea, [contenteditable="true"] {
+  user-select: text;
 }
 
 @layer utilities {
@@ -109,39 +91,16 @@ input, textarea, [contenteditable="true"], .prose {
     box-shadow: 6px 6px 16px rgba(0, 0, 0, 0.4), -6px -6px 16px rgba(255, 255, 255, 0.02);
   }
 
-  .glowing-underline {
-    border-bottom: 2px solid;
-    border-image: linear-gradient(to right, #2488E8, #14CFBD) 1;
-    box-shadow: 0 4px 10px rgba(36, 136, 232, 0.2);
-  }
-
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
   }
-
-  @keyframes splash-pop-in {
-    0% { transform: scale(0.5); opacity: 0; }
-    60% { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  @keyframes splash-slide-in-left {
-    0% { transform: translateX(-50px); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-  }
-
-  @keyframes splash-slide-in-right {
-    0% { transform: translateX(50px); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-  }
-
-  @keyframes splash-slide-in-bottom {
-    0% { transform: translateY(30px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   @keyframes splash-gradient-slide {
@@ -149,9 +108,5 @@ input, textarea, [contenteditable="true"], .prose {
     100% { transform: translateX(100%); }
   }
 
-  .animate-splash-pop-in { animation: splash-pop-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-splash-slide-in-left { animation: splash-slide-in-left 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-splash-slide-in-right { animation: splash-slide-in-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-splash-slide-in-bottom { animation: splash-slide-in-bottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .animate-splash-gradient { animation: splash-gradient-slide 2.5s infinite linear; }
 }

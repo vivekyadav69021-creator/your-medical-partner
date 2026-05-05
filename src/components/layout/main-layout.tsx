@@ -50,9 +50,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       const isScrollingDown = currentScrollY > lastScrollY.current;
       const scrollDistance = Math.abs(currentScrollY - lastScrollY.current);
 
-      // Only toggle if scrolled more than a small threshold
-      if (scrollDistance > 5) {
-        if (isScrollingDown && currentScrollY > 80) {
+      if (scrollDistance > 10) {
+        if (isScrollingDown && currentScrollY > 100) {
           setHeaderVisible(false);
         } else {
           setHeaderVisible(true);
@@ -97,10 +96,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarFooter className="group-data-[state=collapsed]:hidden">
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="flex flex-col relative h-screen overflow-hidden" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
+      <SidebarInset className="flex flex-col relative h-[100dvh] overflow-hidden w-full" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
         <header 
           className={cn(
-            "flex h-16 items-center justify-between p-4 sticky top-0 z-40 bg-white/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ease-in-out shrink-0",
+            "flex h-16 items-center justify-between px-4 sticky top-0 z-40 bg-white/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ease-in-out shrink-0 safe-top",
             showHeader ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
           )}
         >
@@ -110,19 +109,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <span className="text-lg font-black tracking-tighter text-[#2488E8] font-headline uppercase">Your Medical Partner</span>
              </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild title="Cart" className="rounded-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-md shadow-sm border border-white/20">
               <Link href="/store/cart" className="relative">
                 <ShoppingCart className="w-5 h-5 text-[#2D3A5D] dark:text-slate-200" />
                 {itemCount > 0 && (
-                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 text-[10px]">{itemCount}</Badge>
+                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 text-[10px] animate-in zoom-in">{itemCount}</Badge>
                 )}
               </Link>
             </Button>
             
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-12 w-12 p-0 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm overflow-hidden flex items-center justify-center" title="Settings">
+                 <Button variant="ghost" className="relative h-11 w-11 p-0 rounded-full border-2 border-white/50 dark:border-slate-700/50 shadow-sm overflow-hidden flex items-center justify-center" title="Settings">
                   <Avatar className="h-full w-full">
                       <AvatarImage src={userImage} alt={userName} className="object-cover" data-ai-hint="person face" />
                       <AvatarFallback>
@@ -172,8 +171,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         
-        <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth overscroll-none touch-pan-y">
-          <div className="p-4 md:p-6 lg:p-8 min-h-full pb-32">
+        <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth w-full">
+          <div className="p-4 md:p-6 lg:p-8 min-h-full pb-32 w-full max-w-screen-2xl mx-auto">
             {children}
           </div>
         </main>
