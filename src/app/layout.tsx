@@ -1,14 +1,29 @@
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
-import Script from 'next/script';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'Your Medical Partner',
-  description: 'Your Medical Partner',
+  description: 'Your Digital Health Companion',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'MediMate',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#2488E8',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
