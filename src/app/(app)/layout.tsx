@@ -4,6 +4,7 @@ import MainLayout from '@/components/layout/main-layout';
 import { CartProvider } from '@/context/cart-context';
 import { UserProfileProvider } from '@/context/user-profile-context';
 import { SplashScreen } from '@/components/splash-screen';
+import { PWAInstallGuide } from '@/components/pwa-install-guide';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -45,7 +46,10 @@ export default function AppLayout({
   return (
     <UserProfileProvider>
       <CartProvider>
-        <MainLayout>{children}</MainLayout>
+        <MainLayout>
+          {children}
+          <PWAInstallGuide />
+        </MainLayout>
       </CartProvider>
     </UserProfileProvider>
   );

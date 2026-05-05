@@ -1,4 +1,3 @@
-
 import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -6,21 +5,23 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Your Medical Partner',
     short_name: 'MediMate',
     description: 'Your Digital Health Companion with AI Insights',
-    start_url: '/',
-    display: 'standalone',
+    start_url: '/dashboard', // Direct users to dashboard after clicking app icon
+    display: 'standalone', // Removes the browser URL bar
     background_color: '#FDFBFF',
     theme_color: '#2488E8',
+    orientation: 'portrait',
     icons: [
       {
-        src: 'https://picsum.photos/seed/app-icon/192/192',
+        src: 'https://picsum.photos/seed/medimate-192/192/192',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: 'https://picsum.photos/seed/app-icon-512/512/512',
+        src: 'https://picsum.photos/seed/medimate-512/512/512',
         sizes: '512x512',
         type: 'image/png',
+        purpose: 'any'
       },
     ],
   };
