@@ -83,7 +83,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <SidebarProvider>
-      <Sidebar className="border-r-0 shadow-2xl shadow-blue-900/5">
+      <Sidebar className="border-r-0 shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
         <SidebarHeader className="pt-8 px-6">
           <div className="flex items-center gap-4 p-2">
             <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
@@ -112,27 +112,27 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           )}
         >
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="h-11 w-11 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md shadow-sm border border-white/20">
+            <SidebarTrigger className="h-11 w-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-white/20 dark:border-slate-700/50">
                 <Menu className="w-5 h-5 text-primary" />
             </SidebarTrigger>
             <div className="px-2 hidden md:block">
-                <span className="text-xs font-black tracking-[0.2em] text-[#2488E8] font-headline uppercase opacity-60">Your Medical Partner</span>
+                <span className="text-xs font-black tracking-[0.2em] text-primary font-headline uppercase opacity-60">Your Medical Partner</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild title="Cart" className="rounded-full h-11 w-11 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md shadow-sm border border-white/20">
+            <Button variant="ghost" size="icon" asChild title="Cart" className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 shadow-sm border border-white/20">
               <Link href="/store/cart" className="relative">
-                <ShoppingCart className="w-5 h-5 text-[#2D3A5D] dark:text-slate-200" />
+                <ShoppingCart className="w-5 h-5 text-slate-700 dark:text-slate-200" />
                 {itemCount > 0 && (
-                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 text-[10px] animate-in zoom-in border-2 border-white">{itemCount}</Badge>
+                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 text-[10px] animate-in zoom-in border-2 border-white dark:border-slate-900">{itemCount}</Badge>
                 )}
               </Link>
             </Button>
             
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-11 w-11 p-0 rounded-full border-2 border-white shadow-md overflow-hidden flex items-center justify-center" title="Settings">
+                 <Button variant="ghost" className="relative h-11 w-11 p-0 rounded-full border-2 border-white dark:border-slate-700 shadow-md overflow-hidden flex items-center justify-center" title="Settings">
                   <Avatar className="h-full w-full">
                       <AvatarImage src={userImage} alt={userName} className="object-cover" />
                       <AvatarFallback className="bg-primary/10 text-primary">
@@ -142,18 +142,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 rounded-[2rem] border-none shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-2">
-                 <DropdownMenuItem asChild className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-slate-700">
+                 <DropdownMenuItem asChild className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-slate-700 dark:text-slate-200">
                    <Link href="/profile" className="flex items-center gap-3">
-                    <div className="h-8 w-8 bg-blue-50 rounded-xl flex items-center justify-center text-primary">
+                    <div className="h-8 w-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
                         <UserIcon className="w-4 h-4" />
                     </div>
                     My Profile
                    </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="rounded-2xl py-3 px-4 font-bold text-slate-700">
+                  <DropdownMenuSubTrigger className="rounded-2xl py-3 px-4 font-bold text-slate-700 dark:text-slate-200">
                     <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-purple-50 rounded-xl flex items-center justify-center text-purple-500">
+                        <div className="h-8 w-8 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-500">
                             <Sun className="w-4 h-4" />
                         </div>
                         Theme Mode
@@ -176,12 +176,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                <div className="h-px bg-slate-100 my-2 mx-4" />
+                <div className="h-px bg-slate-100 dark:bg-slate-800 my-2 mx-4" />
                 <DropdownMenuItem 
                   onClick={handleSignOut} 
-                  className="rounded-2xl cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50 py-3 px-4 font-bold flex items-center gap-3"
+                  className="rounded-2xl cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-900/20 py-3 px-4 font-bold flex items-center gap-3"
                 >
-                  <div className="h-8 w-8 bg-red-50 rounded-xl flex items-center justify-center">
+                  <div className="h-8 w-8 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
                     <LogOut className="w-4 h-4" />
                   </div>
                   Sign Out

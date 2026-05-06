@@ -18,6 +18,7 @@ import {
   ListTodo,
   Trophy,
   Wind,
+  Flower,
   Video,
   GraduationCap,
   Settings,
@@ -47,7 +48,7 @@ const yourHealthNav = [
 const learnNav = [
     { href: '/challenges', label: 'Health Challenges', icon: Trophy },
     { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
-    { href: '/yoga-library', label: 'Yoga Library', icon: Wind },
+    { href: '/yoga-library', label: 'Yoga Library', icon: Flower },
     { href: '/video-tutorials', label: 'Video Library', icon: Video },
     { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
 ];
@@ -62,7 +63,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
     return (
         <div className="px-3 py-4">
             <h2 className={cn(
-                "mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#2488E8] opacity-50",
+                "mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary opacity-60",
                 "group-data-[state=collapsed]:hidden"
             )}>
                 {title}
@@ -78,16 +79,16 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
                                 onClick={onLinkClick}
                                 tooltip={item.label}
                                 className={cn(
-                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1",
+                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1 h-12",
                                     isActive 
-                                        ? "bg-primary/10 text-primary shadow-sm border border-primary/20" 
-                                        : "hover:bg-primary/5 text-[#2D3A5D]/70 dark:text-slate-400"
+                                        ? "bg-primary text-white shadow-md shadow-primary/20 border-none" 
+                                        : "hover:bg-primary/5 text-slate-600 dark:text-slate-400"
                                 )}
                             >
                                 <Link href={item.href} className="flex items-center gap-3">
-                                    <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-[#2D3A5D]/40 dark:text-slate-500")} />
+                                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
                                     <span className={cn(
-                                        "text-sm font-black tracking-tight",
+                                        "text-sm font-bold tracking-tight",
                                         "group-data-[state=collapsed]:hidden"
                                     )}>
                                         {item.label}
