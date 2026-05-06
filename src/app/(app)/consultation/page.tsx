@@ -29,6 +29,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Player } from '@lottiefiles/react-lottie-player';
+import { cn } from '@/lib/utils';
 
 const indianDoctors = [
   { id: 'dr-shivam-yadav', name: 'Dr. Shivam Yadav', specialty: 'General Physician', rating: 4.8, imageId: 'doctor-2', fees: '₹500', experience: '8 years', location: 'Delhi, India', bio: 'Compassionate general physician with expertise in managing chronic diseases and acute illnesses.', education: 'MBBS, MD (General Medicine)', reviews: [{user: 'Rohan S.', rating: 5, comment: "Very helpful and listens patiently."}] },
@@ -92,13 +93,13 @@ const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, re
               alt={image.description}
               width={80}
               height={80}
-              className="rounded-full border-2 border-primary"
+              className="rounded-full border-2 border-primary shrink-0"
               data-ai-hint={image.imageHint}
             />
           )}
-          <div className="flex-1">
-            <CardTitle>{name}</CardTitle>
-            <CardDescription>{specialty}</CardDescription>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="truncate">{name}</CardTitle>
+            <CardDescription className="truncate">{specialty}</CardDescription>
             <div className="flex items-center gap-4 mt-2">
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400"/>
@@ -126,7 +127,7 @@ const DoctorCard = ({ id, name, specialty, rating, imageId, fees, experience, re
               </div>
            </div>
            <div className="flex items-center text-primary text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-              <span>View Profile</span>
+              <span className="hidden sm:inline">View Profile</span>
               <ArrowRight className="ml-1 h-4 w-4"/>
            </div>
         </CardFooter>
@@ -154,14 +155,12 @@ export default function ConsultationPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Artificial delay removed for better performance
     setIsLoading(false);
   }, []);
 
 
   useEffect(() => {
     if(!isLoading) {
-        // Load appointments from localStorage on component mount
         const savedAppointments = localStorage.getItem('appointments');
         if (savedAppointments) {
             setAppointments(JSON.parse(savedAppointments));
@@ -174,7 +173,7 @@ export default function ConsultationPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">Doctor Consultation</h1>
         <p className="text-muted-foreground">
@@ -183,16 +182,26 @@ export default function ConsultationPage() {
       </div>
 
       <Tabs defaultValue="find-doctor">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="find-doctor">Find a Doctor</TabsTrigger>
-          <TabsTrigger value="appointments">Upcoming Appointments</TabsTrigger>
-          <TabsTrigger value="history">Consultation History</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
+          <TabsTrigger value="find-doctor" className="rounded-lg py-2 px-1 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest">
+            <span className="hidden sm:inline">Find a Doctor</span>
+            <span className="sm:hidden">Find</span>
+          </TabsTrigger>
+          <TabsTrigger value="appointments" className="rounded-lg py-2 px-1 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest">
+            <span className="hidden sm:inline">Upcoming Appointments</span>
+            <span className="sm:hidden">Upcoming</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-lg py-2 px-1 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest">
+            <span className="hidden sm:inline">Consultation History</span>
+            <span className="sm:hidden">History</span>
+          </TabsTrigger>
         </TabsList>
+
         <TabsContent value="find-doctor" className="mt-6">
            <Tabs defaultValue="indian">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="indian">Indian Doctors</TabsTrigger>
-              <TabsTrigger value="foreign">Foreign Doctors</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl">
+              <TabsTrigger value="indian" className="rounded-lg py-2 font-bold text-xs">Indian Doctors</TabsTrigger>
+              <TabsTrigger value="foreign" className="rounded-lg py-2 font-bold text-xs">Foreign Doctors</TabsTrigger>
             </TabsList>
             <TabsContent value="indian" className="mt-6">
               <div className="grid gap-6 md:grid-cols-2">
@@ -206,6 +215,7 @@ export default function ConsultationPage() {
             </TabsContent>
           </Tabs>
         </TabsContent>
+
         <TabsContent value="appointments" className="mt-6">
             <div className="space-y-6">
                 {appointments.length > 0 ? (
@@ -215,37 +225,37 @@ export default function ConsultationPage() {
                         const videoCallLink = isDrShivam ? "https://meet.jit.si/DrShivamConsultRoom" : `/video-call/${appt.id}?doctor=${encodeURIComponent(appt.doctorName)}`;
                         
                         return (
-                            <Card key={appt.id}>
+                            <Card key={appt.id} className="overflow-hidden">
                                 <CardHeader className="flex-row gap-4 items-center">
-                                    {image && <Image src={image.imageUrl} alt={image.description} width={64} height={64} className="rounded-full border" data-ai-hint={image.imageHint}/>}
-                                    <div className="flex-1">
-                                        <CardTitle>{appt.doctorName}</CardTitle>
-                                        <CardDescription>{appt.specialty}</CardDescription>
+                                    {image && <Image src={image.imageUrl} alt={image.description} width={64} height={64} className="rounded-full border shadow-sm shrink-0" data-ai-hint={image.imageHint}/>}
+                                    <div className="flex-1 min-w-0">
+                                        <CardTitle className="truncate text-base">{appt.doctorName}</CardTitle>
+                                        <CardDescription className="truncate text-xs">{appt.specialty}</CardDescription>
                                     </div>
-                                    <Badge variant={appt.type === 'Video Call' ? 'default' : 'secondary'}>{appt.type}</Badge>
+                                    <Badge variant={appt.type === 'Video Call' ? 'default' : 'secondary'} className="text-[10px] uppercase font-bold shrink-0">{appt.type}</Badge>
                                 </CardHeader>
-                                <CardContent className="grid grid-cols-2 gap-4">
+                                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                      <div className="flex items-center gap-2">
-                                        <CalendarIcon className="w-5 h-5 text-muted-foreground"/>
-                                        <p className="font-medium">{appt.date}</p>
+                                        <CalendarIcon className="w-4 h-4 text-primary"/>
+                                        <p className="font-bold text-sm">{appt.date}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Clock className="w-5 h-5 text-muted-foreground"/>
-                                        <p className="font-medium">{appt.time}</p>
+                                        <Clock className="w-4 h-4 text-primary"/>
+                                        <p className="font-bold text-sm">{appt.time}</p>
                                     </div>
                                     {appt.notes && (
-                                        <div className="col-span-2 text-sm text-muted-foreground">
-                                          <strong>Notes:</strong> {appt.notes}
+                                        <div className="col-span-1 sm:col-span-2 text-xs text-muted-foreground bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                          <strong className="text-primary font-black uppercase text-[10px] block mb-1">Notes:</strong> {appt.notes}
                                         </div>
                                     )}
                                 </CardContent>
-                                <CardFooter className="flex justify-end gap-2">
-                                    <Button variant="outline">Reschedule</Button>
+                                <CardFooter className="flex justify-end gap-2 bg-slate-50/50 dark:bg-slate-900/50 p-4 border-t">
+                                    <Button variant="outline" size="sm" className="rounded-full font-bold text-xs">Reschedule</Button>
                                     {appt.type === 'Video Call' && (
-                                         <Button asChild>
+                                         <Button asChild size="sm" className="rounded-full font-bold text-xs shadow-md shadow-primary/20">
                                             <Link href={videoCallLink} target={isDrShivam ? "_blank" : "_self"} rel={isDrShivam ? "noopener noreferrer" : ""}>
                                                 <Video className="mr-2 h-4 w-4"/>
-                                                Join Video Call
+                                                Join Call
                                             </Link>
                                         </Button>
                                     )}
@@ -254,15 +264,22 @@ export default function ConsultationPage() {
                         );
                     })
                 ) : (
-                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">You have no upcoming appointments.</p>
+                    <div className="text-center p-12 border-2 border-dashed rounded-[2rem] bg-white/40 backdrop-blur-sm border-blue-100 dark:border-slate-800">
+                        <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                            <CalendarIcon className="w-8 h-8 text-primary/40" />
+                        </div>
+                        <p className="text-sm font-bold text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-widest">No upcoming appointments</p>
                     </div>
                 )}
             </div>
         </TabsContent>
+
         <TabsContent value="history" className="mt-6">
-             <div className="text-center p-8 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Your consultation history will appear here.</p>
+             <div className="text-center p-12 border-2 border-dashed rounded-[2rem] bg-white/40 backdrop-blur-sm border-blue-100 dark:border-slate-800">
+                <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <MessageSquare className="w-8 h-8 text-primary/40" />
+                </div>
+                <p className="text-sm font-bold text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-widest">History will appear here</p>
             </div>
         </TabsContent>
       </Tabs>
@@ -270,10 +287,8 @@ export default function ConsultationPage() {
   );
 }
 
-// Full doctors list for detail page lookup
 export const allDoctors: Doctor[] = [...indianDoctors, ...foreignDoctors];
 
-// Function to add a new appointment, can be exported or passed down
 export const addAppointment = (newAppointment: Appointment) => {
   const savedAppointments = localStorage.getItem('appointments');
   const appointments = savedAppointments ? JSON.parse(savedAppointments) : [];
