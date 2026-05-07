@@ -19,6 +19,7 @@ import {
     Search,
     Zap,
     History,
+    Menu,
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // Types
 type Message = {
@@ -236,20 +238,28 @@ export default function HealthAssistantPage() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-white dark:bg-slate-950 overflow-hidden fixed inset-0">
         
-        {/* Simplified Slim Header */}
+        {/* Simplified Slim Header with Sidebar Toggle */}
         <header className="h-14 border-b flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-30">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                    {activeMode === 'doctor' ? <BrainCircuit className="w-5 h-5 text-primary" /> : <ShieldPlus className="w-5 h-5 text-primary" />}
+            <div className="flex items-center gap-2">
+                <SidebarTrigger className="h-9 w-9 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+                    <Menu className="w-4 h-4 text-primary" />
+                </SidebarTrigger>
+                
+                <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 mx-1" />
+
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-primary/10 rounded-lg">
+                        {activeMode === 'doctor' ? <BrainCircuit className="w-4 h-4 text-primary" /> : <ShieldPlus className="w-4 h-4 text-primary" />}
+                    </div>
+                    <h1 className="text-xs font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase truncate max-w-[150px] sm:max-w-none">
+                        {activeMode === 'doctor' ? specialty : "AI Health Assistant"}
+                    </h1>
                 </div>
-                <h1 className="text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase">
-                    {activeMode === 'doctor' ? specialty : "AI Health Assistant"}
-                </h1>
             </div>
 
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
                         <History className="w-5 h-5 text-slate-500" />
                     </Button>
                 </SheetTrigger>
@@ -264,7 +274,7 @@ export default function HealthAssistantPage() {
                         <div className="space-y-3 pb-20">
                             {(activeMode === 'general' ? generalSessions : doctorSessions.filter(s => s.specialty === specialty)).map(session => (
                                 <div key={session.id} onClick={() => activeMode === 'general' ? setActiveGeneralId(session.id) : setActiveDoctorId(session.id)}
-                                     className={cn("p-4 rounded-2xl border shadow-sm", currentSessionId === session.id ? "bg-white border-primary/30" : "bg-white/40 border-transparent")}>
+                                     className={cn("p-4 rounded-2xl border shadow-sm cursor-pointer transition-all active:scale-[0.98]", currentSessionId === session.id ? "bg-white border-primary/30" : "bg-white/40 border-transparent hover:bg-white")}>
                                     <p className="text-xs font-black truncate">{session.title}</p>
                                     <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
                                 </div>
