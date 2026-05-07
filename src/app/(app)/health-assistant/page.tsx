@@ -347,14 +347,14 @@ export default function HealthAssistantPage() {
         <footer className={cn("px-4 pb-8 pt-2 transition-all duration-500 transform border-t bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl z-40 shrink-0", 
             showControls ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none")}>
             
-            <div className="max-w-3xl mx-auto flex items-end gap-3">
+            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex items-end gap-3">
                 
                 {/* Vertical Stacked Tools */}
                 <div className="flex flex-col gap-2 shrink-0">
                     {activeMode === 'general' && (
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
+                                <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
                                     <Zap className="h-4 w-4 text-primary" />
                                 </Button>
                             </PopoverTrigger>
@@ -368,7 +368,7 @@ export default function HealthAssistantPage() {
                             </PopoverContent>
                         </Popover>
                     )}
-                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.nextElementSibling?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.parentElement?.nextElementSibling?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
                         <Paperclip className="h-4 w-4 text-slate-400" />
                     </Button>
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -395,7 +395,12 @@ export default function HealthAssistantPage() {
                             target.style.height = `${target.scrollHeight}px`;
                             setIsTyping(target.value.length > 0);
                         }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); formRef.current?.requestSubmit(); } }}
+                        onKeyDown={(e) => { 
+                            if (e.key === 'Enter' && !e.shiftKey) { 
+                                e.preventDefault(); 
+                                formRef.current?.requestSubmit(); 
+                            } 
+                        }}
                     />
                     
                     {/* Mic inside when not typing */}
@@ -414,11 +419,9 @@ export default function HealthAssistantPage() {
 
                 {/* Send Button & Dynamic Mic */}
                 <div className="flex flex-col gap-2 shrink-0">
-                    <form ref={formRef} action={onFormAction}>
-                        <Button type="submit" disabled={isPending} className="h-14 w-14 rounded-full bg-primary shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-                            {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
-                        </Button>
-                    </form>
+                    <Button type="submit" disabled={isPending} className="h-14 w-14 rounded-full bg-primary shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+                    </Button>
                     
                     {/* Mic below when typing or active */}
                     {(isTyping || isRecording) && (
@@ -433,10 +436,10 @@ export default function HealthAssistantPage() {
                         </Button>
                     )}
                 </div>
-            </div>
+            </form>
             
             {attachedImage && (
-                <div className="max-w-3xl mx-auto mt-3">
+                <div className="max-w-3xl mx-auto mt-3 px-12">
                     <div className="relative inline-block w-16 h-16 animate-in zoom-in-95">
                         <Image src={attachedImage} alt="Preview" width={64} height={64} className="rounded-2xl border-2 border-white shadow-xl object-cover h-full w-full" />
                         <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => setAttachedImage(null)}><X className="h-3 w-3" /></Button>
