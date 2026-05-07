@@ -1,4 +1,4 @@
-import { genkit, Genkit } from 'genkit';
+import { genkit, Genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
@@ -84,3 +84,5 @@ export const ai = new Proxy(instances[0], {
     return typeof value === 'function' ? value.bind(target) : value;
   },
 }) as any as Genkit;
+
+export { z };
