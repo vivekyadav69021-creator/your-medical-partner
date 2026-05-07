@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
@@ -341,7 +340,7 @@ export default function HealthAssistantPage() {
   const setActiveSessionId = activeMode === 'general' ? setActiveGeneralSessionId : setActiveDoctorSessionId;
 
   const handleStateUpdate = useCallback((state: typeof initialState, mode: 'general' | 'doctor') => {
-      const currentSessionId = mode === 'general' ? (mode === 'general' ? activeGeneralSessionId : activeDoctorSessionId) : activeDoctorSessionId;
+      const currentSessionId = mode === 'general' ? activeGeneralSessionId : activeDoctorSessionId;
       const setSessionList = mode === 'general' ? setGeneralSessions : setDoctorSessions;
 
       if ((state.response || state.error) && currentSessionId) {
@@ -359,6 +358,25 @@ export default function HealthAssistantPage() {
   useEffect(() => {
       if (!isDoctorPending) handleStateUpdate(doctorState, 'doctor');
   }, [doctorState, isDoctorPending, handleStateUpdate]);
+
+  const handleNewChat = useCallback(() => {
+    const newSession: Session = {
+      id: `session-${Date.now()}`,
+      title: activeMode === 'doctor' ? `${specialty} Consultation` : 'New Health Chat',
+      messages: [],
+      createdAt: Date.now(),
+      ...(activeMode === 'doctor' && { specialty }),
+    };
+
+    if (activeMode === 'general') {
+        setGeneralSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        setActiveGeneralSessionId(newSession.id);
+    } else {
+        setDoctorSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        setActiveDoctorSessionId(newSession.id);
+    }
+    setAttachedImage(null);
+  }, [activeMode, specialty]);
 
   useEffect(() => {
     const loadSessions = (mode: 'general' | 'doctor') => {
@@ -382,31 +400,12 @@ export default function HealthAssistantPage() {
     };
     loadSessions('general');
     loadSessions('doctor');
-  }, []);
+  }, [handleNewChat, specialty]);
 
   useEffect(() => {
     if (generalSessions.length > 0) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
     if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
-
-  const handleNewChat = useCallback(() => {
-    const newSession: Session = {
-      id: `session-${Date.now()}`,
-      title: activeMode === 'doctor' ? `${specialty} Consultation` : 'New Health Chat',
-      messages: [],
-      createdAt: Date.now(),
-      ...(activeMode === 'doctor' && { specialty }),
-    };
-
-    if (activeMode === 'general') {
-        setGeneralSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-        setActiveGeneralSessionId(newSession.id);
-    } else {
-        setDoctorSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-        setActiveDoctorSessionId(newSession.id);
-    }
-    setAttachedImage(null);
-  }, [activeMode, specialty]);
 
   const handleDeleteChat = (sessionId: string) => {
     setSessions(prev => prev.filter(s => s.id !== sessionId));
@@ -546,7 +545,7 @@ export default function HealthAssistantPage() {
                                                 onClick={() => setActiveSessionId(session.id)}
                                             >
                                                 <div className="flex-1 overflow-hidden">
-                                                    <p className={cn("text-sm font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
+                                                    <p className="text-sm font-black truncate tracking-tight text-[#2D3A5D] dark:text-slate-200">{session.title}</p>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase mt-2">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
                                                 </div>
                                                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-red-400 bg-red-50 dark:bg-red-900/20" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
@@ -776,7 +775,7 @@ function ChatInterface({
                 
                 <form
                     ref={formRef}
-                    action={handleFormAction}
+                    action={onFormAction}
                     className="flex w-full items-end gap-3 md:gap-4"
                 >
                     <div className="flex items-center gap-2 shrink-0">
@@ -791,7 +790,7 @@ function ChatInterface({
                                 <PopoverContent className="w-[300px] rounded-[2rem] border-none shadow-2xl p-6 dark:bg-slate-900" side="top" align="start">
                                     <div className="space-y-5">
                                         <h4 className="font-black text-[11px] text-[#2D3A5D] dark:text-slate-100 uppercase tracking-[0.25em] px-2 mb-2 opacity-60">Assistant Engines</h4>
-                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-3">
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode!(v as PulseMode)} className="gap-3">
                                             <PulseModeItem value="standard" label="Balanced" desc="General medical advice" icon={<ShieldPlus className="w-5 h-5"/>} />
                                             <PulseModeItem value="websearch" label="Deep Search" desc="Latest 2024-25 data" icon={<Search className="w-5 h-5"/>} />
                                             <PulseModeItem value="deepthink" label="Logic Think" desc="Complex symptom analysis" icon={<BrainCircuit className="w-5 h-5"/>} />
