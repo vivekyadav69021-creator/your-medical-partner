@@ -1,9 +1,11 @@
+
 import { genkit, Genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview Failover AI configuration for Your Medical Partner.
- * Implements API Key Rotation to handle 'Rate Limit' or 'Server Busy' errors.
+ * @fileOverview Advanced Failover AI configuration for Your Medical Partner.
+ * Implements API Key Rotation with detailed error reporting to handle 'Rate Limit',
+ * 'Quota Exhausted', or 'Invalid Key' errors.
  */
 
 // Array of 4 API keys provided for rotation logic
@@ -17,7 +19,7 @@ const myApiKeys = [
 // Create multiple Genkit instances, each with a different API key
 const instances = myApiKeys.map(key => genkit({
   plugins: [googleAI({ apiKey: key })],
-  model: 'googleai/gemini-2.5-flash',
+  model: googleAI.model('gemini-2.5-flash'), // Using latest recommended model factory
 }));
 
 /**
@@ -30,50 +32,59 @@ export const ai = new Proxy(instances[0], {
     // Intercept prompt definitions to return a multi-key prompt executor
     if (prop === 'definePrompt') {
       return (config: any) => {
-        // Define the prompt on all underlying instances
+        // Define the prompt on all underlying instances to get per-key prompt objects
         const prompts = instances.map(inst => inst.definePrompt(config));
         
         // Return a wrapped function that tries each key sequentially on error
-        return async (input: any) => {
+        const promptWrapper = async (input: any) => {
+          let lastErrorMessage = "";
           for (let i = 0; i < prompts.length; i++) {
             try {
               if (process.env.NODE_ENV !== 'production') {
-                console.log(`Attempting AI Prompt with Key ${i + 1}...`);
+                console.log(`[AI-ROUTER] Attempting Prompt with Key ${i + 1}...`);
               }
+              // Call the prompt defined for this specific key/instance
               return await prompts[i](input);
             } catch (error: any) {
-              console.error(`AI Key ${i + 1} failed:`, error.message);
+              lastErrorMessage = error.message || "Unknown error";
+              console.error(`[AI-ROUTER] Key ${i + 1} failed:`, lastErrorMessage);
 
-              // If it's the last key, throw the final error
+              // If it's the last key, throw the final error with context
               if (i === instances.length - 1) {
-                throw new Error("All API keys are exhausted. Please try again after some time.");
+                throw new Error(`All AI keys failed. Latest Error: ${lastErrorMessage}. Please try again later.`);
               }
               
-              console.log("Rotating to the next available API key...");
+              console.log("[AI-ROUTER] Rotating to the next available API key...");
               // Loop continues to next key
             }
           }
         };
+
+        // Copy properties from the original prompt object (like name) to the wrapper
+        Object.assign(promptWrapper, prompts[0]);
+        return promptWrapper;
       };
     }
 
-    // Intercept direct generate calls (used in some features like STT)
+    // Intercept direct generate calls
     if (prop === 'generate') {
       return async (config: any) => {
+        let lastErrorMessage = "";
         for (let i = 0; i < instances.length; i++) {
           try {
             if (process.env.NODE_ENV !== 'production') {
-              console.log(`Attempting direct generation with Key ${i + 1}...`);
+              console.log(`[AI-ROUTER] Attempting Generation with Key ${i + 1}...`);
             }
             return await instances[i].generate(config);
           } catch (error: any) {
-            console.error(`AI Key ${i + 1} failed during generate:`, error.message);
+            lastErrorMessage = error.message || "Unknown error";
+            console.error(`[AI-ROUTER] Key ${i + 1} failed during generate:`, lastErrorMessage);
 
             if (i === instances.length - 1) {
-              throw new Error("All API keys are exhausted. Please try again after some time.");
+              throw new Error(`AI generation failed after trying all keys. Reason: ${lastErrorMessage}`);
             }
             
-            console.log("Rotating to next key for generation...");
+            console.log("[AI-ROUTER] Rotating to next key for generation...");
           }
         }
       };
