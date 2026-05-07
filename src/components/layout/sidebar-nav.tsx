@@ -63,7 +63,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
     return (
         <div className="px-3 py-4">
             <h2 className={cn(
-                "mb-3 px-4 text-[11px] font-black uppercase tracking-[0.25em] text-primary dark:text-primary/80",
+                "mb-3 px-4 text-[11px] font-black uppercase tracking-[0.25em] text-[#2D3A5D]/60 dark:text-primary/80",
                 "group-data-[state=collapsed]:hidden"
             )}>
                 {title}
@@ -82,11 +82,11 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
                                     "transition-all duration-300 rounded-2xl px-4 py-6 mb-1 h-12 border border-transparent",
                                     isActive 
                                         ? "bg-primary text-white shadow-lg shadow-primary/25 border-none scale-[1.02]" 
-                                        : "hover:bg-primary/10 hover:border-primary/20 text-slate-700 dark:text-slate-300 font-bold"
+                                        : "hover:bg-primary/10 hover:border-primary/20 text-[#2D3A5D] dark:text-slate-300 font-bold"
                                 )}
                             >
                                 <Link href={item.href} className="flex items-center gap-4">
-                                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-primary dark:text-primary/70")} />
+                                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-primary")} />
                                     <span className={cn(
                                         "text-sm tracking-tight",
                                         "group-data-[state=collapsed]:hidden"
@@ -113,7 +113,7 @@ export function SidebarNav() {
   };
 
   return (
-    <div className="space-y-1 pb-10">
+    <div className="space-y-1 pb-10 bg-white dark:bg-slate-900">
         <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
         <NavSection title="Smart AI Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
         <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />

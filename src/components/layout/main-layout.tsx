@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
 import { cn } from '@/lib/utils';
 import { signOut } from 'firebase/auth';
@@ -83,8 +83,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <SidebarProvider>
-      <Sidebar className="border-r-0 shadow-2xl bg-white/98 dark:bg-slate-900/98 backdrop-blur-3xl transition-colors duration-300">
-        <SidebarHeader className="pt-10 px-6 pb-6">
+      <Sidebar className="border-r border-slate-100 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 transition-colors duration-300">
+        <SidebarHeader className="pt-10 px-6 pb-6 bg-white dark:bg-slate-900">
           <div className="flex items-center gap-4 p-2">
             <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30 rotate-3 transition-transform hover:rotate-0">
                 <HeartPulse className="w-7 h-7 text-white" />
@@ -95,10 +95,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </SidebarHeader>
-        <SidebarContent className="scrollbar-hide">
+        <SidebarContent className="scrollbar-hide bg-white dark:bg-slate-900">
           <SidebarNav />
         </SidebarContent>
-        <SidebarFooter className="p-6 border-t border-slate-100 dark:border-slate-800 group-data-[state=collapsed]:hidden">
+        <SidebarFooter className="p-6 border-t border-slate-100 dark:border-slate-800 group-data-[state=collapsed]:hidden bg-white dark:bg-slate-900">
             <div className="p-4 rounded-3xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100/50 dark:border-slate-700 shadow-inner">
                 <p className="text-[9px] font-black text-primary uppercase tracking-widest text-center">Version 2.0.1 Stable</p>
             </div>
