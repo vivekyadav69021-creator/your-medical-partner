@@ -2,12 +2,12 @@ import { genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview AI Configuration for Your Medical Partner with Key Rotation.
- * This setup implements a failover logic to handle Rate Limits and Server errors.
+ * @fileOverview AI Configuration with API Key Rotation & Failover Logic.
+ * This ensures high availability by automatically switching keys on failure.
  */
 
-// Collect available keys from environment
-const keys = [
+// Collect all 4 keys from environment variables
+const apiKeys = [
   process.env.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2,
   process.env.GEMINI_API_KEY_3,
@@ -15,25 +15,25 @@ const keys = [
 ].filter(Boolean) as string[];
 
 // Initialize Genkit instances for each available key
-const instances = keys.map(key => genkit({
+const instances = apiKeys.map(key => genkit({
   plugins: [googleAI({ apiKey: key })],
   model: googleAI.model('gemini-2.5-flash'),
 }));
 
-// Base instance for fallback and schema definitions
+// Fallback base instance using default key or the first rotation key
 const baseAi = genkit({
   plugins: [googleAI()],
   model: googleAI.model('gemini-2.5-flash'),
 });
 
 /**
- * FAILOVER PROXY
- * This logic wraps the Genkit instance to automatically rotate keys
- * when an API request fails with common transient errors.
+ * SMART FAILOVER PROXY
+ * This proxy intercepts AI calls and rotates through the keys if a request fails
+ * with a retryable error (like 429 - Rate Limit or 500 - Server Busy).
  */
 export const ai: any = new Proxy(baseAi, {
   get(target, prop, receiver) {
-    // Intercept generation calls for rotation
+    // 1. Handle direct generation calls (ai.generate)
     if (prop === 'generate') {
       return async (options: any) => {
         const pool = instances.length > 0 ? instances : [baseAi];
@@ -41,37 +41,39 @@ export const ai: any = new Proxy(baseAi, {
 
         for (let i = 0; i < pool.length; i++) {
           try {
-            console.log(`[AI Failover] Attempting generate with Key ${i + 1}/${pool.length}`);
+            console.log(`[AI Rotation] Attempting generation with Key ${i + 1}/${pool.length}`);
             return await pool[i].generate(options);
           } catch (err: any) {
             lastError = err;
-            console.error(`[AI Failover] Key ${i + 1} failed: ${err.message}`);
-            // Check if we should retry with next key (Rate limit or Server busy)
+            console.error(`[AI Rotation] Key ${i + 1} failed: ${err.message}`);
+            
+            // Determine if error is retryable (Rate limit or transient server error)
             const isRetryable = err.message.includes('429') || err.message.includes('500') || err.message.includes('503');
             if (!isRetryable || i === pool.length - 1) {
-              throw new Error(`All AI keys failed. Latest Error: ${err.message}. Please try again later.`);
+              throw new Error(`AI Request failed. Details: ${err.message}`);
             }
+            console.log(`[AI Rotation] Rotating to Key ${i + 2}...`);
           }
         }
       };
     }
 
-    // Intercept prompt definitions to return a failover-capable prompt function
+    // 2. Handle defined prompts (ai.definePrompt)
     if (prop === 'definePrompt') {
       return (promptOptions: any) => {
-        // Pre-define the prompt on all instances in the pool
+        // Pre-define the prompt on all instances in our pool
         const pool = instances.length > 0 ? instances : [baseAi];
-        const promptPool = pool.map(inst => inst.definePrompt(promptOptions));
+        const promptFunctions = pool.map(inst => inst.definePrompt(promptOptions));
         
-        // Return a wrapper function that handles the rotation
+        // Return a wrapper function that implements the rotation logic
         return async (...args: any[]) => {
-          for (let i = 0; i < promptPool.length; i++) {
+          for (let i = 0; i < promptFunctions.length; i++) {
             try {
-              return await promptPool[i](...args);
+              return await promptFunctions[i](...args);
             } catch (err: any) {
-              console.error(`[AI Failover Prompt] Key ${i + 1} failed: ${err.message}`);
-              if (i === promptPool.length - 1) {
-                throw new Error(`AI Service temporarily unavailable. Error: ${err.message}`);
+              console.error(`[AI Prompt Rotation] Key ${i + 1} failed: ${err.message}`);
+              if (i === promptFunctions.length - 1) {
+                throw new Error(`All AI instances failed. Latest: ${err.message}`);
               }
             }
           }
@@ -79,6 +81,7 @@ export const ai: any = new Proxy(baseAi, {
       };
     }
 
+    // Default behavior for other Genkit properties (defineFlow, defineTool, etc.)
     return Reflect.get(target, prop, receiver);
   }
 });
