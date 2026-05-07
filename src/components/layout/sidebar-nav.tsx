@@ -63,7 +63,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
     return (
         <div className="px-3 py-4">
             <h2 className={cn(
-                "mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary opacity-60",
+                "mb-3 px-4 text-[11px] font-black uppercase tracking-[0.25em] text-primary dark:text-primary/80",
                 "group-data-[state=collapsed]:hidden"
             )}>
                 {title}
@@ -79,16 +79,16 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
                                 onClick={onLinkClick}
                                 tooltip={item.label}
                                 className={cn(
-                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1 h-12",
+                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1 h-12 border border-transparent",
                                     isActive 
-                                        ? "bg-primary text-white shadow-md shadow-primary/20 border-none" 
-                                        : "hover:bg-primary/5 text-slate-600 dark:text-slate-400"
+                                        ? "bg-primary text-white shadow-lg shadow-primary/25 border-none scale-[1.02]" 
+                                        : "hover:bg-primary/10 hover:border-primary/20 text-slate-700 dark:text-slate-300 font-bold"
                                 )}
                             >
-                                <Link href={item.href} className="flex items-center gap-3">
-                                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
+                                <Link href={item.href} className="flex items-center gap-4">
+                                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-primary dark:text-primary/70")} />
                                     <span className={cn(
-                                        "text-sm font-bold tracking-tight",
+                                        "text-sm tracking-tight",
                                         "group-data-[state=collapsed]:hidden"
                                     )}>
                                         {item.label}
