@@ -143,48 +143,48 @@ function FeedbackActions({ messageContent }: { messageContent: string }) {
   };
 
   return (
-    <div className="mt-2 flex items-center gap-2">
-      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50" onClick={handleLike}>
+    <div className="mt-4 flex items-center gap-3">
+      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-slate-50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-600 transition-colors" onClick={handleLike}>
         <ThumbsUp className="h-4 w-4" />
       </Button>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50">
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-slate-50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-600 transition-colors">
             <ThumbsDown className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="rounded-[1rem] border-none shadow-2xl">
+        <DialogContent className="rounded-[2rem] border-none shadow-2xl p-8">
           <form onSubmit={handleDislikeSubmit}>
             <DialogHeader>
-              <DialogTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100">Provide Additional Feedback</DialogTitle>
-              <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
-                Your feedback is valuable in helping us improve the AI.
+              <DialogTitle className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100">Help Us Improve</DialogTitle>
+              <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em] mt-2">
+                Your feedback helps our AI grow.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4 space-y-4">
-               <RadioGroup name="feedback-reason" defaultValue="not-helpful">
-                  <div className="flex items-center space-x-2">
+            <div className="py-6 space-y-6">
+               <RadioGroup name="feedback-reason" defaultValue="not-helpful" className="gap-4">
+                  <div className="flex items-center space-x-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                     <RadioGroupItem value="not-helpful" id="r1" />
                     <Label htmlFor="r1" className="font-bold text-slate-600 dark:text-slate-300">Not helpful</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                     <RadioGroupItem value="incorrect" id="r2" />
                     <Label htmlFor="r2" className="font-bold text-slate-600 dark:text-slate-300">Factually incorrect</Label>
                   </div>
-                   <div className="flex items-center space-x-2">
+                   <div className="flex items-center space-x-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                     <RadioGroupItem value="offensive" id="r3" />
-                    <Label htmlFor="r3" className="font-bold text-slate-600 dark:text-slate-300">Harmful or offensive</Label>
+                    <Label htmlFor="r3" className="font-bold text-slate-600 dark:text-slate-300">Harmful content</Label>
                   </div>
                 </RadioGroup>
-                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner" />
+                <Textarea name="feedback-details" placeholder="Anything else you'd like to share?" className="rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner p-4 min-h-[100px]" />
             </div>
             <DialogFooter>
-              <Button type="submit" className="rounded-full w-full font-black uppercase text-[10px] tracking-widest">Submit Feedback</Button>
+              <Button type="submit" className="rounded-full w-full h-12 font-black uppercase text-[11px] tracking-widest shadow-lg shadow-primary/20">Submit Feedback</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50" onClick={handleCopy}>
+      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-slate-50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-600 transition-colors" onClick={handleCopy}>
         <Copy className="h-4 w-4" />
       </Button>
     </div>
@@ -207,10 +207,10 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
     const { transcript, error } = speechState;
     if (transcript) {
       onTranscript(transcript);
-      toast({ title: 'Transcription complete' });
+      toast({ title: 'Speech recognized!' });
     }
     if (error) {
-      toast({ variant: 'destructive', title: 'Transcription Failed', description: error });
+      toast({ variant: 'destructive', title: 'Recognition Failed', description: error });
     }
   }, [speechState, onTranscript, toast]);
 
@@ -258,7 +258,7 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
       };
       mediaRecorderRef.current.start();
       setIsRecording(true);
-      toast({ title: 'Listening...' });
+      toast({ title: 'I am listening...' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Mic Access Denied' });
     }
@@ -272,26 +272,26 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
   };
   
   return (
-    <Card className="rounded-[1rem] neumorphic-card border-none mb-4 w-full">
-        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-2">
+    <Card className="rounded-[1.5rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/40 dark:border-slate-800/40 shadow-sm mb-4 w-full">
+        <CardContent className="p-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-                 <div className="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50 dark:border-slate-700/50">
+                 <div className="flex items-center gap-2 p-1 bg-white/80 dark:bg-slate-800 rounded-full border border-blue-50 dark:border-slate-700 shadow-sm">
                     <Select value={selectedLang} onValueChange={setSelectedLang}>
-                        <SelectTrigger className="w-[100px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
+                        <SelectTrigger className="w-[100px] h-9 text-[10px] font-black uppercase tracking-widest bg-transparent border-none shadow-none focus:ring-0">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-none shadow-xl">
-                            <SelectItem value="en-IN">English</SelectItem>
-                            <SelectItem value="hi-IN">हिन्दी</SelectItem>
+                        <SelectContent className="rounded-[1.5rem] border-none shadow-2xl">
+                            <SelectItem value="en-IN" className="font-bold text-xs">English</SelectItem>
+                            <SelectItem value="hi-IN" className="font-bold text-xs">हिन्दी</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700", isSpeaking && "text-primary")} onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
-                        <Volume2 className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700 transition-all", isSpeaking && "text-primary ring-2 ring-primary/20")} onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
+                        <Volume2 className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700" onClick={handleStopSpeaking} disabled={!isSpeaking}>
-                        <StopCircle className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700" onClick={handleStopSpeaking} disabled={!isSpeaking}>
+                        <StopCircle className="h-5 w-5" />
                     </Button>
                 </div>
             </div>
@@ -302,11 +302,11 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
                     onClick={isRecording ? stopRecording : startRecording} 
                     disabled={isTranscribing}
                     className={cn(
-                        "rounded-full px-4 h-9 font-black text-[10px] uppercase tracking-widest border-none transition-all shadow-sm",
-                        isRecording ? "bg-red-500 text-white animate-pulse" : "bg-primary/10 text-primary hover:bg-primary/20"
+                        "rounded-full px-6 h-10 font-black text-[10px] uppercase tracking-widest border-none transition-all shadow-md",
+                        isRecording ? "bg-red-500 text-white animate-pulse" : "bg-primary text-white hover:bg-primary/90"
                     )}
                 >
-                  {isTranscribing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : (isRecording ? <MicOff className="h-3 w-3 mr-2" /> : <Mic className="h-3 w-3 mr-2" />)}
+                  {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (isRecording ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />)}
                   {isRecording ? "Stop" : "Voice Input"}
                 </Button>
             </div>
@@ -341,11 +341,11 @@ export default function HealthAssistantPage() {
   const setActiveSessionId = activeMode === 'general' ? setActiveGeneralSessionId : setActiveDoctorSessionId;
 
   const handleStateUpdate = useCallback((state: typeof initialState, mode: 'general' | 'doctor') => {
-      const currentSessionId = mode === 'general' ? activeGeneralSessionId : activeDoctorSessionId;
+      const currentSessionId = mode === 'general' ? (mode === 'general' ? activeGeneralSessionId : activeDoctorSessionId) : activeDoctorSessionId;
       const setSessionList = mode === 'general' ? setGeneralSessions : setDoctorSessions;
 
       if ((state.response || state.error) && currentSessionId) {
-          const content = state.response || `Sorry, an error occurred: ${state.error}`;
+          const content = state.response || `Sorry, I encountered an error: ${state.error}`;
           setSessionList(prev => prev.map(s => 
               s.id === currentSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s
           ));
@@ -392,7 +392,7 @@ export default function HealthAssistantPage() {
   const handleNewChat = useCallback(() => {
     const newSession: Session = {
       id: `session-${Date.now()}`,
-      title: activeMode === 'doctor' ? `${specialty} Chat` : 'New Chat',
+      title: activeMode === 'doctor' ? `${specialty} Consultation` : 'New Health Chat',
       messages: [],
       createdAt: Date.now(),
       ...(activeMode === 'doctor' && { specialty }),
@@ -421,7 +421,7 @@ export default function HealthAssistantPage() {
 
     let userMessage: Message = { 
         role: 'user', 
-        content: query || 'Image analysis',
+        content: query || 'Analyze attached medical image',
         mode: activeMode === 'general' ? pulseMode : undefined 
     };
      if (attachedImage) {
@@ -431,7 +431,7 @@ export default function HealthAssistantPage() {
     
     setSessions(prev => prev.map(s => {
       if (s.id === activeSessionId) {
-        const newTitle = (s.messages.length === 0 && query) ? query.substring(0, 30) : s.title;
+        const newTitle = (s.messages.length === 0 && query) ? query.substring(0, 40) : s.title;
         return { ...s, messages: [...s.messages, userMessage], title: newTitle };
       }
       return s;
@@ -456,33 +456,33 @@ export default function HealthAssistantPage() {
   const userImage = 'https://picsum.photos/seed/user/100/100';
 
   return (
-    <div className="flex h-[calc(100vh-120px)] w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
+    <div className="flex h-[calc(100vh-140px)] w-full gap-6 animate-in fade-in duration-500 overflow-hidden pt-2">
         {/* Chat History Sidebar - Desktop Only */}
-        <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden">
+        <Card className="hidden md:flex md:w-1/4 flex-col rounded-[2rem] neumorphic-card border-none p-2 overflow-hidden shrink-0">
             <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
-                <CardTitle className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest">History</CardTitle>
-                <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 dark:bg-slate-800 border border-white/50 dark:border-slate-700/50" onClick={handleNewChat}>
+                <CardTitle className="text-xs font-black text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest">Chat History</CardTitle>
+                <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 dark:bg-slate-800 border border-white/50 dark:border-slate-700/50 shadow-sm" onClick={handleNewChat}>
                     <PlusCircle className="h-5 w-5 text-primary" />
                 </Button>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-2">
                 <ScrollArea className="h-full px-2">
-                    <div className="space-y-3">
+                    <div className="space-y-3 pb-6">
                         {sessions.map(session => (
                             <div 
                                 key={session.id} 
                                 className={cn(
-                                    "p-4 rounded-[1rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
-                                    activeSessionId === session.id ? "bg-white dark:bg-slate-800 shadow-sm border-blue-50 dark:border-slate-700" : "hover:bg-white/40 dark:hover:bg-slate-700/40"
+                                    "p-4 rounded-2xl cursor-pointer group flex items-center justify-between transition-all border border-transparent",
+                                    activeSessionId === session.id ? "bg-white dark:bg-slate-800 shadow-lg border-blue-50/50 dark:border-slate-700" : "hover:bg-white/40 dark:hover:bg-slate-700/40"
                                 )}
                                 onClick={() => setActiveSessionId(session.id)}
                             >
                                 <div className="flex-1 overflow-hidden">
                                   <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
-                                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
                         ))}
@@ -494,25 +494,25 @@ export default function HealthAssistantPage() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full min-w-0 w-full overflow-hidden">
           <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col h-full w-full overflow-hidden">
-            <div className="flex items-center justify-between gap-2 md:gap-4 mb-3 md:mb-4 px-1 shrink-0">
-                <TabsList className="grid grid-cols-2 w-[180px] md:w-[300px] h-11 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-full border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
-                    <TabsTrigger value="general" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Assistant</TabsTrigger>
-                    <TabsTrigger value="doctor" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 px-1 shrink-0">
+                <TabsList className="grid grid-cols-2 w-full sm:w-[320px] h-12 p-1.5 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/60 dark:border-slate-700/60 backdrop-blur-md shadow-sm">
+                    <TabsTrigger value="general" className="rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg">Assistant</TabsTrigger>
+                    <TabsTrigger value="doctor" className="rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg">Specialists</TabsTrigger>
                 </TabsList>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     {activeMode === 'doctor' && (
-                        <div className="flex-1 max-w-[140px] md:max-w-[240px]">
+                        <div className="flex-1 min-w-[160px] md:min-w-[280px]">
                             <Select value={specialty} onValueChange={setSpecialty}>
-                                <SelectTrigger className="h-11 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest">
-                                    <div className="flex items-center gap-2 truncate">
-                                        <BrainCircuit className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary shrink-0" />
-                                        <SelectValue placeholder="Specialty" />
+                                <SelectTrigger className="h-12 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-white/60 dark:border-slate-700/60 shadow-md font-black text-[10px] md:text-[11px] uppercase tracking-widest px-4">
+                                    <div className="flex items-center gap-3 truncate">
+                                        <BrainCircuit className="w-4 h-4 text-primary shrink-0" />
+                                        <SelectValue placeholder="Choose Specialty" />
                                     </div>
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-none shadow-xl">
+                                <SelectContent className="rounded-2xl border-none shadow-2xl p-2">
                                     {doctorSpecialties.map(spec => (
-                                        <SelectItem key={spec} value={spec} className="font-bold text-xs">{spec}</SelectItem>
+                                        <SelectItem key={spec} value={spec} className="font-bold text-xs rounded-xl py-3">{spec}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -522,37 +522,34 @@ export default function HealthAssistantPage() {
                     {/* Mobile History Button */}
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" className="md:hidden rounded-full h-11 w-11 bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm">
+                            <Button variant="outline" size="icon" className="md:hidden rounded-2xl h-12 w-12 bg-white/60 dark:bg-slate-800/60 border-white/60 dark:border-slate-700/60 shadow-md">
                                 <History className="h-5 w-5 text-primary" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 border-none rounded-l-[2rem]">
-                            <SheetHeader className="p-6 border-b">
-                                <SheetTitle className="text-lg font-black text-primary uppercase tracking-widest">Chat History</SheetTitle>
+                        <SheetContent side="right" className="w-[85vw] sm:w-[400px] p-0 border-none rounded-l-[3rem] shadow-2xl">
+                            <SheetHeader className="p-8 border-b bg-primary text-white rounded-tl-[3rem]">
+                                <SheetTitle className="text-xl font-black uppercase tracking-widest text-white">Chat History</SheetTitle>
                             </SheetHeader>
-                            <div className="flex-1 overflow-hidden h-[calc(100vh-80px)]">
-                                <ScrollArea className="h-full p-4">
-                                    <Button variant="outline" className="w-full rounded-2xl mb-6 font-bold" onClick={handleNewChat}>
-                                        <PlusCircle className="mr-2 h-4 w-4" /> New Chat
+                            <div className="flex-1 overflow-hidden h-[calc(100vh-100px)] bg-slate-50 dark:bg-slate-950">
+                                <ScrollArea className="h-full p-6">
+                                    <Button variant="outline" className="w-full h-14 rounded-2xl mb-8 font-black uppercase text-xs tracking-widest border-primary/20 text-primary shadow-sm" onClick={handleNewChat}>
+                                        <PlusCircle className="mr-3 h-5 w-5" /> Start New Chat
                                     </Button>
                                     <div className="space-y-4">
                                         {sessions.map(session => (
                                             <div 
                                                 key={session.id} 
                                                 className={cn(
-                                                    "p-4 rounded-2xl cursor-pointer group flex items-center justify-between transition-all border",
-                                                    activeSessionId === session.id ? "bg-primary/5 border-primary/20" : "bg-slate-50 dark:bg-slate-800/50 border-transparent"
+                                                    "p-5 rounded-2xl cursor-pointer group flex items-center justify-between transition-all border shadow-sm",
+                                                    activeSessionId === session.id ? "bg-white dark:bg-slate-800 border-primary/30" : "bg-white/40 dark:bg-slate-900/40 border-transparent"
                                                 )}
-                                                onClick={() => {
-                                                    setActiveSessionId(session.id);
-                                                    // Add any logic to close sheet if needed via state
-                                                }}
+                                                onClick={() => setActiveSessionId(session.id)}
                                             >
                                                 <div className="flex-1 overflow-hidden">
-                                                    <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
-                                                    <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
+                                                    <p className={cn("text-sm font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-2">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
                                                 </div>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-red-400 bg-red-50 dark:bg-red-900/20" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
@@ -566,7 +563,7 @@ export default function HealthAssistantPage() {
             </div>
 
             <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
-                <div className="shrink-0">
+                <div className="shrink-0 px-1">
                   <VoiceWidget lastAssistantMessage={activeSession?.messages.filter(m => m.role === 'assistant').pop()?.content || ''} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }}/>
                 </div>
                 
@@ -583,10 +580,10 @@ export default function HealthAssistantPage() {
                         assistantImage={assistantImage}
                         pulseMode={pulseMode}
                         setPulseMode={setPulseMode}
-                        title="Health Assistant"
-                        description="Symptoms, meds or health tips"
-                        placeholder="Ask me anything..."
-                        initialMessage="Hi! I'm your AI partner. How can I help you today?"
+                        title="Your Medical Partner"
+                        description="Professional AI Health Companion"
+                        placeholder="Ask about symptoms, medicines or health tips..."
+                        initialMessage="Hello! I'm your dedicated medical assistant. How are you feeling today?"
                         Icon={ShieldPlus}
                     />
                 </TabsContent>
@@ -602,10 +599,10 @@ export default function HealthAssistantPage() {
                         setAttachedImage={setAttachedImage}
                         userImage={userImage}
                         assistantImage={assistantImage}
-                        title={`AI ${specialty}`}
-                        description={`Specialized consultation`}
-                        placeholder={`Talk to the ${specialty}...`}
-                        initialMessage={`Greetings. I am your specialized AI ${specialty}. How may I assist you?`}
+                        title={`Specialist: ${specialty}`}
+                        description={`Professional Medical Consultation`}
+                        placeholder={`Message the ${specialty}...`}
+                        initialMessage={`Welcome. I am your specialized AI ${specialty}. Please describe your symptoms in detail.`}
                         Icon={BrainCircuit}
                     />
                 </TabsContent>
@@ -662,70 +659,73 @@ function ChatInterface({
     }, [messages, isPending]);
 
     return (
-        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full h-full">
-            <CardHeader className="px-4 md:px-8 pt-6 pb-4 shrink-0">
+        <Card className="flex-1 flex flex-col rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-2xl overflow-hidden min-h-0 w-full h-full">
+            <CardHeader className="px-6 md:px-10 pt-8 pb-4 shrink-0 border-b border-white/20 dark:border-slate-800/40">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-2xl shrink-0">
-                            <Icon className="w-6 h-6 text-primary" />
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-primary/10 dark:bg-primary/20 rounded-3xl shrink-0 shadow-inner border border-white/60 dark:border-slate-700/60">
+                            <Icon className="w-7 h-7 text-primary" />
                         </div>
                         <div className="min-w-0">
-                            <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight truncate">{title}</CardTitle>
-                            <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{description}</CardDescription>
+                            <CardTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight truncate">{title}</CardTitle>
+                            <CardDescription className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 truncate">{description}</CardDescription>
                         </div>
                     </div>
                 </div>
             </CardHeader>
             
             <CardContent className="flex-1 overflow-hidden p-0 relative">
-                <ScrollArea className="h-full px-4 md:px-8 pb-8" ref={scrollAreaRef}>
-                    <div className="space-y-6">
+                <ScrollArea className="h-full px-4 md:px-10 pb-10" ref={scrollAreaRef}>
+                    <div className="space-y-8 pt-8">
                         {messages.length === 0 && !isPending && (
-                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
-                                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-[2rem]">
-                                    <Icon className="w-12 h-12 text-[#2D3A5D] dark:text-slate-400" />
+                            <div className="flex flex-col items-center justify-center py-24 text-center space-y-6 opacity-40">
+                                <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-[3rem] shadow-inner">
+                                    <Icon className="w-16 h-16 text-[#2D3A5D] dark:text-slate-400" />
                                 </div>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-400 tracking-tight max-w-[200px]">{initialMessage}</p>
+                                <p className="text-base font-black text-[#2D3A5D] dark:text-slate-400 tracking-tight max-w-[240px] leading-relaxed">{initialMessage}</p>
                             </div>
                         )}
                         {messages.map((message, index) => (
                             <div
                                 key={index}
-                                className={cn("flex items-start gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
+                                className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500", message.role === 'user' ? 'flex-row-reverse' : '')}
                             >
-                                <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0">
+                                <Avatar className="h-10 w-10 md:h-12 md:w-12 border-4 border-white dark:border-slate-800 shadow-xl shrink-0">
                                     {message.role === 'assistant' ? (
                                         <>
                                             {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
-                                            <AvatarFallback className="bg-primary text-white"><Icon className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
+                                            <AvatarFallback className="bg-primary text-white"><Icon className="w-5 h-5 md:w-6 md:h-6"/></AvatarFallback>
                                         </>
                                     ) : (
                                         <>
                                             <AvatarImage src={userImage} alt="User" data-ai-hint="person face" />
-                                            <AvatarFallback className="bg-slate-200"><User className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
+                                            <AvatarFallback className="bg-slate-200"><User className="w-5 h-5 md:w-6 md:h-6"/></AvatarFallback>
                                         </>
                                     )}
                                 </Avatar>
                                 <div
                                     className={cn(
-                                        "max-w-full md:max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
+                                        "max-w-[90%] sm:max-w-[85%] rounded-[1.8rem] px-6 py-5 shadow-sm border transition-all",
                                         message.role === 'user' 
-                                            ? "bg-primary text-white rounded-tr-none" 
-                                            : "bg-white dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-blue-50/30 dark:border-slate-700/50"
+                                            ? "bg-primary text-white rounded-tr-none border-primary/20" 
+                                            : "bg-white dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border-white dark:border-slate-700/60"
                                     )}
                                 >
                                     {message.image && (
-                                        <div className="mb-3 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-700">
-                                            <Image src={message.image} alt="User upload" width={300} height={300} className="w-full h-auto" />
+                                        <div className="mb-4 rounded-2xl overflow-hidden shadow-xl border-4 border-white dark:border-slate-700">
+                                            <Image src={message.image} alt="User upload" width={400} height={400} className="w-full h-auto object-cover" />
                                         </div>
                                     )}
                                     {message.role === 'user' && message.mode && message.mode !== 'standard' && (
-                                        <div className="flex items-center gap-1.5 mb-2 opacity-70">
-                                            <HeartPulse className="w-3 h-3 text-white animate-pulse" />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">Mode: {message.mode}</span>
+                                        <div className="flex items-center gap-2 mb-3 px-3 py-1 bg-white/20 rounded-full w-fit">
+                                            <HeartPulse className="w-3.5 h-3.5 text-white animate-pulse" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest">{message.mode} Mode Active</span>
                                         </div>
                                     )}
-                                    <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium text-base">
+                                    <article className={cn(
+                                        "prose prose-base dark:prose-invert max-w-none text-inherit leading-relaxed font-bold",
+                                        message.role === 'user' ? "prose-p:text-white" : ""
+                                    )}>
                                         <ReactMarkdown>{message.content}</ReactMarkdown>
                                     </article>
                                     {message.role === 'assistant' && index === messages.length - 1 && !isPending && (
@@ -735,13 +735,13 @@ function ChatInterface({
                             </div>
                         ))}
                         {isPending && (
-                            <div className="flex items-start gap-3 animate-pulse">
-                                <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 bg-primary/10">
-                                    <AvatarFallback className="bg-transparent"><Icon className="w-5 h-5 text-primary"/></AvatarFallback>
+                            <div className="flex items-start gap-4 animate-pulse">
+                                <Avatar className="h-10 w-10 md:h-12 md:w-12 border-4 border-white dark:border-slate-800 shadow-xl shrink-0 bg-primary/10">
+                                    <AvatarFallback className="bg-transparent"><Icon className="w-6 h-6 text-primary"/></AvatarFallback>
                                 </Avatar>
-                                <div className="bg-white dark:bg-slate-800 rounded-[1.2rem] rounded-tl-none px-4 md:px-6 py-3 md:py-4 border border-blue-50/30 dark:border-slate-700/50 flex items-center gap-3">
-                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is thinking...</span>
+                                <div className="bg-white dark:bg-slate-800 rounded-[1.8rem] rounded-tl-none px-6 py-5 border border-white dark:border-slate-700/60 flex items-center gap-4 shadow-sm">
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Assistant is thinking...</span>
                                 </div>
                             </div>
                         )}
@@ -749,77 +749,79 @@ function ChatInterface({
                 </ScrollArea>
             </CardContent>
             
-            <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50 shrink-0">
+            <CardFooter className="px-6 md:px-10 pb-8 md:pb-10 pt-6 flex-col items-stretch gap-5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-2xl border-t border-white/30 dark:border-slate-800/40 shrink-0">
                 {/* Active Mode Indicator Above Input */}
                 {pulseMode && pulseMode !== 'standard' && (
                     <div className="flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 shadow-sm">
-                            <HeartPulse className="w-3.5 h-3.5 text-primary animate-pulse" />
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{pulseMode} Mode Active</span>
+                        <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20 shadow-sm">
+                            <HeartPulse className="w-4 h-4 text-primary animate-pulse" />
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{pulseMode} Engine Enabled</span>
                         </div>
                     </div>
                 )}
 
                 {attachedImage && (
-                    <div className="relative inline-block w-20 h-20 group">
-                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-xl border-4 border-white dark:border-slate-700 shadow-lg object-cover h-full w-full" />
+                    <div className="relative inline-block w-24 h-24 group animate-in zoom-in-95 duration-300">
+                        <Image src={attachedImage} alt="Preview" width={100} height={100} className="rounded-2xl border-4 border-white dark:border-slate-700 shadow-2xl object-cover h-full w-full" />
                         <Button
                             variant="destructive"
                             size="icon"
-                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg scale-0 group-hover:scale-100 transition-transform"
+                            className="absolute -top-3 -right-3 h-8 w-8 rounded-full shadow-xl border-4 border-white dark:border-slate-900 scale-0 group-hover:scale-100 transition-transform"
                             onClick={() => setAttachedImage(null)}
                         >
-                            <X className="h-3 w-3" />
+                            <X className="h-4 w-4" />
                         </Button>
                     </div>
                 )}
                 
                 <form
                     ref={formRef}
-                    action={onFormAction}
-                    className="flex w-full items-end gap-2 md:gap-3"
+                    action={handleFormAction}
+                    className="flex w-full items-end gap-3 md:gap-4"
                 >
-                    {/* Mode Selector Button - Independent */}
-                    {setPulseMode && (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0">
-                                    <PlusCircle className="h-7 w-7 text-primary" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-64 rounded-[1rem] border-none shadow-2xl p-4 dark:bg-slate-900" side="top" align="start">
-                                <div className="space-y-4">
-                                    <h4 className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
-                                    <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
-                                        <PulseModeItem value="standard" label="Standard" desc="General health advice" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                        <PulseModeItem value="websearch" label="Web Search" desc="Latest medical databases" icon={<Search className="w-4 h-4"/>} />
-                                        <PulseModeItem value="deepthink" label="Deep Think" desc="Analytical reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                        <PulseModeItem value="proanalysis" label="Pro Analysis" desc="Complex drug checks" icon={<Zap className="w-4 h-4"/>} />
-                                    </RadioGroup>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {/* Mode Selector Button */}
+                        {setPulseMode && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                                        <PlusCircle className="h-8 w-8 text-primary" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] rounded-[2rem] border-none shadow-2xl p-6 dark:bg-slate-900" side="top" align="start">
+                                    <div className="space-y-5">
+                                        <h4 className="font-black text-[11px] text-[#2D3A5D] dark:text-slate-100 uppercase tracking-[0.25em] px-2 mb-2 opacity-60">Assistant Engines</h4>
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-3">
+                                            <PulseModeItem value="standard" label="Balanced" desc="General medical advice" icon={<ShieldPlus className="w-5 h-5"/>} />
+                                            <PulseModeItem value="websearch" label="Deep Search" desc="Latest 2024-25 data" icon={<Search className="w-5 h-5"/>} />
+                                            <PulseModeItem value="deepthink" label="Logic Think" desc="Complex symptom analysis" icon={<BrainCircuit className="w-5 h-5"/>} />
+                                            <PulseModeItem value="proanalysis" label="Pharmacist" desc="Drug-to-drug checks" icon={<Zap className="w-5 h-5"/>} />
+                                        </RadioGroup>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        )}
 
-                    {/* Independent Attachment Button */}
-                    <Button 
-                        type="button" 
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isPending}
-                        className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0"
-                    >
-                        <Paperclip className="h-6 w-6 text-slate-400" />
-                    </Button>
+                        {/* Attachment Button */}
+                        <Button 
+                            type="button" 
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isPending}
+                            className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                        >
+                            <Paperclip className="h-7 w-7 text-slate-400" />
+                        </Button>
+                    </div>
 
-                    <div className="flex-1 relative flex items-end bg-white dark:bg-slate-800 rounded-2xl px-2 shadow-inner min-h-[56px] overflow-hidden border border-slate-100 dark:border-slate-700">
+                    <div className="flex-1 relative flex items-end bg-white dark:bg-slate-800 rounded-3xl px-2 shadow-2xl min-h-[60px] overflow-hidden border border-white dark:border-slate-700 transition-shadow focus-within:shadow-primary/5">
                         <Textarea
                             id="chatInput"
                             ref={queryInputRef}
                             name="query"
                             placeholder={placeholder}
-                            className="flex-1 min-h-[56px] max-h-[150px] p-4 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-base resize-none dark:text-slate-100"
+                            className="flex-1 min-h-[60px] max-h-[200px] p-5 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-lg resize-none dark:text-slate-100"
                             autoComplete="off"
                             disabled={isPending}
                             rows={1}
@@ -839,9 +841,9 @@ function ChatInterface({
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
                     <SubmitButton />
                 </form>
-                <div className="flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    <Activity className="w-3 h-3 text-primary" />
-                    AI-powered health guidance
+                <div className="flex items-center justify-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    Professional AI Medical Insights
                 </div>
             </CardFooter>
         </Card>
@@ -850,14 +852,14 @@ function ChatInterface({
 
 function PulseModeItem({ value, label, desc, icon }: { value: PulseMode, label: string, desc: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group">
+        <div className="flex items-center space-x-4 p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group cursor-pointer">
             <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2 rounded-xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
+            <div className="p-3 rounded-2xl bg-white dark:bg-slate-700 shadow-md border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
                 {icon}
             </div>
             <Label htmlFor={value} className="flex-1 cursor-pointer">
-                <p className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 leading-none">{label}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">{desc}</p>
+                <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-100 leading-none">{label}</p>
+                <p className="text-[11px] font-bold text-slate-400 mt-2 leading-tight">{desc}</p>
             </Label>
         </div>
     )
