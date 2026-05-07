@@ -24,16 +24,6 @@
   --ring: 212 92% 59%;
   --radius: 1.5rem;
   --dashboard-bg: linear-gradient(135deg, #E6F0FF 0%, #FDFBFF 50%, #FFE9F0 100%);
-  
-  /* Sidebar Specific Variables */
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 222.2 84% 4.9%;
-  --sidebar-primary: 212 92% 59%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 100% 97%;
-  --sidebar-accent-foreground: 212 92% 59%;
-  --sidebar-border: 214.3 31.8% 91.4%;
-  --sidebar-ring: 212 92% 59%;
 }
 
 .dark {
@@ -57,16 +47,6 @@
   --input: 217.2 32.6% 17.5%;
   --ring: 212 92% 59%;
   --dashboard-bg: linear-gradient(135deg, #0f172a 0%, #020617 50%, #1e1b4b 100%);
-
-  /* Dark Sidebar Variables */
-  --sidebar-background: 222.2 84% 4.9%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 212 92% 59%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 217.2 32.6% 17.5%;
-  --sidebar-accent-foreground: 212 92% 59%;
-  --sidebar-border: 217.2 32.6% 17.5%;
-  --sidebar-ring: 212 92% 59%;
 }
 
 * {
@@ -75,6 +55,7 @@
   user-select: none;
 }
 
+/* 100% Native App Feel */
 html, body {
   height: 100dvh;
   width: 100vw;
@@ -82,6 +63,7 @@ html, body {
   position: fixed;
   overscroll-behavior-y: none;
   font-family: 'PT Sans', sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {

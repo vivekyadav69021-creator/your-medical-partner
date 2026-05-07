@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Precise viewport settings for 100% app feel
+// Precise viewport settings for 100% native app feel
 export const viewport: Viewport = {
   themeColor: '#2488E8',
   width: 'device-width',
