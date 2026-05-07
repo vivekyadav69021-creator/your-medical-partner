@@ -3,7 +3,7 @@ import { googleAI } from '@genkit-ai/google-genai';
 
 /**
  * @fileOverview AI Configuration with Smart API Key Rotation.
- * This proxy handles Failover: if Key 1 fails, it tries Key 2, and so on.
+ * Intercepts AI calls to implement failover: if Key 1 fails, tries Key 2, etc.
  */
 
 // Load keys from environment variables
@@ -20,29 +20,31 @@ const instances = apiKeys.map((key) => genkit({
   model: googleAI.model('gemini-2.5-flash'),
 }));
 
-// Fallback instance (uses default GEMINI_API_KEY if provided)
-const fallbackAi = genkit({
+// Fallback instance (uses default GEMINI_API_KEY or empty config)
+const defaultAi = genkit({
   plugins: [googleAI()],
   model: googleAI.model('gemini-2.5-flash'),
 });
 
 /**
  * PROXY HANDLER
- * Intercepts calls to 'generate' and 'definePrompt' to implement failover.
+ * This intercepts calls to 'generate' and 'definePrompt' to implement automatic rotation.
  */
-export const ai: any = new Proxy(fallbackAi, {
+export const ai: any = new Proxy(defaultAi, {
   get(target, prop, receiver) {
-    const pool = instances.length > 0 ? instances : [fallbackAi];
+    const pool = instances.length > 0 ? instances : [defaultAi];
 
     // 1. Intercept direct generation (ai.generate)
     if (prop === 'generate') {
       return async (options: any) => {
+        let lastError = null;
         for (let i = 0; i < pool.length; i++) {
           try {
-            console.log(`[AI Rotation] Attempting with Key ${i + 1}/${pool.length}`);
+            console.log(`[AI Rotation] Attempting generation with Key ${i + 1}/${pool.length}`);
             return await pool[i].generate(options);
           } catch (err: any) {
             console.error(`[AI Rotation] Key ${i + 1} failed: ${err.message}`);
+            lastError = err;
             if (i === pool.length - 1) throw new Error(`All AI instances failed. Latest: ${err.message}`);
           }
         }
@@ -52,17 +54,19 @@ export const ai: any = new Proxy(fallbackAi, {
     // 2. Intercept defined prompts (ai.definePrompt)
     if (prop === 'definePrompt') {
       return (promptOptions: any) => {
-        // Define the prompt on every instance in the pool
+        // We define the same prompt on every instance in our pool
         const promptFns = pool.map(inst => inst.definePrompt(promptOptions));
         
-        // Return a wrapper function that tries each prompt definition
+        // Return a single function that attempts execution across the pool
         return async (input: any) => {
+          let lastError = null;
           for (let i = 0; i < promptFns.length; i++) {
             try {
               return await promptFns[i](input);
             } catch (err: any) {
-              console.error(`[AI Prompt Rotation] Key ${i + 1} failed: ${err.message}`);
-              if (i === pool.length - 1) throw new Error(`All AI instances failed. Latest: ${err.message}`);
+              console.error(`[AI Prompt Rotation] Execution with Key ${i + 1} failed: ${err.message}`);
+              lastError = err;
+              if (i === promptFns.length - 1) throw new Error(`All AI prompt instances failed. Latest: ${err.message}`);
             }
           }
         };
