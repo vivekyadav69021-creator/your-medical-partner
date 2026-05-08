@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
+import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +14,6 @@ import {
     X, 
     Volume2, 
     PlusCircle, 
-    BrainCircuit, 
     ShieldPlus,
     Search,
     Zap,
@@ -26,6 +25,8 @@ import {
     Activity,
     Pill,
     ArrowRight,
+    BrainCircuit,
+    ChevronRight,
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -71,11 +72,16 @@ const doctorSpecialties = [
   "Endocrinologist", "Psychiatrist",
 ];
 
-const smartSuggestions = [
-    { label: "Check Symptoms", query: "I have a sudden headache and dizziness, what could it be?", icon: Activity },
-    { label: "Identify Medicine", query: "What are the common uses and side effects of Paracetamol 500mg?", icon: Pill },
-    { label: "Health Tips", query: "Give me 5 daily habits to improve heart health.", icon: Sparkles },
-    { label: "Understand Disease", query: "Explain Type 2 Diabetes in simple terms.", icon: Stethoscope },
+// Expanded pool of suggestions for randomization
+const suggestionPool = [
+    { label: "Common Cold Symptoms", query: "What are the common symptoms of a cold vs flu?", icon: Activity },
+    { label: "Paracetamol Side Effects", query: "Tell me about Paracetamol 500mg side effects.", icon: Pill },
+    { label: "Heart Healthy Tips", query: "5 habits to keep my heart healthy.", icon: Sparkles },
+    { label: "Explain Type 2 Diabetes", query: "Explain Type 2 Diabetes in simple words.", icon: Stethoscope },
+    { label: "High BP Management", query: "How can I manage high blood pressure naturally?", icon: Activity },
+    { label: "Identify this Rash", query: "How to identify a common skin allergy rash?", icon: Search },
+    { label: "First Aid for Burns", query: "What are the first aid steps for minor burns?", icon: Zap },
+    { label: "Improve Sleep Quality", query: "Give me some tips for better deep sleep.", icon: Sparkles },
 ];
 
 const initialState = { response: null, error: null };
@@ -104,9 +110,13 @@ export default function HealthAssistantPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
 
+  // Randomize suggestions on mount
+  const currentSuggestions = useMemo(() => {
+    return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
+  }, []);
+
   const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
-  const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions;
   const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages.length ?? 0) > 0;
 
@@ -295,7 +305,7 @@ export default function HealthAssistantPage() {
                     <div className="p-1.5 bg-primary/10 rounded-lg">
                         {activeMode === 'doctor' ? <BrainCircuit className="w-4 h-4 text-primary" /> : <ShieldPlus className="w-4 h-4 text-primary" />}
                     </div>
-                    <h1 className="text-xs font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase truncate">
+                    <h1 className="text-[10px] font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase truncate max-w-[120px]">
                         {activeMode === 'doctor' ? specialty : "AI Health Assistant"}
                     </h1>
                 </div>
@@ -352,99 +362,106 @@ export default function HealthAssistantPage() {
 
         <main className="flex-1 overflow-hidden relative flex flex-col w-full">
             {!hasMessages && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-start p-8 text-center bg-white dark:bg-slate-950 animate-in fade-in duration-700">
-                    
-                    {/* Hero Section */}
-                    <div className="mt-12 md:mt-20 space-y-6 flex flex-col items-center">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-3xl animate-pulse scale-150" />
-                            <div className="relative p-6 bg-primary/5 rounded-[3rem] border border-primary/10 backdrop-blur-sm shadow-xl">
-                                <ShieldPlus className="w-16 h-16 text-primary" />
+                <ScrollArea className="flex-1 w-full bg-white dark:bg-slate-950 animate-in fade-in duration-700">
+                    <div className="flex flex-col items-center justify-start p-6 text-center space-y-8 pb-32">
+                        
+                        {/* Compact Hero Section */}
+                        <div className="mt-8 space-y-4 flex flex-col items-center">
+                            <div className="relative p-4 bg-primary/5 rounded-[2rem] border border-primary/10 backdrop-blur-sm shadow-xl shrink-0">
+                                <ShieldPlus className="w-10 h-10 text-primary" />
+                                <div className="absolute inset-0 bg-primary/10 rounded-[2rem] blur-2xl -z-10 animate-pulse" />
+                            </div>
+                            <div className="space-y-1">
+                                <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight uppercase">Medical Partner</h2>
+                                <p className="text-[8px] font-bold text-primary/60 uppercase tracking-[0.3em] leading-none">Compassionate AI Care</p>
                             </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                            <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tighter uppercase">Your Medical Partner</h2>
-                            <p className="text-[11px] font-black text-primary/60 uppercase tracking-[0.4em] leading-none">Intelligence • Compassion • Care</p>
-                        </div>
-                    </div>
 
-                    {/* Mode Selection */}
-                    <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="w-full max-w-sm mt-12">
-                        <TabsList className="grid grid-cols-2 h-14 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-[1.5rem] mb-8">
-                            <TabsTrigger value="general" className="rounded-xl font-black text-[10px] uppercase transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg">AI Assistant</TabsTrigger>
-                            <TabsTrigger value="doctor" className="rounded-xl font-black text-[10px] uppercase transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg">Specialists</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="doctor" className="animate-in zoom-in-95 duration-300">
-                            <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-                                {doctorSpecialties.map(spec => (
-                                    <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); }}
-                                            className={cn("h-auto py-4 rounded-2xl text-[10px] font-black uppercase flex flex-col gap-2 border-slate-100 transition-all active:scale-95 shadow-sm", 
-                                            specialty === spec && activeMode === 'doctor' ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20" : "hover:border-primary/30")}>
-                                        <div className={cn("p-2 rounded-lg", specialty === spec ? "bg-primary/20" : "bg-slate-50")}>
-                                            <BrainCircuit className="w-4 h-4" />
+                        {/* Mode Selection Tabs */}
+                        <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="w-full max-w-sm">
+                            <TabsList className="grid grid-cols-2 h-12 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl mb-8">
+                                <TabsTrigger value="general" className="rounded-xl font-black text-[9px] uppercase transition-all">AI Assistant</TabsTrigger>
+                                <TabsTrigger value="doctor" className="rounded-xl font-black text-[9px] uppercase transition-all">Specialists</TabsTrigger>
+                            </TabsList>
+                            
+                            <TabsContent value="doctor" className="animate-in zoom-in-95 duration-300">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {doctorSpecialties.map(spec => (
+                                        <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); }}
+                                                className={cn("h-auto py-3 px-2 rounded-xl text-[9px] font-black uppercase flex flex-col gap-1.5 border-slate-100 transition-all active:scale-95", 
+                                                specialty === spec && activeMode === 'doctor' ? "border-primary bg-primary/5 text-primary" : "hover:border-primary/20 bg-white")}>
+                                            <div className={cn("p-1.5 rounded-lg", specialty === spec ? "bg-primary/10" : "bg-slate-50")}>
+                                                <BrainCircuit className="w-3.5 h-3.5" />
+                                            </div>
+                                            <span className="truncate w-full">{spec}</span>
+                                        </Button>
+                                    ))}
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+
+                        {/* Minimalist Vertical Suggestions */}
+                        <div className="w-full max-w-sm space-y-3">
+                            <div className="flex items-center gap-2 px-1">
+                                <Sparkles className="w-3.5 h-3.5 text-primary/60" />
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Recommended for you</p>
+                            </div>
+                            <div className="flex flex-col gap-2.5">
+                                {currentSuggestions.map((suggestion, idx) => (
+                                    <button 
+                                        key={idx}
+                                        onClick={() => onFormAction(suggestion.query)}
+                                        className="w-full flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 rounded-2xl text-left border border-slate-100 dark:border-slate-800 hover:border-primary/40 hover:bg-primary/5 transition-all active:scale-[0.98] group shadow-sm"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl group-hover:bg-white transition-colors">
+                                                <suggestion.icon className="w-3.5 h-3.5 text-primary/70" />
+                                            </div>
+                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 leading-tight">{suggestion.label}</span>
                                         </div>
-                                        {spec}
-                                    </Button>
+                                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
+                                    </button>
                                 ))}
                             </div>
-                        </TabsContent>
-                    </Tabs>
-
-                    {/* Smart Suggestions Grid */}
-                    <div className="mt-auto w-full max-w-xl pb-10">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Quick Insights</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            {smartSuggestions.map((suggestion, idx) => (
-                                <button 
-                                    key={idx}
-                                    onClick={() => onFormAction(suggestion.query)}
-                                    className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-left border border-transparent hover:border-primary/20 hover:bg-white transition-all active:scale-95 group"
-                                >
-                                    <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
-                                        <suggestion.icon className="w-4 h-4 text-primary" />
-                                    </div>
-                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 leading-tight">{suggestion.label}</span>
-                                </button>
-                            ))}
                         </div>
                     </div>
-                </div>
+                </ScrollArea>
             )}
 
-            <ScrollArea className="flex-1 px-4 md:px-8 py-6" onScroll={handleScroll} ref={scrollAreaRef}>
-                <div className="max-w-3xl mx-auto space-y-12 pb-32">
-                    {activeSession?.messages.map((m, i) => (
-                        <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-4 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
-                            {m.image && (
-                                <div className="mb-4 rounded-3xl overflow-hidden shadow-2xl border-4 border-white max-w-sm">
-                                    <Image src={m.image} alt="Report" width={400} height={400} className="w-full h-auto" />
-                                </div>
-                            )}
-                            <div className={cn("max-w-full text-lg leading-relaxed font-medium transition-all", 
-                                m.role === 'user' ? "text-primary text-right" : "text-slate-800 dark:text-slate-200")}>
-                                <div className="flex items-start gap-4">
-                                    <article className="prose prose-lg dark:prose-invert max-none text-inherit">
-                                        <ReactMarkdown>{m.content}</ReactMarkdown>
-                                    </article>
-                                    {m.role === 'assistant' && (
-                                        <Button variant="ghost" size="icon" onClick={() => handleSpeak(m.content)} className="rounded-full h-8 w-8 hover:bg-primary/10 shrink-0">
-                                            <Volume2 className="w-4 h-4 text-primary" />
-                                        </Button>
-                                    )}
+            {hasMessages && (
+                <ScrollArea className="flex-1 px-4 md:px-8 py-6" onScroll={handleScroll} ref={scrollAreaRef}>
+                    <div className="max-w-3xl mx-auto space-y-10 pb-32">
+                        {activeSession?.messages.map((m, i) => (
+                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
+                                {m.image && (
+                                    <div className="mb-4 rounded-3xl overflow-hidden shadow-2xl border-4 border-white max-w-[280px]">
+                                        <Image src={m.image} alt="Report" width={400} height={400} className="w-full h-auto" />
+                                    </div>
+                                )}
+                                <div className={cn("max-w-full text-[15px] leading-relaxed font-medium transition-all", 
+                                    m.role === 'user' ? "text-primary text-right" : "text-slate-800 dark:text-slate-200")}>
+                                    <div className="flex items-start gap-3">
+                                        <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed">
+                                            <ReactMarkdown>{m.content}</ReactMarkdown>
+                                        </article>
+                                        {m.role === 'assistant' && (
+                                            <Button variant="ghost" size="icon" onClick={() => handleSpeak(m.content)} className="rounded-full h-7 w-7 hover:bg-primary/10 shrink-0 mt-0.5">
+                                                <Volume2 className="w-3.5 h-3.5 text-primary" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                    {isPending && (
-                        <div className="flex flex-col items-start animate-pulse">
-                            <div className="h-4 w-48 bg-slate-100 dark:bg-slate-800 rounded-full mb-3" />
-                            <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
+                        ))}
+                        {isPending && (
+                            <div className="flex flex-col items-start animate-pulse space-y-2">
+                                <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                                <div className="h-3 w-48 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
+            )}
         </main>
 
         <footer className={cn("px-4 pb-8 pt-2 transition-all duration-500 transform border-t bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl z-40 shrink-0", 
@@ -468,7 +485,7 @@ export default function HealthAssistantPage() {
                             </PopoverContent>
                         </Popover>
                     )}
-                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.parentElement?.nextElementSibling?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('form')?.querySelector<HTMLInputElement>('input[type="file"]')?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
                         <Paperclip className="h-4 w-4 text-slate-400" />
                     </Button>
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -486,7 +503,7 @@ export default function HealthAssistantPage() {
                         ref={queryInputRef}
                         name="query"
                         placeholder="Ask anything about your health..."
-                        className="w-full min-h-[56px] max-h-[160px] p-4 pr-12 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-base resize-none"
+                        className="w-full min-h-[56px] max-h-[160px] p-4 pr-12 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[15px] resize-none"
                         rows={1}
                         onInput={(e) => {
                             const target = e.target as HTMLTextAreaElement;
@@ -517,9 +534,9 @@ export default function HealthAssistantPage() {
             
             {attachedImage && (
                 <div className="max-w-3xl mx-auto mt-3 px-12">
-                    <div className="relative inline-block w-16 h-16 animate-in zoom-in-95">
+                    <div className="relative inline-block w-14 h-14 animate-in zoom-in-95">
                         <Image src={attachedImage} alt="Preview" width={64} height={64} className="rounded-2xl border-2 border-white shadow-xl object-cover h-full w-full" />
-                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => setAttachedImage(null)}><X className="h-3 w-3" /></Button>
+                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setAttachedImage(null)}><X className="h-3 w-3" /></Button>
                     </div>
                 </div>
             )}
@@ -535,7 +552,7 @@ function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string
             <div className="p-2 rounded-xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
                 {icon}
             </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[11px] text-slate-800 dark:text-slate-100 uppercase">
+            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[10px] text-slate-800 dark:text-slate-100 uppercase">
                 {label}
             </Label>
         </div>
