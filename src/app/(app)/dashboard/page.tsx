@@ -23,6 +23,7 @@ import {
   Activity,
   HeartPulse,
   ShieldPlus,
+  Settings,
 } from 'lucide-react';
 import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -41,7 +42,7 @@ const healthChartData = [
 ];
 
 export default function DashboardPage() {
-  const { userName } = useUserProfile();
+  const { userName, userImage } = useUserProfile();
   const { toast } = useToast();
 
   // Show welcome toast on initial entry
@@ -51,7 +52,7 @@ export default function DashboardPage() {
       toast({
         title: `Welcome, ${userName.split(' ')[0]}! 👋`,
         description: "Your health journey starts here. Explore our AI tools and expert consultations.",
-        duration: 5000, // Disappears in 5 seconds
+        duration: 5000,
       });
       sessionStorage.setItem('hasGreeted', 'true');
     }
@@ -60,28 +61,42 @@ export default function DashboardPage() {
   return (
     <div className="animate-in fade-in duration-500 space-y-8">
       
-      {/* Header Section */}
+      {/* Header Section with Profile */}
       <div className="max-w-xl mx-auto px-2">
-        <div className="space-y-4">
-          <div className="space-y-3">
-            {/* Attractive Tagline Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 dark:border-blue-800/50 backdrop-blur-sm shadow-sm">
-              <HeartPulse className="w-3.5 h-3.5 text-[#2488E8] animate-pulse" />
-              <p className="text-[#2488E8] text-[10px] font-black uppercase tracking-widest">Your Digital Health Companion</p>
-            </div>
-            
-            <div className="space-y-1">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#2D3A5D] dark:text-slate-100 font-headline leading-tight">
-                Welcome, <br />
-                <span className="relative inline-block">
-                  <span className="text-[#2488E8]">{userName.split(' ')[0]}</span>
-                  {/* Premium Glowing Gradient Underline */}
-                  <div className="absolute -bottom-2 left-0 w-full h-1.5 bg-[#2488E8]/10 rounded-full blur-[2px]" />
-                  <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#2488E8] via-[#14CFBD] to-transparent rounded-full shadow-[0_2px_8px_rgba(36,136,232,0.3)]" />
-                </span>
-              </h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-4 flex-1">
+            <div className="space-y-3">
+              {/* Attractive Tagline Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 dark:border-blue-800/50 backdrop-blur-sm shadow-sm">
+                <HeartPulse className="w-3.5 h-3.5 text-[#2488E8] animate-pulse" />
+                <p className="text-[#2488E8] text-[10px] font-black uppercase tracking-widest">Your Digital Health Companion</p>
+              </div>
+              
+              <div className="space-y-1">
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#2D3A5D] dark:text-slate-100 font-headline leading-tight">
+                  Welcome, <br />
+                  <span className="relative inline-block">
+                    <span className="text-[#2488E8]">{userName.split(' ')[0]}</span>
+                    {/* Premium Glowing Gradient Underline */}
+                    <div className="absolute -bottom-2 left-0 w-full h-1.5 bg-[#2488E8]/10 rounded-full blur-[2px]" />
+                    <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#2488E8] via-[#14CFBD] to-transparent rounded-full shadow-[0_2px_8px_rgba(36,136,232,0.3)]" />
+                  </span>
+                </h1>
+              </div>
             </div>
           </div>
+
+          <Link href="/profile">
+            <div className="relative group">
+              <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-white dark:border-slate-800 shadow-xl transition-transform duration-500 group-hover:scale-105 active:scale-95">
+                <AvatarImage src={userImage} className="object-cover" />
+                <AvatarFallback className="bg-primary/10 text-primary font-black uppercase">{userName[0]}</AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-white dark:bg-slate-900 rounded-full shadow-md flex items-center justify-center border border-slate-100 dark:border-slate-800">
+                <Settings className="w-3 h-3 text-slate-400" />
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 

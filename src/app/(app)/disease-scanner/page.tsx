@@ -33,7 +33,8 @@ import {
   Info,
   Navigation,
   Siren,
-  Utensils
+  Utensils,
+  Settings
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -47,6 +48,7 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -69,7 +71,7 @@ const updateScanStats = () => {
 
 export default function DiseaseScannerPage() {
     const [view, setView] = useState<ScannerView>('home');
-    const { userName } = useUserProfile();
+    const { userName, userImage } = useUserProfile();
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
     
@@ -132,6 +134,12 @@ export default function DiseaseScannerPage() {
                             <h1 className="text-3xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline">{t.greeting}</h1>
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t.subGreeting}</p>
                         </div>
+                        <Link href="/profile">
+                          <Avatar className="h-14 w-14 border-4 border-white dark:border-slate-800 shadow-lg transition-transform active:scale-95">
+                            <AvatarImage src={userImage} className="object-cover" />
+                            <AvatarFallback className="bg-primary/10 text-primary font-black uppercase">{userName[0]}</AvatarFallback>
+                          </Avatar>
+                        </Link>
                     </div>
 
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
@@ -714,7 +722,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                         {state.result.interactionPrompt && (
                              <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
                                 <Info className="h-4 w-4 text-indigo-500" />
-                                <AlertTitle className="font-black text-indigo-700">Follow-up Query</AlertTitle>
+                                <AlertTitle className="font-black text-blue-700">Follow-up Query</AlertTitle>
                                 <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
                             </Alert>
                         )}
@@ -776,7 +784,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     );
 }
 
-function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
+function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -955,4 +963,3 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         </div>
     );
 }
-
