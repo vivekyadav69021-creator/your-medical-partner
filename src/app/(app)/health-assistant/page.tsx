@@ -6,12 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     SendHorizonal, 
     Loader2, 
-    Paperclip, 
+    Plus, 
     Mic, 
     MicOff, 
     X, 
     Volume2, 
-    PlusCircle, 
     ShieldPlus,
     Search,
     Zap,
@@ -23,14 +22,11 @@ import {
     Activity,
     Pill,
     BrainCircuit,
-    ChevronRight,
     ThumbsUp,
     ThumbsDown,
     Copy,
-    Plus,
     Image as ImageIcon,
-    Lightbulb,
-    PenLine
+    Lightbulb
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -73,17 +69,14 @@ type PulseMode = 'standard' | 'websearch' | 'deepthink' | 'proanalysis';
 
 const doctorSpecialties = [
   "General Physician", "Cardiologist", "Dermatologist", "Pediatrician",
-  "Neurologist", "Oncologist", "Gynecologist", "Orthopedist",
-  "Endocrinologist", "Psychiatrist",
+  "Neurologist", "Oncologist", "Gynecologist", "Orthopedist"
 ];
 
 const suggestionPool = [
     { label: "Check symptoms", query: "I have a headache and mild fever, what should I do?", icon: Activity },
     { label: "Explain medicine", query: "What are the common side effects of Paracetamol 500mg?", icon: Pill },
     { label: "Heart health tips", query: "Give me 5 daily habits to keep my heart healthy.", icon: Sparkles },
-    { label: "Understand Diabetes", query: "Explain Type 2 Diabetes in simple terms.", icon: Stethoscope },
     { label: "First aid guide", query: "What are the first aid steps for a minor burn?", icon: Zap },
-    { label: "Sleep better", query: "Give me some scientific tips for better deep sleep.", icon: Lightbulb },
 ];
 
 const initialState = { response: null, error: null, timestamp: 0 };
@@ -96,62 +89,44 @@ export default function HealthAssistantPage() {
   const [pulseMode, setPulseMode] = useState<PulseMode>('standard');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [showControls, setShowControls] = useState(true);
   
   const [generalSessions, setGeneralSessions] = useState<Session[]>([]);
   const [doctorSessions, setDoctorSessions] = useState<Session[]>([]);
   const [activeGeneralId, setActiveGeneralId] = useState<string | null>(null);
   const [activeDoctorId, setActiveDoctorId] = useState<string | null>(null);
 
-  const [generalState, generalAction, isGeneralPending] = useActionState(healthAssistantAction, initialState);
-  const [doctorState, doctorAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
+  const [generalState, generalFormAction, isGeneralPending] = useActionState(healthAssistantAction, initialState);
+  const [doctorState, doctorFormAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
 
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastProcessedGenTimestamp = useRef<number>(0);
-  const lastProcessedDocTimestamp = useRef<number>(0);
+  const lastProcessedTimestamp = useRef<number>(0);
+
+  const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
+  const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
+  const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
+  const hasMessages = activeSession && activeSession.messages.length > 0;
 
   const currentSuggestions = useMemo(() => {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
 
-  const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
-  const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
-  const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
-  const hasMessages = (activeSession?.messages && activeSession.messages.length > 0);
-
-  // Sync AI responses
+  // Handle Response Sync
   useEffect(() => {
-    if (!isGeneralPending && generalState.timestamp > lastProcessedGenTimestamp.current) {
-        lastProcessedGenTimestamp.current = generalState.timestamp;
-        if (generalState.response || generalState.error) {
-            const content = generalState.response || `Error: ${generalState.error}`;
-            const sessionId = activeGeneralId;
-            if (sessionId) {
-                setGeneralSessions(prev => prev.map(s => s.id === sessionId ? {
-                    ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
-                } : s));
-            }
-        }
+    const currentState = activeMode === 'general' ? generalState : doctorState;
+    if (!isPending && currentState.timestamp > lastProcessedTimestamp.current) {
+      lastProcessedTimestamp.current = currentState.timestamp;
+      if (currentState.response || currentState.error) {
+        const content = currentState.response || `Error: ${currentState.error}`;
+        const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
+        setter(prev => prev.map(s => s.id === currentSessionId ? {
+          ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+        } : s));
+      }
     }
-  }, [generalState, isGeneralPending, activeGeneralId]);
-
-  useEffect(() => {
-    if (!isDoctorPending && doctorState.timestamp > lastProcessedDocTimestamp.current) {
-        lastProcessedDocTimestamp.current = doctorState.timestamp;
-        if (doctorState.response || doctorState.error) {
-            const content = doctorState.response || `Error: ${doctorState.error}`;
-            const sessionId = activeDoctorId;
-            if (sessionId) {
-                setDoctorSessions(prev => prev.map(s => s.id === sessionId ? {
-                    ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
-                } : s));
-            }
-        }
-    }
-  }, [doctorState, isDoctorPending, activeDoctorId]);
+  }, [generalState, doctorState, isPending, activeMode, currentSessionId]);
 
   const handleNewChat = useCallback(() => {
     const id = `session-${Date.now()}`;
@@ -172,11 +147,10 @@ export default function HealthAssistantPage() {
     setAttachedImage(null);
   }, [activeMode, specialty]);
 
+  // Load Sessions
   useEffect(() => {
-    const key_gen = 'healthAssistantSessions_general';
-    const key_doc = 'healthAssistantSessions_doctor';
-    const saved_gen = localStorage.getItem(key_gen);
-    const saved_doc = localStorage.getItem(key_doc);
+    const saved_gen = localStorage.getItem('healthAssistantSessions_general');
+    const saved_doc = localStorage.getItem('healthAssistantSessions_doctor');
     
     if (saved_gen) {
         const parsed = JSON.parse(saved_gen);
@@ -191,26 +165,16 @@ export default function HealthAssistantPage() {
 
     if (!saved_gen && activeMode === 'general' && !activeGeneralId) handleNewChat();
     if (!saved_doc && activeMode === 'doctor' && !activeDoctorId) handleNewChat();
-  }, [handleNewChat, activeMode, activeGeneralId, activeDoctorId]);
+  }, [handleNewChat, activeMode]);
 
+  // Save Sessions
   useEffect(() => {
     localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
     localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
-  const onFormAction = (formData: FormData | string) => {
-    let query: string;
-    let finalFormData: FormData;
-
-    if (typeof formData === 'string') {
-        query = formData;
-        finalFormData = new FormData();
-        finalFormData.set('query', query);
-    } else {
-        query = formData.get('query') as string;
-        finalFormData = formData;
-    }
-
+  const onFormAction = (formData: FormData) => {
+    const query = formData.get('query') as string;
     if (!query && !attachedImage) return;
 
     const userMessage: Message = { 
@@ -224,28 +188,23 @@ export default function HealthAssistantPage() {
     const sessionId = currentSessionId;
     if (!sessionId) return;
 
-    // Optimistic Update
-    if (activeMode === 'general') {
-        setGeneralSessions(prev => prev.map(s => s.id === sessionId ? {
-            ...s, messages: [...s.messages, userMessage], title: s.messages.length === 0 ? query.substring(0, 30) : s.title
-        } : s));
-    } else {
-        setDoctorSessions(prev => prev.map(s => s.id === sessionId ? {
-            ...s, messages: [...s.messages, userMessage], title: s.messages.length === 0 ? query.substring(0, 30) : s.title
-        } : s));
-    }
+    const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
+    setter(prev => prev.map(s => s.id === sessionId ? {
+        ...s, 
+        messages: [...s.messages, userMessage], 
+        title: s.messages.length === 0 ? query.substring(0, 30) : s.title
+    } : s));
     
-    // Prepare for server call
-    finalFormData.set('history', JSON.stringify(activeSession?.messages || []));
-    if (attachedImage) finalFormData.set('photoDataUri', attachedImage);
+    formData.set('history', JSON.stringify(activeSession?.messages || []));
+    if (attachedImage) formData.set('photoDataUri', attachedImage);
 
     startTransition(() => {
         if (activeMode === 'doctor') { 
-            finalFormData.set('specialty', specialty); 
-            doctorAction(finalFormData); 
+            formData.set('specialty', specialty); 
+            doctorFormAction(formData); 
         } else { 
-            finalFormData.set('mode', pulseMode); 
-            generalAction(finalFormData); 
+            formData.set('mode', pulseMode); 
+            generalFormAction(formData); 
         }
     });
     
@@ -267,18 +226,7 @@ export default function HealthAssistantPage() {
     }
   }, [activeSession?.messages, isPending]);
 
-  const deleteSession = (e: React.MouseEvent, sessionId: string, mode: 'general' | 'doctor') => {
-    e.stopPropagation();
-    const setter = mode === 'general' ? setGeneralSessions : setDoctorSessions;
-    setter(prev => prev.filter(s => s.id !== sessionId));
-    if (sessionId === currentSessionId) {
-        if (mode === 'general') setActiveGeneralId(null);
-        else setActiveDoctorId(null);
-    }
-    toast({ title: 'Chat deleted' });
-  };
-
-  // Voice Recording
+  // Voice logic
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -305,9 +253,7 @@ export default function HealthAssistantPage() {
           const base64Audio = reader.result as string;
           const formData = new FormData();
           formData.append('audioDataUri', base64Audio);
-          startTransition(() => {
-            speechFormAction(formData);
-          });
+          startTransition(() => { speechFormAction(formData); });
         };
         stream.getTracks().forEach(track => track.stop());
       };
@@ -330,14 +276,8 @@ export default function HealthAssistantPage() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copied to clipboard" });
-  };
-
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#f8f9fa] dark:bg-[#131314] overflow-hidden fixed inset-0">
-        
         <header className="h-14 border-b border-gray-200 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md z-30">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3c4043]">
@@ -346,9 +286,7 @@ export default function HealthAssistantPage() {
                 <div className="h-6 w-px bg-gray-200 dark:bg-[#3c4043] mx-1" />
                 <div className="flex items-center gap-2">
                     <ShieldPlus className="w-4 h-4 text-primary" />
-                    <h1 className="text-sm font-bold text-gray-800 dark:text-[#e3e3e3] truncate max-w-[120px]">
-                        Medical Partner
-                    </h1>
+                    <h1 className="text-xs font-bold text-gray-800 dark:text-[#e3e3e3]">Partner</h1>
                 </div>
             </div>
 
@@ -389,7 +327,7 @@ export default function HealthAssistantPage() {
                                             <p className="text-[8px] font-bold text-gray-400 uppercase">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
                                         </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full" onClick={(e) => deleteSession(e, session.id, historyTab)}>
+                                    <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full" onClick={(e) => { e.stopPropagation(); (historyTab === 'general' ? setGeneralSessions : setDoctorSessions)(prev => prev.filter(s => s.id !== session.id)); }}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -403,44 +341,47 @@ export default function HealthAssistantPage() {
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
-                    <div className="flex flex-col justify-center px-6 pt-24 space-y-12">
-                        
-                        <div className="space-y-2">
+                    <div className="flex flex-col justify-center px-6 pt-16 space-y-10">
+                        <div className="space-y-1">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-primary/10 rounded-xl">
-                                    <ShieldPlus className="w-6 h-6 text-primary" />
+                                    <ShieldPlus className="w-5 h-5 text-primary" />
                                 </div>
-                                <p className="text-xl font-medium text-gray-900 dark:text-white">Hello there</p>
+                                <p className="text-lg font-medium text-gray-900 dark:text-white">Hello there</p>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-medium text-gray-800 dark:text-[#e3e3e3] leading-tight">
-                                How can I help you today?
+                            <h2 className="text-3xl md:text-5xl font-medium text-gray-800 dark:text-[#e3e3e3] leading-tight">
+                                How can I help <br className="sm:hidden" /> you today?
                             </h2>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl">
+                        <div className="grid grid-cols-1 gap-2.5 max-w-3xl">
                             {currentSuggestions.map((suggestion, idx) => (
                                 <button 
                                     key={idx}
-                                    onClick={() => onFormAction(suggestion.query)}
-                                    className="flex items-center gap-4 p-4 bg-white dark:bg-[#1e1f20] rounded-2xl text-left shadow-[0_1px_3px_rgba(0,0,0,0.12)] border border-transparent hover:border-primary/20 hover:bg-gray-50 dark:hover:bg-[#282a2c] transition-all active:scale-[0.98] group"
+                                    onClick={() => {
+                                        const fd = new FormData();
+                                        fd.set('query', suggestion.query);
+                                        onFormAction(fd);
+                                    }}
+                                    className="flex items-center gap-3.5 p-3.5 bg-white dark:bg-[#1e1f20] rounded-2xl text-left border border-gray-100 dark:border-transparent hover:border-primary/30 transition-all active:scale-[0.98] group shadow-sm"
                                 >
-                                    <div className="p-2.5 bg-gray-50 dark:bg-[#131314] rounded-xl group-hover:bg-white transition-colors">
-                                        <suggestion.icon className="w-5 h-5 text-primary" />
+                                    <div className="p-2 bg-gray-50 dark:bg-[#131314] rounded-xl">
+                                        <suggestion.icon className="w-4 h-4 text-primary" />
                                     </div>
-                                    <span className="text-[13px] font-medium text-gray-700 dark:text-[#c4c7c5] leading-snug">{suggestion.label}</span>
+                                    <span className="text-xs font-bold text-gray-700 dark:text-[#c4c7c5]">{suggestion.label}</span>
                                 </button>
                             ))}
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                              <div className="flex items-center gap-2 px-1">
                                 <BrainCircuit className="w-4 h-4 text-primary/60" />
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Connect with Specialists</p>
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
-                                {doctorSpecialties.slice(0, 6).map(spec => (
+                                {doctorSpecialties.map(spec => (
                                     <Button key={spec} variant="ghost" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); handleNewChat(); }}
-                                            className="h-10 px-4 rounded-full bg-white dark:bg-[#1e1f20] text-[11px] font-bold shadow-sm whitespace-nowrap border border-gray-100 dark:border-[#3c4043] dark:text-[#e3e3e3]">
+                                            className="h-9 px-4 rounded-full bg-white dark:bg-[#1e1f20] text-[10px] font-black uppercase tracking-widest shadow-sm border border-gray-100 dark:border-[#3c4043] dark:text-[#e3e3e3]">
                                         {spec}
                                     </Button>
                                 ))}
@@ -454,36 +395,30 @@ export default function HealthAssistantPage() {
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] rounded-[28px] rounded-tr-lg bg-[#e9eef6] dark:bg-[#282a2c] px-5 py-3.5 text-gray-900 dark:text-[#e3e3e3] shadow-sm">
+                                    <div className="max-w-[85%] rounded-[24px] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-3 text-gray-900 dark:text-[#e3e3e3] shadow-sm">
                                         {m.image && (
-                                            <div className="mb-3 rounded-2xl overflow-hidden border border-gray-200">
-                                                <Image src={m.image} alt="Report" width={300} height={300} className="w-full h-auto" />
+                                            <div className="mb-2 rounded-xl overflow-hidden border border-gray-200">
+                                                <Image src={m.image} alt="Report" width={250} height={250} className="w-full h-auto" />
                                             </div>
                                         )}
-                                        <p className="text-[15px] font-medium leading-relaxed">{m.content}</p>
+                                        <p className="text-sm font-medium leading-relaxed">{m.content}</p>
                                     </div>
                                 ) : (
-                                    <div className="flex items-start gap-4 w-full group">
-                                        <div className="mt-1 size-7 shrink-0 flex items-center justify-center bg-primary rounded-lg shadow-sm">
-                                            <ShieldPlus className="w-4 h-4 text-white" />
+                                    <div className="flex items-start gap-3.5 w-full group">
+                                        <div className="mt-1 size-6 shrink-0 flex items-center justify-center bg-primary rounded-lg shadow-sm">
+                                            <ShieldPlus className="w-3.5 h-3.5 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <article className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-[#e3e3e3] leading-relaxed">
+                                            <article className="prose prose-base dark:prose-invert max-w-none text-gray-800 dark:text-[#e3e3e3] leading-relaxed">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             
                                             <div className="mt-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-2">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Like">
-                                                    <ThumbsUp className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleSpeak(m.content)}>
+                                                    <Volume2 className="w-4 h-4 text-gray-400" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Dislike">
-                                                    <ThumbsDown className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleSpeak(m.content)} className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Listen">
-                                                    <Volume2 className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleCopy(m.content)} className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Copy">
-                                                    <Copy className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}>
+                                                    <Copy className="w-4 h-4 text-gray-400" />
                                                 </Button>
                                             </div>
                                         </div>
@@ -493,15 +428,15 @@ export default function HealthAssistantPage() {
                         ))}
                         {isPending && (
                              <div className="flex items-start gap-4 w-full">
-                                <div className="mt-1 size-7 shrink-0 flex items-center justify-center bg-primary/20 rounded-lg animate-pulse">
-                                    <ShieldPlus className="w-4 h-4 text-primary" />
+                                <div className="mt-1 size-6 shrink-0 flex items-center justify-center bg-primary/20 rounded-lg animate-pulse">
+                                    <ShieldPlus className="w-3.5 h-3.5 text-primary" />
                                 </div>
-                                <div className="space-y-3 flex-1 pt-2">
-                                    <div className="h-3 bg-gray-200 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
-                                    <div className="h-3 bg-gray-200 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
+                                <div className="space-y-2 flex-1 pt-1">
+                                    <div className="h-2.5 bg-gray-200 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
+                                    <div className="h-2.5 bg-gray-200 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
                                     <div className="flex items-center gap-2 mt-4">
                                         <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                        <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-[#9aa0a6]">AI is thinking...</span>
+                                        <span className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em]">Thinking...</span>
                                     </div>
                                 </div>
                             </div>
@@ -511,15 +446,12 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        <footer className={cn("px-4 pb-10 pt-2 transition-all duration-500 transform bg-transparent z-40 shrink-0", 
-            showControls ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none")}>
-            
-            <form ref={formRef} action={(fd) => onFormAction(fd)} className="max-w-3xl mx-auto flex flex-col gap-3">
-                
+        <footer className="px-4 pb-8 pt-2 z-40 shrink-0 bg-transparent">
+            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-3">
                 {attachedImage && (
                     <div className="mx-2 mb-1 flex animate-in zoom-in-95">
                         <div className="relative group/thumb">
-                            <Image src={attachedImage} alt="Preview" width={100} height={100} className="rounded-xl border border-gray-200 dark:border-[#3c4043] shadow-lg object-cover w-24 h-24" />
+                            <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-xl border border-gray-200 dark:border-[#3c4043] shadow-lg object-cover" />
                             <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg" onClick={() => setAttachedImage(null)}>
                                 <X className="h-3.5 w-3.5" />
                             </Button>
@@ -527,14 +459,13 @@ export default function HealthAssistantPage() {
                     </div>
                 )}
 
-                <div className="relative flex flex-col rounded-[32px] bg-white dark:bg-[#1e1f20] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)] dark:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.5)] transition-all p-3 border border-transparent focus-within:border-gray-200 dark:focus-within:border-[#3c4043]">
-                    
-                    <div className="flex-1 max-h-96 overflow-y-auto">
+                <div className="relative flex flex-col rounded-[28px] bg-white dark:bg-[#1e1f20] shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08)] transition-all p-2.5 border border-transparent focus-within:border-gray-200 dark:focus-within:border-[#3c4043]">
+                    <div className="flex-1 max-h-48 overflow-y-auto">
                         <Textarea
                             ref={queryInputRef}
                             name="query"
                             placeholder="Ask Medical Partner"
-                            className="w-full min-h-[48px] max-h-[160px] px-3 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-medium text-[16px] text-gray-800 dark:text-[#e3e3e3] placeholder:text-gray-500 dark:placeholder:text-[#9aa0a6] resize-none"
+                            className="w-full min-h-[44px] max-h-[160px] px-3 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-medium text-[16px] text-gray-800 dark:text-[#e3e3e3] placeholder:text-gray-500 resize-none"
                             rows={1}
                             onInput={(e) => {
                                 const target = e.target as HTMLTextAreaElement;
@@ -542,14 +473,14 @@ export default function HealthAssistantPage() {
                                 target.style.height = `${target.scrollHeight}px`;
                                 setIsTyping(target.value.length > 0);
                             }}
-                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); formRef.current?.requestSubmit(); } }}
                         />
                     </div>
 
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 dark:border-[#3c4043]">
+                    <div className="flex items-center justify-between mt-1 pt-1 border-t border-gray-50 dark:border-[#3c4043]">
                         <div className="flex items-center gap-1">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]">
-                                <Plus className="h-5 w-5 text-gray-600 dark:text-[#c4c7c5]" />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-9 w-9 rounded-full">
+                                <Plus className="h-5 w-5 text-gray-500" />
                             </Button>
                             <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
                                 const file = e.target.files?.[0];
@@ -563,17 +494,17 @@ export default function HealthAssistantPage() {
                             {activeMode === 'general' && (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className="h-10 px-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043] gap-2 text-xs font-bold text-gray-500 dark:text-[#9aa0a6]">
+                                        <Button type="button" variant="ghost" className="h-9 px-3 rounded-full gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
                                             <Zap className="h-4 w-4 text-primary" />
                                             <span className="hidden sm:inline">Modes</span>
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 rounded-3xl p-3 mb-4 bg-white dark:bg-[#1e1f20] border-gray-200 dark:border-[#3c4043]" side="top">
-                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
-                                            <PulseModeItem value="standard" label="Balanced" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                            <PulseModeItem value="websearch" label="Deep Search" icon={<Search className="w-4 h-4"/>} />
-                                            <PulseModeItem value="deepthink" label="Logic Think" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                            <PulseModeItem value="proanalysis" label="Pharmacist" icon={<Pill className="w-4 h-4"/>} />
+                                    <PopoverContent className="w-60 rounded-2xl p-2 mb-4 bg-white dark:bg-[#1e1f20]" side="top" align="start">
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-1">
+                                            <PulseModeItem value="standard" label="Balanced" icon={<ShieldPlus className="w-3.5 h-3.5"/>} />
+                                            <PulseModeItem value="websearch" label="Deep Search" icon={<Search className="w-3.5 h-3.5"/>} />
+                                            <PulseModeItem value="deepthink" label="Logic Think" icon={<BrainCircuit className="w-3.5 h-3.5"/>} />
+                                            <PulseModeItem value="proanalysis" label="Pharmacist" icon={<Pill className="w-3.5 h-3.5"/>} />
                                         </RadioGroup>
                                     </PopoverContent>
                                 </Popover>
@@ -581,32 +512,27 @@ export default function HealthAssistantPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <div className="relative size-10 flex items-center justify-center">
-                                {!isTyping && !isRecording && (
-                                    <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]">
-                                        <Mic className="w-5 h-5 text-gray-600 dark:text-[#c4c7c5]" />
-                                    </Button>
-                                )}
-                                {(isTyping || isRecording) && (
-                                    <div className="flex items-center gap-2">
-                                        {isRecording && (
-                                            <Button type="button" size="icon" onClick={stopRecording} className="h-10 w-10 rounded-full bg-red-500 text-white animate-pulse">
-                                                <MicOff className="w-4 h-4" />
-                                            </Button>
-                                        )}
-                                        <Button type="submit" disabled={isPending} className="h-10 w-10 rounded-full bg-[#d3e3fd] hover:bg-[#c2d7fb] dark:bg-[#1f3760] dark:hover:bg-[#2a4a7a] text-gray-900 dark:text-white transition-all">
-                                            {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <SendHorizonal className="w-5 h-5" />}
+                             {!isTyping && !isRecording && (
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-9 w-9 rounded-full">
+                                    <Mic className="w-4 h-4 text-gray-500" />
+                                </Button>
+                            )}
+                            {(isTyping || isRecording) && (
+                                <div className="flex items-center gap-2">
+                                    {isRecording && (
+                                        <Button type="button" size="icon" onClick={stopRecording} className="h-9 w-9 rounded-full bg-red-500 text-white animate-pulse">
+                                            <MicOff className="w-4 h-4" />
                                         </Button>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                    <Button type="submit" disabled={isPending} className="h-9 w-9 rounded-full bg-[#d3e3fd] text-gray-900 dark:bg-[#1f3760] dark:text-white transition-all">
+                                        {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <SendHorizonal className="w-4 h-4" />}
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-
-                <p className="text-[10px] text-center text-gray-500 dark:text-[#9aa0a6] mt-1">
-                    Medical Partner may display inaccurate info, so double-check its responses.
-                </p>
+                <p className="text-[9px] text-center text-gray-400 uppercase tracking-widest mt-1">Medical Partner may display inaccurate info.</p>
             </form>
         </footer>
     </div>
@@ -615,12 +541,12 @@ export default function HealthAssistantPage() {
 
 function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center space-x-3 p-2.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#282a2c] transition-all border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group cursor-pointer">
+        <div className="flex items-center space-x-2.5 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/5 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
             <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2 rounded-xl bg-gray-50 dark:bg-[#131314] shadow-sm border border-gray-100 dark:border-[#3c4043] group-hover:scale-105 transition-transform">
+            <div className="p-1.5 rounded-lg bg-gray-50 dark:bg-[#131314] shadow-sm">
                 {icon}
             </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer font-bold text-[11px] text-gray-700 dark:text-[#e3e3e3] uppercase tracking-wider">
+            <Label htmlFor={value} className="flex-1 cursor-pointer font-bold text-[10px] text-gray-700 dark:text-[#e3e3e3] uppercase tracking-wider">
                 {label}
             </Label>
         </div>
