@@ -107,9 +107,9 @@ export default function HealthAssistantPage() {
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  // Critical for atomic tracking
-  const lastGeneralTimestamp = useRef<number>(0);
-  const lastDoctorTimestamp = useRef<number>(0);
+  // Track processed timestamps to avoid loops
+  const lastProcessedGeneralTime = useRef<number>(0);
+  const lastProcessedDoctorTime = useRef<number>(0);
 
   const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
@@ -123,8 +123,8 @@ export default function HealthAssistantPage() {
 
   // Sync AI responses with Atomic Timestamps
   useEffect(() => {
-    if (!isGeneralPending && generalState.timestamp > lastGeneralTimestamp.current) {
-        lastGeneralTimestamp.current = generalState.timestamp;
+    if (!isGeneralPending && generalState.timestamp > lastProcessedGeneralTime.current) {
+        lastProcessedGeneralTime.current = generalState.timestamp;
         if (generalState.response || generalState.error) {
             const content = generalState.response || `Error: ${generalState.error}`;
             setGeneralSessions(prev => prev.map(s => s.id === activeGeneralId ? {
@@ -135,8 +135,8 @@ export default function HealthAssistantPage() {
   }, [generalState, isGeneralPending, activeGeneralId]);
 
   useEffect(() => {
-    if (!isDoctorPending && doctorState.timestamp > lastDoctorTimestamp.current) {
-        lastDoctorTimestamp.current = doctorState.timestamp;
+    if (!isDoctorPending && doctorState.timestamp > lastProcessedDoctorTime.current) {
+        lastProcessedDoctorTime.current = doctorState.timestamp;
         if (doctorState.response || doctorState.error) {
             const content = doctorState.response || `Error: ${doctorState.error}`;
             setDoctorSessions(prev => prev.map(s => s.id === activeDoctorId ? {
@@ -185,10 +185,8 @@ export default function HealthAssistantPage() {
         const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 20;
 
         if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) {
-            // Scrolling down and not at very bottom
             setIsInputVisible(false);
         } else {
-            // Scrolling up or reached bottom
             setIsInputVisible(true);
         }
         lastScrollTop.current = currentTop;
@@ -234,7 +232,6 @@ export default function HealthAssistantPage() {
 
     let sid = currentSessionId;
 
-    // ATOMIC SESSION CREATION
     if (!sid || (activeMode === 'doctor' && activeSession?.specialty !== specialty)) {
         sid = `session-${Date.now()}`;
         const newSession: Session = {
@@ -261,7 +258,6 @@ export default function HealthAssistantPage() {
         } : s));
     }
 
-    // Trigger AI
     const historyForAi = activeSession ? [...activeSession.messages, userMsg] : [userMsg];
     formData.set('history', JSON.stringify(historyForAi));
     if (attachedImage) formData.set('photoDataUri', attachedImage);
@@ -285,7 +281,6 @@ export default function HealthAssistantPage() {
     setIsInputVisible(true);
   };
 
-  // Voice Logic
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -328,7 +323,6 @@ export default function HealthAssistantPage() {
     }
   };
 
-  // Scroll Sync
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -340,7 +334,6 @@ export default function HealthAssistantPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#f8f9fa] dark:bg-[#131314] overflow-hidden fixed inset-0">
-        {/* Header */}
         <header className="h-14 border-b border-gray-200 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md z-50">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3c4043]">
@@ -418,7 +411,6 @@ export default function HealthAssistantPage() {
                             </div>
                         </div>
 
-                        {/* Suggestions */}
                         <div className="flex flex-col gap-2.5 w-full">
                             {currentSuggestions.map((suggestion, idx) => (
                                 <button 
@@ -438,7 +430,6 @@ export default function HealthAssistantPage() {
                             ))}
                         </div>
 
-                        {/* Specialists Selection */}
                         <div className="space-y-4 w-full">
                              <div className="flex items-center justify-center gap-3">
                                 <div className="h-px bg-gray-100 dark:bg-[#3c4043] flex-1" />
@@ -462,13 +453,13 @@ export default function HealthAssistantPage() {
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] rounded-[1.5rem] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-2.5 text-gray-900 dark:text-[#e3e3e3] shadow-sm">
+                                    <div className="max-w-[85%] rounded-[1.5rem] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-2.5 text-gray-900 dark:text-[#e3e3e3] shadow-sm break-words">
                                         {m.image && (
                                             <div className="mb-2 rounded-xl overflow-hidden border border-gray-200">
-                                                <Image src={m.image} alt="Attached" width={200} height={200} className="w-full h-auto" />
+                                                <Image src={m.image} alt="Attached" width={200} height={200} className="w-full h-auto object-cover" />
                                             </div>
                                         )}
-                                        <p className="text-sm font-medium leading-relaxed">{m.content}</p>
+                                        <p className="text-sm font-medium leading-relaxed break-words">{m.content}</p>
                                     </div>
                                 ) : (
                                     <div className="flex items-start gap-3 w-full group">
@@ -476,7 +467,7 @@ export default function HealthAssistantPage() {
                                             <ShieldPlus className="w-3 h-3 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <article className="prose prose-sm dark:prose-invert max-none text-gray-800 dark:text-[#e3e3e3] leading-relaxed font-medium text-[15px]">
+                                            <article className="prose prose-sm dark:prose-invert max-w-full break-words text-gray-800 dark:text-[#e3e3e3] leading-relaxed font-medium text-[15px]">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             
@@ -506,7 +497,7 @@ export default function HealthAssistantPage() {
                                 <div className="mt-1 size-5 shrink-0 flex items-center justify-center bg-primary/20 rounded-lg animate-pulse">
                                     <ShieldPlus className="w-3 h-3 text-primary" />
                                 </div>
-                                <div className="space-y-2 flex-1 pt-1">
+                                <div className="space-y-2 flex-1 pt-1 min-w-0">
                                     <div className="h-2 bg-gray-100 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
                                     <div className="h-2 bg-gray-100 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
                                     <div className="flex items-center gap-2 mt-4">
@@ -521,7 +512,6 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        {/* Immersive Input Bar - Slidable on Scroll */}
         <footer className={cn(
             "px-4 pb-8 pt-2 z-40 shrink-0 transition-transform duration-500 ease-in-out",
             !isInputVisible && hasMessages ? "translate-y-[150%]" : "translate-y-0"
