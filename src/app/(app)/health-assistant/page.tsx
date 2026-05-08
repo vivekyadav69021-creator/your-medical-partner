@@ -18,15 +18,15 @@ import {
     Menu,
     Trash2,
     Sparkles,
-    Stethoscope,
     Activity,
     Pill,
     BrainCircuit,
-    ThumbsUp,
-    ThumbsDown,
     Copy,
     Image as ImageIcon,
-    Lightbulb
+    Lightbulb,
+    ThumbsUp,
+    ThumbsDown,
+    MoreVertical
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,7 +44,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -102,7 +102,8 @@ export default function HealthAssistantPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastProcessedTimestamp = useRef<number>(0);
+  const lastGeneralProcessed = useRef<number>(0);
+  const lastDoctorProcessed = useRef<number>(0);
 
   const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
@@ -113,20 +114,30 @@ export default function HealthAssistantPage() {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
 
-  // Handle Response Sync
+  // Synchronize AI responses with sessions
   useEffect(() => {
-    const currentState = activeMode === 'general' ? generalState : doctorState;
-    if (!isPending && currentState.timestamp > lastProcessedTimestamp.current) {
-      lastProcessedTimestamp.current = currentState.timestamp;
-      if (currentState.response || currentState.error) {
-        const content = currentState.response || `Error: ${currentState.error}`;
-        const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
-        setter(prev => prev.map(s => s.id === currentSessionId ? {
-          ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
-        } : s));
-      }
+    if (!isGeneralPending && generalState.timestamp > lastGeneralProcessed.current) {
+        lastGeneralProcessed.current = generalState.timestamp;
+        if (generalState.response || generalState.error) {
+            const content = generalState.response || `Error: ${generalState.error}`;
+            setGeneralSessions(prev => prev.map(s => s.id === activeGeneralId ? {
+                ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+            } : s));
+        }
     }
-  }, [generalState, doctorState, isPending, activeMode, currentSessionId]);
+  }, [generalState, isGeneralPending, activeGeneralId]);
+
+  useEffect(() => {
+    if (!isDoctorPending && doctorState.timestamp > lastDoctorProcessed.current) {
+        lastDoctorProcessed.current = doctorState.timestamp;
+        if (doctorState.response || doctorState.error) {
+            const content = doctorState.response || `Error: ${doctorState.error}`;
+            setDoctorSessions(prev => prev.map(s => s.id === activeDoctorId ? {
+                ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+            } : s));
+        }
+    }
+  }, [doctorState, isDoctorPending, activeDoctorId]);
 
   const handleNewChat = useCallback(() => {
     const id = `session-${Date.now()}`;
@@ -147,7 +158,7 @@ export default function HealthAssistantPage() {
     setAttachedImage(null);
   }, [activeMode, specialty]);
 
-  // Load Sessions
+  // Initial Load
   useEffect(() => {
     const saved_gen = localStorage.getItem('healthAssistantSessions_general');
     const saved_doc = localStorage.getItem('healthAssistantSessions_doctor');
@@ -155,59 +166,82 @@ export default function HealthAssistantPage() {
     if (saved_gen) {
         const parsed = JSON.parse(saved_gen);
         setGeneralSessions(parsed);
-        if (activeMode === 'general' && parsed.length && !activeGeneralId) setActiveGeneralId(parsed[0].id);
+        if (activeMode === 'general' && parsed.length) setActiveGeneralId(parsed[0].id);
     }
     if (saved_doc) {
         const parsed = JSON.parse(saved_doc);
         setDoctorSessions(parsed);
-        if (activeMode === 'doctor' && parsed.length && !activeDoctorId) setActiveDoctorId(parsed[0].id);
+        if (activeMode === 'doctor' && parsed.length) setActiveDoctorId(parsed[0].id);
     }
 
-    if (!saved_gen && activeMode === 'general' && !activeGeneralId) handleNewChat();
-    if (!saved_doc && activeMode === 'doctor' && !activeDoctorId) handleNewChat();
+    if (!saved_gen && activeMode === 'general') handleNewChat();
+    if (!saved_doc && activeMode === 'doctor') handleNewChat();
   }, [handleNewChat, activeMode]);
 
-  // Save Sessions
+  // Auto Save
   useEffect(() => {
     localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
     localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
+  // Message Submission
   const onFormAction = (formData: FormData) => {
-    const query = formData.get('query') as string;
+    const query = (formData.get('query') as string) || '';
     if (!query && !attachedImage) return;
 
-    const userMessage: Message = { 
-        role: 'user', 
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+        const newId = `session-${Date.now()}`;
+        const newSession: Session = {
+            id: newId,
+            title: query ? query.substring(0, 30) : 'New Chat',
+            messages: [],
+            createdAt: Date.now(),
+            ...(activeMode === 'doctor' && { specialty }),
+        };
+        if (activeMode === 'general') { 
+            setGeneralSessions(prev => [newSession, ...prev]); 
+            setActiveGeneralId(newId); 
+        } else { 
+            setDoctorSessions(prev => [newSession, ...prev]); 
+            setActiveDoctorId(newId); 
+        }
+        sessionId = newId;
+    }
+
+    // Append User Message Immediately
+    const userMsg: Message = {
+        role: 'user',
         content: query || 'Analyze attached image',
-        mode: activeMode === 'general' ? pulseMode : undefined,
         image: attachedImage || undefined,
+        mode: activeMode === 'general' ? pulseMode : undefined,
         timestamp: Date.now()
     };
-    
-    const sessionId = currentSessionId;
-    if (!sessionId) return;
 
     const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
     setter(prev => prev.map(s => s.id === sessionId ? {
         ...s, 
-        messages: [...s.messages, userMessage], 
+        messages: [...s.messages, userMsg],
         title: s.messages.length === 0 ? query.substring(0, 30) : s.title
     } : s));
-    
-    formData.set('history', JSON.stringify(activeSession?.messages || []));
+
+    // Prepare history for AI
+    const session = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === sessionId);
+    formData.set('history', JSON.stringify(session?.messages || []));
     if (attachedImage) formData.set('photoDataUri', attachedImage);
 
+    // Transition Call
     startTransition(() => {
-        if (activeMode === 'doctor') { 
-            formData.set('specialty', specialty); 
-            doctorFormAction(formData); 
-        } else { 
-            formData.set('mode', pulseMode); 
-            generalFormAction(formData); 
+        if (activeMode === 'doctor') {
+            formData.set('specialty', specialty);
+            doctorFormAction(formData);
+        } else {
+            formData.set('mode', pulseMode);
+            generalFormAction(formData);
         }
     });
-    
+
+    // Cleanup
     if (formRef.current) formRef.current.reset();
     if (queryInputRef.current) {
         queryInputRef.current.value = '';
@@ -217,6 +251,7 @@ export default function HealthAssistantPage() {
     setIsTyping(false);
   };
 
+  // Scroll to Bottom
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -341,20 +376,18 @@ export default function HealthAssistantPage() {
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
-                    <div className="flex flex-col justify-center px-6 pt-16 space-y-10">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-xl">
-                                    <ShieldPlus className="w-5 h-5 text-primary" />
-                                </div>
-                                <p className="text-lg font-medium text-gray-900 dark:text-white">Hello there</p>
+                    <div className="flex flex-col justify-center items-center px-6 pt-12 space-y-8 text-center">
+                        <div className="space-y-4">
+                            <div className="p-5 bg-white/60 dark:bg-[#1e1f20] rounded-[2.5rem] shadow-xl border border-white dark:border-transparent animate-in zoom-in-50 duration-500">
+                                <ShieldPlus className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)]" />
                             </div>
-                            <h2 className="text-3xl md:text-5xl font-medium text-gray-800 dark:text-[#e3e3e3] leading-tight">
-                                How can I help <br className="sm:hidden" /> you today?
+                            <h2 className="text-3xl font-medium text-gray-900 dark:text-white leading-tight">
+                                Hello there
                             </h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Where would you like to start?</p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-2.5 max-w-3xl">
+                        <div className="flex flex-col gap-2.5 w-full max-w-sm">
                             {currentSuggestions.map((suggestion, idx) => (
                                 <button 
                                     key={idx}
@@ -373,15 +406,16 @@ export default function HealthAssistantPage() {
                             ))}
                         </div>
 
-                        <div className="space-y-3">
-                             <div className="flex items-center gap-2 px-1">
-                                <BrainCircuit className="w-4 h-4 text-primary/60" />
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Connect with Specialists</p>
+                        <div className="space-y-4 w-full">
+                             <div className="flex items-center justify-center gap-2">
+                                <div className="h-px bg-gray-200 flex-1" />
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Or Talk to a Specialist</p>
+                                <div className="h-px bg-gray-200 flex-1" />
                             </div>
-                            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                            <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
                                 {doctorSpecialties.map(spec => (
                                     <Button key={spec} variant="ghost" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); handleNewChat(); }}
-                                            className="h-9 px-4 rounded-full bg-white dark:bg-[#1e1f20] text-[10px] font-black uppercase tracking-widest shadow-sm border border-gray-100 dark:border-[#3c4043] dark:text-[#e3e3e3]">
+                                            className="h-9 px-4 rounded-full bg-white dark:bg-[#1e1f20] text-[10px] font-black uppercase tracking-widest shadow-sm border border-gray-100 dark:border-[#3c4043] dark:text-[#e3e3e3] whitespace-nowrap">
                                         {spec}
                                     </Button>
                                 ))}
@@ -413,12 +447,21 @@ export default function HealthAssistantPage() {
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             
-                                            <div className="mt-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-2">
+                                            <div className="mt-6 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-2">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleSpeak(m.content)}>
                                                     <Volume2 className="w-4 h-4 text-gray-400" />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}>
                                                     <Copy className="w-4 h-4 text-gray-400" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                    <ThumbsUp className="w-4 h-4 text-gray-400" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                    <ThumbsDown className="w-4 h-4 text-gray-400" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                    <MoreVertical className="w-4 h-4 text-gray-400" />
                                                 </Button>
                                             </div>
                                         </div>
@@ -447,7 +490,11 @@ export default function HealthAssistantPage() {
         </main>
 
         <footer className="px-4 pb-8 pt-2 z-40 shrink-0 bg-transparent">
-            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-3">
+            <form 
+                ref={formRef} 
+                action={onFormAction} 
+                className="max-w-3xl mx-auto flex flex-col gap-3"
+            >
                 {attachedImage && (
                     <div className="mx-2 mb-1 flex animate-in zoom-in-95">
                         <div className="relative group/thumb">
@@ -464,7 +511,7 @@ export default function HealthAssistantPage() {
                         <Textarea
                             ref={queryInputRef}
                             name="query"
-                            placeholder="Ask Medical Partner"
+                            placeholder={activeMode === 'doctor' ? `Ask ${specialty}` : "Ask Medical Partner"}
                             className="w-full min-h-[44px] max-h-[160px] px-3 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-medium text-[16px] text-gray-800 dark:text-[#e3e3e3] placeholder:text-gray-500 resize-none"
                             rows={1}
                             onInput={(e) => {
@@ -473,7 +520,13 @@ export default function HealthAssistantPage() {
                                 target.style.height = `${target.scrollHeight}px`;
                                 setIsTyping(target.value.length > 0);
                             }}
-                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); formRef.current?.requestSubmit(); } }}
+                            onKeyDown={(e) => { 
+                                if (e.key === 'Enter' && !e.shiftKey) { 
+                                    e.preventDefault(); 
+                                    const formData = new FormData(formRef.current!);
+                                    onFormAction(formData);
+                                } 
+                            }}
                         />
                     </div>
 
@@ -512,19 +565,27 @@ export default function HealthAssistantPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                             {!isTyping && !isRecording && (
+                             {!isTyping && !isRecording && !attachedImage && (
                                 <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-9 w-9 rounded-full">
                                     <Mic className="w-4 h-4 text-gray-500" />
                                 </Button>
                             )}
-                            {(isTyping || isRecording) && (
+                            {(isTyping || isRecording || attachedImage) && (
                                 <div className="flex items-center gap-2">
                                     {isRecording && (
                                         <Button type="button" size="icon" onClick={stopRecording} className="h-9 w-9 rounded-full bg-red-500 text-white animate-pulse">
                                             <MicOff className="w-4 h-4" />
                                         </Button>
                                     )}
-                                    <Button type="submit" disabled={isPending} className="h-9 w-9 rounded-full bg-[#d3e3fd] text-gray-900 dark:bg-[#1f3760] dark:text-white transition-all">
+                                    <Button 
+                                        type="button"
+                                        onClick={() => {
+                                            const formData = new FormData(formRef.current!);
+                                            onFormAction(formData);
+                                        }}
+                                        disabled={isPending} 
+                                        className="h-9 w-9 rounded-full bg-[#d3e3fd] text-gray-900 dark:bg-[#1f3760] dark:text-white transition-all hover:bg-primary hover:text-white"
+                                    >
                                         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <SendHorizonal className="w-4 h-4" />}
                                     </Button>
                                 </div>
