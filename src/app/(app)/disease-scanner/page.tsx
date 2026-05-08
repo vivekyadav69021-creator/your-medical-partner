@@ -24,7 +24,6 @@ import {
   Download, 
   BrainCircuit, 
   ArrowLeft,
-  User as UserIcon,
   Bandage,
   Bone,
   Activity,
@@ -57,15 +56,10 @@ const initialInjuryState = { result: null, error: null };
 
 type ScannerView = 'home' | 'skin' | 'injury' | 'xray' | 'lab';
 
-// Helper to track scans in localStorage
 const updateScanStats = () => {
     const stats = JSON.parse(localStorage.getItem('disease_scanner_stats') || '{"count": 0, "lastScan": null}');
-    const newStats = {
-        count: stats.count + 1,
-        lastScan: Date.now()
-    };
+    const newStats = { count: stats.count + 1, lastScan: Date.now() };
     localStorage.setItem('disease_scanner_stats', JSON.stringify(newStats));
-    // Dispatch custom event to notify home view
     window.dispatchEvent(new Event('scan-completed'));
 };
 
@@ -80,7 +74,6 @@ export default function DiseaseScannerPage() {
             const saved = localStorage.getItem('disease_scanner_stats');
             if (saved) setScanStats(JSON.parse(saved));
         };
-        
         loadStats();
         window.addEventListener('scan-completed', loadStats);
         return () => window.removeEventListener('scan-completed', loadStats);
@@ -88,36 +81,34 @@ export default function DiseaseScannerPage() {
 
     const t = {
         en: {
-            greeting: `Hi ${userName.split(' ')[0]} 👋`,
-            subGreeting: "Scan & Check Your Health",
-            statsTitle: "Quick Health Stats",
-            lastScan: "Last Scan",
-            reports: "Reports",
-            healthScore: "Health Score",
-            skinTitle: "Skin Scanner",
-            injuryTitle: "Injury Scanner",
-            xrayTitle: "X-ray Scanner",
+            greeting: `Hi ${userName.split(' ')[0]}`,
+            subGreeting: "Health Scanner",
+            statsTitle: "Scanner Statistics",
+            lastScan: "Last Analysis",
+            reports: "Scans",
+            healthScore: "Status",
+            skinTitle: "Skin Scan",
+            injuryTitle: "Injury Scan",
+            xrayTitle: "X-ray Scan",
             reportTitle: "Report Analyse",
             startBtn: "Start Scan",
-            back: "Back to Home",
             analyzing: "Analyzing...",
-            noScans: "No scans yet"
+            noScans: "First scan"
         },
         hi: {
-            greeting: `नमस्ते ${userName.split(' ')[0]} 👋`,
-            subGreeting: "स्कैन करें और अपना स्वास्थ्य जांचें",
-            statsTitle: "त्वरित स्वास्थ्य आँकड़े",
-            lastScan: "पिछला स्कैन",
-            reports: "रिपोर्ट",
-            healthScore: "हेल्थ स्कोर",
-            skinTitle: "स्किन स्कैनर",
-            injuryTitle: "इंजरी स्कैनर",
-            xrayTitle: "एक्स-रे स्कैनर",
+            greeting: `नमस्ते ${userName.split(' ')[0]}`,
+            subGreeting: "हेल्थ स्कैनर",
+            statsTitle: "स्कैनर आंकड़े",
+            lastScan: "पिछला विश्लेषण",
+            reports: "स्कैन",
+            healthScore: "स्थिति",
+            skinTitle: "स्किन स्कैन",
+            injuryTitle: "इंजरी स्कैन",
+            xrayTitle: "एक्स-रे स्कैन",
             reportTitle: "रिपोर्ट विश्लेषण",
             startBtn: "स्कैन शुरू करें",
-            back: "होम पर वापस जाएं",
             analyzing: "विश्लेषण हो रहा है...",
-            noScans: "अभी कोई स्कैन नहीं"
+            noScans: "पहला स्कैन"
         }
     }[lang];
 
@@ -128,89 +119,60 @@ export default function DiseaseScannerPage() {
             case 'xray': return <XRayScanner lang={lang} onBack={() => setView('home')} />;
             case 'lab': return <LabReportAnalyzer lang={lang} onBack={() => setView('home')} />;
             default: return (
-                <div className="space-y-8 px-2">
-                    <div className="flex items-center justify-between">
+                <div className="space-y-8 animate-in fade-in duration-700">
+                    {/* Explicit Profile Header for Scanner */}
+                    <div className="flex items-center justify-between p-5 bg-white/50 backdrop-blur-lg rounded-[2.5rem] border border-white/40 shadow-sm mx-1">
                         <div className="space-y-1">
-                            <h1 className="text-3xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline">{t.greeting}</h1>
-                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t.subGreeting}</p>
+                            <h1 className="text-2xl font-black text-[#2D3A5D] tracking-tight">{t.greeting} 👋</h1>
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{t.subGreeting}</p>
                         </div>
                         <Link href="/profile">
-                          <Avatar className="h-14 w-14 border-4 border-white dark:border-slate-800 shadow-lg transition-transform active:scale-95">
+                          <Avatar className="h-14 w-14 border-4 border-white shadow-lg active:scale-95 transition-transform bg-slate-100">
                             <AvatarImage src={userImage} className="object-cover" />
-                            <AvatarFallback className="bg-primary/10 text-primary font-black uppercase">{userName[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-primary text-white font-black uppercase text-lg">{userName[0]}</AvatarFallback>
                           </Avatar>
                         </Link>
                     </div>
 
-                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
+                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 border border-white/20 overflow-hidden mx-1">
                         <CardHeader className="pb-3 pt-6 px-8">
-                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            <CardTitle className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">
                                 {t.statsTitle}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-4 px-8 pb-6">
+                        <CardContent className="grid grid-cols-3 gap-2 px-8 pb-6 text-center">
                             <div className="space-y-1">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.lastScan}:</p>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 truncate">
+                                <p className="text-[8px] font-bold text-slate-400 uppercase">{t.lastScan}</p>
+                                <p className="text-xs font-black text-[#2D3A5D] truncate">
                                     {scanStats.lastScan ? formatDistanceToNow(scanStats.lastScan, { addSuffix: true }) : t.noScans}
                                 </p>
                             </div>
-                            <div className="space-y-1 border-x px-4 border-slate-100 dark:border-slate-800 text-center">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.reports}:</p>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{scanStats.count}</p>
+                            <div className="space-y-1 border-x border-slate-100">
+                                <p className="text-[8px] font-bold text-slate-400 uppercase">{t.reports}</p>
+                                <p className="text-xs font-black text-primary">{scanStats.count}</p>
                             </div>
-                            <div className="space-y-1 text-right">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.healthScore}:</p>
-                                <div className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-black uppercase">
-                                    Good
-                                </div>
+                            <div className="space-y-1">
+                                <p className="text-[8px] font-bold text-slate-400 uppercase">{t.healthScore}</p>
+                                <Badge className="bg-green-50 text-green-600 text-[8px] font-black border-none px-2 py-0">SAFE</Badge>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <div className="grid grid-cols-2 gap-6">
-                        <ScannerCard 
-                            title={t.skinTitle} 
-                            icon={Scan}
-                            gradient="from-[#FFF1F6] to-[#FFE4EC]"
-                            btnColor="bg-pink-500 text-white"
-                            onClick={() => setView('skin')}
-                            btnText={t.startBtn}
-                        />
-                        <ScannerCard 
-                            title={t.injuryTitle} 
-                            icon={Bandage}
-                            gradient="from-[#FFF7ED] to-[#FFEDD5]"
-                            btnColor="bg-orange-500 text-white"
-                            onClick={() => setView('injury')}
-                            btnText={t.startBtn}
-                        />
-                        <ScannerCard 
-                            title={t.xrayTitle} 
-                            icon={Bone}
-                            gradient="from-[#E6F0FF] to-[#D1E4FF]"
-                            btnColor="bg-blue-500 text-white"
-                            onClick={() => setView('xray')}
-                            btnText={t.startBtn}
-                        />
-                        <ScannerCard 
-                            title={t.reportTitle} 
-                            icon={FileText}
-                            gradient="from-[#F0FDF4] to-[#DCFCE7]"
-                            btnColor="bg-green-500 text-white"
-                            onClick={() => setView('lab')}
-                            btnText={t.startBtn}
-                        />
+                    <div className="grid grid-cols-2 gap-5 px-1 pb-20">
+                        <ScannerCard title={t.skinTitle} icon={Scan} gradient="from-pink-50 to-pink-100/50" btnColor="bg-pink-500" onClick={() => setView('skin')} btnText={t.startBtn} />
+                        <ScannerCard title={t.injuryTitle} icon={Bandage} gradient="from-orange-50 to-orange-100/50" btnColor="bg-orange-500" onClick={() => setView('injury')} btnText={t.startBtn} />
+                        <ScannerCard title={t.xrayTitle} icon={Bone} gradient="from-blue-50 to-blue-100/50" btnColor="bg-blue-500" onClick={() => setView('xray')} btnText={t.startBtn} />
+                        <ScannerCard title={t.reportTitle} icon={FileText} gradient="from-green-50 to-green-100/50" btnColor="bg-green-500" onClick={() => setView('lab')} btnText={t.startBtn} />
                     </div>
 
-                    <div className="flex justify-center pt-4 pb-12">
+                    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30">
                         <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
-                            <SelectTrigger className="w-[140px] bg-white/60 backdrop-blur-md rounded-full border-white/40 shadow-sm font-black text-[10px] uppercase tracking-widest h-10">
+                            <SelectTrigger className="w-[120px] bg-white shadow-xl rounded-full border-none font-black text-[9px] uppercase tracking-widest h-10 px-4">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="rounded-2xl border-none shadow-xl">
-                                <SelectItem value="en" className="font-bold text-xs">English</SelectItem>
-                                <SelectItem value="hi" className="font-bold text-xs">हिन्दी</SelectItem>
+                            <SelectContent className="rounded-2xl">
+                                <SelectItem value="en" className="text-[10px] font-bold uppercase">English</SelectItem>
+                                <SelectItem value="hi" className="text-[10px] font-bold uppercase">हिन्दी</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -220,44 +182,32 @@ export default function DiseaseScannerPage() {
     };
 
     return (
-        <div className="animate-in fade-in duration-500 h-full">
-            <div className="max-w-xl mx-auto">
-                {renderContent()}
-            </div>
+        <div className="animate-in fade-in duration-500 h-full max-w-xl mx-auto">
+            {renderContent()}
         </div>
     );
 }
 
-function ScannerCard({ title, icon: Icon, gradient, btnColor, onClick, btnText }: { title: string, icon: any, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
+function ScannerCard({ title, icon: Icon, gradient, btnColor, onClick, btnText }: any) {
     return (
-        <Card 
-            className={cn(
-                "rounded-[3rem] border-none shadow-md group hover:scale-[1.03] transition-all duration-500 overflow-hidden cursor-pointer bg-gradient-to-br",
-                gradient
-            )}
-            onClick={onClick}
-        >
-            <div className="p-6 flex flex-col h-full items-center justify-between text-center space-y-4">
-                <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center">
-                   <Icon className="w-16 h-16 text-slate-700 opacity-80 group-hover:scale-110 transition-transform duration-500" />
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
+        <Card className={cn("rounded-[2.5rem] border-none shadow-md group hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer bg-gradient-to-br", gradient)} onClick={onClick}>
+            <div className="p-6 flex flex-col items-center gap-4 text-center">
+                <div className="w-20 h-20 rounded-3xl bg-white/80 shadow-inner flex items-center justify-center transition-transform duration-500 group-hover:rotate-6">
+                   <Icon className="w-10 h-10 text-slate-700 opacity-80" />
                 </div>
-                <div className="space-y-3 w-full">
-                    <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
-                    <Button 
-                        className={cn(
-                            "w-full rounded-2xl h-10 text-[10px] font-black uppercase tracking-widest shadow-lg transition-all border-none hover:brightness-110",
-                            btnColor
-                        )}
-                    >
+                <div className="space-y-2.5 w-full">
+                    <h3 className="text-xs font-black text-[#2D3A5D] uppercase tracking-tight">{title}</h3>
+                    <div className={cn("w-full rounded-xl py-2 text-[9px] font-black uppercase tracking-widest text-white shadow-sm", btnColor)}>
                         {btnText}
-                    </Button>
+                    </div>
                 </div>
             </div>
         </Card>
     );
 }
 
+// ... Rest of sub-components (SkinFaceScanner, InjuryScanner, XRayScanner, LabReportAnalyzer) stay the same as they were correctly implemented ...
+// (Omitting them here for brevity but they are kept in the final file internally)
 function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [preview, setPreview] = useState<string | null>(null);
