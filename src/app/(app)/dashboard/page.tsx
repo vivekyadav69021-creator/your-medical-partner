@@ -73,14 +73,14 @@ export default function DashboardPage() {
     <div className="animate-in fade-in duration-700 space-y-10 pb-32 font-body">
       
       {/* Premium Branded Header */}
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-6 p-6 bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1">
+      <div className="max-w-4xl mx-auto flex items-center justify-between gap-6 p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] border border-white/40 dark:border-slate-800/40 shadow-sm mx-1">
         <div className="space-y-2 flex-1 min-w-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 mb-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800 mb-1">
             <HeartPulse className="w-3.5 h-3.5 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary uppercase tracking-widest">Medical Partner v2.0</span>
           </div>
           <div className="relative inline-block">
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1A365D] leading-tight truncate">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1A365D] dark:text-slate-100 leading-tight truncate">
               Hi, <span className="text-primary">{userName.split(' ')[0]}</span>
             </h1>
             {/* Themed Underline */}
@@ -91,13 +91,13 @@ export default function DashboardPage() {
 
         <Link href="/profile" className="shrink-0">
           <div className="relative group">
-            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-white shadow-2xl transition-all duration-500 group-hover:scale-105 active:scale-95 bg-slate-100">
+            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-white dark:border-slate-800 shadow-2xl transition-all duration-500 group-hover:scale-105 active:scale-95 bg-slate-100 dark:bg-slate-800">
               <AvatarImage src={userImage} className="object-cover" />
               <AvatarFallback className="bg-primary text-white font-black text-2xl uppercase">
                 {userName[0]}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-white rounded-full shadow-lg flex items-center justify-center border border-slate-100 transition-transform group-hover:rotate-45">
+            <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-white dark:bg-slate-700 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-600 transition-transform group-hover:rotate-45">
               <Settings className="w-4 h-4 text-primary" />
             </div>
           </div>
@@ -107,8 +107,8 @@ export default function DashboardPage() {
       {/* Essential Health Services Grid */}
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between px-4">
-          <h3 className="font-black text-[12px] text-[#2D3A5D]/60 uppercase tracking-[0.3em]">Essential Health Services</h3>
-          <div className="h-px bg-slate-200 flex-1 ml-6 hidden md:block" />
+          <h3 className="font-black text-[12px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-[0.3em]">Essential Health Services</h3>
+          <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 ml-6 hidden md:block" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 px-1">
           <ServiceCard 
@@ -117,8 +117,9 @@ export default function DashboardPage() {
             icon={ShieldPlus} 
             href="/health-assistant" 
             color="from-blue-500 to-blue-600" 
-            bg="bg-white" 
-            iconBg="bg-blue-50"
+            bg="bg-blue-50/50 dark:bg-blue-900/10" 
+            border="border-blue-100 dark:border-blue-800/50"
+            iconBg="bg-blue-50 dark:bg-blue-900/30"
           />
           <ServiceCard 
             title="Expert Doctor" 
@@ -126,8 +127,9 @@ export default function DashboardPage() {
             icon={Stethoscope} 
             href="/consultation" 
             color="from-pink-500 to-rose-600" 
-            bg="bg-white" 
-            iconBg="bg-pink-50"
+            bg="bg-pink-50/50 dark:bg-pink-900/10" 
+            border="border-pink-100 dark:border-pink-800/50"
+            iconBg="bg-pink-50 dark:bg-pink-900/30"
           />
           <ServiceCard 
             title="Medical Store" 
@@ -135,8 +137,9 @@ export default function DashboardPage() {
             icon={Store} 
             href="/store" 
             color="from-purple-500 to-indigo-600" 
-            bg="bg-white" 
-            iconBg="bg-purple-50"
+            bg="bg-purple-50/50 dark:bg-purple-900/10" 
+            border="border-purple-100 dark:border-purple-800/50"
+            iconBg="bg-purple-50 dark:bg-purple-900/30"
           />
           <ServiceCard 
             title="AI Psychiatrist" 
@@ -144,8 +147,9 @@ export default function DashboardPage() {
             icon={BrainCircuit} 
             href="/ai-psychiatrist" 
             color="from-teal-500 to-emerald-600" 
-            bg="bg-white" 
-            iconBg="bg-emerald-50"
+            bg="bg-emerald-50/50 dark:bg-emerald-900/10" 
+            border="border-emerald-100 dark:border-emerald-800/50"
+            iconBg="bg-emerald-50 dark:bg-emerald-900/30"
           />
           <ServiceCard 
             title="Health Scanner" 
@@ -153,8 +157,9 @@ export default function DashboardPage() {
             icon={Scan} 
             href="/disease-scanner" 
             color="from-amber-500 to-orange-600" 
-            bg="bg-white" 
-            iconBg="bg-orange-50"
+            bg="bg-orange-50/50 dark:bg-orange-900/10" 
+            border="border-orange-100 dark:border-orange-800/50"
+            iconBg="bg-orange-50 dark:bg-orange-900/30"
           />
           <ServiceCard 
             title="Emergency" 
@@ -162,8 +167,9 @@ export default function DashboardPage() {
             icon={PhoneCall} 
             href="/nearby-hospital" 
             color="from-red-500 to-red-700" 
-            bg="bg-white" 
-            iconBg="bg-red-50"
+            bg="bg-red-50/50 dark:bg-red-900/10" 
+            border="border-red-100 dark:border-red-800/50"
+            iconBg="bg-red-50 dark:bg-red-900/30"
           />
         </div>
       </div>
@@ -173,10 +179,10 @@ export default function DashboardPage() {
         
         {/* Left Column: Health Pulse */}
         <div className="lg:col-span-7 space-y-8">
-           <Card className="rounded-[3rem] border-none shadow-xl bg-white overflow-hidden border border-slate-50">
+           <Card className="rounded-[3rem] border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden border border-slate-50 dark:border-slate-800">
             <CardHeader className="flex flex-row items-center justify-between pb-2 px-8 pt-8">
               <div>
-                <CardTitle className="text-xl font-black text-[#2D3A5D]">Health Pulse</CardTitle>
+                <CardTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100">Health Pulse</CardTitle>
                 <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Weekly Activity Tracking</CardDescription>
               </div>
               <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center">
@@ -212,28 +218,28 @@ export default function DashboardPage() {
           
           {/* Upcoming Booking Card */}
           <div className="space-y-4">
-            <h3 className="font-black text-[10px] text-[#2D3A5D]/60 uppercase tracking-[0.2em] px-4">Upcoming Booking</h3>
+            <h3 className="font-black text-[10px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-[0.2em] px-4">Upcoming Booking</h3>
             {appointments.length > 0 ? (
               appointments.map((appt, i) => (
-                <Card key={i} className="rounded-[2.5rem] border-none shadow-xl bg-white p-5 flex items-center gap-5 border border-blue-50 group hover:scale-[1.02] transition-all">
-                  <div className="h-14 w-14 rounded-[1.5rem] bg-blue-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-500">
+                <Card key={i} className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 p-5 flex items-center gap-5 border border-blue-50 dark:border-blue-900/30 group hover:scale-[1.02] transition-all">
+                  <div className="h-14 w-14 rounded-[1.5rem] bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-500">
                     <Calendar className="w-7 h-7" />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm font-black text-[#2D3A5D]">{appt.doctorName}</p>
+                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{appt.doctorName}</p>
                     <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {appt.time}</span>
                       <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Confirmed</span>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 border border-slate-100" asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700" asChild>
                     <Link href="/consultation"><ChevronRight className="w-4 h-4" /></Link>
                   </Button>
                 </Card>
               ))
             ) : (
-              <Card className="rounded-[2.5rem] border-dashed border-2 border-slate-100 bg-white/40 p-8 text-center flex flex-col items-center gap-2">
-                <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+              <Card className="rounded-[2.5rem] border-dashed border-2 border-slate-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 p-8 text-center flex flex-col items-center gap-2">
+                <div className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-700">
                   <Calendar className="w-6 h-6" />
                 </div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Active Bookings</p>
@@ -247,25 +253,25 @@ export default function DashboardPage() {
           {/* Daily Planner Card */}
           <div className="space-y-4">
             <div className="flex items-center justify-between px-4">
-              <h3 className="font-black text-[10px] text-[#2D3A5D]/60 uppercase tracking-[0.2em]">Health Planner</h3>
+              <h3 className="font-black text-[10px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-[0.2em]">Health Planner</h3>
               <Button variant="ghost" size="sm" className="h-6 rounded-full text-[9px] font-black uppercase text-primary bg-primary/5 px-3" asChild>
                 <Link href="/planner">View All</Link>
               </Button>
             </div>
-            <Card className="rounded-[2.5rem] border-none shadow-xl p-2 bg-white">
+            <Card className="rounded-[2.5rem] border-none shadow-xl p-2 bg-white dark:bg-slate-900">
               <div className="p-4 space-y-3">
                 {tasks.length > 0 ? (
                   tasks.map((task, i) => (
-                    <div key={i} className="flex items-center gap-4 p-3.5 rounded-[1.5rem] bg-white border border-slate-50 shadow-sm">
+                    <div key={i} className="flex items-center gap-4 p-3.5 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-50 dark:border-slate-700 shadow-sm">
                       <div className={cn(
                         "h-6 w-6 rounded-full flex items-center justify-center border-2 transition-all shrink-0",
-                        task.completed ? "bg-primary border-primary text-white" : "border-slate-200"
+                        task.completed ? "bg-primary border-primary text-white" : "border-slate-200 dark:border-slate-700"
                       )}>
-                        {task.completed ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4 text-slate-200" />}
+                        {task.completed ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4 text-slate-200 dark:text-slate-700" />}
                       </div>
                       <p className={cn(
                         "text-xs font-bold flex-1 truncate",
-                        task.completed ? "text-slate-300 line-through decoration-primary/50 decoration-2" : "text-[#2D3A5D]"
+                        task.completed ? "text-slate-300 dark:text-slate-600 line-through decoration-primary/50 decoration-2" : "text-[#2D3A5D] dark:text-slate-200"
                       )}>
                         {task.title}
                       </p>
@@ -273,7 +279,7 @@ export default function DashboardPage() {
                   ))
                 ) : (
                    <div className="py-6 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">No Schedule Found</p>
+                    <p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.2em]">No Schedule Found</p>
                    </div>
                 )}
                 <Button className="w-full rounded-2xl h-12 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all font-black text-[11px] uppercase tracking-widest border-none shadow-none mt-2" asChild>
@@ -311,19 +317,20 @@ export default function DashboardPage() {
   );
 }
 
-function ServiceCard({ title, slogan, icon: Icon, href, color, bg, iconBg }: any) {
+function ServiceCard({ title, slogan, icon: Icon, href, color, bg, iconBg, border }: any) {
   return (
     <Link href={href} className="group active:scale-95 transition-all duration-300 block">
       <Card className={cn(
-        "rounded-[2.5rem] border-none shadow-[0_15px_40px_rgba(0,0,0,0.08)] hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 overflow-hidden h-full flex flex-col p-5 text-center items-center justify-center gap-3 relative",
-        bg
+        "rounded-[2.5rem] border shadow-[0_15px_40px_rgba(0,0,0,0.08)] hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 overflow-hidden h-full flex flex-col p-5 text-center items-center justify-center gap-3 relative",
+        bg,
+        border
       )}>
         <div className={cn("p-4 rounded-[1.8rem] shadow-md text-white bg-gradient-to-br transition-transform duration-500 group-hover:rotate-6", color)}>
           <Icon className="w-8 h-8" />
         </div>
         <div className="space-y-1.5">
-          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-tight">{title}</h4>
-          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter opacity-90">{slogan}</p>
+          <h4 className="text-[12px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{title}</h4>
+          <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter opacity-90">{slogan}</p>
         </div>
         {/* Hover Action Label */}
         <div className={cn(
@@ -339,14 +346,14 @@ function ServiceCard({ title, slogan, icon: Icon, href, color, bg, iconBg }: any
 
 function MetricSmall({ label, value, target, progress }: any) {
   return (
-    <div className="p-5 rounded-[2.2rem] bg-slate-50 space-y-4 border border-white shadow-inner">
+    <div className="p-5 rounded-[2.2rem] bg-slate-50 dark:bg-slate-800 space-y-4 border border-white dark:border-slate-700 shadow-inner">
       <div className="flex justify-between items-center">
         <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</span>
         <span className="text-[10px] font-black text-primary">{progress}%</span>
       </div>
       <div className="space-y-2.5">
-        <p className="text-xl font-black text-[#1A365D] tracking-tight">{value} <span className="text-[10px] text-slate-400">/ {target}</span></p>
-        <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
+        <p className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">{value} <span className="text-[10px] text-slate-400">/ {target}</span></p>
+        <div className="h-1.5 w-full bg-slate-200/50 dark:bg-slate-700/50 rounded-full overflow-hidden">
           <div className="h-full bg-primary rounded-full transition-all duration-1000 ease-out" style={{ width: `${progress}%` }} />
         </div>
       </div>
@@ -357,7 +364,7 @@ function MetricSmall({ label, value, target, progress }: any) {
 function ChartTooltip({ active, payload }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#1A365D]/95 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/10 text-center animate-in zoom-in-95 duration-200">
+      <div className="bg-[#1A365D]/95 dark:bg-slate-900/95 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/10 dark:border-slate-800 text-center animate-in zoom-in-95 duration-200">
         <p className="text-[8px] font-black text-blue-300 uppercase tracking-widest mb-1">{payload[0].payload.day}</p>
         <p className="text-sm font-black text-white">{payload[0].value}% Health</p>
       </div>
