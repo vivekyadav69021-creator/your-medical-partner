@@ -291,17 +291,15 @@ export default function AIPsychiatristPage() {
     setActiveSessionId(newSession.id);
   }, []);
 
+  // Professional Initial State: Always start fresh but load history for the sidebar
   useEffect(() => {
     const saved = localStorage.getItem('aiPsychiatristSessions');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setSessions(parsed);
-      if (parsed.length > 0) setActiveSessionId(parsed[0].id);
-      else handleNewChat();
-    } else {
-      handleNewChat();
+      setSessions(JSON.parse(saved));
     }
-  }, [handleNewChat]);
+    // Always start with no active session (landing state) to ensure professionalism
+    setActiveSessionId(null);
+  }, []);
 
   useEffect(() => {
     if (sessions.some(s => s.messages.length > 0)) {
@@ -329,18 +327,34 @@ export default function AIPsychiatristPage() {
     const query = formData.get('query') as string;
     if (!query) return;
 
-    setSessions(prev => prev.map(s => {
-      if (s.id === activeSessionId) {
-        const newTitle = s.messages.length === 0 ? query.substring(0, 30) : s.title;
-        return { ...s, title: newTitle, messages: [...s.messages, { role: 'user', content: query }] };
-      }
-      return s;
-    }));
+    let sid = activeSessionId;
+    if (!sid) {
+        sid = `psy-${Date.now()}`;
+        const newSession: Session = {
+            id: sid,
+            title: query.substring(0, 30),
+            messages: [{ role: 'user', content: query }],
+            createdAt: Date.now(),
+        };
+        setSessions(prev => [newSession, ...prev]);
+        setActiveSessionId(sid);
+    } else {
+        setSessions(prev => prev.map(s => {
+          if (s.id === sid) {
+            const newTitle = s.messages.length === 0 ? query.substring(0, 30) : s.title;
+            return { ...s, title: newTitle, messages: [...s.messages, { role: 'user', content: query }] };
+          }
+          return s;
+        }));
+    }
 
     formData.set('history', JSON.stringify(messages));
     formAction(formData);
     formRef.current?.reset();
-    if(queryInputRef.current) queryInputRef.current.value = '';
+    if(queryInputRef.current) {
+        queryInputRef.current.value = '';
+        queryInputRef.current.style.height = 'auto';
+    }
   };
 
   const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');

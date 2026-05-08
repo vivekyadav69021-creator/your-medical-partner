@@ -146,21 +146,17 @@ export default function HealthAssistantPage() {
     }
   }, [doctorState, isDoctorPending, activeDoctorId]);
 
-  // Initial Data Load (Once on mount)
+  // Initial Data Load (Always start with landing page for professionalism)
   useEffect(() => {
     const savedGen = localStorage.getItem('healthAssistantSessions_general');
     const savedDoc = localStorage.getItem('healthAssistantSessions_doctor');
     
-    if (savedGen) {
-        const parsed = JSON.parse(savedGen);
-        setGeneralSessions(parsed);
-        if (parsed.length > 0) setActiveGeneralId(parsed[0].id);
-    }
-    if (savedDoc) {
-        const parsed = JSON.parse(savedDoc);
-        setDoctorSessions(parsed);
-        if (parsed.length > 0) setActiveDoctorId(parsed[0].id);
-    }
+    if (savedGen) setGeneralSessions(JSON.parse(savedGen));
+    if (savedDoc) setDoctorSessions(JSON.parse(savedDoc));
+
+    // Reset active IDs to null on mount to force landing page view
+    setActiveGeneralId(null);
+    setActiveDoctorId(null);
   }, []);
 
   // Sync Persistent Storage
