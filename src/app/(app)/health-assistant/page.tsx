@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -23,7 +22,6 @@ import {
     Stethoscope,
     Activity,
     Pill,
-    ArrowRight,
     BrainCircuit,
     ChevronRight,
 } from 'lucide-react';
@@ -107,8 +105,8 @@ export default function HealthAssistantPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastScrollTop = useRef(0);
-  const lastProcessedTimestamp = useRef<number>(0);
+  const lastProcessedGenTimestamp = useRef<number>(0);
+  const lastProcessedDocTimestamp = useRef<number>(0);
 
   const currentSuggestions = useMemo(() => {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -117,41 +115,38 @@ export default function HealthAssistantPage() {
   const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
   const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
-  const hasMessages = (activeSession?.messages.length ?? 0) > 0;
+  const hasMessages = (activeSession?.messages && activeSession.messages.length > 0);
 
-  // Function to add a message to the active session
-  const addMessageToSession = useCallback((message: Message, sessionId: string, mode: 'general' | 'doctor') => {
-    const setter = mode === 'general' ? setGeneralSessions : setDoctorSessions;
-    setter(prev => prev.map(s => {
-        if (s.id === sessionId) {
-            const isFirstUserMessage = s.messages.length === 0 && message.role === 'user';
-            return {
-                ...s,
-                messages: [...s.messages, message],
-                title: isFirstUserMessage ? message.content.substring(0, 30) : s.title
-            };
-        }
-        return s;
-    }));
-  }, []);
-
-  // Synchronize AI responses with the chat history
+  // Sync AI responses
   useEffect(() => {
-    const state = activeMode === 'general' ? generalState : doctorState;
-    const pending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
-
-    if (!pending && state.timestamp > lastProcessedTimestamp.current) {
-        lastProcessedTimestamp.current = state.timestamp;
-        if (state.response || state.error) {
-            const content = state.response || `Error: ${state.error}`;
-            addMessageToSession({ 
-                role: 'assistant', 
-                content, 
-                timestamp: Date.now() 
-            }, currentSessionId!, activeMode);
+    if (!isGeneralPending && generalState.timestamp > lastProcessedGenTimestamp.current) {
+        lastProcessedGenTimestamp.current = generalState.timestamp;
+        if (generalState.response || generalState.error) {
+            const content = generalState.response || `Error: ${generalState.error}`;
+            const sessionId = activeGeneralId;
+            if (sessionId) {
+                setGeneralSessions(prev => prev.map(s => s.id === sessionId ? {
+                    ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+                } : s));
+            }
         }
     }
-  }, [generalState, doctorState, isGeneralPending, isDoctorPending, activeMode, currentSessionId, addMessageToSession]);
+  }, [generalState, isGeneralPending, activeGeneralId]);
+
+  useEffect(() => {
+    if (!isDoctorPending && doctorState.timestamp > lastProcessedDocTimestamp.current) {
+        lastProcessedDocTimestamp.current = doctorState.timestamp;
+        if (doctorState.response || doctorState.error) {
+            const content = doctorState.response || `Error: ${doctorState.error}`;
+            const sessionId = activeDoctorId;
+            if (sessionId) {
+                setDoctorSessions(prev => prev.map(s => s.id === sessionId ? {
+                    ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+                } : s));
+            }
+        }
+    }
+  }, [doctorState, isDoctorPending, activeDoctorId]);
 
   const handleNewChat = useCallback(() => {
     const id = `session-${Date.now()}`;
@@ -181,17 +176,17 @@ export default function HealthAssistantPage() {
     if (saved_gen) {
         const parsed = JSON.parse(saved_gen);
         setGeneralSessions(parsed);
-        if (activeMode === 'general' && parsed.length) setActiveGeneralId(parsed[0].id);
+        if (activeMode === 'general' && parsed.length && !activeGeneralId) setActiveGeneralId(parsed[0].id);
     }
     if (saved_doc) {
         const parsed = JSON.parse(saved_doc);
         setDoctorSessions(parsed);
-        if (activeMode === 'doctor' && parsed.length) setActiveDoctorId(parsed[0].id);
+        if (activeMode === 'doctor' && parsed.length && !activeDoctorId) setActiveDoctorId(parsed[0].id);
     }
 
-    if (!saved_gen && activeMode === 'general') handleNewChat();
-    if (!saved_doc && activeMode === 'doctor') handleNewChat();
-  }, [handleNewChat]);
+    if (!saved_gen && activeMode === 'general' && !activeGeneralId) handleNewChat();
+    if (!saved_doc && activeMode === 'doctor' && !activeDoctorId) handleNewChat();
+  }, [handleNewChat, activeMode, activeGeneralId, activeDoctorId]);
 
   useEffect(() => {
     localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
@@ -221,8 +216,19 @@ export default function HealthAssistantPage() {
         timestamp: Date.now()
     };
     
-    // Optimistic update
-    addMessageToSession(userMessage, currentSessionId!, activeMode);
+    const sessionId = currentSessionId;
+    if (!sessionId) return;
+
+    // Optimistic Update
+    if (activeMode === 'general') {
+        setGeneralSessions(prev => prev.map(s => s.id === sessionId ? {
+            ...s, messages: [...s.messages, userMessage], title: s.messages.length === 0 ? query.substring(0, 30) : s.title
+        } : s));
+    } else {
+        setDoctorSessions(prev => prev.map(s => s.id === sessionId ? {
+            ...s, messages: [...s.messages, userMessage], title: s.messages.length === 0 ? query.substring(0, 30) : s.title
+        } : s));
+    }
     
     // Prepare for server call
     finalFormData.set('history', JSON.stringify(activeSession?.messages || []));
@@ -238,7 +244,6 @@ export default function HealthAssistantPage() {
         }
     });
     
-    // Reset inputs
     if (formRef.current) formRef.current.reset();
     if (queryInputRef.current) {
         queryInputRef.current.value = '';
@@ -246,16 +251,6 @@ export default function HealthAssistantPage() {
     }
     setAttachedImage(null);
     setIsTyping(false);
-  };
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = e.currentTarget.scrollTop;
-    if (scrollTop > lastScrollTop.current && scrollTop > 100) {
-        setShowControls(false);
-    } else {
-        setShowControls(true);
-    }
-    lastScrollTop.current = scrollTop;
   };
 
   useEffect(() => {
@@ -344,14 +339,14 @@ export default function HealthAssistantPage() {
                         {activeMode === 'doctor' ? <BrainCircuit className="w-4 h-4 text-primary" /> : <ShieldPlus className="w-4 h-4 text-primary" />}
                     </div>
                     <h1 className="text-[10px] font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase truncate max-w-[120px]">
-                        {activeMode === 'doctor' ? specialty : "AI Health Assistant"}
+                        {activeMode === 'doctor' ? specialty : "AI Assistant"}
                     </h1>
                 </div>
             </div>
 
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => setHistoryTab(activeMode)}>
+                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
                         <History className="w-5 h-5 text-slate-500" />
                     </Button>
                 </SheetTrigger>
@@ -399,8 +394,8 @@ export default function HealthAssistantPage() {
         </header>
 
         <main className="flex-1 overflow-hidden relative flex flex-col w-full">
-            {!hasMessages && !isPending && (
-                <ScrollArea className="flex-1 w-full bg-white dark:bg-slate-950 animate-in fade-in duration-700">
+            {!hasMessages && !isPending ? (
+                <ScrollArea className="flex-1 w-full bg-white dark:bg-slate-950">
                     <div className="flex flex-col items-center justify-start p-6 text-center space-y-8 pb-32">
                         
                         <div className="mt-8 space-y-4 flex flex-col items-center">
@@ -423,7 +418,7 @@ export default function HealthAssistantPage() {
                             <TabsContent value="doctor" className="animate-in zoom-in-95 duration-300">
                                 <div className="grid grid-cols-2 gap-2">
                                     {doctorSpecialties.map(spec => (
-                                        <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); }}
+                                        <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); handleNewChat(); }}
                                                 className={cn("h-auto py-3 px-2 rounded-xl text-[9px] font-black uppercase flex flex-col gap-1.5 border-slate-100 transition-all active:scale-95", 
                                                 specialty === spec && activeMode === 'doctor' ? "border-primary bg-primary/5 text-primary" : "hover:border-primary/20 bg-white")}>
                                             <div className={cn("p-1.5 rounded-lg", specialty === spec ? "bg-primary/10" : "bg-slate-50")}>
@@ -461,13 +456,14 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 </ScrollArea>
-            )}
-
-            {(hasMessages || isPending) && (
-                <ScrollArea className="flex-1 px-4 md:px-8 py-6" onScroll={handleScroll} ref={scrollAreaRef}>
+            ) : (
+                <ScrollArea className="flex-1 px-4 md:px-8 py-6" ref={scrollAreaRef} onScroll={(e) => {
+                    const top = e.currentTarget.scrollTop;
+                    setShowControls(top < lastProcessedGenTimestamp.current || top < 100);
+                }}>
                     <div className="max-w-3xl mx-auto space-y-10 pb-32">
                         {activeSession?.messages.map((m, i) => (
-                            <div key={m.timestamp || i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
+                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.image && (
                                     <div className="mb-4 rounded-3xl overflow-hidden shadow-2xl border-4 border-white max-w-[280px]">
                                         <Image src={m.image} alt="Report" width={400} height={400} className="w-full h-auto" />
@@ -505,7 +501,7 @@ export default function HealthAssistantPage() {
 
         <footer className={cn("px-4 pb-8 pt-2 transition-all duration-500 transform border-t bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl z-40 shrink-0", 
             showControls ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none")}>
-            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex items-end gap-3">
+            <form ref={formRef} action={(fd) => onFormAction(fd)} className="max-w-3xl mx-auto flex items-end gap-3">
                 <div className="flex flex-col gap-2 shrink-0">
                     {activeMode === 'general' && (
                         <Popover>
@@ -597,4 +593,3 @@ function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string
         </div>
     )
 }
-
