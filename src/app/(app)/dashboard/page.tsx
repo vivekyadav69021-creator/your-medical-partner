@@ -29,7 +29,6 @@ import {
   AlertCircle,
   Plus,
 } from 'lucide-react';
-import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
@@ -54,7 +53,6 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch Data from LocalStorage
     const savedAppts = localStorage.getItem('appointments');
     if (savedAppts) setAppointments(JSON.parse(savedAppts).slice(0, 1));
 
@@ -72,19 +70,23 @@ export default function DashboardPage() {
   }, [userName, toast]);
 
   return (
-    <div className="animate-in fade-in duration-700 space-y-10 pb-32">
+    <div className="animate-in fade-in duration-700 space-y-10 pb-32 font-body">
       
       {/* Premium Branded Header */}
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-6 p-6 bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1">
-        <div className="space-y-1.5 flex-1 min-w-0">
+        <div className="space-y-2 flex-1 min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 mb-1">
             <HeartPulse className="w-3.5 h-3.5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest font-headline">Medical Partner v2.0</span>
+            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Medical Partner v2.0</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1A365D] leading-tight truncate">
-            Hi, <span className="text-primary">{userName.split(' ')[0]}</span>
-          </h1>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Digital Health Companion</p>
+          <div className="relative inline-block">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1A365D] leading-tight truncate">
+              Hi, <span className="text-primary">{userName.split(' ')[0]}</span>
+            </h1>
+            {/* Themed Underline */}
+            <div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent rounded-full opacity-60" />
+          </div>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">Digital Health Companion</p>
         </div>
 
         <Link href="/profile" className="shrink-0">
@@ -104,18 +106,19 @@ export default function DashboardPage() {
 
       {/* Essential Health Services Grid */}
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between px-2">
+        <div className="flex items-center justify-between px-4">
           <h3 className="font-black text-[12px] text-[#2D3A5D]/60 uppercase tracking-[0.3em]">Essential Health Services</h3>
           <div className="h-px bg-slate-200 flex-1 ml-6 hidden md:block" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 px-1">
           <ServiceCard 
             title="AI Assistant" 
             slogan="24/7 Expert Help" 
             icon={ShieldPlus} 
             href="/health-assistant" 
             color="from-blue-500 to-blue-600" 
-            bg="bg-blue-50/50" 
+            bg="bg-white" 
+            iconBg="bg-blue-50"
           />
           <ServiceCard 
             title="Expert Doctor" 
@@ -123,7 +126,8 @@ export default function DashboardPage() {
             icon={Stethoscope} 
             href="/consultation" 
             color="from-pink-500 to-rose-600" 
-            bg="bg-pink-50/50" 
+            bg="bg-white" 
+            iconBg="bg-pink-50"
           />
           <ServiceCard 
             title="Medical Store" 
@@ -131,7 +135,8 @@ export default function DashboardPage() {
             icon={Store} 
             href="/store" 
             color="from-purple-500 to-indigo-600" 
-            bg="bg-purple-50/50" 
+            bg="bg-white" 
+            iconBg="bg-purple-50"
           />
           <ServiceCard 
             title="AI Psychiatrist" 
@@ -139,7 +144,8 @@ export default function DashboardPage() {
             icon={BrainCircuit} 
             href="/ai-psychiatrist" 
             color="from-teal-500 to-emerald-600" 
-            bg="bg-emerald-50/50" 
+            bg="bg-white" 
+            iconBg="bg-emerald-50"
           />
           <ServiceCard 
             title="Health Scanner" 
@@ -147,7 +153,8 @@ export default function DashboardPage() {
             icon={Scan} 
             href="/disease-scanner" 
             color="from-amber-500 to-orange-600" 
-            bg="bg-orange-50/50" 
+            bg="bg-white" 
+            iconBg="bg-orange-50"
           />
           <ServiceCard 
             title="Emergency" 
@@ -155,7 +162,8 @@ export default function DashboardPage() {
             icon={PhoneCall} 
             href="/nearby-hospital" 
             color="from-red-500 to-red-700" 
-            bg="bg-red-50/50" 
+            bg="bg-white" 
+            iconBg="bg-red-50"
           />
         </div>
       </div>
@@ -165,7 +173,7 @@ export default function DashboardPage() {
         
         {/* Left Column: Health Pulse */}
         <div className="lg:col-span-7 space-y-8">
-           <Card className="rounded-[3rem] border-none shadow-sm neumorphic-card overflow-hidden">
+           <Card className="rounded-[3rem] border-none shadow-xl bg-white overflow-hidden border border-slate-50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 px-8 pt-8">
               <div>
                 <CardTitle className="text-xl font-black text-[#2D3A5D]">Health Pulse</CardTitle>
@@ -207,7 +215,7 @@ export default function DashboardPage() {
             <h3 className="font-black text-[10px] text-[#2D3A5D]/60 uppercase tracking-[0.2em] px-4">Upcoming Booking</h3>
             {appointments.length > 0 ? (
               appointments.map((appt, i) => (
-                <Card key={i} className="rounded-[2.5rem] border-none shadow-md bg-white p-5 flex items-center gap-5 border border-blue-50 group hover:scale-[1.02] transition-all">
+                <Card key={i} className="rounded-[2.5rem] border-none shadow-xl bg-white p-5 flex items-center gap-5 border border-blue-50 group hover:scale-[1.02] transition-all">
                   <div className="h-14 w-14 rounded-[1.5rem] bg-blue-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-500">
                     <Calendar className="w-7 h-7" />
                   </div>
@@ -244,7 +252,7 @@ export default function DashboardPage() {
                 <Link href="/planner">View All</Link>
               </Button>
             </div>
-            <Card className="rounded-[2.5rem] border-none shadow-sm p-2 bg-white/80 backdrop-blur-sm">
+            <Card className="rounded-[2.5rem] border-none shadow-xl p-2 bg-white">
               <div className="p-4 space-y-3">
                 {tasks.length > 0 ? (
                   tasks.map((task, i) => (
@@ -280,15 +288,15 @@ export default function DashboardPage() {
       {/* Emergency Red Button (Footer) */}
       <div className="max-w-5xl mx-auto px-1">
         <Link href="tel:112" className="block active:scale-95 transition-all">
-          <div className="p-6 rounded-[2.5rem] bg-red-500 shadow-2xl shadow-red-200 flex items-center justify-between group overflow-hidden relative">
+          <div className="p-6 rounded-[2.5rem] bg-red-500 shadow-[0_20px_50px_rgba(239,68,68,0.3)] flex items-center justify-between group overflow-hidden relative">
             <div className="absolute top-0 right-0 h-full w-32 bg-white/10 skew-x-[30deg] translate-x-16 group-hover:translate-x-0 transition-transform duration-700" />
             <div className="flex items-center gap-5 relative z-10">
               <div className="p-4 bg-white/20 rounded-[1.8rem] backdrop-blur-md border border-white/30">
                 <AlertCircle className="w-7 h-7 text-white animate-bounce" />
               </div>
-              <div className="text-white">
+              <div className="text-white text-left">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Immediate Help</p>
-                <p className="text-2xl font-black leading-none mt-1 font-headline">EMERGENCY 112</p>
+                <p className="text-2xl font-black leading-none mt-1">EMERGENCY 112</p>
               </div>
             </div>
             <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center relative z-10">
@@ -303,21 +311,26 @@ export default function DashboardPage() {
   );
 }
 
-function ServiceCard({ title, slogan, icon: Icon, href, color, bg }: any) {
+function ServiceCard({ title, slogan, icon: Icon, href, color, bg, iconBg }: any) {
   return (
-    <Link href={href} className="group active:scale-95 transition-all duration-300">
-      <Card className={cn("rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden h-full flex flex-col", bg)}>
-        <div className="p-5 flex flex-col items-center text-center space-y-3 relative">
-          <div className={cn("p-4 rounded-[1.8rem] shadow-lg text-white bg-gradient-to-br transition-transform duration-500 group-hover:rotate-6", color)}>
-            <Icon className="w-8 h-8" />
-          </div>
-          <div className="space-y-1">
-            <h4 className="text-[12px] font-black text-[#2D3A5D] uppercase tracking-tight">{title}</h4>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter opacity-80">{slogan}</p>
-          </div>
-          <div className={cn("mt-2 py-2 px-4 w-full rounded-xl text-[9px] font-black uppercase tracking-[0.2em] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md", color)}>
-            Explore
-          </div>
+    <Link href={href} className="group active:scale-95 transition-all duration-300 block">
+      <Card className={cn(
+        "rounded-[2.5rem] border-none shadow-[0_15px_40px_rgba(0,0,0,0.08)] hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 overflow-hidden h-full flex flex-col p-5 text-center items-center justify-center gap-3 relative",
+        bg
+      )}>
+        <div className={cn("p-4 rounded-[1.8rem] shadow-md text-white bg-gradient-to-br transition-transform duration-500 group-hover:rotate-6", color)}>
+          <Icon className="w-8 h-8" />
+        </div>
+        <div className="space-y-1.5">
+          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-tight">{title}</h4>
+          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter opacity-90">{slogan}</p>
+        </div>
+        {/* Hover Action Label */}
+        <div className={cn(
+          "mt-2 py-2 px-4 w-full rounded-xl text-[9px] font-black uppercase tracking-[0.2em] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md",
+          color
+        )}>
+          Open
         </div>
       </Card>
     </Link>
@@ -326,7 +339,7 @@ function ServiceCard({ title, slogan, icon: Icon, href, color, bg }: any) {
 
 function MetricSmall({ label, value, target, progress }: any) {
   return (
-    <div className="p-5 rounded-[2.2rem] bg-slate-50/80 space-y-4 border border-white">
+    <div className="p-5 rounded-[2.2rem] bg-slate-50 space-y-4 border border-white shadow-inner">
       <div className="flex justify-between items-center">
         <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</span>
         <span className="text-[10px] font-black text-primary">{progress}%</span>
