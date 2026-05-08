@@ -3,70 +3,93 @@
 @tailwind utilities;
 
 :root {
-  --background: 210 100% 98%;
-  --foreground: 222.2 84% 4.9%;
+  /* Premium Medical Blue Theme */
+  --background: 210 100% 99%;
+  --foreground: 222 47% 11%;
+  
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: 222 47% 11%;
+  
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 212 92% 59%;
+  --popover-foreground: 222 47% 11%;
+  
+  /* Main Primary Blue: #2488E8 */
+  --primary: 210 80% 52%;
   --primary-foreground: 210 40% 98%;
+  
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 84% 4.9%;
+  
   --muted: 210 40% 96.1%;
   --muted-foreground: 215 20.2% 65.1%;
-  --accent: 261 46% 63%;
+  
+  /* Accent Color: #14CFBD */
+  --accent: 174 82% 44%;
   --accent-foreground: 210 40% 98%;
+  
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
+  
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 212 92% 59%;
+  --ring: 210 80% 52%;
+  
   --radius: 1.5rem;
+  
+  /* Dashboard Gradient */
   --dashboard-bg: linear-gradient(135deg, #E6F0FF 0%, #FDFBFF 50%, #FFE9F0 100%);
   
   /* Sidebar Variables */
   --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 222.2 84% 4.9%;
-  --sidebar-primary: 212 92% 59%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 210 80% 52%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 210 40% 96.1%;
   --sidebar-accent-foreground: 222.2 84% 4.9%;
   --sidebar-border: 214.3 31.8% 91.4%;
-  --sidebar-ring: 212 92% 59%;
+  --sidebar-ring: 210 80% 52%;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
+  --background: 222 47% 4%;
   --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
+  
+  --card: 222 47% 6%;
   --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
+  
+  --popover: 222 47% 6%;
   --popover-foreground: 210 40% 98%;
-  --primary: 212 92% 59%;
+  
+  --primary: 210 80% 52%;
   --primary-foreground: 210 40% 98%;
+  
   --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
+  
+  --muted: 217.2 32.6% 12%;
   --muted-foreground: 215 20.2% 65.1%;
-  --accent: 261 46% 63%;
+  
+  --accent: 174 82% 44%;
   --accent-foreground: 210 40% 98%;
+  
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212 92% 59%;
+  
+  --border: 222 47% 12%;
+  --input: 222 47% 12%;
+  --ring: 210 80% 52%;
+  
   --dashboard-bg: linear-gradient(135deg, #0f172a 0%, #020617 50%, #1e1b4b 100%);
 
-  /* Dark Sidebar Variables */
-  --sidebar-background: 222.2 84% 4.9%;
+  /* Dark Sidebar */
+  --sidebar-background: 222 47% 4%;
   --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 212 92% 59%;
+  --sidebar-primary: 210 80% 52%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217.2 32.6% 17.5%;
+  --sidebar-accent: 217.2 32.6% 12%;
   --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 217.2 32.6% 17.5%;
-  --sidebar-ring: 212 92% 59%;
+  --sidebar-border: 222 47% 12%;
+  --sidebar-ring: 210 80% 52%;
 }
 
 * {
@@ -75,7 +98,7 @@
   user-select: none;
 }
 
-/* 100% Native App Feel */
+/* Native App Feel */
 html, body {
   height: 100dvh;
   width: 100vw;
@@ -104,7 +127,7 @@ input, textarea, [contenteditable="true"] {
 @layer utilities {
   .neumorphic-card {
     @apply bg-card border border-white/50 dark:border-slate-800/50;
-    box-shadow: 6px 6px 16px rgba(163, 177, 198, 0.16), -6px -6px 16px rgba(255, 255, 255, 0.7);
+    box-shadow: 6px 6px 16px rgba(163, 177, 198, 0.12), -6px -6px 16px rgba(255, 255, 255, 0.7);
   }
 
   .dark .neumorphic-card {
