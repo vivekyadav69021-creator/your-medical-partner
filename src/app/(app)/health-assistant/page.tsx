@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
-import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -54,6 +53,7 @@ type Message = {
   content: string;
   image?: string;
   mode?: string;
+  timestamp: number;
 };
 
 type Session = {
@@ -83,7 +83,7 @@ const suggestionPool = [
     { label: "Improve Sleep Quality", query: "Give me some tips for better deep sleep.", icon: Sparkles },
 ];
 
-const initialState = { response: null, error: null };
+const initialState = { response: null, error: null, timestamp: 0 };
 const initialSpeechState = { transcript: null, error: null };
 
 export default function HealthAssistantPage() {
@@ -108,6 +108,7 @@ export default function HealthAssistantPage() {
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
+  const lastProcessedTimestamp = useRef<number>(0);
 
   const currentSuggestions = useMemo(() => {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -118,16 +119,39 @@ export default function HealthAssistantPage() {
   const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages.length ?? 0) > 0;
 
-  const syncResponse = useCallback((state: typeof initialState) => {
-    if ((state.response || state.error) && currentSessionId) {
-        const content = state.response || `Error: ${state.error}`;
-        const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
-        setter(prev => prev.map(s => s.id === currentSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s));
-    }
-  }, [currentSessionId, activeMode]);
+  // Function to add a message to the active session
+  const addMessageToSession = useCallback((message: Message, sessionId: string, mode: 'general' | 'doctor') => {
+    const setter = mode === 'general' ? setGeneralSessions : setDoctorSessions;
+    setter(prev => prev.map(s => {
+        if (s.id === sessionId) {
+            const isFirstUserMessage = s.messages.length === 0 && message.role === 'user';
+            return {
+                ...s,
+                messages: [...s.messages, message],
+                title: isFirstUserMessage ? message.content.substring(0, 30) : s.title
+            };
+        }
+        return s;
+    }));
+  }, []);
 
-  useEffect(() => { if (!isGeneralPending) syncResponse(generalState); }, [generalState, isGeneralPending, syncResponse]);
-  useEffect(() => { if (!isDoctorPending) syncResponse(doctorState); }, [doctorState, isDoctorPending, syncResponse]);
+  // Synchronize AI responses with the chat history
+  useEffect(() => {
+    const state = activeMode === 'general' ? generalState : doctorState;
+    const pending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
+
+    if (!pending && state.timestamp > lastProcessedTimestamp.current) {
+        lastProcessedTimestamp.current = state.timestamp;
+        if (state.response || state.error) {
+            const content = state.response || `Error: ${state.error}`;
+            addMessageToSession({ 
+                role: 'assistant', 
+                content, 
+                timestamp: Date.now() 
+            }, currentSessionId!, activeMode);
+        }
+    }
+  }, [generalState, doctorState, isGeneralPending, isDoctorPending, activeMode, currentSessionId, addMessageToSession]);
 
   const handleNewChat = useCallback(() => {
     const id = `session-${Date.now()}`;
@@ -138,8 +162,13 @@ export default function HealthAssistantPage() {
       createdAt: Date.now(),
       ...(activeMode === 'doctor' && { specialty }),
     };
-    if (activeMode === 'general') { setGeneralSessions(prev => [newSession, ...prev]); setActiveGeneralId(id); }
-    else { setDoctorSessions(prev => [newSession, ...prev]); setActiveDoctorId(id); }
+    if (activeMode === 'general') { 
+        setGeneralSessions(prev => [newSession, ...prev]); 
+        setActiveGeneralId(id); 
+    } else { 
+        setDoctorSessions(prev => [newSession, ...prev]); 
+        setActiveDoctorId(id); 
+    }
     setAttachedImage(null);
   }, [activeMode, specialty]);
 
@@ -188,12 +217,14 @@ export default function HealthAssistantPage() {
         role: 'user', 
         content: query || 'Analyze attached image',
         mode: activeMode === 'general' ? pulseMode : undefined,
-        image: attachedImage || undefined
+        image: attachedImage || undefined,
+        timestamp: Date.now()
     };
     
-    const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
-    setter(prev => prev.map(s => s.id === currentSessionId ? { ...s, messages: [...s.messages, userMessage], title: (s.messages.length === 0 && query) ? query.substring(0, 30) : s.title } : s));
+    // Optimistic update
+    addMessageToSession(userMessage, currentSessionId!, activeMode);
     
+    // Prepare for server call
     finalFormData.set('history', JSON.stringify(activeSession?.messages || []));
     if (attachedImage) finalFormData.set('photoDataUri', attachedImage);
 
@@ -207,8 +238,9 @@ export default function HealthAssistantPage() {
         }
     });
     
-    formRef.current?.reset();
-    if(queryInputRef.current) {
+    // Reset inputs
+    if (formRef.current) formRef.current.reset();
+    if (queryInputRef.current) {
         queryInputRef.current.value = '';
         queryInputRef.current.style.height = 'auto';
     }
@@ -229,7 +261,9 @@ export default function HealthAssistantPage() {
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-        if (viewport) viewport.scrollTop = viewport.scrollHeight;
+        if (viewport) {
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        }
     }
   }, [activeSession?.messages, isPending]);
 
@@ -365,7 +399,7 @@ export default function HealthAssistantPage() {
         </header>
 
         <main className="flex-1 overflow-hidden relative flex flex-col w-full">
-            {!hasMessages && (
+            {!hasMessages && !isPending && (
                 <ScrollArea className="flex-1 w-full bg-white dark:bg-slate-950 animate-in fade-in duration-700">
                     <div className="flex flex-col items-center justify-start p-6 text-center space-y-8 pb-32">
                         
@@ -429,11 +463,11 @@ export default function HealthAssistantPage() {
                 </ScrollArea>
             )}
 
-            {hasMessages && (
+            {(hasMessages || isPending) && (
                 <ScrollArea className="flex-1 px-4 md:px-8 py-6" onScroll={handleScroll} ref={scrollAreaRef}>
                     <div className="max-w-3xl mx-auto space-y-10 pb-32">
                         {activeSession?.messages.map((m, i) => (
-                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
+                            <div key={m.timestamp || i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.image && (
                                     <div className="mb-4 rounded-3xl overflow-hidden shadow-2xl border-4 border-white max-w-[280px]">
                                         <Image src={m.image} alt="Report" width={400} height={400} className="w-full h-auto" />
@@ -458,6 +492,10 @@ export default function HealthAssistantPage() {
                             <div className="flex flex-col items-start animate-pulse space-y-2">
                                 <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded-full" />
                                 <div className="h-3 w-48 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                                <div className="flex items-center gap-2 mt-2">
+                                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                                    <span className="text-[8px] font-black uppercase text-slate-400">AI is thinking...</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -486,10 +524,10 @@ export default function HealthAssistantPage() {
                             </PopoverContent>
                         </Popover>
                     )}
-                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('form')?.querySelector<HTMLInputElement>('input[type="file"]')?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
                         <Paperclip className="h-4 w-4 text-slate-400" />
                     </Button>
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
                             const r = new FileReader();
@@ -512,7 +550,7 @@ export default function HealthAssistantPage() {
                             target.style.height = `${target.scrollHeight}px`;
                             setIsTyping(target.value.length > 0);
                         }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); formRef.current?.requestSubmit(); } }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }}
                     />
                     {!isTyping && !isRecording && (
                         <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="absolute right-2 bottom-2 h-10 w-10 rounded-full text-primary hover:bg-primary/10">
@@ -559,3 +597,4 @@ function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string
         </div>
     )
 }
+
