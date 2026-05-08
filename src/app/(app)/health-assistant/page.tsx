@@ -154,7 +154,7 @@ export default function HealthAssistantPage() {
     if (savedGen) setGeneralSessions(JSON.parse(savedGen));
     if (savedDoc) setDoctorSessions(JSON.parse(savedDoc));
 
-    // Reset active IDs to null on mount to force landing page view
+    // Force landing page entry by resetting active IDs
     setActiveGeneralId(null);
     setActiveDoctorId(null);
   }, []);
@@ -449,21 +449,27 @@ export default function HealthAssistantPage() {
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] rounded-[1.5rem] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-2.5 text-gray-900 dark:text-[#e3e3e3] shadow-sm break-words">
+                                    <div 
+                                        className="max-w-[90%] rounded-[1.5rem] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-2.5 text-gray-900 dark:text-[#e3e3e3] shadow-sm overflow-hidden" 
+                                        style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
+                                    >
                                         {m.image && (
                                             <div className="mb-2 rounded-xl overflow-hidden border border-gray-200">
                                                 <Image src={m.image} alt="Attached" width={200} height={200} className="w-full h-auto object-cover" />
                                             </div>
                                         )}
-                                        <p className="text-sm font-medium leading-relaxed break-words">{m.content}</p>
+                                        <p className="text-sm font-medium leading-relaxed">{m.content}</p>
                                     </div>
                                 ) : (
-                                    <div className="flex items-start gap-3 w-full group">
+                                    <div className="flex items-start gap-3 w-full group min-w-0">
                                         <div className="mt-1 size-5 shrink-0 flex items-center justify-center bg-primary rounded-lg shadow-sm">
                                             <ShieldPlus className="w-3 h-3 text-white" />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <article className="prose prose-sm dark:prose-invert max-w-full break-words text-gray-800 dark:text-[#e3e3e3] leading-relaxed font-medium text-[15px]">
+                                        <div className="flex-1 min-w-0 overflow-hidden">
+                                            <article 
+                                                className="prose prose-sm dark:prose-invert max-w-full text-gray-800 dark:text-[#e3e3e3] leading-relaxed font-medium text-[15px]" 
+                                                style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
+                                            >
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             

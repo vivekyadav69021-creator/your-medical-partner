@@ -291,13 +291,12 @@ export default function AIPsychiatristPage() {
     setActiveSessionId(newSession.id);
   }, []);
 
-  // Professional Initial State: Always start fresh but load history for the sidebar
+  // Always start with fresh landing view on return
   useEffect(() => {
     const saved = localStorage.getItem('aiPsychiatristSessions');
     if (saved) {
       setSessions(JSON.parse(saved));
     }
-    // Always start with no active session (landing state) to ensure professionalism
     setActiveSessionId(null);
   }, []);
 
@@ -494,13 +493,14 @@ export default function AIPsychiatristPage() {
                               </Avatar>
                               <div
                                   className={cn(
-                                      "max-w-full md:max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
+                                      "max-w-[90%] md:max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm overflow-hidden",
                                       message.role === 'user' 
                                           ? "bg-primary text-white rounded-tr-none" 
                                           : "bg-white dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-blue-50/30 dark:border-slate-700/50"
                                   )}
+                                  style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
                               >
-                                  <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium text-base">
+                                  <article className="prose prose-sm dark:prose-invert max-w-full text-inherit leading-relaxed font-medium text-base">
                                       <ReactMarkdown>{message.content}</ReactMarkdown>
                                   </article>
                                   {message.role === 'assistant' && index === messages.length - 1 && !isPending && (
