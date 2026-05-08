@@ -4,7 +4,7 @@ import React, { useActionState, useRef, useEffect, useState, useCallback, useMem
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { 
-    Send, 
+    SendHorizonal, 
     Loader2, 
     Paperclip, 
     Mic, 
@@ -24,6 +24,13 @@ import {
     Pill,
     BrainCircuit,
     ChevronRight,
+    ThumbsUp,
+    ThumbsDown,
+    Copy,
+    Plus,
+    Image as ImageIcon,
+    Lightbulb,
+    PenLine
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -71,14 +78,12 @@ const doctorSpecialties = [
 ];
 
 const suggestionPool = [
-    { label: "Common Cold Symptoms", query: "What are the common symptoms of a cold vs flu?", icon: Activity },
-    { label: "Paracetamol Side Effects", query: "Tell me about Paracetamol 500mg side effects.", icon: Pill },
-    { label: "Heart Healthy Tips", query: "5 habits to keep my heart healthy.", icon: Sparkles },
-    { label: "Explain Type 2 Diabetes", query: "Explain Type 2 Diabetes in simple words.", icon: Stethoscope },
-    { label: "High BP Management", query: "How can I manage high blood pressure naturally?", icon: Activity },
-    { label: "Identify this Rash", query: "How to identify a common skin allergy rash?", icon: Search },
-    { label: "First Aid for Burns", query: "What are the first aid steps for minor burns?", icon: Zap },
-    { label: "Improve Sleep Quality", query: "Give me some tips for better deep sleep.", icon: Sparkles },
+    { label: "Check symptoms", query: "I have a headache and mild fever, what should I do?", icon: Activity },
+    { label: "Explain medicine", query: "What are the common side effects of Paracetamol 500mg?", icon: Pill },
+    { label: "Heart health tips", query: "Give me 5 daily habits to keep my heart healthy.", icon: Sparkles },
+    { label: "Understand Diabetes", query: "Explain Type 2 Diabetes in simple terms.", icon: Stethoscope },
+    { label: "First aid guide", query: "What are the first aid steps for a minor burn?", icon: Zap },
+    { label: "Sleep better", query: "Give me some scientific tips for better deep sleep.", icon: Lightbulb },
 ];
 
 const initialState = { response: null, error: null, timestamp: 0 };
@@ -325,21 +330,24 @@ export default function HealthAssistantPage() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard" });
+  };
+
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-white dark:bg-slate-950 overflow-hidden fixed inset-0">
+    <div className="flex flex-col h-[100dvh] w-full bg-[#f8f9fa] dark:bg-[#131314] overflow-hidden fixed inset-0">
         
-        <header className="h-14 border-b flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-30">
+        <header className="h-14 border-b border-gray-200 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md z-30">
             <div className="flex items-center gap-2">
-                <SidebarTrigger className="h-9 w-9 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                    <Menu className="w-4 h-4 text-primary" />
+                <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3c4043]">
+                    <Menu className="w-5 h-5 text-gray-600 dark:text-[#c4c7c5]" />
                 </SidebarTrigger>
-                <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 mx-1" />
+                <div className="h-6 w-px bg-gray-200 dark:bg-[#3c4043] mx-1" />
                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-primary/10 rounded-lg">
-                        {activeMode === 'doctor' ? <BrainCircuit className="w-4 h-4 text-primary" /> : <ShieldPlus className="w-4 h-4 text-primary" />}
-                    </div>
-                    <h1 className="text-[10px] font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase truncate max-w-[120px]">
-                        {activeMode === 'doctor' ? specialty : "AI Assistant"}
+                    <ShieldPlus className="w-4 h-4 text-primary" />
+                    <h1 className="text-sm font-bold text-gray-800 dark:text-[#e3e3e3] truncate max-w-[120px]">
+                        Medical Partner
                     </h1>
                 </div>
             </div>
@@ -347,24 +355,24 @@ export default function HealthAssistantPage() {
             <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
-                        <History className="w-5 h-5 text-slate-500" />
+                        <History className="w-5 h-5 text-gray-500 dark:text-[#9aa0a6]" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col">
+                <SheetContent side="right" className="w-[85vw] p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white dark:bg-[#1e1f20]">
                     <SheetHeader className="p-6 pb-2">
-                        <SheetTitle className="text-primary uppercase font-black text-sm tracking-widest">Chat History</SheetTitle>
+                        <SheetTitle className="text-primary uppercase font-black text-sm tracking-widest">Recents</SheetTitle>
                     </SheetHeader>
                     <div className="px-6 pb-4">
                          <Tabs value={historyTab} onValueChange={(v) => setHistoryTab(v as any)} className="w-full">
-                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
-                                <TabsTrigger value="general" className="rounded-lg font-black text-[9px] uppercase">Assistant</TabsTrigger>
-                                <TabsTrigger value="doctor" className="rounded-lg font-black text-[9px] uppercase">Specialists</TabsTrigger>
+                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-gray-100 dark:bg-[#131314] rounded-xl">
+                                <TabsTrigger value="general" className="rounded-lg font-bold text-[10px] uppercase">Assistant</TabsTrigger>
+                                <TabsTrigger value="doctor" className="rounded-lg font-bold text-[10px] uppercase">Specialists</TabsTrigger>
                             </TabsList>
                          </Tabs>
                     </div>
                     <ScrollArea className="flex-1 p-6 pt-0">
-                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-6 font-black uppercase text-[10px] tracking-widest" onClick={handleNewChat}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> New Chat
+                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-6 font-bold uppercase text-[10px] tracking-widest" onClick={handleNewChat}>
+                            <Plus className="mr-2 h-4 w-4" /> New Chat
                         </Button>
                         <div className="space-y-3 pb-20">
                             {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
@@ -374,15 +382,14 @@ export default function HealthAssistantPage() {
                                          if (historyTab === 'general') setActiveGeneralId(session.id);
                                          else { setActiveDoctorId(session.id); setSpecialty(session.specialty || "General Physician"); }
                                      }}
-                                     className={cn("group p-4 rounded-2xl border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 border-transparent hover:bg-white")}>
+                                     className={cn("group p-4 rounded-2xl border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c] border-transparent hover:bg-gray-50")}>
                                     <div className="pr-8">
-                                        <p className="text-xs font-black truncate">{session.title}</p>
+                                        <p className="text-xs font-bold truncate dark:text-[#e3e3e3]">{session.title}</p>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
-                                            {session.specialty && <p className="text-[8px] font-black text-primary uppercase">• {session.specialty}</p>}
+                                            <p className="text-[8px] font-bold text-gray-400 uppercase">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
                                         </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-300 hover:text-red-500 rounded-full" onClick={(e) => deleteSession(e, session.id, historyTab)}>
+                                    <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full" onClick={(e) => deleteSession(e, session.id, historyTab)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -393,104 +400,109 @@ export default function HealthAssistantPage() {
             </Sheet>
         </header>
 
-        <main className="flex-1 overflow-hidden relative flex flex-col w-full">
+        <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
-                <ScrollArea className="flex-1 w-full bg-white dark:bg-slate-950">
-                    <div className="flex flex-col items-center justify-start p-6 text-center space-y-8 pb-32">
+                <ScrollArea className="flex-1 w-full">
+                    <div className="flex flex-col justify-center px-6 pt-24 space-y-12">
                         
-                        <div className="mt-8 space-y-4 flex flex-col items-center">
-                            <div className="relative p-4 bg-primary/5 rounded-[2rem] border border-primary/10 backdrop-blur-sm shadow-xl shrink-0">
-                                <ShieldPlus className="w-10 h-10 text-primary" />
-                                <div className="absolute inset-0 bg-primary/10 rounded-[2rem] blur-2xl -z-10 animate-pulse" />
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-xl">
+                                    <ShieldPlus className="w-6 h-6 text-primary" />
+                                </div>
+                                <p className="text-xl font-medium text-gray-900 dark:text-white">Hello there</p>
                             </div>
-                            <div className="space-y-1">
-                                <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight uppercase">Medical Partner</h2>
-                                <p className="text-[8px] font-bold text-primary/60 uppercase tracking-[0.3em] leading-none">Compassionate AI Care</p>
-                            </div>
+                            <h2 className="text-4xl md:text-5xl font-medium text-gray-800 dark:text-[#e3e3e3] leading-tight">
+                                How can I help you today?
+                            </h2>
                         </div>
 
-                        <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="w-full max-w-sm">
-                            <TabsList className="grid grid-cols-2 h-12 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl mb-8">
-                                <TabsTrigger value="general" className="rounded-xl font-black text-[9px] uppercase transition-all">AI Assistant</TabsTrigger>
-                                <TabsTrigger value="doctor" className="rounded-xl font-black text-[9px] uppercase transition-all">Specialists</TabsTrigger>
-                            </TabsList>
-                            
-                            <TabsContent value="doctor" className="animate-in zoom-in-95 duration-300">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {doctorSpecialties.map(spec => (
-                                        <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); handleNewChat(); }}
-                                                className={cn("h-auto py-3 px-2 rounded-xl text-[9px] font-black uppercase flex flex-col gap-1.5 border-slate-100 transition-all active:scale-95", 
-                                                specialty === spec && activeMode === 'doctor' ? "border-primary bg-primary/5 text-primary" : "hover:border-primary/20 bg-white")}>
-                                            <div className={cn("p-1.5 rounded-lg", specialty === spec ? "bg-primary/10" : "bg-slate-50")}>
-                                                <BrainCircuit className="w-3.5 h-3.5" />
-                                            </div>
-                                            <span className="truncate w-full">{spec}</span>
-                                        </Button>
-                                    ))}
-                                </div>
-                            </TabsContent>
-                        </Tabs>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl">
+                            {currentSuggestions.map((suggestion, idx) => (
+                                <button 
+                                    key={idx}
+                                    onClick={() => onFormAction(suggestion.query)}
+                                    className="flex items-center gap-4 p-4 bg-white dark:bg-[#1e1f20] rounded-2xl text-left shadow-[0_1px_3px_rgba(0,0,0,0.12)] border border-transparent hover:border-primary/20 hover:bg-gray-50 dark:hover:bg-[#282a2c] transition-all active:scale-[0.98] group"
+                                >
+                                    <div className="p-2.5 bg-gray-50 dark:bg-[#131314] rounded-xl group-hover:bg-white transition-colors">
+                                        <suggestion.icon className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <span className="text-[13px] font-medium text-gray-700 dark:text-[#c4c7c5] leading-snug">{suggestion.label}</span>
+                                </button>
+                            ))}
+                        </div>
 
-                        <div className="w-full max-w-sm space-y-3">
-                            <div className="flex items-center gap-2 px-1">
-                                <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Recommended for you</p>
+                        <div className="space-y-4">
+                             <div className="flex items-center gap-2 px-1">
+                                <BrainCircuit className="w-4 h-4 text-primary/60" />
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Connect with Specialists</p>
                             </div>
-                            <div className="flex flex-col gap-2.5">
-                                {currentSuggestions.map((suggestion, idx) => (
-                                    <button 
-                                        key={idx}
-                                        onClick={() => onFormAction(suggestion.query)}
-                                        className="w-full flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 rounded-2xl text-left border border-slate-100 dark:border-slate-800 hover:border-primary/40 hover:bg-primary/5 transition-all active:scale-[0.98] group shadow-sm"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl group-hover:bg-white transition-colors">
-                                                <suggestion.icon className="w-3.5 h-3.5 text-primary/70" />
-                                            </div>
-                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 leading-tight">{suggestion.label}</span>
-                                        </div>
-                                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
-                                    </button>
+                            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                                {doctorSpecialties.slice(0, 6).map(spec => (
+                                    <Button key={spec} variant="ghost" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); handleNewChat(); }}
+                                            className="h-10 px-4 rounded-full bg-white dark:bg-[#1e1f20] text-[11px] font-bold shadow-sm whitespace-nowrap border border-gray-100 dark:border-[#3c4043] dark:text-[#e3e3e3]">
+                                        {spec}
+                                    </Button>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </ScrollArea>
             ) : (
-                <ScrollArea className="flex-1 px-4 md:px-8 py-6" ref={scrollAreaRef} onScroll={(e) => {
-                    const top = e.currentTarget.scrollTop;
-                    setShowControls(top < lastProcessedGenTimestamp.current || top < 100);
-                }}>
-                    <div className="max-w-3xl mx-auto space-y-10 pb-32">
+                <ScrollArea className="flex-1 px-4 md:px-8 py-8" ref={scrollAreaRef}>
+                    <div className="max-w-3xl mx-auto space-y-8 pb-32">
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
-                                {m.image && (
-                                    <div className="mb-4 rounded-3xl overflow-hidden shadow-2xl border-4 border-white max-w-[280px]">
-                                        <Image src={m.image} alt="Report" width={400} height={400} className="w-full h-auto" />
+                                {m.role === 'user' ? (
+                                    <div className="max-w-[85%] rounded-[28px] rounded-tr-lg bg-[#e9eef6] dark:bg-[#282a2c] px-5 py-3.5 text-gray-900 dark:text-[#e3e3e3] shadow-sm">
+                                        {m.image && (
+                                            <div className="mb-3 rounded-2xl overflow-hidden border border-gray-200">
+                                                <Image src={m.image} alt="Report" width={300} height={300} className="w-full h-auto" />
+                                            </div>
+                                        )}
+                                        <p className="text-[15px] font-medium leading-relaxed">{m.content}</p>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-4 w-full group">
+                                        <div className="mt-1 size-7 shrink-0 flex items-center justify-center bg-primary rounded-lg shadow-sm">
+                                            <ShieldPlus className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <article className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-[#e3e3e3] leading-relaxed">
+                                                <ReactMarkdown>{m.content}</ReactMarkdown>
+                                            </article>
+                                            
+                                            <div className="mt-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-2">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Like">
+                                                    <ThumbsUp className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Dislike">
+                                                    <ThumbsDown className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleSpeak(m.content)} className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Listen">
+                                                    <Volume2 className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleCopy(m.content)} className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]" title="Copy">
+                                                    <Copy className="w-4 h-4 text-gray-500 dark:text-[#9aa0a6]" />
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
-                                <div className={cn("max-w-full text-[15px] leading-relaxed font-medium transition-all", 
-                                    m.role === 'user' ? "text-primary text-right" : "text-slate-800 dark:text-slate-200")}>
-                                    <div className="flex items-start gap-3">
-                                        <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed">
-                                            <ReactMarkdown>{m.content}</ReactMarkdown>
-                                        </article>
-                                        {m.role === 'assistant' && (
-                                            <Button variant="ghost" size="icon" onClick={() => handleSpeak(m.content)} className="rounded-full h-7 w-7 hover:bg-primary/10 shrink-0 mt-0.5">
-                                                <Volume2 className="w-3.5 h-3.5 text-primary" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
                         ))}
                         {isPending && (
-                            <div className="flex flex-col items-start animate-pulse space-y-2">
-                                <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                                <div className="h-3 w-48 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                                <div className="flex items-center gap-2 mt-2">
-                                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                    <span className="text-[8px] font-black uppercase text-slate-400">AI is thinking...</span>
+                             <div className="flex items-start gap-4 w-full">
+                                <div className="mt-1 size-7 shrink-0 flex items-center justify-center bg-primary/20 rounded-lg animate-pulse">
+                                    <ShieldPlus className="w-4 h-4 text-primary" />
+                                </div>
+                                <div className="space-y-3 flex-1 pt-2">
+                                    <div className="h-3 bg-gray-200 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
+                                    <div className="h-3 bg-gray-200 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
+                                    <div className="flex items-center gap-2 mt-4">
+                                        <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                                        <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-[#9aa0a6]">AI is thinking...</span>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -499,82 +511,103 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        <footer className={cn("px-4 pb-8 pt-2 transition-all duration-500 transform border-t bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl z-40 shrink-0", 
+        <footer className={cn("px-4 pb-10 pt-2 transition-all duration-500 transform bg-transparent z-40 shrink-0", 
             showControls ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none")}>
-            <form ref={formRef} action={(fd) => onFormAction(fd)} className="max-w-3xl mx-auto flex items-end gap-3">
-                <div className="flex flex-col gap-2 shrink-0">
-                    {activeMode === 'general' && (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
-                                    <Zap className="h-4 w-4 text-primary" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-64 rounded-[2rem] p-3 mb-2" side="top">
-                                <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
-                                    <PulseModeItem value="standard" label="Balanced" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                    <PulseModeItem value="websearch" label="Deep Search" icon={<Search className="w-4 h-4"/>} />
-                                    <PulseModeItem value="deepthink" label="Logic Think" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                    <PulseModeItem value="proanalysis" label="Pharmacist" icon={<PlusCircle className="w-4 h-4"/>} />
-                                </RadioGroup>
-                            </PopoverContent>
-                        </Popover>
-                    )}
-                    <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 border-none shadow-sm">
-                        <Paperclip className="h-4 w-4 text-slate-400" />
-                    </Button>
-                    <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            const r = new FileReader();
-                            r.onload = (ev) => setAttachedImage(ev.target?.result as string);
-                            r.readAsDataURL(file);
-                        }
-                    }} />
-                </div>
-
-                <div className="flex-1 relative bg-slate-50 dark:bg-slate-950 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-inner group transition-all">
-                    <Textarea
-                        ref={queryInputRef}
-                        name="query"
-                        placeholder="Ask anything about your health..."
-                        className="w-full min-h-[56px] max-h-[160px] p-4 pr-12 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[15px] resize-none"
-                        rows={1}
-                        onInput={(e) => {
-                            const target = e.target as HTMLTextAreaElement;
-                            target.style.height = 'auto';
-                            target.style.height = `${target.scrollHeight}px`;
-                            setIsTyping(target.value.length > 0);
-                        }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }}
-                    />
-                    {!isTyping && !isRecording && (
-                        <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="absolute right-2 bottom-2 h-10 w-10 rounded-full text-primary hover:bg-primary/10">
-                            <Mic className="w-5 h-5" />
-                        </Button>
-                    )}
-                </div>
-
-                <div className="flex flex-col gap-2 shrink-0">
-                    <Button type="submit" disabled={isPending} className="h-14 w-14 rounded-full bg-primary shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
-                    </Button>
-                    {(isTyping || isRecording) && (
-                        <Button type="button" size="icon" onClick={isRecording ? stopRecording : startRecording} className={cn("h-10 w-14 rounded-full animate-in zoom-in duration-300 transition-all", isRecording ? "bg-red-500 text-white animate-pulse" : "bg-slate-100 dark:bg-slate-800 text-primary")}>
-                            {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                        </Button>
-                    )}
-                </div>
-            </form>
             
-            {attachedImage && (
-                <div className="max-w-3xl mx-auto mt-3 px-12">
-                    <div className="relative inline-block w-14 h-14 animate-in zoom-in-95">
-                        <Image src={attachedImage} alt="Preview" width={64} height={64} className="rounded-2xl border-2 border-white shadow-xl object-cover h-full w-full" />
-                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setAttachedImage(null)}><X className="h-3 w-3" /></Button>
+            <form ref={formRef} action={(fd) => onFormAction(fd)} className="max-w-3xl mx-auto flex flex-col gap-3">
+                
+                {attachedImage && (
+                    <div className="mx-2 mb-1 flex animate-in zoom-in-95">
+                        <div className="relative group/thumb">
+                            <Image src={attachedImage} alt="Preview" width={100} height={100} className="rounded-xl border border-gray-200 dark:border-[#3c4043] shadow-lg object-cover w-24 h-24" />
+                            <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg" onClick={() => setAttachedImage(null)}>
+                                <X className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="relative flex flex-col rounded-[32px] bg-white dark:bg-[#1e1f20] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)] dark:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.5)] transition-all p-3 border border-transparent focus-within:border-gray-200 dark:focus-within:border-[#3c4043]">
+                    
+                    <div className="flex-1 max-h-96 overflow-y-auto">
+                        <Textarea
+                            ref={queryInputRef}
+                            name="query"
+                            placeholder="Ask Medical Partner"
+                            className="w-full min-h-[48px] max-h-[160px] px-3 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-medium text-[16px] text-gray-800 dark:text-[#e3e3e3] placeholder:text-gray-500 dark:placeholder:text-[#9aa0a6] resize-none"
+                            rows={1}
+                            onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = `${target.scrollHeight}px`;
+                                setIsTyping(target.value.length > 0);
+                            }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 dark:border-[#3c4043]">
+                        <div className="flex items-center gap-1">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]">
+                                <Plus className="h-5 w-5 text-gray-600 dark:text-[#c4c7c5]" />
+                            </Button>
+                            <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    const r = new FileReader();
+                                    r.onload = (ev) => setAttachedImage(ev.target?.result as string);
+                                    r.readAsDataURL(file);
+                                }
+                            }} />
+
+                            {activeMode === 'general' && (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button type="button" variant="ghost" className="h-10 px-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043] gap-2 text-xs font-bold text-gray-500 dark:text-[#9aa0a6]">
+                                            <Zap className="h-4 w-4 text-primary" />
+                                            <span className="hidden sm:inline">Modes</span>
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 rounded-3xl p-3 mb-4 bg-white dark:bg-[#1e1f20] border-gray-200 dark:border-[#3c4043]" side="top">
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
+                                            <PulseModeItem value="standard" label="Balanced" icon={<ShieldPlus className="w-4 h-4"/>} />
+                                            <PulseModeItem value="websearch" label="Deep Search" icon={<Search className="w-4 h-4"/>} />
+                                            <PulseModeItem value="deepthink" label="Logic Think" icon={<BrainCircuit className="w-4 h-4"/>} />
+                                            <PulseModeItem value="proanalysis" label="Pharmacist" icon={<Pill className="w-4 h-4"/>} />
+                                        </RadioGroup>
+                                    </PopoverContent>
+                                </Popover>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <div className="relative size-10 flex items-center justify-center">
+                                {!isTyping && !isRecording && (
+                                    <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-[#3c4043]">
+                                        <Mic className="w-5 h-5 text-gray-600 dark:text-[#c4c7c5]" />
+                                    </Button>
+                                )}
+                                {(isTyping || isRecording) && (
+                                    <div className="flex items-center gap-2">
+                                        {isRecording && (
+                                            <Button type="button" size="icon" onClick={stopRecording} className="h-10 w-10 rounded-full bg-red-500 text-white animate-pulse">
+                                                <MicOff className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                        <Button type="submit" disabled={isPending} className="h-10 w-10 rounded-full bg-[#d3e3fd] hover:bg-[#c2d7fb] dark:bg-[#1f3760] dark:hover:bg-[#2a4a7a] text-gray-900 dark:text-white transition-all">
+                                            {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <SendHorizonal className="w-5 h-5" />}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )}
+
+                <p className="text-[10px] text-center text-gray-500 dark:text-[#9aa0a6] mt-1">
+                    Medical Partner may display inaccurate info, so double-check its responses.
+                </p>
+            </form>
         </footer>
     </div>
   );
@@ -582,12 +615,12 @@ export default function HealthAssistantPage() {
 
 function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center space-x-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group cursor-pointer">
+        <div className="flex items-center space-x-3 p-2.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#282a2c] transition-all border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group cursor-pointer">
             <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2 rounded-xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-xl bg-gray-50 dark:bg-[#131314] shadow-sm border border-gray-100 dark:border-[#3c4043] group-hover:scale-105 transition-transform">
                 {icon}
             </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[10px] text-slate-800 dark:text-slate-100 uppercase">
+            <Label htmlFor={value} className="flex-1 cursor-pointer font-bold text-[11px] text-gray-700 dark:text-[#e3e3e3] uppercase tracking-wider">
                 {label}
             </Label>
         </div>
