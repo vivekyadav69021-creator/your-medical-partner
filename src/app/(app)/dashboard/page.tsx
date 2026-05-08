@@ -28,6 +28,7 @@ import {
   Circle,
   AlertCircle,
   Plus,
+  Sparkles
 } from 'lucide-react';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -106,10 +107,14 @@ export default function DashboardPage() {
 
       {/* Essential Health Services Grid */}
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between px-4">
-          <h3 className="font-black text-[12px] text-[#2D3A5D]/60 dark:text-slate-400 uppercase tracking-[0.3em]">Essential Health Services</h3>
-          <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 ml-6 hidden md:block" />
+        <div className="px-4 space-y-2">
+          <h3 className="font-black text-[12px] text-[#2D3A5D] dark:text-slate-100 uppercase tracking-[0.3em]">Essential Health Services</h3>
+          {/* Unique Looping Underline */}
+          <div className="w-24 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative">
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary via-accent to-primary animate-splash-gradient shadow-[0_0_10px_rgba(36,136,232,0.4)]" />
+          </div>
         </div>
+        
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 px-1">
           <ServiceCard 
             title="AI Assistant" 
@@ -194,7 +199,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={healthChartData}>
                     <defs>
-                      <linearGradient id="pulseGrad" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="pulseGrad" x1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#2488E8" stopOpacity={0.2}/>
                         <stop offset="95%" stopColor="#2488E8" stopOpacity={0}/>
                       </linearGradient>
