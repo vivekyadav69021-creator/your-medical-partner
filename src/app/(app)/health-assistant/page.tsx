@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,7 +72,6 @@ const doctorSpecialties = [
   "Endocrinologist", "Psychiatrist",
 ];
 
-// Expanded pool of suggestions for randomization
 const suggestionPool = [
     { label: "Common Cold Symptoms", query: "What are the common symptoms of a cold vs flu?", icon: Activity },
     { label: "Paracetamol Side Effects", query: "Tell me about Paracetamol 500mg side effects.", icon: Pill },
@@ -110,7 +109,6 @@ export default function HealthAssistantPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
 
-  // Randomize suggestions on mount
   const currentSuggestions = useMemo(() => {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
@@ -120,7 +118,6 @@ export default function HealthAssistantPage() {
   const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages.length ?? 0) > 0;
 
-  // Sync Logic
   const syncResponse = useCallback((state: typeof initialState) => {
     if ((state.response || state.error) && currentSessionId) {
         const content = state.response || `Error: ${state.error}`;
@@ -132,7 +129,6 @@ export default function HealthAssistantPage() {
   useEffect(() => { if (!isGeneralPending) syncResponse(generalState); }, [generalState, isGeneralPending, syncResponse]);
   useEffect(() => { if (!isDoctorPending) syncResponse(doctorState); }, [doctorState, isDoctorPending, syncResponse]);
 
-  // History & Session Management
   const handleNewChat = useCallback(() => {
     const id = `session-${Date.now()}`;
     const newSession: Session = {
@@ -166,7 +162,6 @@ export default function HealthAssistantPage() {
 
     if (!saved_gen && activeMode === 'general') handleNewChat();
     if (!saved_doc && activeMode === 'doctor') handleNewChat();
-
   }, [handleNewChat]);
 
   useEffect(() => {
@@ -202,8 +197,15 @@ export default function HealthAssistantPage() {
     finalFormData.set('history', JSON.stringify(activeSession?.messages || []));
     if (attachedImage) finalFormData.set('photoDataUri', attachedImage);
 
-    if (activeMode === 'doctor') { finalFormData.set('specialty', specialty); doctorAction(finalFormData); }
-    else { finalFormData.set('mode', pulseMode); generalAction(finalFormData); }
+    startTransition(() => {
+        if (activeMode === 'doctor') { 
+            finalFormData.set('specialty', specialty); 
+            doctorAction(finalFormData); 
+        } else { 
+            finalFormData.set('mode', pulseMode); 
+            generalAction(finalFormData); 
+        }
+    });
     
     formRef.current?.reset();
     if(queryInputRef.current) {
@@ -269,7 +271,9 @@ export default function HealthAssistantPage() {
           const base64Audio = reader.result as string;
           const formData = new FormData();
           formData.append('audioDataUri', base64Audio);
-          speechFormAction(formData);
+          startTransition(() => {
+            speechFormAction(formData);
+          });
         };
         stream.getTracks().forEach(track => track.stop());
       };
@@ -365,7 +369,6 @@ export default function HealthAssistantPage() {
                 <ScrollArea className="flex-1 w-full bg-white dark:bg-slate-950 animate-in fade-in duration-700">
                     <div className="flex flex-col items-center justify-start p-6 text-center space-y-8 pb-32">
                         
-                        {/* Compact Hero Section */}
                         <div className="mt-8 space-y-4 flex flex-col items-center">
                             <div className="relative p-4 bg-primary/5 rounded-[2rem] border border-primary/10 backdrop-blur-sm shadow-xl shrink-0">
                                 <ShieldPlus className="w-10 h-10 text-primary" />
@@ -377,7 +380,6 @@ export default function HealthAssistantPage() {
                             </div>
                         </div>
 
-                        {/* Mode Selection Tabs */}
                         <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="w-full max-w-sm">
                             <TabsList className="grid grid-cols-2 h-12 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl mb-8">
                                 <TabsTrigger value="general" className="rounded-xl font-black text-[9px] uppercase transition-all">AI Assistant</TabsTrigger>
@@ -400,7 +402,6 @@ export default function HealthAssistantPage() {
                             </TabsContent>
                         </Tabs>
 
-                        {/* Minimalist Vertical Suggestions */}
                         <div className="w-full max-w-sm space-y-3">
                             <div className="flex items-center gap-2 px-1">
                                 <Sparkles className="w-3.5 h-3.5 text-primary/60" />
