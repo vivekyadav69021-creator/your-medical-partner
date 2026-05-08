@@ -20,6 +20,7 @@ import {
     Zap,
     History,
     Menu,
+    Trash2,
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -70,6 +71,7 @@ const initialSpeechState = { transcript: null, error: null };
 
 export default function HealthAssistantPage() {
   const [activeMode, setActiveMode] = useState<'general' | 'doctor'>('general');
+  const [historyTab, setHistoryTab] = useState<'general' | 'doctor'>('general');
   const [specialty, setSpecialty] = useState<string>("General Physician");
   const [pulseMode, setPulseMode] = useState<PulseMode>('standard');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
@@ -92,8 +94,8 @@ export default function HealthAssistantPage() {
 
   const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
-  const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions.filter(s => s.specialty === specialty);
-  const activeSession = currentSessions.find(s => s.id === currentSessionId);
+  const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions;
+  const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages.length ?? 0) > 0;
 
   // Sync Logic
@@ -123,19 +125,45 @@ export default function HealthAssistantPage() {
     setAttachedImage(null);
   }, [activeMode, specialty]);
 
-  useEffect(() => {
-    const key = `healthAssistantSessions_${activeMode}`;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        if (activeMode === 'general') { setGeneralSessions(parsed); if (parsed.length) setActiveGeneralId(parsed[0].id); else handleNewChat(); }
-        else { setDoctorSessions(parsed); const rel = parsed.filter((s: Session) => s.specialty === specialty); if (rel.length) setActiveDoctorId(rel[0].id); else handleNewChat(); }
-    } else handleNewChat();
-  }, [activeMode, specialty, handleNewChat]);
+  // Deletion logic
+  const deleteSession = (e: React.MouseEvent, sessionId: string, mode: 'general' | 'doctor') => {
+    e.stopPropagation();
+    const setter = mode === 'general' ? setGeneralSessions : setDoctorSessions;
+    setter(prev => prev.filter(s => s.id !== sessionId));
+    
+    if (sessionId === currentSessionId) {
+        if (mode === 'general') setActiveGeneralId(null);
+        else setActiveDoctorId(null);
+    }
+    
+    toast({ title: 'Chat deleted', duration: 2000 });
+  };
 
   useEffect(() => {
-    if (generalSessions.length) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
-    if (doctorSessions.length) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
+    const key_gen = 'healthAssistantSessions_general';
+    const key_doc = 'healthAssistantSessions_doctor';
+    const saved_gen = localStorage.getItem(key_gen);
+    const saved_doc = localStorage.getItem(key_doc);
+    
+    if (saved_gen) {
+        const parsed = JSON.parse(saved_gen);
+        setGeneralSessions(parsed);
+        if (activeMode === 'general' && parsed.length) setActiveGeneralId(parsed[0].id);
+    }
+    if (saved_doc) {
+        const parsed = JSON.parse(saved_doc);
+        setDoctorSessions(parsed);
+        if (activeMode === 'doctor' && parsed.length) setActiveDoctorId(parsed[0].id);
+    }
+
+    if (!saved_gen && activeMode === 'general') handleNewChat();
+    if (!saved_doc && activeMode === 'doctor') handleNewChat();
+
+  }, [handleNewChat]); // Only on mount
+
+  useEffect(() => {
+    localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
+    localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
   const onFormAction = (formData: FormData) => {
@@ -259,26 +287,68 @@ export default function HealthAssistantPage() {
 
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
+                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={() => setHistoryTab(activeMode)}>
                         <History className="w-5 h-5 text-slate-500" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] p-0 border-none rounded-l-[2rem] shadow-2xl">
-                    <SheetHeader className="p-6 border-b bg-primary text-white rounded-tl-[2rem]">
-                        <SheetTitle className="text-white uppercase font-black text-sm tracking-widest">History</SheetTitle>
+                <SheetContent side="right" className="w-[85vw] p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col">
+                    <SheetHeader className="p-6 pb-2">
+                        <SheetTitle className="text-primary uppercase font-black text-sm tracking-widest">Chat History</SheetTitle>
                     </SheetHeader>
-                    <ScrollArea className="h-full p-6">
+                    
+                    <div className="px-6 pb-4">
+                         <Tabs value={historyTab} onValueChange={(v) => setHistoryTab(v as any)} className="w-full">
+                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+                                <TabsTrigger value="general" className="rounded-lg font-black text-[9px] uppercase">Assistant</TabsTrigger>
+                                <TabsTrigger value="doctor" className="rounded-lg font-black text-[9px] uppercase">Specialists</TabsTrigger>
+                            </TabsList>
+                         </Tabs>
+                    </div>
+
+                    <ScrollArea className="flex-1 p-6 pt-0">
                         <Button variant="outline" className="w-full h-12 rounded-2xl mb-6 font-black uppercase text-[10px] tracking-widest" onClick={handleNewChat}>
                             <PlusCircle className="mr-2 h-4 w-4" /> New Chat
                         </Button>
                         <div className="space-y-3 pb-20">
-                            {(activeMode === 'general' ? generalSessions : doctorSessions.filter(s => s.specialty === specialty)).map(session => (
-                                <div key={session.id} onClick={() => activeMode === 'general' ? setActiveGeneralId(session.id) : setActiveDoctorId(session.id)}
-                                     className={cn("p-4 rounded-2xl border shadow-sm cursor-pointer transition-all active:scale-[0.98]", currentSessionId === session.id ? "bg-white border-primary/30" : "bg-white/40 border-transparent hover:bg-white")}>
-                                    <p className="text-xs font-black truncate">{session.title}</p>
-                                    <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
+                            {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
+                                <div key={session.id} 
+                                     onClick={() => {
+                                         setActiveMode(historyTab);
+                                         if (historyTab === 'general') setActiveGeneralId(session.id);
+                                         else {
+                                             setActiveDoctorId(session.id);
+                                             setSpecialty(session.specialty || "General Physician");
+                                         }
+                                     }}
+                                     className={cn("group p-4 rounded-2xl border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 border-transparent hover:bg-white")}>
+                                    <div className="pr-8">
+                                        <p className="text-xs font-black truncate">{session.title}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
+                                            {session.specialty && (
+                                                <>
+                                                    <span className="h-1 w-1 rounded-full bg-slate-200" />
+                                                    <p className="text-[8px] font-black text-primary uppercase">{session.specialty}</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => deleteSession(e, session.id, historyTab)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             ))}
+                            {(historyTab === 'general' ? generalSessions : doctorSessions).length === 0 && (
+                                <div className="text-center py-10 opacity-30">
+                                    <History className="w-10 h-10 mx-auto mb-2" />
+                                    <p className="text-[10px] font-black uppercase">No history found</p>
+                                </div>
+                            )}
                         </div>
                     </ScrollArea>
                 </SheetContent>
@@ -308,7 +378,7 @@ export default function HealthAssistantPage() {
                                 {doctorSpecialties.slice(0, 6).map(spec => (
                                     <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); }}
                                             className={cn("h-auto py-3 rounded-2xl text-[10px] font-black uppercase flex flex-col gap-2 border-slate-100", 
-                                            specialty === spec && "border-primary bg-primary/5 text-primary")}>
+                                            specialty === spec && activeMode === 'doctor' && "border-primary bg-primary/5 text-primary")}>
                                         {spec}
                                     </Button>
                                 ))}
