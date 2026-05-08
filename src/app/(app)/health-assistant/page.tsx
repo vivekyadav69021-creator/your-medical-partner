@@ -348,8 +348,13 @@ export default function HealthAssistantPage() {
                 </SidebarTrigger>
                 <div className="h-6 w-px bg-gray-200 dark:bg-[#3c4043] mx-1" />
                 <div className="flex items-center gap-2">
-                    <ShieldPlus className="w-4 h-4 text-primary" />
-                    <h1 className="text-xs font-bold text-gray-800 dark:text-[#e3e3e3]">Partner</h1>
+                    <div className="p-1.5 bg-primary/10 rounded-lg shadow-inner">
+                        <ShieldPlus className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex flex-col -space-y-0.5">
+                        <h1 className="text-[11px] font-black text-[#2D3A5D] dark:text-slate-100 uppercase tracking-tighter leading-none">AI Health</h1>
+                        <p className="text-[8px] font-black text-primary uppercase tracking-[0.25em]">Assistant</p>
+                    </div>
                 </div>
             </div>
 
@@ -471,7 +476,7 @@ export default function HealthAssistantPage() {
                                             <ShieldPlus className="w-3 h-3 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <article className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-[#e3e3e3] leading-relaxed">
+                                            <article className="prose prose-sm dark:prose-invert max-none text-gray-800 dark:text-[#e3e3e3] leading-relaxed font-medium text-[15px]">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             
