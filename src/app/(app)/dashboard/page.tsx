@@ -62,7 +62,7 @@ export default function DashboardPage() {
       
       {/* Premium Profile Header Section */}
       <div className="max-w-xl mx-auto">
-        <div className="flex items-center justify-between gap-6 p-4 bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/40 shadow-sm">
+        <div className="flex items-center justify-between gap-6 p-5 bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/40 shadow-sm">
           <div className="space-y-1.5 flex-1 min-w-0">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50/80 rounded-full border border-blue-100 shadow-sm mb-1">
               <HeartPulse className="w-3 h-3 text-[#2488E8] animate-pulse" />
@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
           <Link href="/profile" className="shrink-0">
             <div className="relative group">
-              <Avatar className="h-16 w-16 md:h-18 md:w-18 border-4 border-white shadow-xl transition-all duration-300 group-hover:scale-105 active:scale-95">
+              <Avatar className="h-16 w-16 md:h-18 md:w-18 border-4 border-white shadow-xl transition-all duration-300 group-hover:scale-105 active:scale-95 bg-slate-100">
                 <AvatarImage src={userImage} className="object-cover" />
                 <AvatarFallback className="bg-primary text-white font-black text-xl uppercase">
                   {userName[0]}
@@ -136,7 +136,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Red Emergency Action */}
-        <Link href="tel:112" className="block">
+        <Link href="tel:112" className="block pb-24">
           <div className="p-6 rounded-[2.5rem] bg-red-500 shadow-xl shadow-red-200 flex items-center justify-between group active:scale-95 transition-all">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/20 rounded-2xl">
