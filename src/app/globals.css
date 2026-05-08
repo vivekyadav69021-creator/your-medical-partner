@@ -3,27 +3,27 @@
 @tailwind utilities;
 
 :root {
-  /* Premium Medical Blue Theme */
-  --background: 210 100% 99%;
-  --foreground: 222 47% 11%;
+  /* Premium Medical Blue Theme - White & Blue focus */
+  --background: 210 100% 99%; /* Very Light Blue-White */
+  --foreground: 222 47% 11%; /* Deep Navy for Text */
   
-  --card: 0 0% 100%;
+  --card: 0 0% 100%; /* Pure White */
   --card-foreground: 222 47% 11%;
   
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
   
-  /* Main Primary Blue: #2488E8 */
+  /* Main Primary Medical Blue: #2488E8 */
   --primary: 210 80% 52%;
   --primary-foreground: 210 40% 98%;
   
-  --secondary: 210 40% 96.1%;
+  --secondary: 210 40% 96.1%; /* Soft Blue-Gray */
   --secondary-foreground: 222.2 84% 4.9%;
   
   --muted: 210 40% 96.1%;
   --muted-foreground: 215 20.2% 65.1%;
   
-  /* Accent Color: #14CFBD */
+  /* Accent Color: #14CFBD (Teal/Mint for health) */
   --accent: 174 82% 44%;
   --accent-foreground: 210 40% 98%;
   
@@ -36,7 +36,7 @@
   
   --radius: 1.5rem;
   
-  /* Dashboard Gradient */
+  /* Dashboard Gradient: Smooth White to Blue Transition */
   --dashboard-bg: linear-gradient(135deg, #E6F0FF 0%, #FDFBFF 50%, #FFE9F0 100%);
   
   /* Sidebar Variables */
@@ -118,6 +118,11 @@ main, .scroll-area, [data-radix-scroll-area-viewport] {
   user-select: text;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: auto;
+}
+
+/* Fix for text rendering in articles */
+article, p, li, h1, h2, h3, h4, h5, h6 {
+  user-select: text !important;
 }
 
 input, textarea, [contenteditable="true"] {
