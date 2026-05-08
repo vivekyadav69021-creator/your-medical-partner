@@ -26,7 +26,6 @@ import {
     Lightbulb,
     ThumbsUp,
     ThumbsDown,
-    MoreVertical,
     ArrowLeft
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
@@ -74,9 +73,9 @@ const doctorSpecialties = [
 ];
 
 const suggestionPool = [
-    { label: "First aid guide", query: "What are the first aid steps for a minor burn?", icon: Zap },
-    { label: "Heart health tips", query: "Give me 5 daily habits to keep my heart healthy.", icon: Sparkles },
-    { label: "Check symptoms", query: "I have a headache and mild fever, what should I do?", icon: Activity },
+    { label: "Minor burn first aid", query: "What are the first aid steps for a minor burn?", icon: Zap },
+    { label: "Keep heart healthy", query: "Give me 5 daily habits to keep my heart healthy.", icon: Sparkles },
+    { label: "Check my symptoms", query: "I have a headache and mild fever, what should I do?", icon: Activity },
     { label: "Explain medicine", query: "What are the common side effects of Paracetamol 500mg?", icon: Pill },
 ];
 
@@ -108,14 +107,15 @@ export default function HealthAssistantPage() {
 
   const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
-  const activeSession = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === currentSessionId);
-  const hasMessages = activeSession && activeSession.messages.length > 0;
+  const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions;
+  const activeSession = currentSessions.find(s => s.id === currentSessionId);
+  const hasMessages = (activeSession?.messages?.length || 0) > 0;
 
   const currentSuggestions = useMemo(() => {
-    return [...suggestionPool].sort(() => 0.5 - Math.random());
+    return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
 
-  // Sync AI responses with session storage
+  // Sync AI responses
   useEffect(() => {
     if (!isGeneralPending && generalState.timestamp > lastGeneralProcessed.current) {
         lastGeneralProcessed.current = generalState.timestamp;
@@ -140,16 +140,19 @@ export default function HealthAssistantPage() {
     }
   }, [doctorState, isDoctorPending, activeDoctorId]);
 
-  const handleNewChat = useCallback(() => {
+  // Handle New Chat
+  const handleNewChat = useCallback((modeOverride?: 'general' | 'doctor') => {
+    const targetMode = modeOverride || activeMode;
     const id = `session-${Date.now()}`;
     const newSession: Session = {
       id,
-      title: activeMode === 'doctor' ? `${specialty}` : 'New Health Chat',
+      title: targetMode === 'doctor' ? `${specialty}` : 'New Health Chat',
       messages: [],
       createdAt: Date.now(),
-      ...(activeMode === 'doctor' && { specialty }),
+      ...(targetMode === 'doctor' && { specialty }),
     };
-    if (activeMode === 'general') { 
+
+    if (targetMode === 'general') { 
         setGeneralSessions(prev => [newSession, ...prev]); 
         setActiveGeneralId(id); 
     } else { 
@@ -159,30 +162,33 @@ export default function HealthAssistantPage() {
     setAttachedImage(null);
   }, [activeMode, specialty]);
 
-  // Initial Data Load
+  // Initial Load (Strictly once)
   useEffect(() => {
     const saved_gen = localStorage.getItem('healthAssistantSessions_general');
     const saved_doc = localStorage.getItem('healthAssistantSessions_doctor');
     
+    let genParsed: Session[] = [];
+    let docParsed: Session[] = [];
+
     if (saved_gen) {
-        const parsed = JSON.parse(saved_gen);
-        setGeneralSessions(parsed);
-        if (activeMode === 'general' && parsed.length) setActiveGeneralId(parsed[0].id);
+        genParsed = JSON.parse(saved_gen);
+        setGeneralSessions(genParsed);
     }
     if (saved_doc) {
-        const parsed = JSON.parse(saved_doc);
-        setDoctorSessions(parsed);
-        if (activeMode === 'doctor' && parsed.length) setActiveDoctorId(parsed[0].id);
+        docParsed = JSON.parse(saved_doc);
+        setDoctorSessions(docParsed);
     }
 
-    if (!saved_gen && activeMode === 'general') handleNewChat();
-    if (!saved_doc && activeMode === 'doctor') handleNewChat();
-  }, [activeMode]); // Removed handleNewChat dependency to avoid infinite loops
+    // Set initial active IDs
+    if (genParsed.length > 0) setActiveGeneralId(genParsed[0].id);
+    if (docParsed.length > 0) setActiveDoctorId(docParsed[0].id);
+    
+  }, []);
 
-  // Persistence
+  // Persistent Saving
   useEffect(() => {
-    localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
-    localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
+    if (generalSessions.length > 0) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
+    if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
   // Message Sender Logic
@@ -191,25 +197,6 @@ export default function HealthAssistantPage() {
     if (!query && !attachedImage) return;
 
     let sessionId = currentSessionId;
-    if (!sessionId) {
-        const newId = `session-${Date.now()}`;
-        const newSession: Session = {
-            id: newId,
-            title: query ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : 'New Chat',
-            messages: [],
-            createdAt: Date.now(),
-            ...(activeMode === 'doctor' && { specialty }),
-        };
-        if (activeMode === 'general') { 
-            setGeneralSessions(prev => [newSession, ...prev]); 
-            setActiveGeneralId(newId); 
-        } else { 
-            setDoctorSessions(prev => [newSession, ...prev]); 
-            setActiveDoctorId(newId); 
-        }
-        sessionId = newId;
-    }
-
     const userMsg: Message = {
         role: 'user',
         content: query || 'Analyze attached image',
@@ -218,15 +205,37 @@ export default function HealthAssistantPage() {
         timestamp: Date.now()
     };
 
-    const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
-    setter(prev => prev.map(s => s.id === sessionId ? {
-        ...s, 
-        messages: [...s.messages, userMsg],
-        title: s.messages.length === 0 ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : s.title
-    } : s));
+    // 1. Create session if it doesn't exist OR the current one belongs to a different specialty
+    if (!sessionId || (activeMode === 'doctor' && activeSession?.specialty !== specialty)) {
+        sessionId = `session-${Date.now()}`;
+        const newSession: Session = {
+            id: sessionId,
+            title: query ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : 'New Chat',
+            messages: [userMsg],
+            createdAt: Date.now(),
+            ...(activeMode === 'doctor' && { specialty }),
+        };
 
-    const sessionMessages = (activeMode === 'general' ? generalSessions : doctorSessions).find(s => s.id === sessionId)?.messages || [];
-    formData.set('history', JSON.stringify([...sessionMessages, userMsg]));
+        if (activeMode === 'general') { 
+            setGeneralSessions(prev => [newSession, ...prev]); 
+            setActiveGeneralId(sessionId); 
+        } else { 
+            setDoctorSessions(prev => [newSession, ...prev]); 
+            setActiveDoctorId(sessionId); 
+        }
+    } else {
+        // 2. Append to existing session
+        const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
+        setter(prev => prev.map(s => s.id === sessionId ? {
+            ...s, 
+            messages: [...s.messages, userMsg],
+            title: s.messages.length === 0 ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : s.title
+        } : s));
+    }
+
+    // 3. Trigger Server Action
+    const updatedMessages = activeSession ? [...activeSession.messages, userMsg] : [userMsg];
+    formData.set('history', JSON.stringify(updatedMessages));
     if (attachedImage) formData.set('photoDataUri', attachedImage);
 
     startTransition(() => {
@@ -310,7 +319,7 @@ export default function HealthAssistantPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#f8f9fa] dark:bg-[#131314] overflow-hidden fixed inset-0">
-        {/* Slim Header */}
+        {/* Header */}
         <header className="h-14 border-b border-gray-200 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md z-30">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3c4043]">
@@ -329,23 +338,23 @@ export default function HealthAssistantPage() {
                         <History className="w-5 h-5 text-gray-500 dark:text-[#9aa0a6]" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white dark:bg-[#1e1f20]">
+                <SheetContent side="right" className="w-[85vw] max-w-sm p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white dark:bg-[#1e1f20]">
                     <SheetHeader className="p-6 pb-2">
-                        <SheetTitle className="text-primary uppercase font-black text-sm tracking-widest">Recents</SheetTitle>
+                        <SheetTitle className="text-primary uppercase font-black text-xs tracking-[0.2em]">History</SheetTitle>
                     </SheetHeader>
                     <div className="px-6 pb-4">
                          <Tabs value={historyTab} onValueChange={(v) => setHistoryTab(v as any)} className="w-full">
-                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-gray-100 dark:bg-[#131314] rounded-xl">
-                                <TabsTrigger value="general" className="rounded-lg font-bold text-[10px] uppercase">Assistant</TabsTrigger>
-                                <TabsTrigger value="doctor" className="rounded-lg font-bold text-[10px] uppercase">Specialists</TabsTrigger>
+                            <TabsList className="grid grid-cols-2 h-9 p-1 bg-gray-100 dark:bg-[#131314] rounded-xl">
+                                <TabsTrigger value="general" className="rounded-lg font-bold text-[9px] uppercase">Assistant</TabsTrigger>
+                                <TabsTrigger value="doctor" className="rounded-lg font-bold text-[9px] uppercase">Specialists</TabsTrigger>
                             </TabsList>
                          </Tabs>
                     </div>
                     <ScrollArea className="flex-1 p-6 pt-0">
-                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-6 font-bold uppercase text-[10px] tracking-widest" onClick={handleNewChat}>
+                        <Button variant="outline" className="w-full h-11 rounded-2xl mb-6 font-black uppercase text-[10px] tracking-widest" onClick={() => handleNewChat()}>
                             <Plus className="mr-2 h-4 w-4" /> New Chat
                         </Button>
-                        <div className="space-y-3 pb-20">
+                        <div className="space-y-2.5 pb-20">
                             {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
                                 <div key={session.id} 
                                      onClick={() => {
@@ -353,12 +362,10 @@ export default function HealthAssistantPage() {
                                          if (historyTab === 'general') setActiveGeneralId(session.id);
                                          else { setActiveDoctorId(session.id); setSpecialty(session.specialty || "General Physician"); }
                                      }}
-                                     className={cn("group p-4 rounded-2xl border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c] border-transparent hover:bg-gray-50")}>
+                                     className={cn("group p-4 rounded-[1.5rem] border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c] border-transparent hover:bg-gray-50")}>
                                     <div className="pr-8">
                                         <p className="text-xs font-bold truncate dark:text-[#e3e3e3]">{session.title}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <p className="text-[8px] font-bold text-gray-400 uppercase">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
-                                        </div>
+                                        <p className="text-[8px] font-black text-gray-400 uppercase mt-1">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
                                     </div>
                                     <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full" onClick={(e) => { e.stopPropagation(); (historyTab === 'general' ? setGeneralSessions : setDoctorSessions)(prev => prev.filter(s => s.id !== session.id)); }}>
                                         <Trash2 className="h-4 w-4" />
@@ -372,22 +379,23 @@ export default function HealthAssistantPage() {
         </header>
 
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
+            {/* Conditional Rendering: Landing vs Chat */}
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
-                    <div className="flex flex-col justify-center items-center px-6 pt-12 pb-32 space-y-10 text-center max-w-lg mx-auto">
-                        <div className="space-y-4 flex flex-col items-center">
-                            <div className="p-4 bg-white/80 dark:bg-[#1e1f20] rounded-3xl shadow-xl border border-white dark:border-transparent animate-in zoom-in-50 duration-700">
-                                <ShieldPlus className="w-10 h-10 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.3)]" />
+                    <div className="flex flex-col justify-center items-center px-6 pt-16 pb-32 space-y-12 text-center max-w-md mx-auto">
+                        <div className="space-y-5 flex flex-col items-center">
+                            <div className="p-3.5 bg-white dark:bg-[#1e1f20] rounded-[2rem] shadow-xl border border-white dark:border-transparent animate-in zoom-in-50 duration-700">
+                                <ShieldPlus className="w-8 h-8 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.3)]" />
                             </div>
-                            <div className="space-y-1">
-                                <h2 className="text-3xl md:text-4xl font-medium text-gray-900 dark:text-white tracking-tight">
+                            <div className="space-y-1.5">
+                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                                     Hello there
                                 </h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Where would you like to start?</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Medical Partner Assistant</p>
                             </div>
                         </div>
 
-                        {/* Centered Pill Suggestions */}
+                        {/* Suggestions */}
                         <div className="flex flex-col gap-3 w-full">
                             {currentSuggestions.map((suggestion, idx) => (
                                 <button 
@@ -397,25 +405,26 @@ export default function HealthAssistantPage() {
                                         fd.set('query', suggestion.query);
                                         onFormAction(fd);
                                     }}
-                                    className="flex items-center gap-3 p-4 bg-white dark:bg-[#1e1f20] rounded-full text-left border border-gray-100 dark:border-transparent hover:border-primary/30 transition-all active:scale-[0.98] group shadow-sm w-full"
+                                    className="flex items-center gap-3.5 p-4 bg-white dark:bg-[#1e1f20] rounded-full text-left border border-gray-100 dark:border-transparent hover:border-primary/30 transition-all active:scale-[0.98] group shadow-sm w-full"
                                 >
                                     <div className="p-1.5 bg-primary/5 dark:bg-[#131314] rounded-full">
-                                        <suggestion.icon className="w-4 h-4 text-primary" />
+                                        <suggestion.icon className="w-3.5 h-3.5 text-primary" />
                                     </div>
-                                    <span className="text-xs font-bold text-gray-700 dark:text-[#c4c7c5] flex-1">{suggestion.label}</span>
+                                    <span className="text-[11px] font-bold text-gray-700 dark:text-[#c4c7c5] flex-1">{suggestion.label}</span>
                                 </button>
                             ))}
                         </div>
 
+                        {/* Specialists Selection */}
                         <div className="space-y-4 w-full">
                              <div className="flex items-center justify-center gap-3">
                                 <div className="h-px bg-gray-100 dark:bg-[#3c4043] flex-1" />
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">OR TALK TO A SPECIALIST</p>
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] whitespace-nowrap">TALK TO SPECIALISTS</p>
                                 <div className="h-px bg-gray-100 dark:bg-[#3c4043] flex-1" />
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
                                 {doctorSpecialties.map(spec => (
-                                    <Button key={spec} variant="ghost" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); handleNewChat(); }}
+                                    <Button key={spec} variant="ghost" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); }}
                                             className="h-8 px-4 rounded-full bg-white dark:bg-[#1e1f20] text-[9px] font-black uppercase tracking-widest shadow-sm border border-gray-100 dark:border-[#3c4043] dark:text-[#e3e3e3] whitespace-nowrap active:scale-95 transition-all">
                                         {spec}
                                     </Button>
@@ -430,7 +439,7 @@ export default function HealthAssistantPage() {
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-2 duration-500", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] rounded-[24px] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-3 text-gray-900 dark:text-[#e3e3e3] shadow-sm">
+                                    <div className="max-w-[85%] rounded-[1.5rem] rounded-tr-sm bg-[#e9eef6] dark:bg-[#282a2c] px-4 py-3 text-gray-900 dark:text-[#e3e3e3] shadow-sm">
                                         {m.image && (
                                             <div className="mb-2 rounded-xl overflow-hidden border border-gray-200">
                                                 <Image src={m.image} alt="Report" width={250} height={250} className="w-full h-auto" />
@@ -469,11 +478,11 @@ export default function HealthAssistantPage() {
                                     <ShieldPlus className="w-3.5 h-3.5 text-primary" />
                                 </div>
                                 <div className="space-y-2 flex-1 pt-1">
-                                    <div className="h-2.5 bg-gray-200 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
-                                    <div className="h-2.5 bg-gray-200 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
+                                    <div className="h-2 bg-gray-200 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
+                                    <div className="h-2 bg-gray-200 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
                                     <div className="flex items-center gap-2 mt-4">
                                         <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                        <span className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em]">Thinking...</span>
+                                        <span className="text-[8px] font-black uppercase text-gray-400 tracking-[0.2em]">Analyzing...</span>
                                     </div>
                                 </div>
                             </div>
@@ -483,7 +492,7 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        {/* Gemini Style Floating Input Bar */}
+        {/* Input Bar */}
         <footer className="px-4 pb-8 pt-2 z-40 shrink-0 bg-transparent">
             <form 
                 ref={formRef} 
@@ -542,7 +551,7 @@ export default function HealthAssistantPage() {
                             {activeMode === 'general' && (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className="h-9 px-3 rounded-full gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                        <Button type="button" variant="ghost" className="h-9 px-3 rounded-full gap-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">
                                             <Zap className="h-4 w-4 text-primary" />
                                             <span className="hidden sm:inline">Modes</span>
                                         </Button>
@@ -584,7 +593,7 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 </div>
-                <p className="text-[9px] text-center text-gray-400 uppercase tracking-widest mt-1">Partner may display inaccurate info.</p>
+                <p className="text-[8px] text-center text-gray-400 uppercase tracking-widest mt-1">Medical Partner may display inaccurate info.</p>
             </form>
         </footer>
     </div>
@@ -598,7 +607,7 @@ function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string
             <div className="p-1.5 rounded-lg bg-gray-50 dark:bg-[#131314] shadow-sm">
                 {icon}
             </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer font-bold text-[10px] text-gray-700 dark:text-[#e3e3e3] uppercase tracking-wider">
+            <Label htmlFor={value} className="flex-1 cursor-pointer font-bold text-[9px] text-gray-700 dark:text-[#e3e3e3] uppercase tracking-wider">
                 {label}
             </Label>
         </div>
