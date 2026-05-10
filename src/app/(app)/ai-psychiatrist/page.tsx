@@ -199,8 +199,6 @@ export default function AIPsychiatristPage() {
     }
   };
 
-  const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
-
   return (
     <div className="flex h-[calc(100vh-120px)] w-full gap-6 animate-in fade-in duration-500 overflow-hidden font-body">
       {/* Sidebar - Desktop */}
@@ -322,19 +320,14 @@ export default function AIPsychiatristPage() {
                               key={index}
                               className={cn("flex items-end gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
                           >
-                              <Avatar className="h-8 w-8 border-2 border-white shadow-sm shrink-0 mb-1">
-                                  {message.role === 'assistant' ? (
-                                      <>
-                                          {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" className="object-cover" />}
-                                          <AvatarFallback className="bg-primary text-white"><Heart className="w-4 h-4"/></AvatarFallback>
-                                      </>
-                                  ) : (
-                                      <>
-                                          <AvatarImage src="https://picsum.photos/seed/user/100/100" alt="User" />
-                                          <AvatarFallback className="bg-slate-200"><User className="w-4 h-4"/></AvatarFallback>
-                                      </>
-                                  )}
-                              </Avatar>
+                              {message.role === 'user' ? (
+                                  <Avatar className="h-8 w-8 border-2 border-white shadow-sm shrink-0 mb-1">
+                                      <AvatarImage src="https://picsum.photos/seed/user/100/100" alt="User" />
+                                      <AvatarFallback className="bg-slate-200"><User className="w-4 h-4"/></AvatarFallback>
+                                  </Avatar>
+                              ) : (
+                                  <div className="w-8 shrink-0" />
+                              )}
                               <div
                                   className={cn(
                                       "max-w-[85%] rounded-[1.8rem] px-5 py-3.5 shadow-sm",
@@ -353,9 +346,7 @@ export default function AIPsychiatristPage() {
 
                       {isPending && (
                           <div className="flex items-end gap-3">
-                              <Avatar className="h-8 w-8 border-2 border-white shadow-sm bg-primary/10 shrink-0">
-                                  <AvatarFallback className="bg-transparent"><Heart className="w-4 h-4 text-primary animate-pulse"/></AvatarFallback>
-                              </Avatar>
+                              <div className="w-8 shrink-0" />
                               <div className="bg-slate-100 dark:bg-slate-800 rounded-[1.8rem] rounded-bl-sm px-6 py-4 border border-white/50 flex items-center gap-3 shadow-inner">
                                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Companion is listening...</span>
