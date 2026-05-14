@@ -26,7 +26,9 @@ import {
     Lightbulb,
     ThumbsUp,
     ThumbsDown,
-    ArrowLeft
+    ArrowLeft,
+    Globe,
+    Clock
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -79,6 +81,17 @@ const suggestionPool = [
     { label: "Explain medicine", query: "What are the common side effects of Paracetamol 500mg?", icon: Pill },
 ];
 
+const medicalSources = [
+  "World Health Organization (WHO)",
+  "Mayo Clinic",
+  "Harvard Health Publishing",
+  "Johns Hopkins Medicine",
+  "AIIMS India (Expert Database)",
+  "NHS UK (Clinical Guidelines)",
+  "PubMed & The Lancet",
+  "Cleveland Clinic"
+];
+
 const initialState = { response: null, error: null, timestamp: 0 };
 const initialSpeechState = { transcript: null, error: null };
 
@@ -93,6 +106,10 @@ export default function HealthAssistantPage() {
   // Immersive Reading Mode State
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
+
+  // Loading UI Enhancement States
+  const [loadingTimer, setLoadingTimer] = useState(0);
+  const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
 
   const [generalSessions, setGeneralSessions] = useState<Session[]>([]);
   const [doctorSessions, setDoctorSessions] = useState<Session[]>([]);
@@ -146,7 +163,33 @@ export default function HealthAssistantPage() {
     }
   }, [doctorState, isDoctorPending, activeDoctorId]);
 
-  // Initial Data Load (Always start with landing page for professionalism)
+  // Loading UI Logic (Timer and Source Rotation)
+  useEffect(() => {
+    let timerInterval: NodeJS.Timeout;
+    let sourceInterval: NodeJS.Timeout;
+
+    if (isPending) {
+      setLoadingTimer(0);
+      setCurrentSourceIndex(0);
+
+      timerInterval = setInterval(() => {
+        setLoadingTimer(prev => prev + 1);
+      }, 1000);
+
+      sourceInterval = setInterval(() => {
+        setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length);
+      }, 2500); // Change source every 2.5 seconds
+    } else {
+        setLoadingTimer(0);
+    }
+
+    return () => {
+      clearInterval(timerInterval);
+      clearInterval(sourceInterval);
+    };
+  }, [isPending]);
+
+  // Initial Data Load
   useEffect(() => {
     const savedGen = localStorage.getItem('healthAssistantSessions_general');
     const savedDoc = localStorage.getItem('healthAssistantSessions_doctor');
@@ -154,7 +197,6 @@ export default function HealthAssistantPage() {
     if (savedGen) setGeneralSessions(JSON.parse(savedGen));
     if (savedDoc) setDoctorSessions(JSON.parse(savedDoc));
 
-    // Force landing page entry by resetting active IDs
     setActiveGeneralId(null);
     setActiveDoctorId(null);
   }, []);
@@ -329,7 +371,7 @@ export default function HealthAssistantPage() {
   }, [activeSession?.messages, isPending]);
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#f8f9fa] dark:bg-[#131314] overflow-hidden fixed inset-0">
+    <div className="flex flex-col h-[100dvh] w-full bg-[#f8f9fa] dark:bg-[#131314] overflow-hidden fixed inset-0 font-body">
         <header className="h-14 border-b border-gray-200 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md z-50">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3c4043]">
@@ -495,16 +537,48 @@ export default function HealthAssistantPage() {
                             </div>
                         ))}
                         {isPending && (
-                             <div className="flex items-start gap-3 w-full">
-                                <div className="mt-1 size-5 shrink-0 flex items-center justify-center bg-primary/20 rounded-lg animate-pulse">
-                                    <ShieldPlus className="w-3 h-3 text-primary" />
+                             <div className="flex items-start gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="mt-1 size-6 shrink-0 flex items-center justify-center bg-primary/20 rounded-lg animate-pulse">
+                                    <ShieldPlus className="w-4 h-4 text-primary" />
                                 </div>
-                                <div className="space-y-2 flex-1 pt-1 min-w-0">
-                                    <div className="h-2 bg-gray-100 dark:bg-[#3c4043] rounded-full w-3/4 animate-pulse" />
-                                    <div className="h-2 bg-gray-100 dark:bg-[#3c4043] rounded-full w-1/2 animate-pulse" />
-                                    <div className="flex items-center gap-2 mt-4">
-                                        <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                        <span className="text-[8px] font-black uppercase text-gray-400 tracking-[0.2em]">Thinking...</span>
+                                <div className="flex-1 pt-1 min-w-0">
+                                    {/* Animated Thinking Bubble */}
+                                    <div className="bg-white dark:bg-[#1e1f20] p-4 rounded-[1.8rem] rounded-tl-sm shadow-sm border border-gray-100 dark:border-[#3c4043] space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em]">
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                <span>Thinking...</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
+                                                <Clock className="w-2.5 h-2.5 text-primary" />
+                                                <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px bg-gray-100 dark:bg-[#3c4043]" />
+
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Globe className="w-3 h-3 text-emerald-500 animate-pulse" />
+                                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Searching Global Expert Sources</span>
+                                            </div>
+                                            
+                                            {/* Dynamic Source Switcher */}
+                                            <div className="relative h-10 overflow-hidden bg-gray-50 dark:bg-[#131314] rounded-2xl border border-dashed border-gray-200 dark:border-[#3c4043] flex items-center px-4">
+                                                <div key={currentSourceIndex} className="flex items-center gap-2 animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
+                                                    <Sparkles className="w-3 h-3 text-yellow-500 shrink-0" />
+                                                    <p className="text-[10px] font-bold text-gray-700 dark:text-[#c4c7c5] truncate">
+                                                        Accessing: <span className="text-primary">{medicalSources[currentSourceIndex]}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-1.5">
+                                                <div className="h-1 w-8 rounded-full bg-primary/30 animate-pulse" />
+                                                <div className="h-1 w-12 rounded-full bg-primary/20 animate-pulse delay-75" />
+                                                <div className="h-1 w-6 rounded-full bg-primary/10 animate-pulse delay-150" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
