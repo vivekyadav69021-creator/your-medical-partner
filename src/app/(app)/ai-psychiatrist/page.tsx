@@ -24,7 +24,9 @@ import {
     Clock,
     ShieldCheck,
     MessageCircle,
-    NotebookPen
+    NotebookPen,
+    Square,
+    ThumbsDown
 } from 'lucide-react';
 import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -80,6 +82,7 @@ export default function AIPsychiatristPage() {
   const lastScrollTop = useRef(0);
   const [loadingTimer, setLoadingTimer] = useState(0);
   const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
+  const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
 
   const [state, formAction, isPending] = useActionState(aiPsychiatristAction, initialState);
   const { toast } = useToast();
@@ -92,14 +95,14 @@ export default function AIPsychiatristPage() {
 
   // Initial Data Load
   useEffect(() => {
-    const saved = localStorage.getItem('mindCompanionSessions_v2');
+    const saved = localStorage.getItem('mindCompanionSessions_v3');
     if (saved) setSessions(JSON.parse(saved));
     setActiveSessionId(null);
   }, []);
 
   // Sync Persistent Storage
   useEffect(() => {
-    if (sessions.length > 0) localStorage.setItem('mindCompanionSessions_v2', JSON.stringify(sessions));
+    if (sessions.length > 0) localStorage.setItem('mindCompanionSessions_v3', JSON.stringify(sessions));
   }, [sessions]);
 
   // Handle Response Logic
@@ -265,6 +268,16 @@ export default function AIPsychiatristPage() {
     } catch (e) { toast({ variant: 'destructive', title: 'Mic Error' }); }
   };
 
+  const handleToggleSpeech = (text: string, msgId: number) => {
+    if (!window.speechSynthesis) return;
+    if (speakingMsgId === msgId) { window.speechSynthesis.cancel(); setSpeakingMsgId(null); return; }
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/[*#_`]/g, '').trim();
+    const u = new SpeechSynthesisUtterance(clean);
+    u.onstart = () => setSpeakingMsgId(msgId); u.onend = () => setSpeakingMsgId(null);
+    window.speechSynthesis.speak(u);
+  };
+
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
         <header className="h-16 border-b border-gray-100 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl z-50">
@@ -331,7 +344,7 @@ export default function AIPsychiatristPage() {
             </Sheet>
         </header>
 
-        <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-3xl mx-auto">
+        <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
                     <div className="flex flex-col justify-center items-center px-6 pt-24 pb-32 space-y-12 text-center max-w-sm mx-auto animate-in fade-in duration-1000">
@@ -351,67 +364,49 @@ export default function AIPsychiatristPage() {
                     </div>
                 </ScrollArea>
             ) : (
-                <ScrollArea className="flex-1 px-4 md:px-6 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-2xl mx-auto space-y-2 pb-48">
+                <ScrollArea className="flex-1 px-4 md:px-8 py-10" ref={scrollAreaRef}>
+                    <div className="max-w-4xl mx-auto space-y-16 pb-64">
                         {activeSession?.messages.map((m, i) => {
-                            const isPrevSame = i > 0 && activeSession.messages[i-1].role === m.role;
-                            const isNextSame = i < activeSession.messages.length - 1 && activeSession.messages[i+1].role === m.role;
-                            
                             return (
                                 <div 
                                     key={i} 
                                     className={cn(
-                                        "animate-in fade-in slide-in-from-bottom-3 duration-700", 
-                                        m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start",
-                                        !isPrevSame && i !== 0 ? "mt-8" : "mt-0"
+                                        "animate-in fade-in slide-in-from-bottom-6 duration-700", 
+                                        m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start"
                                     )}
                                 >
                                     {m.role === 'user' ? (
                                         <div 
-                                            className={cn(
-                                                "max-w-[85%] bg-primary text-white px-6 py-3.5 shadow-xl shadow-primary/5 border border-white/10 overflow-hidden",
-                                                "rounded-[1.8rem]",
-                                                isNextSame ? "rounded-br-md" : "rounded-br-sm",
-                                                isPrevSame ? "rounded-tr-md" : ""
-                                            )} 
+                                            className="max-w-[85%] md:max-w-[70%] bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden rounded-[2.2rem] rounded-tr-sm" 
                                             style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
                                         >
-                                            <p className="text-[15px] font-bold leading-relaxed">{m.content}</p>
+                                            <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{m.content}</p>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-start w-full group min-w-0">
-                                            <div className="flex-1 min-w-0 overflow-hidden w-full">
-                                                <div 
-                                                    className={cn(
-                                                        "bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md p-5 shadow-sm border border-white dark:border-[#3c4043] w-fit max-w-[85%]", 
-                                                        "rounded-[1.8rem]",
-                                                        isNextSame ? "rounded-bl-md" : "rounded-bl-sm",
-                                                        isPrevSame ? "rounded-tl-md" : "rounded-tl-sm"
-                                                    )}
-                                                    style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
-                                                >
-                                                    <article className="prose prose-sm dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px]">
-                                                        <ReactMarkdown>{m.content}</ReactMarkdown>
-                                                    </article>
+                                        <div className="flex flex-col items-start w-full group">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
+                                                    <Sparkles className="w-4.5 h-4.5 text-primary" />
                                                 </div>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mind Companion</span>
+                                            </div>
+
+                                            <div className="flex-1 w-full min-w-0">
+                                                <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                                                </article>
                                                 
-                                                {!isNextSame && (
-                                                    <div className="mt-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20" onClick={() => {
-                                                            if (window.speechSynthesis) {
-                                                                window.speechSynthesis.cancel();
-                                                                const u = new SpeechSynthesisUtterance(m.content.replace(/[*#_`]/g, ''));
-                                                                window.speechSynthesis.speak(u);
-                                                            }
-                                                        }}>
-                                                            <Volume2 className="w-3.5 h-3.5 text-slate-400" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to heart"}); }}>
-                                                            <Copy className="w-3.5 h-3.5 text-slate-400" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20"><ThumbsUp className="w-3.5 h-3.5 text-slate-400" /></Button>
-                                                    </div>
-                                                )}
+                                                <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-1">
+                                                    <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full transition-all border border-slate-100 dark:border-slate-800", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                                        {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
+                                                        <Copy className="w-4 h-4 text-slate-400" />
+                                                    </Button>
+                                                    <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsDown className="w-4 h-4 text-slate-400" /></Button>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -420,37 +415,37 @@ export default function AIPsychiatristPage() {
                         })}
 
                         {isPending && (
-                             <div className="flex items-start gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-300 mt-8">
-                                <div className="flex-1 pt-1 min-w-0">
-                                    <div className="bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-xl p-6 rounded-[2.2rem] rounded-tl-sm shadow-sm border border-white dark:border-[#3c4043] space-y-5">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 text-primary font-black text-[11px] uppercase tracking-[0.2em]">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>Companion is feeling...</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 bg-blue-50/50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-800">
-                                                <Clock className="w-3 h-3 text-primary" />
-                                                <span className="text-[11px] font-black tabular-nums text-primary">{loadingTimer}s</span>
-                                            </div>
+                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
+                                        <Sparkles className="w-4.5 h-4.5 text-primary" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Listening...</span>
+                                        <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
+                                            <Clock className="w-2.5 h-2.5 text-primary" />
+                                            <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        <div className="h-px bg-gray-100/50 dark:bg-[#3c4043]" />
-
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-2.5">
-                                                <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Cross-checking Empathy Data</span>
-                                            </div>
-                                            
-                                            <div className="relative h-12 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
-                                                <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
-                                                    <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                    <p className="text-[11px] font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                        Checking: <span className="text-primary">{mentalHealthSources[currentSourceIndex]}</span>
-                                                    </p>
-                                                </div>
-                                            </div>
+                                <div className="space-y-4 w-full max-w-lg">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Cross-checking Empathy Data</span>
+                                    </div>
+                                    
+                                    <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
+                                        <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
+                                            <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
+                                            <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
+                                                Checking: <span className="text-primary">{mentalHealthSources[currentSourceIndex]}</span>
+                                            </p>
                                         </div>
+                                    </div>
+                                    <div className="space-y-2 pt-2">
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-2/3 animate-pulse" />
                                     </div>
                                 </div>
                             </div>
@@ -458,16 +453,16 @@ export default function AIPsychiatristPage() {
 
                         {/* Suggestion Chips */}
                         {suggestionChips.length > 0 && !isPending && (
-                            <div className="flex flex-wrap gap-2.5 pt-10 justify-start animate-in fade-in slide-in-from-left-4 duration-700">
+                            <div className="flex flex-wrap gap-3 pt-10 justify-start animate-in fade-in slide-in-from-left-6 duration-700">
                                 {suggestionChips.map((chip, idx) => (
                                     <Button 
                                         key={idx} 
                                         variant="outline" 
                                         size="sm" 
-                                        className="rounded-full border-primary/20 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-sm hover:bg-primary hover:text-white hover:border-primary text-[11px] font-black text-primary px-7 h-12 transition-all active:scale-95 shadow-lg shadow-primary/5"
+                                        className="rounded-full border-primary/10 bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-sm hover:bg-primary hover:text-white hover:border-primary text-[11px] font-black text-primary px-8 h-12 transition-all active:scale-95 shadow-xl shadow-primary/5"
                                         onClick={() => onFormAction(chip)}
                                     >
-                                        <MessageCircle className="w-4 h-4 mr-2 opacity-70" />
+                                        <MessageCircle className="w-4 h-4 mr-2.5 opacity-70" />
                                         {chip}
                                     </Button>
                                 ))}
@@ -480,20 +475,20 @@ export default function AIPsychiatristPage() {
 
         {/* Floating Input Footer - Absolute Positioning to prevent layout ghost space */}
         <div className={cn(
-            "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out px-4 pb-10",
-            !isInputVisible && hasMessages ? "translate-y-[120%]" : "translate-y-0"
+            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-10",
+            !isInputVisible && hasMessages ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
         )}>
-            <form ref={formRef} action={onFormAction} className="max-w-2xl mx-auto flex flex-col gap-4">
-                <div className="relative flex flex-col rounded-[2.5rem] bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/5">
+            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-4">
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
                     <div className="flex items-center justify-between px-5 mb-2">
-                        <div className="flex items-center gap-2.5 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">
+                        <div className="flex items-center gap-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                             <ShieldCheck className="w-4 h-4 text-primary" />
                             Private Safe Space
                         </div>
                         {activeSession?.mood && (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/10">
-                                <Activity className="w-3 h-3 text-primary" />
-                                <span className="text-[9px] font-black uppercase text-primary tracking-widest">{activeSession.mood}</span>
+                            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-primary/10 rounded-full border border-primary/10 shadow-sm">
+                                <Activity className="w-3.5 h-3.5 text-primary" />
+                                <span className="text-[10px] font-black uppercase text-primary tracking-widest">{activeSession.mood}</span>
                             </div>
                         )}
                     </div>
@@ -503,7 +498,7 @@ export default function AIPsychiatristPage() {
                             ref={queryInputRef}
                             name="query"
                             placeholder="Tell me whatever's on your heart..."
-                            className="w-full min-h-[50px] max-h-[160px] px-4 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[16px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none"
+                            className="w-full min-h-[50px] max-h-[160px] px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none"
                             rows={1}
                             onInput={(e) => {
                                 const target = e.target as HTMLTextAreaElement;
@@ -520,39 +515,39 @@ export default function AIPsychiatristPage() {
                         />
                     </div>
 
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/50 dark:border-[#3c4043]">
-                        <div className="flex items-center gap-1">
-                             <Button type="button" variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/5" onClick={handleNewChat}>
-                                <Plus className="h-6 w-6 text-slate-400" />
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80 dark:border-[#3c4043]">
+                        <div className="flex items-center gap-1.5">
+                             <Button type="button" variant="ghost" size="icon" className="h-11 w-11 rounded-full hover:bg-primary/5" onClick={handleNewChat}>
+                                <Plus className="h-6 w-6 text-slate-500" />
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-3">
                              {!isTyping && !isRecording && (
-                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-11 w-11 rounded-full bg-slate-50 dark:bg-slate-800">
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800">
                                     <Mic className="w-5 h-5 text-primary" />
                                 </Button>
                             )}
                             {(isTyping || isRecording) && (
-                                <div className="flex items-center gap-2.5">
+                                <div className="flex items-center gap-3">
                                     {isRecording && (
-                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-11 w-11 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
+                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
                                             <MicOff className="w-5 h-5" />
                                         </Button>
                                     )}
                                     <Button 
                                         type="submit"
                                         disabled={isPending} 
-                                        className="h-11 w-11 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20"
+                                        className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20"
                                     >
-                                        {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <SendHorizonal className="w-5 h-5" />}
+                                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                     </Button>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-                <p className="text-[8px] text-center text-slate-400 font-black uppercase tracking-[0.3em] mt-2">Mind Companion is here to support, not diagnose.</p>
+                <p className="text-[9px] text-center text-slate-400 font-black uppercase tracking-widest mt-2">Mind Companion is here to support, not diagnose.</p>
             </form>
         </div>
     </div>

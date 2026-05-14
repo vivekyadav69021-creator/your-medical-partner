@@ -426,7 +426,7 @@ export default function HealthAssistantPage() {
             </Sheet>
         </header>
 
-        <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-3xl mx-auto">
+        <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
                     <div className="flex flex-col justify-center items-center px-6 pt-10 pb-32 space-y-12 text-center max-w-sm mx-auto">
@@ -471,37 +471,43 @@ export default function HealthAssistantPage() {
                     </div>
                 </ScrollArea>
             ) : (
-                <ScrollArea className="flex-1 px-4 md:px-6 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-3xl mx-auto space-y-12 pb-48">
+                <ScrollArea className="flex-1 px-4 md:px-8 py-10" ref={scrollAreaRef}>
+                    <div className="max-w-4xl mx-auto space-y-16 pb-64">
                         {activeSession?.messages.map((m, i) => (
-                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-4 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
+                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-6 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                                         {m.image && (
                                             <div className="mb-4 rounded-[1.5rem] overflow-hidden border-2 border-white/20 shadow-lg">
                                                 <Image src={m.image} alt="Attached" width={300} height={300} className="w-full h-auto object-cover" />
                                             </div>
                                         )}
-                                        <p className="text-[15px] font-bold leading-relaxed">{m.content}</p>
+                                        <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{m.content}</p>
                                     </div>
                                 ) : (
-                                    <div className="flex items-start gap-4 w-full group min-w-0">
-                                        <div className="mt-2 size-8 shrink-0 flex items-center justify-center bg-primary rounded-xl shadow-lg shadow-primary/20">
-                                            <ShieldPlus className="w-4 h-4 text-white" />
+                                    <div className="flex flex-col items-start w-full group">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
+                                                <ShieldPlus className="w-4.5 h-4.5 text-primary" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medical Assistant</span>
                                         </div>
-                                        <div className="flex-1 min-w-0 overflow-hidden">
-                                            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px] py-1 px-2" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                        
+                                        <div className="flex-1 w-full min-w-0">
+                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             
-                                            <div className="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-2">
-                                                <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full transition-all", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full transition-all border border-slate-100 dark:border-slate-800", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
                                                     {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
                                                     <Copy className="w-4 h-4 text-slate-400" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
+                                                <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsDown className="w-4 h-4 text-slate-400" /></Button>
                                             </div>
                                         </div>
                                     </div>
@@ -509,40 +515,40 @@ export default function HealthAssistantPage() {
                             </div>
                         ))}
                         {isPending && (
-                             <div className="flex items-start gap-4 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="mt-1.5 size-8 shrink-0 flex items-center justify-center bg-primary/20 rounded-xl animate-pulse">
-                                    <ShieldPlus className="w-4 h-4 text-primary" />
+                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
+                                        <ShieldPlus className="w-4.5 h-4.5 text-primary" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Generating...</span>
+                                        <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
+                                            <Clock className="w-2.5 h-2.5 text-primary" />
+                                            <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex-1 pt-1 min-w-0">
-                                    <div className="bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl p-5 rounded-[2rem] rounded-tl-sm border border-white dark:border-[#3c4043] space-y-4 max-w-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.1em]">
-                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                <span>Assistant processing...</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
-                                                <Clock className="w-2.5 h-2.5 text-primary" />
-                                                <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
-                                            </div>
-                                        </div>
 
-                                        <div className="h-px bg-gray-100/50 dark:bg-[#3c4043]" />
-
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2">
-                                                <Globe className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-                                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-[0.1em]">Verifying Evidence</span>
-                                            </div>
-                                            
-                                            <div className="relative h-10 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-4">
-                                                <div key={currentSourceIndex} className="flex items-center gap-2.5 animate-in slide-in-from-bottom-2 fade-in duration-500 w-full">
-                                                    <Sparkles className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                                                    <p className="text-[10px] font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                        Checking: <span className="text-primary">{medicalSources[currentSourceIndex]}</span>
-                                                    </p>
-                                                </div>
-                                            </div>
+                                <div className="space-y-4 w-full max-w-lg">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Tapping World Expert Data</span>
+                                    </div>
+                                    
+                                    <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
+                                        <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
+                                            <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
+                                            <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
+                                                Analyzing <span className="text-primary">{medicalSources[currentSourceIndex]}</span> guidelines
+                                            </p>
                                         </div>
+                                    </div>
+                                    
+                                    {/* Shimmer effect to mimic Gemini text loading */}
+                                    <div className="space-y-2 pt-2">
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-3/4 animate-pulse" />
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-1/2 animate-pulse" />
                                     </div>
                                 </div>
                             </div>
@@ -554,10 +560,10 @@ export default function HealthAssistantPage() {
 
         {/* Floating Input Footer - Absolute Positioning to prevent layout ghost space */}
         <div className={cn(
-            "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out px-4 pb-10",
-            !isInputVisible && hasMessages ? "translate-y-[120%]" : "translate-y-0"
+            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-10",
+            !isInputVisible && hasMessages ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
         )}>
-            <form ref={formRef} action={onFormAction} className="max-w-2xl mx-auto flex flex-col gap-4">
+            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-4">
                 {attachedImage && (
                     <div className="mx-4 mb-1 flex animate-in zoom-in-95">
                         <div className="relative group/thumb">
@@ -568,29 +574,29 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 )}
-                <div className="relative flex flex-col rounded-[2.5rem] bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/5">
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
                     <div className="flex-1 max-h-48 overflow-y-auto">
-                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Discuss with ${specialty}...` : "Ask health questions..."}
-                            className="w-full min-h-[50px] max-h-[160px] px-4 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[16px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none" rows={1}
+                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Discuss with ${specialty}...` : "Ask anything about health..."}
+                            className="w-full min-h-[50px] max-h-[160px] px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none" rows={1}
                             onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/50 dark:border-[#3c4043]">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80 dark:border-[#3c4043]">
                         <div className="flex items-center gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-10 w-10 rounded-full hover:bg-primary/5">
-                                <Plus className="h-6 w-6 text-slate-400" />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-11 w-11 rounded-full hover:bg-primary/5">
+                                <Plus className="h-6 w-6 text-slate-500" />
                             </Button>
                             <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setAttachedImage(ev.target?.result as string); r.readAsDataURL(file); } }} />
                             {activeMode === 'general' && (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className="h-10 px-4 rounded-full gap-2.5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50/50 dark:bg-slate-800/50">
+                                        <Button type="button" variant="ghost" className="h-11 px-5 rounded-full gap-2.5 text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest bg-slate-50/80 dark:bg-slate-800/80">
                                             <Zap className="h-4 w-4 text-primary" />
-                                            <span className="hidden sm:inline">Advanced Modes</span>
+                                            <span className="hidden sm:inline">Expert Modes</span>
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 rounded-[2rem] p-3 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
-                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-1.5">
+                                    <PopoverContent className="w-72 rounded-[2.5rem] p-4 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
                                             <PulseModeItem value="standard" label="Balanced Expert" icon={<ShieldPlus className="w-4 h-4"/>} />
                                             <PulseModeItem value="websearch" label="Deep Web Search" icon={<Search className="w-4 h-4"/>} />
                                             <PulseModeItem value="deepthink" label="Logical Reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
@@ -600,21 +606,21 @@ export default function HealthAssistantPage() {
                                 </Popover>
                             )}
                         </div>
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-3">
                              {!isTyping && !isRecording && !attachedImage && (
-                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-11 w-11 rounded-full bg-slate-50 dark:bg-slate-800">
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800">
                                     <Mic className="w-5 h-5 text-primary" />
                                 </Button>
                             )}
                             {(isTyping || isRecording || attachedImage) && (
-                                <div className="flex items-center gap-2.5">
+                                <div className="flex items-center gap-3">
                                     {isRecording && (
-                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-11 w-11 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
+                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
                                             <MicOff className="w-5 h-5" />
                                         </Button>
                                     )}
-                                    <Button type="submit" disabled={isPending} className="h-11 w-11 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
-                                        {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <SendHorizonal className="w-5 h-5" />}
+                                    <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
+                                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                     </Button>
                                 </div>
                             )}
@@ -629,12 +635,12 @@ export default function HealthAssistantPage() {
 
 function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center space-x-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
+        <div className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
             <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#131314] shadow-sm group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900">
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] shadow-sm group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900 transition-colors">
                 {icon}
             </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[10px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">
+            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">
                 {label}
             </Label>
         </div>
