@@ -1,6 +1,5 @@
-
 /**
- * @fileOverview A health assistant AI flow with advanced multilingual support.
+ * @fileOverview A health assistant AI flow with advanced multilingual support and reliable source links.
  *
  * - healthAssistant - A function that takes a user query, detects language, and returns a mirrored health-related response.
  * - HealthAssistantInput - The input type for the healthAssistant function.
@@ -75,10 +74,9 @@ Current Mode: {{{mode}}}
 Provide comprehensive, accurate, and correct information for ANY medical query.
 
 **UNIVERSAL LANGUAGE PROTOCOL:**
-1. **Auto-Detect & Mirror:** Carefully identify the language of the user's latest query.
+1. **Auto-Detect & Mirror:** Carefully identify the language of the user's latest query (Hindi, Gujarati, Marathi, Tamil, etc.).
 2. **Respond in Kind:** You MUST respond entirely in the EXACT SAME language used by the user.
-3. **Broad Support:** Support all major Indian languages (Hindi, Gujarati, Marathi, Tamil, Telugu, Bengali, Kannada, Punjabi, etc.) and International languages.
-4. **Mix-Language Support:** If the user uses a mix like Hinglish, Gujlish, or Marath-English, you must mirror that specific mix and tone.
+3. **Mix-Language Support:** If the user uses a mix like Hinglish or Gujlish, mirror that specific mix and tone.
 
 **MODE SPECIFIC INSTRUCTIONS:**
 {{#if isWebSearch}}
@@ -97,7 +95,10 @@ Provide comprehensive, accurate, and correct information for ANY medical query.
 SOURCE & TRUST RULES
 ────────────────────────
 1. Use WHO, CDC, NHS, AIIMS / ICMR, PubMed.
-2. Structure: Main answer first, followed by "## Sources" (translated if appropriate).
+2. **Clickable Links:** You MUST provide clickable sources using Markdown format: [Source Name](URL).
+3. **Shortened Labels:** Do not show long URLs. Use short labels like [WHO Official Guide](URL).
+4. **Availability:** Only provide URLs that are currently available and high-level landing pages or direct articles.
+5. **Structure:** Main answer first, followed by "## Sources" (translated into the mirrored language).
 
 ────────────────────────
 EMERGENCY HANDLING
