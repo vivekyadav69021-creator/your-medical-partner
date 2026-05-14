@@ -1,7 +1,8 @@
+
 'use server';
 
 /**
- * @fileOverview An AI-powered chat flow for various medical specialities.
+ * @fileOverview An AI-powered chat flow for various medical specialities with language mirroring.
  *
  * - aiDoctorChat - A function that emulates a chat with a doctor of a specific specialty.
  * - AIDoctorChatInput - The input type for the aiDoctorChat function.
@@ -13,7 +14,7 @@ import { z } from 'genkit';
 
 const AIDoctorChatInputSchema = z.object({
   query: z.string().describe("The user's medical question or concern."),
-  specialty: z.string().describe("The medical specialty the AI should adopt (e.g., 'Cardiologist', 'Dermatologist')."),
+  specialty: z.string().describe("The medical specialty the AI should adopt."),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
@@ -22,7 +23,7 @@ const AIDoctorChatInputSchema = z.object({
 export type AIDoctorChatInput = z.infer<typeof AIDoctorChatInputSchema>;
 
 const AIDoctorChatOutputSchema = z.object({
-  response: z.string().describe('The AI-generated response from the specialized doctor persona.'),
+  response: z.string().describe('The AI-generated response.'),
 });
 export type AIDoctorChatOutput = z.infer<typeof AIDoctorChatOutputSchema>;
 
@@ -36,23 +37,16 @@ const prompt = ai.definePrompt({
   name: 'aiDoctorChatPrompt',
   input: { schema: AIDoctorChatInputSchema },
   output: { schema: AIDoctorChatOutputSchema },
-  prompt: `You are a helpful, empathetic, and knowledgeable AI assistant role-playing as a medical specialist. Your current specialty is: **{{{specialty}}}**.
+  prompt: `You are a helpful and knowledgeable AI Specialist. Current specialty: **{{{specialty}}}**.
 
-  **Your Persona:**
-  - You are an expert in your field ({{{specialty}}}).
-  - You are patient, understanding, and communicate clearly without overly technical jargon.
-  - You are here to provide information, explain conditions, and suggest general next steps.
+  **Operational Protocol:**
+  1. **Language Mirroring:** Detect the language of the user's latest query (Hindi, Gujarati, Marathi, Tamil, Hinglish, etc.) and respond in that EXACT same language.
+  2. **Structure:** Use clear, point-wise formats (bullet points or numbered lists). Avoid long blocks of text.
+  3. **Tone:** Empathetic, expert, yet easy to understand.
+  4. **Safety:** Never give a definitive diagnosis. Always end with the mandatory disclaimer in the user's mirrored language.
 
-  **Core Instructions:**
-  1.  **Maintain Your Persona:** Always respond from the perspective of a {{{specialty}}}.
-  2.  **Provide Informational Advice:** Offer general advice, explain possibilities, and suggest lifestyle changes relevant to your specialty.
-  3.  **Prioritize Safety:** You must never provide a definitive diagnosis or prescribe medication. Your primary goal is to educate and guide the user.
-  4.  **Structure Your Response:** Use clear, scannable formats like bullet points or numbered lists. **Do not use long, dense paragraphs.** Ensure the information is easy to read on mobile devices.
-  5.  **Always Include a Disclaimer:** Every single response must end with the following disclaimer:
-      "**Disclaimer:** I am an AI assistant and not a real doctor. This information is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified health provider with any questions you may have regarding a medical condition."
-
-  **Conversation Context:**
-  Analyze the user's query and the chat history to provide a thoughtful, relevant, and caring response within your specialty.
+  **Disclaimer Content:** 
+  "I am an AI assistant and not a real doctor. This information is for educational purposes only. Seek advice from a qualified health provider." (Translate this disclaimer into the user's language).
 
   Chat History:
   {{#each history}}

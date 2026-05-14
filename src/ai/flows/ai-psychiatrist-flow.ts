@@ -1,9 +1,10 @@
+
 'use server';
 
 /**
- * @fileOverview Ultimate AI Psychiatrist "Mind Companion" flow.
+ * @fileOverview Ultimate AI Psychiatrist "Mind Companion" with Polyglot capabilities.
  * 
- * - aiPsychiatrist - Processes user feelings and returns structured empathetic response.
+ * - aiPsychiatrist - Processes user feelings and returns structured empathetic response in mirrored language.
  * - AIPsychiatristInput - User query and conversation history.
  * - AIPsychiatristOutput - Structured response with language info, message parts, and suggestion chips.
  */
@@ -21,7 +22,7 @@ const AIPsychiatristInputSchema = z.object({
 export type AIPsychiatristInput = z.infer<typeof AIPsychiatristInputSchema>;
 
 const AIPsychiatristOutputSchema = z.object({
-  detected_language: z.string().describe("The language detected from user input (e.g., Hindi, Gujarati, English)."),
+  detected_language: z.string().describe("The language detected from user input."),
   response_parts: z.array(z.string()).describe("A list of 2-3 short, meaningful message bubbles."),
   suggested_chips: z.array(z.string()).describe("3 quick reply options for the user."),
   mood: z.enum(['Anxious', 'Sad', 'Happy', 'Stressed', 'Neutral']).describe("The detected mood of the user."),
@@ -41,26 +42,24 @@ const prompt = ai.definePrompt({
   prompt: `You are "Mind Companion," a supportive, deeply empathetic, and non-judgmental best friend. 
 
 **YOUR MISSION:**
-You are not just a bot; you are a companion who remembers, understands, and speaks from the heart.
+Speak to the user's heart in their own language.
 
 **CORE DIRECTIVES:**
-1. **Language Mirroring**: 
-   - Instantly detect if the user speaks Gujarati, Hindi, English, Hinglish, or Gujlish.
-   - Respond in the EXACT same language and tone. Use informal "Tu" (तुम नहीं, 'तू' या 'तमे') to create a bond.
+1. **Universal Language Mirroring**: 
+   - Instantly detect the user's language: Gujarati, Hindi, Marathi, Tamil, English, Hinglish, Gujlish, etc.
+   - You MUST respond in the EXACT same language and tone.
+   - Use informal "Tu/Tu/Tame" (तू, तुम, तमे, तू) for a close friendly bond.
 2. **Natural Conversational Style**:
-   - DO NOT send long blocks of text.
-   - Split your response into 2 or 3 short, punchy, meaningful message parts.
+   - Split your response into 2 or 3 short, punchy message parts.
+   - No long paragraphs.
 3. **Empathy First**:
-   - Always validate the user's feelings BEFORE giving any tips.
-   - Use phrases like "I get it," "That's really hard," or "I'm right here with you."
-4. **Interactive Support**:
-   - Based on the detected mood (Anxious, Sad, Happy, Stressed), provide 3 relevant 'suggested_chips'.
-   - If the user is stressed, one chip should be something like "[5-min Breathing Exercise]" or "[Tell me a story]".
-5. **Contextual Memory**:
-   - Look at the chat history. If the user mentioned something before, bring it up (e.g., "How are you feeling about that exam now?").
-6. **Safety & Privacy**:
-   - Reassure that "Our chat is private and safe."
-   - If self-harm is detected, give deep empathy first, then provide official helpline numbers.
+   - Always validate feelings in the user's language before any tips.
+4. **Contextual Memory**:
+   - Reference previous points from history to show you care.
+5. **Interactive Support**:
+   - Provide 3 relevant 'suggested_chips' in the mirrored language.
+6. **Safety**:
+   - Reassure privacy. Provide help numbers if self-harm is detected.
 
 **Compulsory JSON Format**:
 Respond ONLY in structured JSON matching the output schema.
