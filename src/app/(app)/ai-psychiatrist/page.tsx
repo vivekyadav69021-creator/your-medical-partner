@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -11,7 +12,6 @@ import {
     MicOff, 
     X, 
     Volume2, 
-    Heart,
     History,
     Menu,
     Trash2,
@@ -20,7 +20,6 @@ import {
     BrainCircuit,
     Copy,
     ThumbsUp,
-    ThumbsDown,
     Globe,
     Clock,
     ShieldCheck,
@@ -268,7 +267,7 @@ export default function AIPsychiatristPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
-        {/* Gemini Header */}
+        {/* Branded Header with Journal in Top Right */}
         <header className="h-16 border-b border-gray-100 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl z-50">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-10 w-10 rounded-2xl hover:bg-white/50 dark:hover:bg-[#3c4043] shadow-sm border border-white/20">
@@ -397,7 +396,6 @@ export default function AIPsychiatristPage() {
                                                     </article>
                                                 </div>
                                                 
-                                                {/* Action buttons show only on last part of group or single message */}
                                                 {!isNextSame && (
                                                     <div className="mt-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20" onClick={() => {

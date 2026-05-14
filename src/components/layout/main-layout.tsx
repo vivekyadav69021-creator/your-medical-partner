@@ -17,7 +17,10 @@ import { cn } from '@/lib/utils';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Hide global header for focused AI chat pages
   const isHealthAssistant = pathname === '/health-assistant';
+  const isPsychiatrist = pathname === '/ai-psychiatrist';
+  const hideGlobalHeader = isHealthAssistant || isPsychiatrist;
 
   return (
     <SidebarProvider>
@@ -44,8 +47,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </Sidebar>
       
       <SidebarInset className="flex flex-col relative h-[100dvh] overflow-hidden w-full" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
-        {/* Simplified Header Logic: Hide Cart/Profile on specific pages for focus */}
-        {!isHealthAssistant && (
+        {/* Only show global header if not on specialized AI pages */}
+        {!hideGlobalHeader && (
           <header className="flex h-16 items-center justify-between px-4 sticky top-0 z-40 bg-white/10 backdrop-blur-lg border-b border-white/20 shrink-0 safe-top">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-11 w-11 rounded-full bg-white dark:bg-slate-800 shadow-md border border-white/30 dark:border-slate-700/50">
@@ -58,8 +61,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </header>
         )}
 
-        <main className={cn("flex-1 overflow-y-auto scroll-smooth w-full scrollbar-hide", isHealthAssistant && "p-0 max-w-full")}>
-          <div className={cn("min-h-full w-full", isHealthAssistant ? "p-0" : "p-4 md:p-6 lg:p-10 pb-32 max-w-screen-2xl mx-auto")}>
+        <main className={cn("flex-1 overflow-y-auto scroll-smooth w-full scrollbar-hide", hideGlobalHeader && "p-0 max-w-full")}>
+          <div className={cn("min-h-full w-full", hideGlobalHeader ? "p-0" : "p-4 md:p-6 lg:p-10 pb-32 max-w-screen-2xl mx-auto")}>
             {children}
           </div>
         </main>
