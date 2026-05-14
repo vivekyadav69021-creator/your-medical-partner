@@ -354,51 +354,76 @@ export default function AIPsychiatristPage() {
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-6 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-2xl mx-auto space-y-10 pb-36">
-                        {activeSession?.messages.map((m, i) => (
-                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-3 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
-                                {m.role === 'user' ? (
-                                    <div 
-                                        className="max-w-[85%] rounded-[2rem] rounded-tr-sm bg-primary text-white px-6 py-4 shadow-xl shadow-primary/10 overflow-hidden border border-white/10" 
-                                        style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
-                                    >
-                                        <p className="text-[15px] font-bold leading-relaxed">{m.content}</p>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start gap-3 w-full group min-w-0">
-                                        <div className="flex-1 min-w-0 overflow-hidden">
-                                            <div 
-                                                className="bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md p-6 rounded-[2rem] rounded-tl-sm shadow-sm border border-white dark:border-[#3c4043]" 
-                                                style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
-                                            >
-                                                <article className="prose prose-sm dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px]">
-                                                    <ReactMarkdown>{m.content}</ReactMarkdown>
-                                                </article>
-                                            </div>
-                                            
-                                            <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 border border-white/20" onClick={() => {
-                                                    if (window.speechSynthesis) {
-                                                        window.speechSynthesis.cancel();
-                                                        const u = new SpeechSynthesisUtterance(m.content.replace(/[*#_`]/g, ''));
-                                                        window.speechSynthesis.speak(u);
-                                                    }
-                                                }}>
-                                                    <Volume2 className="w-4 h-4 text-slate-400" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 border border-white/20" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to heart"}); }}>
-                                                    <Copy className="w-4 h-4 text-slate-400" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 border border-white/20"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
+                    <div className="max-w-2xl mx-auto space-y-2 pb-36">
+                        {activeSession?.messages.map((m, i) => {
+                            const isPrevSame = i > 0 && activeSession.messages[i-1].role === m.role;
+                            const isNextSame = i < activeSession.messages.length - 1 && activeSession.messages[i+1].role === m.role;
+                            
+                            return (
+                                <div 
+                                    key={i} 
+                                    className={cn(
+                                        "animate-in fade-in slide-in-from-bottom-3 duration-700", 
+                                        m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start",
+                                        !isPrevSame && i !== 0 ? "mt-8" : "mt-0"
+                                    )}
+                                >
+                                    {m.role === 'user' ? (
+                                        <div 
+                                            className={cn(
+                                                "max-w-[85%] bg-primary text-white px-6 py-3.5 shadow-xl shadow-primary/5 border border-white/10 overflow-hidden",
+                                                "rounded-[1.8rem]",
+                                                isNextSame ? "rounded-br-md" : "rounded-br-sm",
+                                                isPrevSame ? "rounded-tr-md" : ""
+                                            )} 
+                                            style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
+                                        >
+                                            <p className="text-[15px] font-bold leading-relaxed">{m.content}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-start w-full group min-w-0">
+                                            <div className="flex-1 min-w-0 overflow-hidden w-full">
+                                                <div 
+                                                    className={cn(
+                                                        "bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md p-5 shadow-sm border border-white dark:border-[#3c4043] w-fit max-w-[85%]", 
+                                                        "rounded-[1.8rem]",
+                                                        isNextSame ? "rounded-bl-md" : "rounded-bl-sm",
+                                                        isPrevSame ? "rounded-tl-md" : "rounded-tl-sm"
+                                                    )}
+                                                    style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
+                                                >
+                                                    <article className="prose prose-sm dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px]">
+                                                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                                                    </article>
+                                                </div>
+                                                
+                                                {/* Action buttons show only on last part of group or single message */}
+                                                {!isNextSame && (
+                                                    <div className="mt-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20" onClick={() => {
+                                                            if (window.speechSynthesis) {
+                                                                window.speechSynthesis.cancel();
+                                                                const u = new SpeechSynthesisUtterance(m.content.replace(/[*#_`]/g, ''));
+                                                                window.speechSynthesis.speak(u);
+                                                            }
+                                                        }}>
+                                                            <Volume2 className="w-3.5 h-3.5 text-slate-400" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to heart"}); }}>
+                                                            <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 border border-white/20"><ThumbsUp className="w-3.5 h-3.5 text-slate-400" /></Button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                    )}
+                                </div>
+                            );
+                        })}
 
                         {isPending && (
-                             <div className="flex items-start gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                             <div className="flex items-start gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-300 mt-8">
                                 <div className="flex-1 pt-1 min-w-0">
                                     <div className="bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-xl p-6 rounded-[2.2rem] rounded-tl-sm shadow-sm border border-white dark:border-[#3c4043] space-y-5">
                                         <div className="flex items-center justify-between">
@@ -436,7 +461,7 @@ export default function AIPsychiatristPage() {
 
                         {/* Suggestion Chips */}
                         {suggestionChips.length > 0 && !isPending && (
-                            <div className="flex flex-wrap gap-2.5 pt-6 justify-start animate-in fade-in slide-in-from-left-4 duration-700">
+                            <div className="flex flex-wrap gap-2.5 pt-10 justify-start animate-in fade-in slide-in-from-left-4 duration-700">
                                 {suggestionChips.map((chip, idx) => (
                                     <Button 
                                         key={idx} 
