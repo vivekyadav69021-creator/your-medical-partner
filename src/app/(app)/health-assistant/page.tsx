@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -30,7 +29,8 @@ import {
     ArrowLeft,
     Globe,
     Clock,
-    Square
+    Square,
+    Stethoscope
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -403,9 +403,14 @@ export default function HealthAssistantPage() {
                             {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
                                 <div key={session.id} 
                                      onClick={() => {
-                                         setActiveMode(historyTab);
-                                         if (historyTab === 'general') setActiveGeneralId(session.id);
-                                         else { setActiveDoctorId(session.id); setSpecialty(session.specialty || "General Physician"); }
+                                         if (historyTab === 'general') {
+                                             setActiveMode('general');
+                                             setActiveGeneralId(session.id);
+                                         } else { 
+                                             setActiveMode('doctor');
+                                             setActiveDoctorId(session.id); 
+                                             setSpecialty(session.specialty || "General Physician"); 
+                                         }
                                      }}
                                      className={cn("group p-5 rounded-[2rem] border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c]/40 border-transparent hover:bg-white/60")}>
                                     <div className="pr-8">
@@ -414,6 +419,7 @@ export default function HealthAssistantPage() {
                                             <Clock className="w-2.5 h-2.5" />
                                             {formatDistanceToNow(session.createdAt, { addSuffix: true })}
                                         </p>
+                                        {session.specialty && <Badge className="mt-2 text-[7px] bg-primary/10 text-primary border-none uppercase font-black">{session.specialty}</Badge>}
                                     </div>
                                     <Button variant="ghost" size="icon" className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); (historyTab === 'general' ? setGeneralSessions : setDoctorSessions)(prev => prev.filter(s => s.id !== session.id)); }}>
                                         <Trash2 className="h-4 w-4" />
@@ -432,26 +438,42 @@ export default function HealthAssistantPage() {
                     <div className="flex flex-col justify-center items-center px-6 pt-10 pb-32 space-y-12 text-center max-w-sm mx-auto">
                         <div className="space-y-6 flex flex-col items-center">
                             <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[3rem] shadow-2xl border border-white/50 relative group">
-                                <ShieldPlus className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)] transition-transform duration-500 group-hover:scale-110" />
+                                {activeMode === 'general' ? (
+                                    <ShieldPlus className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)] transition-transform duration-500 group-hover:scale-110" />
+                                ) : (
+                                    <Stethoscope className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)] transition-transform duration-500 group-hover:scale-110" />
+                                )}
                                 <div className="absolute inset-0 bg-primary/5 rounded-[3rem] animate-pulse" />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-3xl font-black text-[#1A365D] dark:text-white tracking-tight">How can I help?</h2>
-                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">Global Medical Intelligence</p>
+                                <h2 className="text-3xl font-black text-[#1A365D] dark:text-white tracking-tight">
+                                    {activeMode === 'doctor' ? `Chat with ${specialty}` : "How can I help?"}
+                                </h2>
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
+                                    {activeMode === 'doctor' ? 'Personal Clinical Inquiry' : 'Global Medical Intelligence'}
+                                </p>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 w-full">
-                            {currentSuggestions.map((suggestion, idx) => (
-                                <button key={idx} onClick={() => { const fd = new FormData(); fd.set('query', suggestion.query); onFormAction(fd); }}
-                                    className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-[2rem] text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full">
-                                    <div className="p-2 bg-primary/10 dark:bg-[#131314] rounded-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                                        <suggestion.icon className="w-4 h-4 text-primary group-hover:text-white" />
-                                    </div>
-                                    <span className="text-[11px] font-bold text-slate-700 dark:text-[#c4c7c5] flex-1 line-clamp-1">{suggestion.label}</span>
-                                </button>
-                            ))}
-                        </div>
+                        {activeMode === 'general' ? (
+                             <div className="flex flex-col gap-3 w-full">
+                                {currentSuggestions.map((suggestion, idx) => (
+                                    <button key={idx} onClick={() => { const fd = new FormData(); fd.set('query', suggestion.query); onFormAction(fd); }}
+                                        className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-[2rem] text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full">
+                                        <div className="p-2 bg-primary/10 dark:bg-[#131314] rounded-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                                            <suggestion.icon className="w-4 h-4 text-primary group-hover:text-white" />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-slate-700 dark:text-[#c4c7c5] flex-1 line-clamp-1">{suggestion.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 bg-blue-50/50 dark:bg-blue-900/10 rounded-[3rem] border border-blue-100 dark:border-blue-800 border-dashed text-center">
+                                <p className="text-sm font-bold text-blue-600 dark:text-blue-300 leading-relaxed">
+                                    "I am your AI {specialty}. Tell me your symptoms or health concerns, and I will guide you with a clinical approach."
+                                </p>
+                            </div>
+                        )}
 
                         <div className="space-y-6 w-full pt-4">
                              <div className="flex items-center justify-center gap-4 px-8">
@@ -461,11 +483,15 @@ export default function HealthAssistantPage() {
                             </div>
                             <div className="flex gap-2.5 overflow-x-auto pb-4 px-2 scrollbar-hide">
                                 {doctorSpecialties.map(spec => (
-                                    <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); }}
-                                            className="h-10 px-6 rounded-full bg-white/60 dark:bg-[#1e1f20]/60 text-[10px] font-black uppercase tracking-widest shadow-sm border-white/50 dark:border-[#3c4043] dark:text-[#e3e3e3] whitespace-nowrap active:scale-95 transition-all hover:bg-primary hover:text-white hover:border-primary">
+                                    <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); setActiveDoctorId(null); }}
+                                            className={cn("h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm transition-all whitespace-nowrap",
+                                                activeMode === 'doctor' && specialty === spec ? "bg-primary text-white border-primary" : "bg-white/60 dark:bg-[#1e1f20]/60 border-white/50 dark:border-[#3c4043] dark:text-[#e3e3e3] hover:bg-primary/5")}>
                                         {spec}
                                     </Button>
                                 ))}
+                                <Button variant="ghost" onClick={() => setActiveMode('general')} className="h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <ArrowLeft className="w-3 h-3 mr-2" /> Back to Assistant
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -488,9 +514,14 @@ export default function HealthAssistantPage() {
                                     <div className="flex flex-col items-start w-full group">
                                         <div className="flex items-center gap-3 mb-6">
                                             <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
-                                                <ShieldPlus className="w-4.5 h-4.5 text-primary" />
+                                                {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medical Assistant</span>
+                                            <div className="flex flex-col -space-y-1">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    {activeMode === 'doctor' ? specialty : 'Medical Assistant'}
+                                                </span>
+                                                {activeMode === 'doctor' && <span className="text-[8px] font-bold text-primary uppercase">Clinic Mode</span>}
+                                            </div>
                                         </div>
                                         
                                         <div className="flex-1 w-full min-w-0">
@@ -518,10 +549,12 @@ export default function HealthAssistantPage() {
                              <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="flex items-center gap-3">
                                     <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
-                                        <ShieldPlus className="w-4.5 h-4.5 text-primary" />
+                                        {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Generating...</span>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                            {activeMode === 'doctor' ? `Consulting ${specialty}...` : 'Generating...'}
+                                        </span>
                                         <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
                                             <Clock className="w-2.5 h-2.5 text-primary" />
                                             <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
@@ -532,7 +565,9 @@ export default function HealthAssistantPage() {
                                 <div className="space-y-4 w-full max-w-lg">
                                     <div className="flex items-center gap-2 px-1">
                                         <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Tapping World Expert Data</span>
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
+                                            {activeMode === 'doctor' ? `Accessing ${specialty} clinical protocols` : 'Tapping World Expert Data'}
+                                        </span>
                                     </div>
                                     
                                     <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
@@ -544,7 +579,6 @@ export default function HealthAssistantPage() {
                                         </div>
                                     </div>
                                     
-                                    {/* Shimmer effect to mimic Gemini text loading */}
                                     <div className="space-y-2 pt-2">
                                         <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
                                         <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-3/4 animate-pulse" />
@@ -558,7 +592,6 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        {/* Floating Input Footer - Absolute Positioning to prevent layout ghost space */}
         <div className={cn(
             "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-10",
             !isInputVisible && hasMessages ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
@@ -576,7 +609,7 @@ export default function HealthAssistantPage() {
                 )}
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
                     <div className="flex-1 max-h-48 overflow-y-auto">
-                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Discuss with ${specialty}...` : "Ask anything about health..."}
+                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Tell ${specialty} about your symptoms...` : "Ask anything about health..."}
                             className="w-full min-h-[50px] max-h-[160px] px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none" rows={1}
                             onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
@@ -604,6 +637,11 @@ export default function HealthAssistantPage() {
                                         </RadioGroup>
                                     </PopoverContent>
                                 </Popover>
+                            )}
+                            {activeMode === 'doctor' && (
+                                <div className="px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
+                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Consulting: {specialty}</span>
+                                </div>
                             )}
                         </div>
                         <div className="flex items-center gap-3">
