@@ -84,13 +84,13 @@ const suggestionPool = [
 ];
 
 const medicalSources = [
-  "World Health Organization (WHO)",
+  "WHO",
   "Mayo Clinic",
-  "Harvard Health Publishing",
-  "Johns Hopkins Medicine",
-  "AIIMS India (Expert Database)",
-  "NHS UK (Clinical Guidelines)",
-  "PubMed & The Lancet",
+  "Harvard Health",
+  "Johns Hopkins",
+  "AIIMS India",
+  "NHS UK",
+  "The Lancet",
   "Cleveland Clinic"
 ];
 
@@ -176,16 +176,8 @@ export default function HealthAssistantPage() {
     if (isPending) {
       setLoadingTimer(0);
       setCurrentSourceIndex(0);
-
-      timerInterval = setInterval(() => {
-        setLoadingTimer(prev => prev + 1);
-      }, 1000);
-
-      sourceInterval = setInterval(() => {
-        setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length);
-      }, 2500); // Change source every 2.5 seconds
-    } else {
-        setLoadingTimer(0);
+      timerInterval = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
+      sourceInterval = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length), 2500);
     }
 
     return () => {
@@ -198,10 +190,8 @@ export default function HealthAssistantPage() {
   useEffect(() => {
     const savedGen = localStorage.getItem('healthAssistantSessions_general');
     const savedDoc = localStorage.getItem('healthAssistantSessions_doctor');
-    
     if (savedGen) setGeneralSessions(JSON.parse(savedGen));
     if (savedDoc) setDoctorSessions(JSON.parse(savedDoc));
-
     setActiveGeneralId(null);
     setActiveDoctorId(null);
   }, []);
@@ -215,23 +205,15 @@ export default function HealthAssistantPage() {
   // Immersive Reading Mode: Hide/Show Footer on Scroll
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
-    if (!scrollArea || !hasMessages) {
-        setIsInputVisible(true);
-        return;
-    }
-
+    if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
     const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
 
     const handleScroll = () => {
         const currentTop = viewport.scrollTop;
-        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) * 0.9 <= 20; // Adjusted for precision
-
-        if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) {
-            setIsInputVisible(false);
-        } else {
-            setIsInputVisible(true);
-        }
+        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 20;
+        if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) setIsInputVisible(false);
+        else setIsInputVisible(true);
         lastScrollTop.current = currentTop;
     };
 
@@ -327,7 +309,7 @@ export default function HealthAssistantPage() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const [speechState, speechFormAction, isTranscribing] = useActionState(speechToTextAction, initialSpeechState);
+  const [speechState, speechFormAction] = useActionState(speechToTextAction, initialSpeechState);
 
   useEffect(() => {
     if (speechState.transcript && queryInputRef.current) {
@@ -359,66 +341,21 @@ export default function HealthAssistantPage() {
     } catch (e) { toast({ variant: 'destructive', title: 'Mic Access Denied' }); }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-        if (viewport) {
-            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
-        }
+        if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
     }
   }, [activeSession?.messages, isPending]);
 
-  // Clean text for TTS
-  const cleanTextForTTS = (text: string) => {
-      return text
-          .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove markdown links but keep labels
-          .replace(/[*#_`]/g, '') // Remove markdown symbols
-          .replace(/https?:\/\/\S+/g, '') // Remove naked URLs
-          .trim();
-  };
-
-  // Improved TTS Toggle Logic
   const handleToggleSpeech = (text: string, msgId: number) => {
-    if (!window.speechSynthesis) {
-        toast({ variant: 'destructive', title: 'TTS Not Supported' });
-        return;
-    }
-
-    if (speakingMsgId === msgId) {
-        window.speechSynthesis.cancel();
-        setSpeakingMsgId(null);
-        return;
-    }
-
-    // Stop existing speech
+    if (!window.speechSynthesis) return;
+    if (speakingMsgId === msgId) { window.speechSynthesis.cancel(); setSpeakingMsgId(null); return; }
     window.speechSynthesis.cancel();
-
-    const cleanedText = cleanTextForTTS(text);
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-    
-    // Voice Selection (Try to find a natural voice)
-    const voices = window.speechSynthesis.getVoices();
-    const premiumVoice = voices.find(v => v.lang.includes('IN') || v.name.includes('Google') || v.name.includes('Premium'));
-    if (premiumVoice) utterance.voice = premiumVoice;
-    
-    utterance.rate = 0.95; // Slightly slower for clarity
-    utterance.pitch = 1.0;
-
-    utterance.onstart = () => setSpeakingMsgId(msgId);
-    utterance.onend = () => setSpeakingMsgId(null);
-    utterance.onerror = () => {
-        setSpeakingMsgId(null);
-        toast({ variant: 'destructive', title: 'Speech Error' });
-    };
-
-    window.speechSynthesis.speak(utterance);
+    const clean = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/[*#_`]/g, '').trim();
+    const u = new SpeechSynthesisUtterance(clean);
+    u.rate = 0.95; u.onstart = () => setSpeakingMsgId(msgId); u.onend = () => setSpeakingMsgId(null);
+    window.speechSynthesis.speak(u);
   };
 
   return (
@@ -506,15 +443,8 @@ export default function HealthAssistantPage() {
 
                         <div className="flex flex-col gap-3 w-full">
                             {currentSuggestions.map((suggestion, idx) => (
-                                <button 
-                                    key={idx}
-                                    onClick={() => {
-                                        const fd = new FormData();
-                                        fd.set('query', suggestion.query);
-                                        onFormAction(fd);
-                                    }}
-                                    className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-[2rem] text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full"
-                                >
+                                <button key={idx} onClick={() => { const fd = new FormData(); fd.set('query', suggestion.query); onFormAction(fd); }}
+                                    className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-[2rem] text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full">
                                     <div className="p-2 bg-primary/10 dark:bg-[#131314] rounded-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                                         <suggestion.icon className="w-4 h-4 text-primary group-hover:text-white" />
                                     </div>
@@ -542,16 +472,13 @@ export default function HealthAssistantPage() {
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-6 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-2xl mx-auto space-y-10 pb-36">
+                    <div className="max-w-3xl mx-auto space-y-12 pb-36">
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-4 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div 
-                                        className="max-w-[85%] rounded-[2rem] rounded-tr-sm bg-primary text-white px-6 py-3.5 shadow-xl shadow-primary/10 overflow-hidden" 
-                                        style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
-                                    >
+                                    <div className="max-w-[85%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                                         {m.image && (
-                                            <div className="mb-3 rounded-2xl overflow-hidden border-2 border-white/20 shadow-lg">
+                                            <div className="mb-4 rounded-[1.5rem] overflow-hidden border-2 border-white/20 shadow-lg">
                                                 <Image src={m.image} alt="Attached" width={300} height={300} className="w-full h-auto object-cover" />
                                             </div>
                                         )}
@@ -559,33 +486,23 @@ export default function HealthAssistantPage() {
                                     </div>
                                 ) : (
                                     <div className="flex items-start gap-4 w-full group min-w-0">
-                                        <div className="mt-1.5 size-8 shrink-0 flex items-center justify-center bg-primary rounded-xl shadow-lg shadow-primary/20">
+                                        <div className="mt-2 size-8 shrink-0 flex items-center justify-center bg-primary rounded-xl shadow-lg shadow-primary/20">
                                             <ShieldPlus className="w-4 h-4 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0 overflow-hidden">
-                                            <article 
-                                                className="prose prose-sm dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px] bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-md p-6 rounded-[2.2rem] rounded-tl-sm shadow-sm border border-white dark:border-[#3c4043]" 
-                                                style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
-                                            >
+                                            {/* Clean Output Layout - No Card Wrapper */}
+                                            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px] py-1 px-2" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
                                             
-                                            <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className={cn(
-                                                        "h-8 w-8 rounded-full transition-all",
-                                                        speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40"
-                                                    )} 
-                                                    onClick={() => handleToggleSpeech(m.content, i)}
-                                                >
-                                                    {speakingMsgId === i ? <Square className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                                            <div className="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-2">
+                                                <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full transition-all", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                                    {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 dark:bg-slate-800/40" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
-                                                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
+                                                    <Copy className="w-4 h-4 text-slate-400" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 dark:bg-slate-800/40"><ThumbsUp className="w-3.5 h-3.5 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
                                             </div>
                                         </div>
                                     </div>
@@ -598,39 +515,33 @@ export default function HealthAssistantPage() {
                                     <ShieldPlus className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="flex-1 pt-1 min-w-0">
-                                    <div className="bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-xl p-6 rounded-[2.2rem] rounded-tl-sm shadow-sm border border-white dark:border-[#3c4043] space-y-5">
+                                    <div className="bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl p-5 rounded-[2rem] rounded-tl-sm border border-white dark:border-[#3c4043] space-y-4 max-w-sm">
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 text-primary font-black text-[11px] uppercase tracking-[0.2em]">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>Assistant is processing...</span>
+                                            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.1em]">
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                <span>Assistant processing...</span>
                                             </div>
-                                            <div className="flex items-center gap-2 bg-blue-50/50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-800">
-                                                <Clock className="w-3 h-3 text-primary" />
-                                                <span className="text-[11px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                            <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
+                                                <Clock className="w-2.5 h-2.5 text-primary" />
+                                                <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
                                             </div>
                                         </div>
 
                                         <div className="h-px bg-gray-100/50 dark:bg-[#3c4043]" />
 
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-2.5">
-                                                <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Searching World Medical Expert Sources</span>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Globe className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+                                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-[0.1em]">Verifying Evidence</span>
                                             </div>
                                             
-                                            <div className="relative h-12 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
-                                                <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500 w-full">
-                                                    <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                    <p className="text-[11px] font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                        Accessing: <span className="text-primary">{medicalSources[currentSourceIndex]}</span>
+                                            <div className="relative h-10 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-4">
+                                                <div key={currentSourceIndex} className="flex items-center gap-2.5 animate-in slide-in-from-bottom-2 fade-in duration-500 w-full">
+                                                    <Sparkles className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                                                    <p className="text-[10px] font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
+                                                        Checking: <span className="text-primary">{medicalSources[currentSourceIndex]}</span>
                                                     </p>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <div className="h-1.5 w-10 rounded-full bg-primary/40 animate-pulse" />
-                                                <div className="h-1.5 w-16 rounded-full bg-primary/20 animate-pulse delay-75" />
-                                                <div className="h-1.5 w-8 rounded-full bg-primary/10 animate-pulse delay-150" />
                                             </div>
                                         </div>
                                     </div>
@@ -642,15 +553,8 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        <footer className={cn(
-            "px-4 pb-10 pt-2 z-40 shrink-0 transition-transform duration-500 ease-in-out",
-            !isInputVisible && hasMessages ? "translate-y-[150%]" : "translate-y-0"
-        )}>
-            <form 
-                ref={formRef} 
-                action={onFormAction} 
-                className="max-w-2xl mx-auto flex flex-col gap-4"
-            >
+        <footer className={cn("px-4 pb-10 pt-2 z-40 shrink-0 transition-transform duration-500 ease-in-out", !isInputVisible && hasMessages ? "translate-y-[150%]" : "translate-y-0")}>
+            <form ref={formRef} action={onFormAction} className="max-w-2xl mx-auto flex flex-col gap-4">
                 {attachedImage && (
                     <div className="mx-4 mb-1 flex animate-in zoom-in-95">
                         <div className="relative group/thumb">
@@ -661,45 +565,19 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 )}
-
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/5">
                     <div className="flex-1 max-h-48 overflow-y-auto">
-                        <Textarea
-                            ref={queryInputRef}
-                            name="query"
-                            placeholder={activeMode === 'doctor' ? `Discuss with ${specialty}...` : "Describe symptoms or ask health questions..."}
-                            className="w-full min-h-[50px] max-h-[160px] px-4 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[16px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none"
-                            rows={1}
-                            onInput={(e) => {
-                                const target = e.target as HTMLTextAreaElement;
-                                target.style.height = 'auto';
-                                target.style.height = `${target.scrollHeight}px`;
-                                setIsTyping(target.value.length > 0);
-                            }}
-                            onKeyDown={(e) => { 
-                                if (e.key === 'Enter' && !e.shiftKey) { 
-                                    e.preventDefault(); 
-                                    const formData = new FormData(formRef.current!);
-                                    onFormAction(formData);
-                                } 
-                            }}
-                        />
+                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Discuss with ${specialty}...` : "Ask health questions..."}
+                            className="w-full min-h-[50px] max-h-[160px] px-4 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[16px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none" rows={1}
+                            onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>
-
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/50 dark:border-[#3c4043]">
                         <div className="flex items-center gap-1.5">
                             <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-10 w-10 rounded-full hover:bg-primary/5">
                                 <Plus className="h-6 w-6 text-slate-400" />
                             </Button>
-                            <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    const r = new FileReader();
-                                    r.onload = (ev) => setAttachedImage(ev.target?.result as string);
-                                    r.readAsDataURL(file);
-                                }
-                            }} />
-
+                            <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setAttachedImage(ev.target?.result as string); r.readAsDataURL(file); } }} />
                             {activeMode === 'general' && (
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -709,19 +587,16 @@ export default function HealthAssistantPage() {
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-64 rounded-[2rem] p-3 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
-                                        <div className="space-y-1">
-                                            <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-1.5">
-                                                <PulseModeItem value="standard" label="Balanced Expert" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                                <PulseModeItem value="websearch" label="Deep Web Search" icon={<Search className="w-4 h-4"/>} />
-                                                <PulseModeItem value="deepthink" label="Logical Reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                                <PulseModeItem value="proanalysis" label="Pharmacist Analysis" icon={<Pill className="w-4 h-4"/>} />
-                                            </RadioGroup>
-                                        </div>
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-1.5">
+                                            <PulseModeItem value="standard" label="Balanced Expert" icon={<ShieldPlus className="w-4 h-4"/>} />
+                                            <PulseModeItem value="websearch" label="Deep Web Search" icon={<Search className="w-4 h-4"/>} />
+                                            <PulseModeItem value="deepthink" label="Logical Reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
+                                            <PulseModeItem value="proanalysis" label="Pharmacist Analysis" icon={<Pill className="w-4 h-4"/>} />
+                                        </RadioGroup>
                                     </PopoverContent>
                                 </Popover>
                             )}
                         </div>
-
                         <div className="flex items-center gap-2.5">
                              {!isTyping && !isRecording && !attachedImage && (
                                 <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-11 w-11 rounded-full bg-slate-50 dark:bg-slate-800">
@@ -731,15 +606,11 @@ export default function HealthAssistantPage() {
                             {(isTyping || isRecording || attachedImage) && (
                                 <div className="flex items-center gap-2.5">
                                     {isRecording && (
-                                        <Button type="button" size="icon" onClick={stopRecording} className="h-11 w-11 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
+                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-11 w-11 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
                                             <MicOff className="w-5 h-5" />
                                         </Button>
                                     )}
-                                    <Button 
-                                        type="submit"
-                                        disabled={isPending} 
-                                        className="h-11 w-11 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20"
-                                    >
+                                    <Button type="submit" disabled={isPending} className="h-11 w-11 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
                                         {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <SendHorizonal className="w-5 h-5" />}
                                     </Button>
                                 </div>
