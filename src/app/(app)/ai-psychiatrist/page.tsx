@@ -267,7 +267,6 @@ export default function AIPsychiatristPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
-        {/* Branded Header with Journal in Top Right */}
         <header className="h-16 border-b border-gray-100 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl z-50">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-10 w-10 rounded-2xl hover:bg-white/50 dark:hover:bg-[#3c4043] shadow-sm border border-white/20">
@@ -353,7 +352,7 @@ export default function AIPsychiatristPage() {
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-6 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-2xl mx-auto space-y-2 pb-36">
+                    <div className="max-w-2xl mx-auto space-y-2 pb-48">
                         {activeSession?.messages.map((m, i) => {
                             const isPrevSame = i > 0 && activeSession.messages[i-1].role === m.role;
                             const isNextSame = i < activeSession.messages.length - 1 && activeSession.messages[i+1].role === m.role;
@@ -479,10 +478,10 @@ export default function AIPsychiatristPage() {
             )}
         </main>
 
-        {/* Input Footer */}
-        <footer className={cn(
-            "px-4 pb-10 pt-2 z-40 shrink-0 transition-transform duration-500 ease-in-out",
-            !isInputVisible && hasMessages ? "translate-y-[150%]" : "translate-y-0"
+        {/* Floating Input Footer - Absolute Positioning to prevent layout ghost space */}
+        <div className={cn(
+            "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out px-4 pb-10",
+            !isInputVisible && hasMessages ? "translate-y-[120%]" : "translate-y-0"
         )}>
             <form ref={formRef} action={onFormAction} className="max-w-2xl mx-auto flex flex-col gap-4">
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/80 dark:bg-[#1e1f20]/80 backdrop-blur-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/5">
@@ -555,7 +554,7 @@ export default function AIPsychiatristPage() {
                 </div>
                 <p className="text-[8px] text-center text-slate-400 font-black uppercase tracking-[0.3em] mt-2">Mind Companion is here to support, not diagnose.</p>
             </form>
-        </footer>
+        </div>
     </div>
   );
 }

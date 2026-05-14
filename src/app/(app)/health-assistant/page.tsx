@@ -143,7 +143,7 @@ export default function HealthAssistantPage() {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
 
-  // Sync AI responses with Atomic Timestamps
+  // Sync AI responses
   useEffect(() => {
     if (!isGeneralPending && generalState.timestamp > lastProcessedGeneralTime.current) {
         lastProcessedGeneralTime.current = generalState.timestamp;
@@ -168,7 +168,7 @@ export default function HealthAssistantPage() {
     }
   }, [doctorState, isDoctorPending, activeDoctorId]);
 
-  // Loading UI Logic (Timer and Source Rotation)
+  // Loading UI Logic
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
     let sourceInterval: NodeJS.Timeout;
@@ -202,7 +202,7 @@ export default function HealthAssistantPage() {
     if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
-  // Immersive Reading Mode: Hide/Show Footer on Scroll
+  // Immersive Reading Mode: Detect Scroll
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
@@ -472,7 +472,7 @@ export default function HealthAssistantPage() {
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-6 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-3xl mx-auto space-y-12 pb-36">
+                    <div className="max-w-3xl mx-auto space-y-12 pb-48">
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-4 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
@@ -490,7 +490,6 @@ export default function HealthAssistantPage() {
                                             <ShieldPlus className="w-4 h-4 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0 overflow-hidden">
-                                            {/* Clean Output Layout - No Card Wrapper */}
                                             <article className="prose prose-sm md:prose-base dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-bold text-[16px] py-1 px-2" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
@@ -553,7 +552,11 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        <footer className={cn("px-4 pb-10 pt-2 z-40 shrink-0 transition-transform duration-500 ease-in-out", !isInputVisible && hasMessages ? "translate-y-[150%]" : "translate-y-0")}>
+        {/* Floating Input Footer - Absolute Positioning to prevent layout ghost space */}
+        <div className={cn(
+            "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out px-4 pb-10",
+            !isInputVisible && hasMessages ? "translate-y-[120%]" : "translate-y-0"
+        )}>
             <form ref={formRef} action={onFormAction} className="max-w-2xl mx-auto flex flex-col gap-4">
                 {attachedImage && (
                     <div className="mx-4 mb-1 flex animate-in zoom-in-95">
@@ -618,9 +621,8 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 </div>
-                <p className="text-[8px] text-center text-slate-400 font-black uppercase tracking-[0.3em] mt-2">Always verify medical information with a doctor.</p>
             </form>
-        </footer>
+        </div>
     </div>
   );
 }
