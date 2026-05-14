@@ -365,14 +365,18 @@ export default function AIPsychiatristPage() {
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-8 py-10" ref={scrollAreaRef}>
-                    <div className="max-w-4xl mx-auto space-y-16 pb-64">
+                    <div className="max-w-4xl mx-auto pb-64">
                         {activeSession?.messages.map((m, i) => {
+                            const isContinuation = i > 0 && activeSession?.messages[i-1].role === m.role;
+                            
                             return (
                                 <div 
                                     key={i} 
                                     className={cn(
                                         "animate-in fade-in slide-in-from-bottom-6 duration-700", 
-                                        m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start"
+                                        m.role === 'user' ? "flex flex-col items-end mt-10" : "flex flex-col items-start",
+                                        m.role === 'assistant' && !isContinuation ? "mt-12" : "",
+                                        m.role === 'assistant' && isContinuation ? "mt-1.5" : ""
                                     )}
                                 >
                                     {m.role === 'user' ? (
@@ -384,28 +388,27 @@ export default function AIPsychiatristPage() {
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-start w-full group">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
-                                                    <Sparkles className="w-4.5 h-4.5 text-primary" />
+                                            {!isContinuation && (
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
+                                                        <Sparkles className="w-4.5 h-4.5 text-primary" />
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mind Companion</span>
                                                 </div>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mind Companion</span>
-                                            </div>
+                                            )}
 
                                             <div className="flex-1 w-full min-w-0">
-                                                <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                                <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-medium px-1" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                                                     <ReactMarkdown>{m.content}</ReactMarkdown>
                                                 </article>
                                                 
-                                                <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-1">
-                                                    <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full transition-all border border-slate-100 dark:border-slate-800", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
-                                                        {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                                <div className="mt-4 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-1">
+                                                    <Button variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all border border-slate-100 dark:border-slate-800", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                                        {speakingMsgId === i ? <Square className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
-                                                        <Copy className="w-4 h-4 text-slate-400" />
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
+                                                        <Copy className="w-3.5 h-3.5 text-slate-400" />
                                                     </Button>
-                                                    <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsDown className="w-4 h-4 text-slate-400" /></Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -415,7 +418,7 @@ export default function AIPsychiatristPage() {
                         })}
 
                         {isPending && (
-                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300 mt-12">
                                 <div className="flex items-center gap-3">
                                     <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
                                         <Sparkles className="w-4.5 h-4.5 text-primary" />
