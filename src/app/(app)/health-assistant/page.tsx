@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -28,7 +29,8 @@ import {
     ThumbsDown,
     ArrowLeft,
     Globe,
-    Clock
+    Clock,
+    Square
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -103,6 +105,9 @@ export default function HealthAssistantPage() {
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   
+  // TTS State
+  const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
+
   // Immersive Reading Mode State
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
@@ -220,7 +225,7 @@ export default function HealthAssistantPage() {
 
     const handleScroll = () => {
         const currentTop = viewport.scrollTop;
-        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 20;
+        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) * 0.9 <= 20; // Adjusted for precision
 
         if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) {
             setIsInputVisible(false);
@@ -369,6 +374,52 @@ export default function HealthAssistantPage() {
         }
     }
   }, [activeSession?.messages, isPending]);
+
+  // Clean text for TTS
+  const cleanTextForTTS = (text: string) => {
+      return text
+          .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove markdown links but keep labels
+          .replace(/[*#_`]/g, '') // Remove markdown symbols
+          .replace(/https?:\/\/\S+/g, '') // Remove naked URLs
+          .trim();
+  };
+
+  // Improved TTS Toggle Logic
+  const handleToggleSpeech = (text: string, msgId: number) => {
+    if (!window.speechSynthesis) {
+        toast({ variant: 'destructive', title: 'TTS Not Supported' });
+        return;
+    }
+
+    if (speakingMsgId === msgId) {
+        window.speechSynthesis.cancel();
+        setSpeakingMsgId(null);
+        return;
+    }
+
+    // Stop existing speech
+    window.speechSynthesis.cancel();
+
+    const cleanedText = cleanTextForTTS(text);
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
+    
+    // Voice Selection (Try to find a natural voice)
+    const voices = window.speechSynthesis.getVoices();
+    const premiumVoice = voices.find(v => v.lang.includes('IN') || v.name.includes('Google') || v.name.includes('Premium'));
+    if (premiumVoice) utterance.voice = premiumVoice;
+    
+    utterance.rate = 0.95; // Slightly slower for clarity
+    utterance.pitch = 1.0;
+
+    utterance.onstart = () => setSpeakingMsgId(msgId);
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => {
+        setSpeakingMsgId(null);
+        toast({ variant: 'destructive', title: 'Speech Error' });
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
@@ -520,14 +571,16 @@ export default function HealthAssistantPage() {
                                             </article>
                                             
                                             <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 dark:bg-slate-800/40" onClick={() => {
-                                                    if (window.speechSynthesis) {
-                                                        window.speechSynthesis.cancel();
-                                                        const u = new SpeechSynthesisUtterance(m.content.replace(/[*#_`]/g, ''));
-                                                        window.speechSynthesis.speak(u);
-                                                    }
-                                                }}>
-                                                    <Volume2 className="w-3.5 h-3.5 text-slate-400" />
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className={cn(
+                                                        "h-8 w-8 rounded-full transition-all",
+                                                        speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40"
+                                                    )} 
+                                                    onClick={() => handleToggleSpeech(m.content, i)}
+                                                >
+                                                    {speakingMsgId === i ? <Square className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/40 dark:bg-slate-800/40" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
                                                     <Copy className="w-3.5 h-3.5 text-slate-400" />
