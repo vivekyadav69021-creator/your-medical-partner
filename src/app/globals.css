@@ -158,5 +158,11 @@ input, textarea, [contenteditable="true"] {
     100% { transform: translateX(100%); }
   }
 
+  @keyframes scan-move {
+    0% { top: 0%; }
+    100% { top: 100%; }
+  }
+
   .animate-splash-gradient { animation: splash-gradient-slide 2.5s infinite linear; }
+  .animate-scan-line { animation: scan-move 2.5s ease-in-out infinite alternate; }
 }
