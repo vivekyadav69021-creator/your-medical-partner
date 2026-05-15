@@ -34,7 +34,8 @@ import {
   Siren,
   Utensils,
   Settings,
-  ShieldCheck
+  ShieldCheck,
+  ChevronLeft
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -121,20 +122,26 @@ export default function DiseaseScannerPage() {
             case 'lab': return <LabReportAnalyzer lang={lang} onBack={() => setView('home')} />;
             default: return (
                 <div className="space-y-8 animate-in fade-in duration-700 pb-32">
-                    {/* Premium Branded Header for Scanner */}
-                    <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1">
-                        <div className="space-y-1.5 flex-1 min-w-0">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 mb-1">
-                                <Scan className="w-3 h-3 text-primary" />
-                                <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Diagnostic Lab</span>
+                    {/* Immersive Branded Header for Scanner Home */}
+                    <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top mt-2">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <Link href="/dashboard">
+                                <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white/50 shadow-sm border border-white/20 shrink-0">
+                                    <ChevronLeft className="h-6 w-6 text-[#1A365D]" />
+                                </Button>
+                            </Link>
+                            <div className="space-y-0.5 min-w-0">
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 mb-0.5">
+                                    <Scan className="w-2.5 h-2.5 text-primary" />
+                                    <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Diagnostic Lab</span>
+                                </div>
+                                <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight truncate">{t.greeting} 👋</h1>
                             </div>
-                            <h1 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight truncate">{t.greeting} 👋</h1>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">{t.subGreeting}</p>
                         </div>
                         <Link href="/profile" className="shrink-0 ml-4">
-                          <Avatar className="h-14 w-14 border-4 border-white shadow-lg active:scale-95 transition-transform bg-slate-100">
+                          <Avatar className="h-12 w-12 border-4 border-white shadow-lg active:scale-95 transition-transform bg-slate-100">
                             <AvatarImage src={userImage} className="object-cover" />
-                            <AvatarFallback className="bg-primary text-white font-black uppercase text-lg">{userName[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-primary text-white font-black uppercase text-base">{userName[0]}</AvatarFallback>
                           </Avatar>
                         </Link>
                     </div>
@@ -191,8 +198,8 @@ export default function DiseaseScannerPage() {
 
     return (
         <div className="h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] fixed inset-0 overflow-hidden font-body">
-            <main className="h-full overflow-y-auto scroll-smooth scrollbar-hide safe-top">
-                <div className="max-w-2xl mx-auto p-4 pt-6 min-h-full">
+            <main className="h-full overflow-y-auto scroll-smooth scrollbar-hide">
+                <div className="max-w-2xl mx-auto p-4 pt-4 min-h-full">
                     {renderContent()}
                 </div>
             </main>
@@ -277,7 +284,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20 shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -384,7 +391,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -468,7 +475,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
              <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -546,7 +553,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
