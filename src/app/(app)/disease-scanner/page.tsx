@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useActionState, useRef, useState, useEffect } from 'react';
+import React, { useActionState, useRef, useState, useEffect, startTransition } from 'react';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,24 +14,18 @@ import {
   Scan, 
   Loader2, 
   X, 
-  Camera, 
   AlertTriangle, 
   FileText, 
   ImageIcon, 
-  Download, 
   BrainCircuit, 
   ArrowLeft,
   Bandage,
   Bone,
   Activity,
-  Sparkles,
   Info,
-  Utensils,
-  Settings,
   ChevronLeft,
   CheckCircle2,
   ClipboardCheck,
-  Zap,
   Lightbulb,
   Siren
 } from 'lucide-react';
@@ -45,15 +38,7 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { Avatar, AvatarFallback, AvatarImage } from '@/avatar-fix'; // Using a placeholder for brevity, assume normal imports
 import ReactMarkdown from 'react-markdown';
-
-// Fallback for avatar if local import is tricky in this context
-const UserAvatar = ({ src, name }: { src: string, name: string }) => (
-    <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg overflow-hidden shrink-0">
-        <img src={src} alt={name} className="h-full w-full object-cover" />
-    </div>
-);
 
 // --- UTILITIES ---
 
@@ -136,9 +121,11 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
             if (savedProfile) formData.set('userProfile', savedProfile);
             formData.set('imageDataUri', compressed);
-            formAction(formData);
+            startTransition(() => {
+                formAction(formData);
+            });
         }
-    }
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
@@ -256,7 +243,9 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
             formData.set('imageDataUri', compressed);
         }
         formData.set('language', lang);
-        formAction(formData);
+        startTransition(() => {
+            formAction(formData);
+        });
     };
 
     return (
@@ -334,7 +323,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Injury Classification</h4>
                             </div>
                             <div className="flex items-center gap-4 px-2">
-                                <h3 className="text-2xl font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <h3 className="text-lg md:text-xl font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
                                 <Badge className={cn("font-black uppercase tracking-widest text-[8px] border-none px-2.5 py-0.5", 
                                     state.result.severity === 'high' ? "bg-red-100 text-red-600" : state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600")}>
                                     {state.result.severity}
@@ -383,7 +372,9 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             formData.set('photoDataUri', compressed);
             formData.set('contentType', fileType || 'image/jpeg');
             formData.set('language', lang);
-            formAction(formData);
+            startTransition(() => {
+                formAction(formData);
+            });
         }
     };
 
@@ -505,7 +496,9 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
             const compressed = await compressImage(preview);
             formData.set('imageDataUri', compressed);
             formData.set('language', lang);
-            formAction(formData);
+            startTransition(() => {
+                formAction(formData);
+            });
         }
     };
 
@@ -682,7 +675,9 @@ export default function DiseaseScannerPage() {
                             </div>
                         </div>
                         <Link href="/profile" className="shrink-0 ml-4">
-                            <UserAvatar src={userImage} name={userName} />
+                            <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg overflow-hidden shrink-0">
+                                <img src={userImage} alt={userName} className="h-full w-full object-cover" />
+                            </div>
                         </Link>
                     </div>
 
