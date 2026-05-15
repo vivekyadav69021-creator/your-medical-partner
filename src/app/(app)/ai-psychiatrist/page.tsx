@@ -291,8 +291,8 @@ export default function AIPsychiatristPage() {
                         <BrainCircuit className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex flex-col -space-y-0.5">
-                        <h1 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-none">Mind</h1>
-                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.25em]">Companion</p>
+                        <h1 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-none">AI</h1>
+                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.25em]">Psychiatrist</p>
                     </div>
                 </div>
             </div>
@@ -393,7 +393,7 @@ export default function AIPsychiatristPage() {
                                                     <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
                                                         <Sparkles className="w-4.5 h-4.5 text-primary" />
                                                     </div>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mind Companion</span>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Psychiatrist</span>
                                                 </div>
                                             )}
 
@@ -550,7 +550,7 @@ export default function AIPsychiatristPage() {
                         </div>
                     </div>
                 </div>
-                <p className="text-[9px] text-center text-slate-400 font-black uppercase tracking-widest mt-2">Mind Companion is here to support, not diagnose.</p>
+                <p className="text-[9px] text-center text-slate-400 font-black uppercase tracking-widest mt-2">AI Psychiatrist is here to support, not diagnose.</p>
             </form>
         </div>
     </div>
