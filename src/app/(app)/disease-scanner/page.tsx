@@ -93,14 +93,24 @@ const initialSkinState = { result: null, error: null };
 const initialLabReportState = { result: null, error: null };
 const initialInjuryState = { result: null, error: null };
 
+/**
+ * Premium Scan Animation Overlay
+ */
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
-        <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[inherit]">
+            {/* The Laser Beam */}
             <div 
-                className={cn("absolute left-0 right-0 h-1.5 shadow-[0_0_20px_2px_currentColor] animate-scan-line z-30", color)} 
+                className={cn("absolute left-0 right-0 h-1 animate-scan-line z-40", color)} 
+                style={{ 
+                    backgroundColor: 'currentColor',
+                    boxShadow: '0 0 20px 3px currentColor' 
+                }}
             />
-            <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px] dark:opacity-[0.15]" />
-            <div className={cn("absolute inset-0 opacity-10 animate-pulse", color.replace('text-', 'bg-'))} />
+            {/* Holographic Grid Background */}
+            <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:25px_25px] dark:opacity-[0.1]" />
+            {/* Tinted Ambient Pulse */}
+            <div className={cn("absolute inset-0 opacity-[0.03] animate-pulse", color.replace('text-', 'bg-'))} />
         </div>
     );
 }
