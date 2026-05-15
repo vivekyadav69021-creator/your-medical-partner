@@ -35,7 +35,12 @@ import {
   Utensils,
   Settings,
   ShieldCheck,
-  ChevronLeft
+  ChevronLeft,
+  CheckCircle2,
+  Stethoscope,
+  ClipboardCheck,
+  Zap,
+  Lightbulb
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -50,6 +55,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ReactMarkdown from 'react-markdown';
 
 const initialXrayState = { result: null, error: null };
 const initialSkinState = { result: null, error: null };
@@ -122,7 +128,6 @@ export default function DiseaseScannerPage() {
             case 'lab': return <LabReportAnalyzer lang={lang} onBack={() => setView('home')} />;
             default: return (
                 <div className="space-y-8 animate-in fade-in duration-700 pb-32">
-                    {/* Immersive Branded Header for Scanner Home */}
                     <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top mt-2">
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                             <Link href="/dashboard">
@@ -146,7 +151,6 @@ export default function DiseaseScannerPage() {
                         </Link>
                     </div>
 
-                    {/* Stats Dashboard Card */}
                     <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 overflow-hidden mx-1">
                         <CardHeader className="pb-3 pt-6 px-8">
                             <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500/80 flex items-center gap-2">
@@ -174,7 +178,6 @@ export default function DiseaseScannerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Scanner Selection Grid */}
                     <div className="grid grid-cols-2 gap-5 px-1">
                         <ScannerCard title={t.skinTitle} slogan="Dermatology" icon={Scan} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" btnColor="bg-pink-500" onClick={() => setView('skin')} btnText={t.startBtn} />
                         <ScannerCard title={t.injuryTitle} slogan="Emergency" icon={Bandage} gradient="from-orange-50 to-orange-100/30" iconColor="text-orange-500" btnColor="bg-orange-500" onClick={() => setView('injury')} btnText={t.startBtn} />
@@ -182,7 +185,6 @@ export default function DiseaseScannerPage() {
                         <ScannerCard title={t.reportTitle} slogan="OCR Lab" icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => setView('lab')} btnText={t.startBtn} />
                     </div>
 
-                    {/* Language Toggler */}
                     <div className="fixed bottom-24 left-0 right-0 flex justify-center z-40 px-6 pointer-events-none">
                         <div className="pointer-events-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl rounded-full p-1 border border-white/40 dark:border-slate-800">
                              <div className="flex items-center gap-1">
@@ -210,9 +212,7 @@ export default function DiseaseScannerPage() {
 function ScannerCard({ title, slogan, icon: Icon, gradient, iconColor, btnColor, onClick, btnText }: any) {
     return (
         <Card className={cn("rounded-[3rem] border-none shadow-lg group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden", gradient)} onClick={onClick}>
-            {/* Background pattern */}
             <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/20 rounded-full blur-2xl" />
-            
             <div className="p-6 flex flex-col items-center gap-4 text-center relative z-10">
                 <div className="w-20 h-20 rounded-[2rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
                    <Icon className={cn("w-10 h-10", iconColor)} />
@@ -229,18 +229,14 @@ function ScannerCard({ title, slogan, icon: Icon, gradient, iconColor, btnColor,
     );
 }
 
-// --- SCAN ANIMATION OVERLAY ---
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
         <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-            {/* Scanning Line */}
             <div 
                 className={cn("absolute left-0 right-0 h-1.5 shadow-[0_0_20px_2px_currentColor] animate-scan-line z-30", color)} 
                 style={{ color: 'inherit' }}
             />
-            {/* Holographic Grid Effect */}
             <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px] dark:opacity-[0.15]" />
-            {/* Pulsing Glow Tint */}
             <div className={cn("absolute inset-0 opacity-10 animate-pulse", color.replace('text-', 'bg-'))} />
         </div>
     );
@@ -334,7 +330,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group">
                         <Image src={preview} alt="Preview" width={800} height={1000} className="w-full h-auto object-cover" />
                         {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
-                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 shadow-xl z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
                     </div>
@@ -351,24 +347,104 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 </form>
             </div>
             
+            {state.error && (
+                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
+                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
+                </Alert>
+            )}
+
             {state.result && (
-                <div className="space-y-12 animate-in slide-in-from-top-6 duration-700">
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    {state.result.overallAssessment && (
+                    
+                    {/* Overall Assessment */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-2">
+                            <BrainCircuit className="w-5 h-5 text-pink-500" />
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Architect Verdict</h4>
+                        </div>
+                        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                            <ReactMarkdown>{state.result.overallAssessment}</ReactMarkdown>
+                        </div>
+                    </div>
+
+                    {/* Identified Conditions */}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 px-2">
+                            <Scan className="w-5 h-5 text-pink-500" />
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Morphological Data</h4>
+                        </div>
+                        <div className="grid gap-6">
+                            {state.result.identifiedConditions?.map((c: any, i: number) => (
+                                <div key={i} className="space-y-4 border-l-4 border-pink-100 dark:border-pink-900/30 pl-6 py-2">
+                                    <div className="flex items-center justify-between">
+                                        <h5 className="font-black text-xl text-[#1A365D] dark:text-slate-100">{c.name}</h5>
+                                        <Badge className="bg-pink-50 text-pink-500 border-none font-black text-[9px] tracking-widest">CONF: {Math.round(c.confidence * 100)}%</Badge>
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-500 italic">"{c.biologicalLogic}"</p>
+                                    <p className="text-sm font-medium text-slate-400 leading-relaxed">{c.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Comparative Analysis */}
+                    {state.result.comparativeAnalysis && (
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 px-2"><BrainCircuit className="w-5 h-5 text-pink-500" /><h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D]">AI Architect Verdict</h4></div>
-                            <div className="p-8 rounded-[2.5rem] bg-white/40 backdrop-blur-xl border border-white shadow-sm"><p className="text-base font-bold text-slate-700 leading-relaxed">{state.result.overallAssessment}</p></div>
+                             <div className="flex items-center gap-2 px-2">
+                                <ClipboardCheck className="w-5 h-5 text-pink-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Comparative Linkage</h4>
+                            </div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">{state.result.comparativeAnalysis}</p>
                         </div>
                     )}
-                    <div className="grid gap-6">
-                        {state.result.identifiedConditions?.map((c: any, i: number) => (
-                            <div key={i} className="p-8 rounded-[2.5rem] bg-white/80 shadow-sm space-y-4">
-                                <h5 className="font-black text-xl text-[#1A365D]">{c.name}</h5>
-                                <p className="text-sm font-bold text-slate-500 italic border-l-4 border-pink-100 pl-4">"{c.biologicalLogic}"</p>
-                                <p className="text-sm font-medium text-slate-400">{c.description}</p>
+
+                    {/* Nutritional Support */}
+                    {state.result.nutritionalSupport?.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <Utensils className="w-5 h-5 text-pink-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Nutritional Support</h4>
                             </div>
-                        ))}
-                    </div>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {state.result.nutritionalSupport.map((item: string, i: number) => (
+                                    <li key={i} className="flex items-center gap-3 p-3 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {state.result.recommendations?.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <Sparkles className="w-5 h-5 text-pink-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Action Plan</h4>
+                            </div>
+                            <div className="space-y-3">
+                                {state.result.recommendations.map((rec: any, i: number) => (
+                                    <div key={i} className="flex gap-4 p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm items-start">
+                                        <div className="h-8 w-8 rounded-xl bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center shrink-0 mt-0.5">
+                                            {rec.type === 'routine' ? <Activity className="w-4 h-4 text-pink-500" /> : rec.type === 'product' ? <ClipboardCheck className="w-4 h-4 text-pink-500" /> : <Settings className="w-4 h-4 text-pink-500" />}
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{rec.suggestion}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                        <Info className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                            Disclaimer: This analysis is for educational purposes. AI can misread visual data. Consult a certified dermatologist for professional diagnosis.
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
@@ -406,18 +482,18 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                  <form action={handleFormAction} className="space-y-8">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Accident Description</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee..." className="rounded-[2.5rem] bg-white/60 backdrop-blur-xl border-none shadow-inner min-h-[160px] text-lg font-bold p-8" required />
+                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[160px] text-lg font-bold p-8" required />
                     </div>
                     
                     {!preview ? (
-                        <div className="border-4 border-dashed border-orange-100 rounded-[2.5rem] p-10 text-center space-y-4 bg-orange-50/20" onClick={() => fileInputRef.current?.click()}>
-                            <div className="h-16 w-16 bg-white rounded-2xl shadow-xl flex items-center justify-center text-orange-400 mx-auto">
+                        <div className="border-4 border-dashed border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] p-10 text-center space-y-4 bg-orange-50/20" onClick={() => fileInputRef.current?.click()}>
+                            <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-orange-400 mx-auto">
                                 <ImageIcon className="w-8 h-8" />
                             </div>
-                            <p className="text-[10px] font-black text-orange-600/80 uppercase">Add Injury Photo (Optional)</p>
+                            <p className="text-[10px] font-black text-orange-600/80 dark:text-orange-400 uppercase tracking-widest">Add Injury Photo (Optional)</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden border-4 border-white shadow-2xl">
+                        <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl">
                             <Image src={preview} alt="Injury" width={800} height={600} className="w-full h-auto object-cover" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-orange-500" />}
                             <Button size="icon" variant="destructive" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
@@ -440,15 +516,79 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                 </form>
             </div>
 
+            {state.error && (
+                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
+                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
+                </Alert>
+            )}
+
             {state.result && (
-                <div className="space-y-12 animate-in slide-in-from-top-6 duration-700">
-                    <div className="h-px bg-slate-200" />
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
                     {state.result.severity === 'high' && (
                         <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-8 animate-pulse shadow-2xl shadow-red-200">
-                            <AlertTitle className="text-xl font-black uppercase">CRITICAL ALERT</AlertTitle>
-                            <AlertDescription className="text-base font-bold leading-relaxed">{state.result.actionableAlert}</AlertDescription>
+                            <Siren className="h-10 w-10 mb-4" />
+                            <AlertTitle className="text-2xl font-black uppercase tracking-tight">CRITICAL ALERT</AlertTitle>
+                            <AlertDescription className="text-lg font-bold leading-relaxed">{state.result.actionableAlert || "High severity detected. Seek medical help."}</AlertDescription>
                         </Alert>
                     )}
+
+                    <div className="space-y-8">
+                         {/* Core Classification */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <Bandage className="w-5 h-5 text-orange-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Injury Classification</h4>
+                            </div>
+                            <div className="flex items-baseline gap-4">
+                                <h3 className="text-3xl font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <Badge className={cn("font-black uppercase tracking-widest text-[9px] border-none px-3 py-1", 
+                                    state.result.severity === 'high' ? "bg-red-100 text-red-600" : state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600")}>
+                                    SEVERITY: {state.result.severity}
+                                </Badge>
+                            </div>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                            <ReactMarkdown>{state.result.summary}</ReactMarkdown>
+                        </div>
+
+                        {/* Biological Logic */}
+                        <div className="space-y-3 p-6 bg-orange-50/30 dark:bg-orange-950/10 rounded-[2rem] border border-orange-100/50 dark:border-orange-900/30">
+                            <div className="flex items-center gap-2">
+                                <BrainCircuit className="w-4 h-4 text-orange-500" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">Biological Response Logic</span>
+                            </div>
+                            <p className="text-sm font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic">"{state.result.biologicalLogic}"</p>
+                        </div>
+
+                        {/* First Aid Steps */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 px-2">
+                                <ClipboardCheck className="w-5 h-5 text-orange-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Immediate First-Aid</h4>
+                            </div>
+                            <div className="grid gap-3">
+                                {state.result.firstAidSteps?.map((step: string, i: number) => (
+                                    <div key={i} className="flex gap-4 p-5 bg-white/60 dark:bg-slate-800/60 rounded-[2rem] border border-white/20 shadow-sm items-start">
+                                        <div className="h-8 w-8 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0 font-black text-orange-500 text-xs">{i+1}</div>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed">{step}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-slate-100/50 dark:bg-slate-800/50 p-6 border-dashed border-2">
+                        <Info className="h-5 w-5 text-slate-400" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                            Disclaimer: This is an AI-generated guide for awareness. If bleeding is heavy or pain is extreme, go to the nearest emergency room immediately.
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
@@ -477,7 +617,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
@@ -489,14 +629,14 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             <div className="space-y-8">
                 <form action={handleFormAction} className="space-y-8">
                     {!preview ? (
-                        <div className="border-4 border-dashed border-blue-100 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-6 bg-white rounded-[2rem] shadow-xl text-blue-500">
+                        <div className="border-4 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-blue-500">
                                 <Bone className="w-12 h-12" />
                             </div>
-                            <p className="text-sm font-black text-[#1A365D] uppercase">Upload X-Ray Plate</p>
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">Upload X-Ray Plate</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800">
                             <Image src={preview} alt="X-ray" width={800} height={1000} className="w-full h-auto object-cover" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
                             <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
@@ -516,7 +656,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 border-none shadow-inner min-h-[140px] text-lg font-bold p-8" />
+                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-lg font-bold p-8" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
@@ -525,10 +665,75 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                 </form>
             </div>
 
+            {state.error && (
+                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
+                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
+                </Alert>
+            )}
+
             {state.result && (
-                <div className="space-y-12 animate-in slide-in-from-top-6 duration-700">
-                    <div className="h-px bg-slate-200" />
-                    <div className="p-8 rounded-[2.5rem] bg-white/80 shadow-sm"><p className="text-base font-bold text-slate-700 italic border-l-4 border-blue-500 pl-4">"{state.result.observation}"</p></div>
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    <div className="space-y-8">
+                        {/* Identifiers */}
+                        <div className="flex items-center justify-between px-2">
+                             <div className="space-y-1">
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Body Part</h4>
+                                <h3 className="text-2xl font-black text-[#1A365D] dark:text-slate-100">{state.result.bodyPart}</h3>
+                             </div>
+                             <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center border border-blue-100/50">
+                                <Bone className="w-8 h-8 text-blue-500" />
+                             </div>
+                        </div>
+
+                        {/* Observation */}
+                        <div className="space-y-4">
+                             <div className="flex items-center gap-2 px-2">
+                                <Scan className="w-5 h-5 text-blue-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Clinical Observation</h4>
+                            </div>
+                            <div className="p-8 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/40 shadow-sm">
+                                <p className="text-lg font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                            </div>
+                        </div>
+
+                        {/* Reasoning */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <BrainCircuit className="w-5 h-5 text-blue-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Radiographic Logic</h4>
+                            </div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed pl-2">{state.result.biologicalReasoning}</p>
+                        </div>
+
+                        {/* Actions */}
+                        {state.result.suggestedActions?.length > 0 && (
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-2">
+                                    <Lightbulb className="w-5 h-5 text-blue-500" />
+                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Immediate Care</h4>
+                                </div>
+                                <div className="grid gap-3">
+                                    {state.result.suggestedActions.map((action: string, i: number) => (
+                                        <div key={i} className="flex items-center gap-4 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100/50">
+                                            <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                                            <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{action}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50 dark:bg-blue-900/10 p-6">
+                        <Info className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                            Disclaimer: {state.result.disclaimer || "This is an AI-powered preliminary scan for awareness. AI can misinterpret shadows in X-rays. Consult a certified Radiologist for a final official diagnosis."}
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
@@ -555,7 +760,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
@@ -567,14 +772,14 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
             <div className="space-y-8">
                 <form action={handleFormAction} className="space-y-8">
                     {!preview ? (
-                        <div className="border-4 border-dashed border-emerald-100 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-6 bg-white rounded-[2rem] shadow-xl text-emerald-500">
+                        <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
                                 <FileText className="w-12 h-12" />
                             </div>
-                            <p className="text-sm font-black text-[#1A365D] uppercase">Drop Lab Report Here</p>
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">Drop Lab Report Here</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white group">
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group">
                             <Image src={preview} alt="Report" width={800} height={1000} className="w-full h-auto object-cover" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
                             <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
@@ -593,7 +798,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Clinical Context</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Feeling extremely tired for 1 month..." className="rounded-[2.5rem] bg-white/60 border-none shadow-inner min-h-[140px] text-lg font-bold p-8" />
+                        <Textarea name="userQuery" placeholder="E.g., Feeling extremely tired for 1 month..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-lg font-bold p-8" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
@@ -602,12 +807,96 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 </form>
             </div>
 
+            {state.error && (
+                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
+                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
+                </Alert>
+            )}
+
             {state.result && (
-                <div className="space-y-12 animate-in slide-in-from-top-6 duration-700">
-                    <div className="h-px bg-slate-200" />
-                    <div className="space-y-6">
-                        <h4 className="text-xl font-black text-[#1A365D] tracking-tight leading-tight">{state.result.summary}</h4>
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    <div className="space-y-10">
+                        {/* Patient & Summary */}
+                        <div className="space-y-6">
+                            {state.result.patientDetails && (
+                                <div className="flex flex-wrap gap-4 px-2">
+                                    {state.result.patientDetails.name && <Badge variant="outline" className="rounded-full font-black text-[9px] uppercase tracking-wider px-3">PATIENT: {state.result.patientDetails.name}</Badge>}
+                                    {state.result.patientDetails.age && <Badge variant="outline" className="rounded-full font-black text-[9px] uppercase tracking-wider px-3">AGE: {state.result.patientDetails.age}</Badge>}
+                                    {state.result.patientDetails.date && <Badge variant="outline" className="rounded-full font-black text-[9px] uppercase tracking-wider px-3">DATE: {state.result.patientDetails.date}</Badge>}
+                                </div>
+                            )}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-2">
+                                    <ClipboardCheck className="w-5 h-5 text-emerald-500" />
+                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Executive Summary</h4>
+                                </div>
+                                <h3 className="text-xl md:text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight leading-tight">{state.result.summary}</h3>
+                            </div>
+                        </div>
+
+                        {/* Biomarkers Interpretation */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 px-2">
+                                <Activity className="w-5 h-5 text-emerald-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Biomarker Analysis</h4>
+                            </div>
+                            <div className="grid gap-3">
+                                {state.result.interpretations?.map((item: any, i: number) => (
+                                    <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm flex items-center justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest truncate">{item.test}</p>
+                                            <p className="text-lg font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
+                                            {item.range && <p className="text-[9px] font-bold text-slate-400 mt-0.5">RANGE: {item.range}</p>}
+                                        </div>
+                                        <Badge className={cn("font-black text-[9px] uppercase tracking-widest border-none px-3 py-1", 
+                                            item.status === 'high' ? "bg-red-50 text-red-500" : item.status === 'low' ? "bg-orange-50 text-orange-500" : item.status === 'normal' ? "bg-emerald-50 text-emerald-500" : "bg-blue-50 text-blue-500")}>
+                                            {item.status}
+                                        </Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Biological Logic */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <BrainCircuit className="w-5 h-5 text-emerald-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Scientific Logic</h4>
+                            </div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed pl-2 border-l-4 border-emerald-100 dark:border-emerald-900/30 ml-2 py-1 italic">
+                                {state.result.biologicalLogic}
+                            </p>
+                        </div>
+
+                        {/* Lifestyle Suggestions */}
+                        {state.result.lifestyleSuggestions?.length > 0 && (
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-2">
+                                    <Zap className="w-5 h-5 text-emerald-500" />
+                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Lifestyle Adjustments</h4>
+                                </div>
+                                <div className="space-y-3">
+                                    {state.result.lifestyleSuggestions.map((tip: string, i: number) => (
+                                        <div key={i} className="flex items-center gap-4 p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100/50">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{tip}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50 dark:bg-blue-900/10 p-6">
+                        <Info className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                            Disclaimer: {state.result.recommendation || "This is an AI-generated interpretation for awareness. AI can occasionally misread laboratory values. Please consult a qualified Physician for a formal diagnosis."}
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
