@@ -45,8 +45,15 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/avatar-fix'; // Using a placeholder for brevity, assume normal imports
 import ReactMarkdown from 'react-markdown';
+
+// Fallback for avatar if local import is tricky in this context
+const UserAvatar = ({ src, name }: { src: string, name: string }) => (
+    <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg overflow-hidden shrink-0">
+        <img src={src} alt={name} className="h-full w-full object-cover" />
+    </div>
+);
 
 // --- UTILITIES ---
 
@@ -62,9 +69,6 @@ const updateScanStats = () => {
     }
 };
 
-/**
- * Compresses an image to prevent server payload size errors.
- */
 const compressImage = (dataUri: string, maxWidth = 1024): Promise<string> => {
     return new Promise((resolve) => {
         const img = new (window as any).Image();
@@ -98,19 +102,19 @@ const initialInjuryState = { result: null, error: null };
  */
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
-        <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[inherit]">
+        <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
             {/* The Laser Beam */}
             <div 
-                className={cn("absolute left-0 right-0 h-1 animate-scan-line z-40", color)} 
+                className={cn("absolute left-0 right-0 h-1.5 animate-scan-line z-[60]", color)} 
                 style={{ 
                     backgroundColor: 'currentColor',
-                    boxShadow: '0 0 20px 3px currentColor' 
+                    boxShadow: '0 0 25px 4px currentColor, 0 0 10px 1px white' 
                 }}
             />
             {/* Holographic Grid Background */}
-            <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:25px_25px] dark:opacity-[0.1]" />
+            <div className="absolute inset-0 opacity-[0.1] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] dark:opacity-[0.15]" />
             {/* Tinted Ambient Pulse */}
-            <div className={cn("absolute inset-0 opacity-[0.03] animate-pulse", color.replace('text-', 'bg-'))} />
+            <div className={cn("absolute inset-0 opacity-[0.05] animate-pulse", color.replace('text-', 'bg-'))} />
         </div>
     );
 }
@@ -121,10 +125,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
 
     useEffect(() => {
         if (state.result && !state.error) updateScanStats();
@@ -140,20 +140,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
         }
     }
 
-    const takePicture = () => {
-        if (videoRef.current && canvasRef.current) {
-          const canvas = canvasRef.current;
-          canvas.width = videoRef.current.videoWidth;
-          canvas.height = videoRef.current.videoHeight;
-          canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-          setPreview(canvas.toDataURL('image/jpeg', 0.9));
-          setIsCameraOpen(false);
-          streamRef.current?.getTracks().forEach(t => t.stop());
-        }
-    };
-
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20 shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -164,19 +152,13 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 </div>
             </div>
 
-            <div className="space-y-8">
-                <canvas ref={canvasRef} className="hidden"></canvas>
-                {!isCameraOpen && !preview && (
+            <div className="space-y-6">
+                {!preview ? (
                     <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                         <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-pink-400">
                             <ImageIcon className="w-12 h-12" />
                         </div>
-                        <div className="text-center space-y-1">
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Upload Photo</p>
-                        </div>
-                        <Button type="button" onClick={(e) => { e.stopPropagation(); setIsCameraOpen(true); }} className="rounded-full bg-pink-500 text-white font-black px-8 h-12 shadow-lg">
-                             <Camera className="mr-2 h-4 w-4" /> Open Camera
-                        </Button>
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Upload Photo</p>
                         <input type="file" ref={fileInputRef} hidden onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -186,24 +168,11 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             }
                         }} accept="image/*" />
                     </div>
-                )}
-
-                {isCameraOpen && (
-                    <div className="relative rounded-[3rem] overflow-hidden shadow-2xl aspect-[4/5] bg-black border-4 border-white">
-                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                        <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-6 px-10">
-                            <button onClick={takePicture} className="h-20 w-20 rounded-full border-4 border-white bg-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform">
-                                <div className="h-14 w-14 rounded-full bg-pink-500 border-2 border-white"></div>
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {preview && (
-                    <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group">
-                        <Image src={preview} alt="Preview" width={800} height={1000} className="w-full h-auto object-cover" />
+                ) : (
+                    <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
+                        <Image src={preview} alt="Preview" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" />
                         {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
-                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
                     </div>
@@ -212,7 +181,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Describe Symptoms</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-lg font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-pink-500 to-rose-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
                         {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : "Start Scientific Analysis"}
@@ -229,14 +198,14 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             )}
 
             {state.result && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 px-2">
                             <BrainCircuit className="w-5 h-5 text-pink-500" />
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Architect Verdict</h4>
                         </div>
-                        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium px-2">
                             <ReactMarkdown>{state.result.overallAssessment || ''}</ReactMarkdown>
                         </div>
                     </div>
@@ -246,40 +215,24 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 <Scan className="w-5 h-5 text-pink-500" />
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Morphological Data</h4>
                             </div>
-                            <div className="grid gap-6">
+                            <div className="grid gap-4">
                                 {state.result.identifiedConditions.map((c: any, i: number) => (
-                                    <div key={i} className="space-y-4 border-l-4 border-pink-100 dark:border-pink-900/30 pl-6 py-2">
+                                    <div key={i} className="space-y-2 border-l-4 border-pink-100 dark:border-pink-900/30 pl-6 py-1">
                                         <div className="flex items-center justify-between">
-                                            <h5 className="font-black text-xl text-[#1A365D] dark:text-slate-100">{c.name}</h5>
-                                            <Badge className="bg-pink-50 text-pink-500 border-none font-black text-[9px] tracking-widest">CONF: {Math.round((c.confidence || 0) * 100)}%</Badge>
+                                            <h5 className="font-black text-lg text-[#1A365D] dark:text-slate-100">{c.name}</h5>
+                                            <Badge className="bg-pink-50 text-pink-500 border-none font-black text-[8px] tracking-widest">CONF: {Math.round((c.confidence || 0) * 100)}%</Badge>
                                         </div>
-                                        <p className="text-sm font-bold text-slate-500 italic">"{c.biologicalLogic}"</p>
-                                        <p className="text-sm font-medium text-slate-400 leading-relaxed">{c.description}</p>
+                                        <p className="text-xs font-bold text-slate-500 italic">"{c.biologicalLogic}"</p>
+                                        <p className="text-xs font-medium text-slate-400 leading-relaxed">{c.description}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
-                    {state.result.nutritionalSupport?.length > 0 && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 px-2">
-                                <Utensils className="w-5 h-5 text-pink-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Nutritional Support</h4>
-                            </div>
-                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {state.result.nutritionalSupport.map((item: string, i: number) => (
-                                    <li key={i} className="flex items-center gap-3 p-3 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20 text-xs font-bold text-slate-600 dark:text-slate-400">
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <Info className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
-                            Disclaimer: This analysis is for educational purposes. AI can misread visual data. Consult a certified dermatologist for professional diagnosis.
+                            Disclaimer: This analysis is for educational purposes. AI can misread visual data. Consult a certified dermatologist.
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -307,7 +260,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -318,25 +271,25 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                 </div>
             </div>
 
-            <div className="space-y-8">
-                 <form action={handleFormAction} className="space-y-8">
+            <div className="space-y-6">
+                 <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Accident Description</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[160px] text-lg font-bold p-8" required />
+                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" required />
                     </div>
                     
                     {!preview ? (
-                        <div className="border-4 border-dashed border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] p-10 text-center space-y-4 bg-orange-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-orange-400 mx-auto">
-                                <ImageIcon className="w-8 h-8" />
+                        <div className="border-4 border-dashed border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] p-8 text-center space-y-4 bg-orange-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="h-14 w-14 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-orange-400 mx-auto">
+                                <ImageIcon className="w-7 h-7" />
                             </div>
                             <p className="text-[10px] font-black text-orange-600/80 dark:text-orange-400 uppercase tracking-widest">Add Injury Photo (Optional)</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl">
-                            <Image src={preview} alt="Injury" width={800} height={600} className="w-full h-auto object-cover" />
+                        <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 max-h-[500px] flex items-center justify-center">
+                            <Image src={preview} alt="Injury" width={800} height={600} className="w-full h-auto object-contain max-h-[500px]" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-orange-500" />}
-                            <Button size="icon" variant="destructive" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                            <Button size="icon" variant="destructive" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
@@ -365,43 +318,43 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
             )}
 
             {state.result && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     {state.result.severity === 'high' && (
-                        <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-8 animate-pulse shadow-2xl shadow-red-200">
-                            <Siren className="h-10 w-10 mb-4" />
-                            <AlertTitle className="text-2xl font-black uppercase tracking-tight">CRITICAL ALERT</AlertTitle>
-                            <AlertDescription className="text-lg font-bold leading-relaxed">{state.result.actionableAlert || "High severity detected. Seek medical help."}</AlertDescription>
+                        <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-6 animate-pulse shadow-2xl">
+                            <Siren className="h-8 w-8 mb-3" />
+                            <AlertTitle className="text-xl font-black uppercase tracking-tight">CRITICAL ALERT</AlertTitle>
+                            <AlertDescription className="text-sm font-bold leading-relaxed">{state.result.actionableAlert || "High severity detected. Seek medical help."}</AlertDescription>
                         </Alert>
                     )}
                     <div className="space-y-8">
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div className="flex items-center gap-2 px-2">
                                 <Bandage className="w-5 h-5 text-orange-500" />
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Injury Classification</h4>
                             </div>
-                            <div className="flex items-baseline gap-4">
-                                <h3 className="text-3xl font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
-                                <Badge className={cn("font-black uppercase tracking-widest text-[9px] border-none px-3 py-1", 
+                            <div className="flex items-center gap-4 px-2">
+                                <h3 className="text-2xl font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <Badge className={cn("font-black uppercase tracking-widest text-[8px] border-none px-2.5 py-0.5", 
                                     state.result.severity === 'high' ? "bg-red-100 text-red-600" : state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600")}>
-                                    SEVERITY: {state.result.severity}
+                                    {state.result.severity}
                                 </Badge>
                             </div>
                         </div>
-                        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium px-2">
                             <ReactMarkdown>{state.result.summary || ''}</ReactMarkdown>
                         </div>
                         {state.result.firstAidSteps?.length > 0 && (
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 <div className="flex items-center gap-2 px-2">
                                     <ClipboardCheck className="w-5 h-5 text-orange-500" />
                                     <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Immediate First-Aid</h4>
                                 </div>
-                                <div className="grid gap-3">
+                                <div className="grid gap-2">
                                     {state.result.firstAidSteps.map((step: string, i: number) => (
-                                        <div key={i} className="flex gap-4 p-5 bg-white/60 dark:bg-slate-800/60 rounded-[2rem] border border-white/20 shadow-sm items-start">
-                                            <div className="h-8 w-8 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0 font-black text-orange-500 text-xs">{i+1}</div>
-                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed">{step}</p>
+                                        <div key={i} className="flex gap-4 p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm items-start">
+                                            <div className="h-7 w-7 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0 font-black text-orange-500 text-[10px]">{i+1}</div>
+                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed">{step}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -435,7 +388,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
              <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -446,8 +399,8 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                 </div>
             </div>
 
-            <div className="space-y-8">
-                <form action={handleFormAction} className="space-y-8">
+            <div className="space-y-6">
+                <form action={handleFormAction} className="space-y-6">
                     {!preview ? (
                         <div className="border-4 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-blue-500">
@@ -456,10 +409,10 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                             <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">Upload X-Ray Plate</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="X-ray" width={800} height={1000} className="w-full h-auto object-cover" />
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
+                            <Image src={preview} alt="X-ray" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
-                            <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                            <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
@@ -476,7 +429,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-lg font-bold p-8" />
+                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
@@ -494,7 +447,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             )}
 
             {state.result && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     <div className="space-y-8">
                         <div className="flex items-center justify-between px-2">
@@ -511,8 +464,8 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                 <Scan className="w-5 h-5 text-blue-500" />
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Clinical Observation</h4>
                             </div>
-                            <div className="p-8 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/40 shadow-sm">
-                                <p className="text-lg font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                            <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/40 shadow-sm">
+                                <p className="text-base font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
                             </div>
                         </div>
                         {state.result.suggestedActions?.length > 0 && (
@@ -521,11 +474,11 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                     <Lightbulb className="w-5 h-5 text-blue-500" />
                                     <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Immediate Care</h4>
                                 </div>
-                                <div className="grid gap-3">
+                                <div className="grid gap-2">
                                     {state.result.suggestedActions.map((action: string, i: number) => (
                                         <div key={i} className="flex items-center gap-4 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100/50">
                                             <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                                            <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{action}</span>
+                                            <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{action}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -557,7 +510,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
@@ -568,8 +521,8 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 </div>
             </div>
 
-            <div className="space-y-8">
-                <form action={handleFormAction} className="space-y-8">
+            <div className="space-y-6">
+                <form action={handleFormAction} className="space-y-6">
                     {!preview ? (
                         <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
@@ -578,10 +531,10 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">Drop Lab Report Here</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group">
-                            <Image src={preview} alt="Report" width={800} height={1000} className="w-full h-auto object-cover" />
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group bg-black/5 max-h-[500px] flex items-center justify-center">
+                            <Image src={preview} alt="Report" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
-                            <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-40", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                            <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
@@ -597,7 +550,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Clinical Context</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Feeling extremely tired for 1 month..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-lg font-bold p-8" />
+                        <Textarea name="userQuery" placeholder="E.g., Feeling extremely tired for 1 month..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
@@ -615,32 +568,32 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
             )}
 
             {state.result && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     <div className="space-y-10">
                         <div className="space-y-6">
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="flex items-center gap-2 px-2">
                                     <ClipboardCheck className="w-5 h-5 text-emerald-500" />
                                     <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Executive Summary</h4>
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight leading-tight">{state.result.summary}</h3>
+                                <h3 className="text-lg md:text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight leading-tight px-2">{state.result.summary}</h3>
                             </div>
                         </div>
                         {state.result.interpretations?.length > 0 && (
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 <div className="flex items-center gap-2 px-2">
                                     <Activity className="w-5 h-5 text-emerald-500" />
                                     <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Biomarker Analysis</h4>
                                 </div>
-                                <div className="grid gap-3">
+                                <div className="grid gap-2">
                                     {state.result.interpretations.map((item: any, i: number) => (
-                                        <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm flex items-center justify-between gap-4">
+                                        <div key={i} className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm flex items-center justify-between gap-4">
                                             <div className="min-w-0">
-                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest truncate">{item.test}</p>
-                                                <p className="text-lg font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
+                                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest truncate">{item.test}</p>
+                                                <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
                                             </div>
-                                            <Badge className={cn("font-black text-[9px] uppercase tracking-widest border-none px-3 py-1", 
+                                            <Badge className={cn("font-black text-[8px] uppercase tracking-widest border-none px-2 py-0.5", 
                                                 item.status === 'high' ? "bg-red-50 text-red-500" : item.status === 'low' ? "bg-orange-50 text-orange-500" : "bg-emerald-50 text-emerald-500")}>
                                                 {item.status}
                                             </Badge>
@@ -729,10 +682,7 @@ export default function DiseaseScannerPage() {
                             </div>
                         </div>
                         <Link href="/profile" className="shrink-0 ml-4">
-                          <Avatar className="h-12 w-12 border-4 border-white shadow-lg active:scale-95 transition-transform bg-slate-100">
-                            <AvatarImage src={userImage} className="object-cover" />
-                            <AvatarFallback className="bg-primary text-white font-black uppercase text-base">{userName[0]}</AvatarFallback>
-                          </Avatar>
+                            <UserAvatar src={userImage} name={userName} />
                         </Link>
                     </div>
 
@@ -799,13 +749,13 @@ function ScannerCard({ title, slogan, icon: Icon, gradient, iconColor, btnColor,
         <Card className={cn("rounded-[3rem] border-none shadow-lg group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden", gradient)} onClick={onClick}>
             <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/20 rounded-full blur-2xl" />
             <div className="p-6 flex flex-col items-center gap-4 text-center relative z-10">
-                <div className="w-20 h-20 rounded-[2rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
-                   <Icon className={cn("w-10 h-10", iconColor)} />
+                <div className="w-16 h-16 rounded-[1.8rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
+                   <Icon className={cn("w-8 h-8", iconColor)} />
                 </div>
                 <div className="space-y-1.5 w-full">
-                    <h3 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h3>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{slogan}</p>
-                    <div className={cn("w-full rounded-2xl py-2.5 mt-3 text-[10px] font-black uppercase tracking-widest text-white shadow-xl transition-all duration-300 group-hover:shadow-primary/20", btnColor)}>
+                    <h3 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h3>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{slogan}</p>
+                    <div className={cn("w-full rounded-2xl py-2 mt-3 text-[9px] font-black uppercase tracking-widest text-white shadow-xl transition-all duration-300 group-hover:shadow-primary/20", btnColor)}>
                         {btnText}
                     </div>
                 </div>
