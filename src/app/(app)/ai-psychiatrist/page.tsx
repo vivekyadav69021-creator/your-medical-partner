@@ -19,14 +19,17 @@ import {
     Activity,
     BrainCircuit,
     Copy,
-    ThumbsUp,
     Globe,
     Clock,
     ShieldCheck,
     MessageCircle,
     NotebookPen,
     Square,
-    ThumbsDown
+    Heart,
+    Wind,
+    CloudRain,
+    Smile,
+    MessageSquareQuote
 } from 'lucide-react';
 import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -66,6 +69,13 @@ const mentalHealthSources = [
   "World Federation for Mental Health",
   "Mindful Awareness Research Center",
   "Counseling & Support Experts"
+];
+
+const mentalPrompts = [
+    { label: "Feeling Anxious", query: "I've been feeling quite anxious lately and I need someone to talk to.", icon: CloudRain, color: "text-blue-400" },
+    { label: "Stress at Work", query: "Work is getting very stressful and I'm finding it hard to manage.", icon: Wind, color: "text-teal-400" },
+    { label: "Just Need to Talk", query: "I just need a safe space to share what's on my mind today.", icon: MessageSquareQuote, color: "text-purple-400" },
+    { label: "Feeling Happy", query: "I'm having a great day and wanted to share my positive energy!", icon: Smile, color: "text-yellow-400" },
 ];
 
 const initialState = { result: null, error: null };
@@ -347,20 +357,56 @@ export default function AIPsychiatristPage() {
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
-                    <div className="flex flex-col justify-center items-center px-6 pt-24 pb-32 space-y-12 text-center max-w-sm mx-auto animate-in fade-in duration-1000">
-                        <div className="space-y-8 flex flex-col items-center">
-                            <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[3rem] shadow-2xl border border-white/50 relative group">
-                                <Sparkles className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)] group-hover:rotate-12 transition-transform duration-500" />
-                                <div className="absolute inset-0 bg-primary/5 rounded-[3rem] animate-pulse" />
+                    <div className="flex flex-col justify-center items-center px-6 pt-10 pb-32 space-y-12 text-center max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-1000">
+                        
+                        {/* Immersive Hero Section */}
+                        <div className="relative flex flex-col items-center">
+                            {/* Glowing Aura Background */}
+                            <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-[1.5] animate-pulse -z-10" />
+                            
+                            <div className="p-8 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl border border-white/50 relative group transition-transform duration-700 hover:scale-105">
+                                <BrainCircuit className="w-16 h-16 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.5)] transition-transform duration-700 group-hover:rotate-6" />
+                                
+                                {/* Unique Mini Icon */}
+                                <div className="absolute -top-2 -right-2 bg-gradient-to-br from-pink-400 to-rose-500 p-2.5 rounded-2xl shadow-xl border-4 border-white dark:border-slate-900 rotate-12">
+                                    <Heart className="w-4 h-4 text-white fill-white" />
+                                </div>
                             </div>
-                            <div className="space-y-3">
-                                <h2 className="text-4xl font-black text-[#1A365D] dark:text-white tracking-tight leading-tight">How is your <span className="text-primary">heart?</span></h2>
-                                <p className="text-sm font-bold text-slate-400 leading-relaxed px-4">I'm right here in your private space, ready to listen without judgment.</p>
+
+                            <div className="mt-10 space-y-4">
+                                <h2 className="text-4xl md:text-5xl font-black text-[#1A365D] dark:text-white tracking-tight leading-tight">
+                                    Your <span className="text-primary">Safe Space</span>
+                                </h2>
+                                <p className="text-sm md:text-base font-bold text-slate-500/80 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
+                                    I'm your AI Psychiatrist. Whatever you share stays here, private and protected.
+                                </p>
                             </div>
                         </div>
-                        <Button className="rounded-full h-16 px-12 font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_15px_30px_-5px_rgba(36,136,232,0.3)] active:scale-95 transition-all bg-primary hover:bg-primary/90" onClick={handleNewChat}>
-                           Open My Heart
-                        </Button>
+
+                        {/* Interactive Starting Tiles */}
+                        <div className="grid grid-cols-2 gap-4 w-full px-2">
+                            {mentalPrompts.map((prompt, idx) => (
+                                <button 
+                                    key={idx} 
+                                    onClick={() => onFormAction(prompt.query)}
+                                    className="flex flex-col items-start gap-4 p-6 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-md rounded-[2.5rem] text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.95] group shadow-sm"
+                                >
+                                    <div className={cn("p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-md transition-transform group-hover:scale-110", prompt.color)}>
+                                        <prompt.icon className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-[12px] font-black text-slate-700 dark:text-[#e3e3e3] uppercase tracking-widest leading-tight">{prompt.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4 pt-4">
+                            <Button className="rounded-full h-16 px-16 font-black uppercase text-[11px] tracking-[0.3em] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] active:scale-95 transition-all bg-primary hover:bg-primary/90 group" onClick={handleNewChat}>
+                               Start Conversation <Sparkles className="ml-2 w-4 h-4 transition-transform group-hover:rotate-12" />
+                            </Button>
+                            <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                                <ShieldCheck className="w-3.5 h-3.5 text-primary" /> End-to-End Encrypted Session
+                            </p>
+                        </div>
                     </div>
                 </ScrollArea>
             ) : (
@@ -391,9 +437,12 @@ export default function AIPsychiatristPage() {
                                             {!isContinuation && (
                                                 <div className="flex items-center gap-3 mb-4">
                                                     <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
-                                                        <Sparkles className="w-4.5 h-4.5 text-primary" />
+                                                        <BrainCircuit className="w-4.5 h-4.5 text-primary" />
                                                     </div>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Psychiatrist</span>
+                                                    <div className="flex flex-col -space-y-1">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Psychiatrist</span>
+                                                        <span className="text-[8px] font-bold text-primary uppercase">Expert Care</span>
+                                                    </div>
                                                 </div>
                                             )}
 
