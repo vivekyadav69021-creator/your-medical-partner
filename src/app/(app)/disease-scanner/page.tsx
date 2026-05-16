@@ -57,8 +57,12 @@ const updateScanStats = () => {
     }
 };
 
-const compressImage = (dataUri: string, maxWidth = 1024): Promise<string> => {
-    return new Promise((resolve) => {
+/**
+ * Optimizes image for server action payload limits
+ * Target: Under 1MB base64 string
+ */
+const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
+    return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
@@ -73,17 +77,35 @@ const compressImage = (dataUri: string, maxWidth = 1024): Promise<string> => {
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', 0.8));
+            if (!ctx) {
+                resolve(dataUri);
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            // Quality 0.5 is a sweet spot for size and OCR/Vision clarity
+            const compressed = canvas.toDataURL('image/jpeg', 0.5);
+            
+            // Check if string is still huge (unlikely at 800px 0.5q)
+            if (compressed.length > 1300000) {
+                 const smallerCanvas = document.createElement('canvas');
+                 smallerCanvas.width = width * 0.7;
+                 smallerCanvas.height = height * 0.7;
+                 const sCtx = smallerCanvas.getContext('2d');
+                 sCtx?.drawImage(canvas, 0, 0, smallerCanvas.width, smallerCanvas.height);
+                 resolve(smallerCanvas.toDataURL('image/jpeg', 0.4));
+            } else {
+                resolve(compressed);
+            }
         };
+        img.onerror = () => reject(new Error("Image failed to load"));
         img.src = dataUri;
     });
 };
 
-const initialXrayState = { result: null, error: null };
-const initialSkinState = { result: null, error: null };
-const initialLabReportState = { result: null, error: null };
-const initialInjuryState = { result: null, error: null };
+const initialXrayState = { result: null, error: null, timestamp: 0 };
+const initialSkinState = { result: null, error: null, timestamp: 0 };
+const initialLabReportState = { result: null, error: null, timestamp: 0 };
+const initialInjuryState = { result: null, error: null, timestamp: 0 };
 
 /**
  * Premium Scan Animation Overlay
@@ -113,20 +135,29 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (state.result && !state.error) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (preview) {
+        if (!preview) {
+            toast({ variant: 'destructive', title: 'Photo Required', description: 'Please upload a photo of the skin concern.' });
+            return;
+        }
+        
+        try {
             const compressed = await compressImage(preview);
             const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
             if (savedProfile) formData.set('userProfile', savedProfile);
             formData.set('imageDataUri', compressed);
+            
             startTransition(() => {
                 formAction(formData);
             });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
         }
     };
 
@@ -191,7 +222,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     
-                    {/* Interaction Prompt (if applicable) */}
                     {state.result.interactionPrompt && (
                         <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
                             <MessageCircle className="h-5 w-5 text-blue-500" />
@@ -200,7 +230,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         </Alert>
                     )}
 
-                    {/* Verdict */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 px-2">
                             <BrainCircuit className="w-5 h-5 text-pink-500" />
@@ -211,7 +240,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         </div>
                     </div>
 
-                    {/* Comparative Analysis */}
                     {state.result.comparativeAnalysis && (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 px-2">
@@ -226,7 +254,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         </div>
                     )}
 
-                    {/* Conditions */}
                     {state.result.identifiedConditions?.length > 0 && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-2 px-2">
@@ -251,7 +278,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         </div>
                     )}
 
-                    {/* Nutritional Support */}
                     {state.result.nutritionalSupport?.length > 0 && (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 px-2">
@@ -269,7 +295,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         </div>
                     )}
 
-                    {/* Recommendations */}
                     {state.result.recommendations?.length > 0 && (
                          <div className="space-y-4">
                             <div className="flex items-center gap-2 px-2">
@@ -306,20 +331,25 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const [state, formAction, isAnalyzing] = useActionState(analyzeInjuryAction, initialInjuryState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (state.result && !state.error) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (preview) {
-            const compressed = await compressImage(preview);
-            formData.set('imageDataUri', compressed);
+        try {
+            if (preview) {
+                const compressed = await compressImage(preview);
+                formData.set('imageDataUri', compressed);
+            }
+            formData.set('language', lang);
+            startTransition(() => {
+                formAction(formData);
+            });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
         }
-        formData.set('language', lang);
-        startTransition(() => {
-            formAction(formData);
-        });
     };
 
     return (
@@ -435,13 +465,19 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const [preview, setPreview] = useState<string | null>(null);
     const [fileType, setFileType] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (state.result && !state.error) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (preview) {
+        if (!preview) {
+            toast({ variant: 'destructive', title: 'X-ray Required', description: 'Please upload an X-ray plate image.' });
+            return;
+        }
+
+        try {
             const compressed = await compressImage(preview);
             formData.set('photoDataUri', compressed);
             formData.set('contentType', fileType || 'image/jpeg');
@@ -449,6 +485,8 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             startTransition(() => {
                 formAction(formData);
             });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
         }
     };
 
@@ -560,19 +598,27 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (state.result && !state.error) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (preview) {
+        if (!preview) {
+             toast({ variant: 'destructive', title: 'Report Required', description: 'Please upload a photo of the lab report.' });
+             return;
+        }
+
+        try {
             const compressed = await compressImage(preview);
             formData.set('imageDataUri', compressed);
             formData.set('language', lang);
             startTransition(() => {
                 formAction(formData);
             });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
         }
     };
 

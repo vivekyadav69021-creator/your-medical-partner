@@ -31,6 +31,7 @@ export async function analyzeXrayAction(
         validatedFields.error.flatten().fieldErrors.photoDataUri?.[0] ??
         validatedFields.error.flatten().fieldErrors.contentType?.[0] ??
         'Invalid input.',
+      timestamp: Date.now(),
     };
   }
   
@@ -43,22 +44,22 @@ export async function analyzeXrayAction(
       userQuery: validatedFields.data.userQuery,
       language: validatedFields.data.language,
     });
-    if (result.status === 'error') {
-        return { result: null, error: result.error || 'Analysis failed.' };
-    }
+    
+    // Ensure we return a plain object
     return {
-      result: result,
-      error: null,
+      result: JSON.parse(JSON.stringify(result)),
+      error: result.status === 'error' ? (result.error || 'Analysis failed') : null,
+      timestamp: Date.now(),
     };
   } catch (e: any) {
-    console.error(e);
+    console.error("Xray Action Error:", e);
     return {
       result: null,
-      error: e.message || 'The AI model could not be reached. Please try again later.',
+      error: 'The AI model could not be reached. Please try a smaller/clearer image.',
+      timestamp: Date.now(),
     };
   }
 }
-
 
 const skinAnalysisSchema = z.object({
   imageDataUri: z.string().min(1, 'Please upload an image.'),
@@ -75,7 +76,10 @@ export async function analyzeSkinImageAction(
   formData: FormData
 ) {
   const profileString = formData.get('userProfile') as string;
-  const userProfile = profileString ? JSON.parse(profileString) : undefined;
+  let userProfile = undefined;
+  try {
+    userProfile = profileString ? JSON.parse(profileString) : undefined;
+  } catch(e) {}
 
   const validatedFields = skinAnalysisSchema.safeParse({
     imageDataUri: formData.get('imageDataUri'),
@@ -86,25 +90,27 @@ export async function analyzeSkinImageAction(
   if (!validatedFields.success) {
     return {
       result: null,
-      error:
-        validatedFields.error.flatten().fieldErrors.imageDataUri?.[0] ?? 'Invalid input.',
+      error: 'Invalid input data.',
+      timestamp: Date.now(),
     };
   }
 
   try {
     const result = await analyzeSkinImage(validatedFields.data);
     return {
-      result,
+      result: JSON.parse(JSON.stringify(result)),
       error: null,
+      timestamp: Date.now(),
     };
   } catch (e: any) {
+    console.error("Skin Action Error:", e);
     return {
       result: null,
-      error: e.message || 'The AI model could not be reached. Please try again later.',
+      error: 'Analysis failed. Please try again with a clearer photo.',
+      timestamp: Date.now(),
     };
   }
 }
-
 
 const labReportImageSchema = z.object({
   imageDataUri: z.string().min(1, 'Please upload an image.'),
@@ -125,18 +131,24 @@ export async function analyzeLabReportImageAction(
     if (!validatedFields.success) {
         return {
             result: null,
-            error: validatedFields.error.flatten().fieldErrors.imageDataUri?.[0] ?? 'Invalid input.',
+            error: 'Invalid input.',
+            timestamp: Date.now(),
         };
     }
 
     try {
         const result = await analyzeLabReportImage(validatedFields.data);
-        return { result, error: null };
+        return { 
+            result: JSON.parse(JSON.stringify(result)), 
+            error: null,
+            timestamp: Date.now()
+        };
     } catch (e: any) {
-        console.error("Action Error:", e);
+        console.error("Lab Action Error:", e);
         return {
             result: null,
-            error: e.message || 'The AI model could not be reached. Please try again later.',
+            error: 'The report could not be read. Ensure the image is bright and steady.',
+            timestamp: Date.now(),
         };
     }
 }
@@ -160,22 +172,24 @@ export async function analyzeInjuryAction(
   if (!validatedFields.success) {
     return {
       result: null,
-      error:
-        validatedFields.error.flatten().fieldErrors.userQuery?.[0] ?? 'Invalid input.',
+      error: 'Please describe what happened.',
+      timestamp: Date.now(),
     };
   }
 
   try {
     const result = await analyzeInjury(validatedFields.data);
     return {
-      result,
+      result: JSON.parse(JSON.stringify(result)),
       error: null,
+      timestamp: Date.now(),
     };
   } catch (e: any) {
     console.error("Injury Action Error:", e);
     return {
       result: null,
-      error: e.message || 'The AI model could not be reached. Please try again later.',
+      error: 'Emergency analysis failed. Please provide more details.',
+      timestamp: Date.now(),
     };
   }
 }
