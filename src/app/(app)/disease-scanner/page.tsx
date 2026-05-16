@@ -59,7 +59,7 @@ const updateScanStats = () => {
 
 /**
  * Optimizes image for server action payload limits
- * Target: Under 1MB base64 string
+ * Target: Under 512KB for maximum speed and reliable AI processing
  */
 const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -82,20 +82,9 @@ const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
                 return;
             }
             ctx.drawImage(img, 0, 0, width, height);
-            // Quality 0.5 is a sweet spot for size and OCR/Vision clarity
-            const compressed = canvas.toDataURL('image/jpeg', 0.5);
-            
-            // Check if string is still huge (unlikely at 800px 0.5q)
-            if (compressed.length > 1300000) {
-                 const smallerCanvas = document.createElement('canvas');
-                 smallerCanvas.width = width * 0.7;
-                 smallerCanvas.height = height * 0.7;
-                 const sCtx = smallerCanvas.getContext('2d');
-                 sCtx?.drawImage(canvas, 0, 0, smallerCanvas.width, smallerCanvas.height);
-                 resolve(smallerCanvas.toDataURL('image/jpeg', 0.4));
-            } else {
-                resolve(compressed);
-            }
+            // Quality 0.4 is optimal for base64 speed while keeping diagnostic detail
+            const compressed = canvas.toDataURL('image/jpeg', 0.4);
+            resolve(compressed);
         };
         img.onerror = () => reject(new Error("Image failed to load"));
         img.src = dataUri;
@@ -138,8 +127,11 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error) updateScanStats();
-    }, [state]);
+        if (state.result && !state.error && state.timestamp > 0) {
+            updateScanStats();
+            toast({ title: "Analysis Complete", description: "Your skin report is ready below." });
+        }
+    }, [state, toast]);
 
     const handleFormAction = async (formData: FormData) => {
         if (!preview) {
@@ -318,7 +310,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
-                            Disclaimer: This analysis is for educational purposes. AI can misread visual data. Consult a certified dermatologist for a formal diagnosis.
+                            {state.result.disclaimer}
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -334,7 +326,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error) updateScanStats();
+        if (state.result && !state.error && state.timestamp > 0) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
@@ -468,7 +460,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error) updateScanStats();
+        if (state.result && !state.error && state.timestamp > 0) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
@@ -601,7 +593,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error) updateScanStats();
+        if (state.result && !state.error && state.timestamp > 0) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
