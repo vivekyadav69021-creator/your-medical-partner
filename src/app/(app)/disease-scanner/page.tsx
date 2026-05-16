@@ -27,7 +27,10 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Lightbulb,
-  Siren
+  Siren,
+  Apple,
+  MessageCircle,
+  ShieldAlert
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -157,7 +160,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     </div>
                 ) : (
                     <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
-                        <Image src={preview} alt="Preview" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" />
+                        <Image src={preview} alt="Preview" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
                         {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
@@ -168,10 +171,10 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Describe Symptoms</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days, feels like burning..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-pink-500 to-rose-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : "Start Scientific Analysis"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Analyzing Skin...</> : "Start Scientific Analysis"}
                     </Button>
                 </form>
             </div>
@@ -179,14 +182,25 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             {state.error && (
                 <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
                     <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
+                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Analysis Error</AlertTitle>
                     <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
                 </Alert>
             )}
 
             {state.result && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    {/* Interaction Prompt (if applicable) */}
+                    {state.result.interactionPrompt && (
+                        <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
+                            <MessageCircle className="h-5 w-5 text-blue-500" />
+                            <AlertTitle className="font-black uppercase text-[10px] text-blue-500 mb-2">Further Inquiry</AlertTitle>
+                            <AlertDescription className="font-bold text-blue-700">{state.result.interactionPrompt}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* Verdict */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 px-2">
                             <BrainCircuit className="w-5 h-5 text-pink-500" />
@@ -196,30 +210,90 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             <ReactMarkdown>{state.result.overallAssessment || ''}</ReactMarkdown>
                         </div>
                     </div>
+
+                    {/* Comparative Analysis */}
+                    {state.result.comparativeAnalysis && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <Activity className="w-5 h-5 text-pink-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Comparative Analysis</h4>
+                            </div>
+                            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                                    {state.result.comparativeAnalysis}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Conditions */}
                     {state.result.identifiedConditions?.length > 0 && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-2 px-2">
                                 <Scan className="w-5 h-5 text-pink-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Morphological Data</h4>
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Potential Conditions</h4>
                             </div>
                             <div className="grid gap-4">
                                 {state.result.identifiedConditions.map((c: any, i: number) => (
-                                    <div key={i} className="space-y-2 border-l-4 border-pink-100 dark:border-pink-900/30 pl-6 py-1">
+                                    <div key={i} className="space-y-3 border-l-4 border-pink-100 dark:border-pink-900/30 pl-6 py-1">
                                         <div className="flex items-center justify-between">
                                             <h5 className="font-black text-lg text-[#1A365D] dark:text-slate-100">{c.name}</h5>
                                             <Badge className="bg-pink-50 text-pink-500 border-none font-black text-[8px] tracking-widest">CONF: {Math.round((c.confidence || 0) * 100)}%</Badge>
                                         </div>
-                                        <p className="text-xs font-bold text-slate-500 italic">"{c.biologicalLogic}"</p>
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-black text-pink-400 uppercase tracking-widest flex items-center gap-1.5"><ClipboardCheck className="w-3 h-3"/> Biological Logic</p>
+                                            <p className="text-xs font-bold text-slate-500 leading-relaxed">"{c.biologicalLogic}"</p>
+                                        </div>
                                         <p className="text-xs font-medium text-slate-400 leading-relaxed">{c.description}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
+
+                    {/* Nutritional Support */}
+                    {state.result.nutritionalSupport?.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <Apple className="w-5 h-5 text-emerald-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Nutritional Support</h4>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-2">
+                                {state.result.nutritionalSupport.map((item: string, i: number) => (
+                                    <div key={i} className="flex items-center gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-100/50">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{item}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {state.result.recommendations?.length > 0 && (
+                         <div className="space-y-4">
+                            <div className="flex items-center gap-2 px-2">
+                                <Lightbulb className="w-5 h-5 text-yellow-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Recommendations</h4>
+                            </div>
+                            <div className="grid gap-3">
+                                {state.result.recommendations.map((rec: any, i: number) => (
+                                    <div key={i} className="flex gap-4 p-5 bg-white dark:bg-slate-800/60 rounded-[1.8rem] border border-slate-100 shadow-sm items-start">
+                                        <div className={cn("h-7 w-7 rounded-xl flex items-center justify-center shrink-0 text-[10px] font-black uppercase", 
+                                            rec.type === 'routine' ? "bg-blue-50 text-blue-500" : rec.type === 'product' ? "bg-purple-50 text-purple-500" : "bg-orange-50 text-orange-500")}>
+                                            {rec.type[0]}
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed">{rec.suggestion}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
-                        <Info className="h-5 w-5 text-blue-500" />
+                        <ShieldAlert className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
-                            Disclaimer: This analysis is for educational purposes. AI can misread visual data. Consult a certified dermatologist.
+                            Disclaimer: This analysis is for educational purposes. AI can misread visual data. Consult a certified dermatologist for a formal diagnosis.
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -264,7 +338,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                  <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Accident Description</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" required />
+                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee, bleeding..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" required />
                     </div>
                     
                     {!preview ? (
@@ -276,7 +350,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         </div>
                     ) : (
                         <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="Injury" width={800} height={600} className="w-full h-auto object-contain max-h-[500px]" />
+                            <Image src={preview} alt="Injury" width={800} height={600} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
                             {isAnalyzing && <ScanAnimationOverlay color="text-orange-500" />}
                             <Button size="icon" variant="destructive" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
@@ -323,7 +397,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Injury Classification</h4>
                             </div>
                             <div className="flex items-center gap-4 px-2">
-                                <h3 className="text-lg md:text-xl font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <h3 className="text-base md:text-lg font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
                                 <Badge className={cn("font-black uppercase tracking-widest text-[8px] border-none px-2.5 py-0.5", 
                                     state.result.severity === 'high' ? "bg-red-100 text-red-600" : state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600")}>
                                     {state.result.severity}
@@ -401,7 +475,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                         </div>
                     ) : (
                         <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="X-ray" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" />
+                            <Image src={preview} alt="X-ray" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
                             {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
                             <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
@@ -525,7 +599,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         </div>
                     ) : (
                         <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="Report" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" />
+                            <Image src={preview} alt="Report" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
                             {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
                             <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />

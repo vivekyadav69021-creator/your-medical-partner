@@ -21,7 +21,7 @@ const SkinAnalysisInputSchema = z.object({
   imageDataUri: z
     .string()
     .describe(
-      "A photo of the face as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of the face as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   userQuery: z.string().optional().describe("User-reported symptoms or context."),
   userProfile: z.object({
@@ -36,12 +36,13 @@ const SkinAnalysisOutputSchema = z.object({
   overallAssessment: z.string().describe('High-level summary of the skin condition.'),
   identifiedConditions: z.array(ConditionSchema).describe('List of potential conditions.'),
   comparativeAnalysis: z.string().describe('How the visual data confirms or contradicts user descriptions.'),
-  nutritionalSupport: z.array(z.string()).describe('Specific vitamins (E, C, Zinc) or foods suggested for this skin state.'),
-  interactionPrompt: z.string().optional().describe('Contextual question asked to the user if query was insufficient.'),
+  nutritionalSupport: z.array(z.string()).describe('Specific vitamins (E, C, Zinc) or foods suggested for this skin state based on human physiology.'),
+  interactionPrompt: z.string().optional().describe('Contextual question asked to the user if query was insufficient (e.g., "Is it itchy?").'),
   recommendations: z.array(z.object({
     type: z.enum(['routine', 'product', 'lifestyle']),
     suggestion: z.string(),
   })),
+  disclaimer: z.string().describe('The mandatory clinical disclaimer.'),
 });
 export type SkinAnalysisOutput = z.infer<typeof SkinAnalysisOutputSchema>;
 
@@ -56,20 +57,21 @@ const prompt = ai.definePrompt({
   prompt: `You are the Onboarding & Personalization Architect for the "Your Medical Partner" Skin/Face Scanner.
 
 **Operational Protocol:**
-- Analyze visual morphology, distribution, and texture in the provided image.
-- **Workflow Track 1 (Detect):** If no userQuery is provided, describe the visual findings and ask for context in 'interactionPrompt' (e.g., "Is it itchy or painful?").
-- **Workflow Track 2 (Describe):** If userQuery is provided, prioritize reported symptoms to refine visual analysis. Compare visual pustules vs dry spots against user text.
-- **Biological Logic:** Explain condition causes using medical terminology (e.g., "sebaceous gland overactivity").
-- **Data Linkage:** Use User Profile (Age: {{userProfile.age}}, Lifestyle: {{userProfile.lifestyle}}, Diet: {{userProfile.dietaryPreference}}) to provide personalized advice.
-- **Nutritional Support:** Suggest relevant vitamins (Zinc, C, E) or antioxidants based on the biological needs identified.
+- Analyze visual morphology, distribution, pigmentation, and texture in the provided image.
+- **Workflow Track 1 (Detect):** If no userQuery is provided, perform multimodal analysis on the image. Describe visual findings and ask for context in 'interactionPrompt' (e.g., "Is it itchy, burning, or painful?").
+- **Workflow Track 2 (Describe):** If userQuery is provided, prioritize reported symptoms (itching, duration, triggers) to refine visual analysis. Explicitly state in 'comparativeAnalysis' how visual data confirms or contradicts their text.
+- **Biological Logic:** Explain the 'why' using medical terminology (e.g., "sebaceous gland overactivity" or "inflammatory cytokines").
+- **Data Linkage:** Use the provided User Profile (Age: {{userProfile.age}}, Lifestyle: {{userProfile.lifestyle}}, Diet: {{userProfile.dietaryPreference}}) to personalize the advice.
+- **Nutritional Support:** Suggest 3-4 specific vitamins (E, C, Zinc) or antioxidants (Green Tea, Berries) that support the identified skin state.
 
 **Compulsory Disclaimer:** "This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment".
 
 **User Input:**
 Context: {{{userQuery}}}
+User Profile Data: Age {{userProfile.age}}, Lifestyle {{userProfile.lifestyle}}, Diet {{userProfile.dietaryPreference}}
 Image: {{media url=imageDataUri}}
 
-Provide the analysis in structured JSON format.`,
+Respond ONLY in structured JSON matching the output schema.`,
 });
 
 const skinAnalyzerFlow = ai.defineFlow(
@@ -82,7 +84,11 @@ const skinAnalyzerFlow = ai.defineFlow(
     try {
       const { output } = await prompt(input);
       if (!output) throw new Error('AI analysis failed.');
-      return output;
+      
+      return {
+        ...output,
+        disclaimer: "This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment."
+      };
     } catch (e: any) {
       console.error("Skin Flow Error:", e);
       return {
@@ -91,6 +97,7 @@ const skinAnalyzerFlow = ai.defineFlow(
         comparativeAnalysis: "Could not perform comparison.",
         nutritionalSupport: [],
         recommendations: [],
+        disclaimer: "Error in analysis.",
         interactionPrompt: "I'm having trouble seeing the image clearly. Could you try uploading a brighter photo?",
       };
     }
