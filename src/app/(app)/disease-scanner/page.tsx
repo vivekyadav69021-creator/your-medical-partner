@@ -22,7 +22,6 @@ import {
   Bandage,
   Bone,
   Activity,
-  Info,
   ChevronLeft,
   CheckCircle2,
   ClipboardCheck,
@@ -59,9 +58,9 @@ const updateScanStats = () => {
 
 /**
  * Optimizes image for server action payload limits
- * Target: Under 512KB for maximum speed and reliable AI processing
+ * ULTRA-SAFE: 600px width and 0.4 quality for maximum stability and speed
  */
-const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
+const compressImage = (dataUri: string, maxWidth = 600): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
         img.onload = () => {
@@ -82,7 +81,7 @@ const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
                 return;
             }
             ctx.drawImage(img, 0, 0, width, height);
-            // Quality 0.4 is optimal for base64 speed while keeping diagnostic detail
+            // Low quality for fast transmission, still enough for AI Vision
             const compressed = canvas.toDataURL('image/jpeg', 0.4);
             resolve(compressed);
         };
@@ -96,13 +95,9 @@ const initialSkinState = { result: null, error: null, timestamp: 0 };
 const initialLabReportState = { result: null, error: null, timestamp: 0 };
 const initialInjuryState = { result: null, error: null, timestamp: 0 };
 
-/**
- * Premium Scan Animation Overlay
- */
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
-            {/* The Laser Beam */}
             <div 
                 className={cn("absolute left-0 right-0 h-1.5 animate-scan-line z-[60]", color)} 
                 style={{ 
@@ -110,15 +105,13 @@ function ScanAnimationOverlay({ color }: { color: string }) {
                     boxShadow: '0 0 25px 4px currentColor, 0 0 10px 1px white' 
                 }}
             />
-            {/* Holographic Grid Background */}
             <div className="absolute inset-0 opacity-[0.1] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] dark:opacity-[0.15]" />
-            {/* Tinted Ambient Pulse */}
             <div className={cn("absolute inset-0 opacity-[0.05] animate-pulse", color.replace('text-', 'bg-'))} />
         </div>
     );
 }
 
-// --- SUB-COMPONENTS ---
+// --- SCANNER SUB-COMPONENTS (Defined above main component for stability) ---
 
 function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
@@ -127,7 +120,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error && state.timestamp > 0) {
+        if (state?.result && !state?.error && state?.timestamp > 0) {
             updateScanStats();
             toast({ title: "Analysis Complete", description: "Your skin report is ready below." });
         }
@@ -135,7 +128,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
     const handleFormAction = async (formData: FormData) => {
         if (!preview) {
-            toast({ variant: 'destructive', title: 'Photo Required', description: 'Please upload a photo of the skin concern.' });
+            toast({ variant: 'destructive', title: 'Photo Required' });
             return;
         }
         
@@ -144,12 +137,13 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
             if (savedProfile) formData.set('userProfile', savedProfile);
             formData.set('imageDataUri', compressed);
+            formData.set('language', lang);
             
             startTransition(() => {
                 formAction(formData);
             });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
+            toast({ variant: 'destructive', title: 'Optimization Error' });
         }
     };
 
@@ -183,7 +177,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     </div>
                 ) : (
                     <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
-                        <Image src={preview} alt="Preview" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
+                        <Image src={preview} alt="Preview" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
                         {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
@@ -194,30 +188,28 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Describe Symptoms</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days, feels like burning..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-pink-500 to-rose-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Analyzing Skin...</> : "Start Scientific Analysis"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : "Start Scientific Analysis"}
                     </Button>
                 </form>
             </div>
             
-            {state.error && (
-                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
+            {state?.error && (
+                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6">
                     <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Analysis Error</AlertTitle>
                     <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
                 </Alert>
             )}
 
-            {state.result && (
+            {state?.result && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     
                     {state.result.interactionPrompt && (
                         <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
                             <MessageCircle className="h-5 w-5 text-blue-500" />
-                            <AlertTitle className="font-black uppercase text-[10px] text-blue-500 mb-2">Further Inquiry</AlertTitle>
                             <AlertDescription className="font-bold text-blue-700">{state.result.interactionPrompt}</AlertDescription>
                         </Alert>
                     )}
@@ -259,48 +251,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                             <h5 className="font-black text-lg text-[#1A365D] dark:text-slate-100">{c.name}</h5>
                                             <Badge className="bg-pink-50 text-pink-500 border-none font-black text-[8px] tracking-widest">CONF: {Math.round((c.confidence || 0) * 100)}%</Badge>
                                         </div>
-                                        <div className="space-y-2">
-                                            <p className="text-xs font-black text-pink-400 uppercase tracking-widest flex items-center gap-1.5"><ClipboardCheck className="w-3 h-3"/> Biological Logic</p>
-                                            <p className="text-xs font-bold text-slate-500 leading-relaxed">"{c.biologicalLogic}"</p>
-                                        </div>
+                                        <p className="text-xs font-bold text-slate-500 leading-relaxed">"{c.biologicalLogic}"</p>
                                         <p className="text-xs font-medium text-slate-400 leading-relaxed">{c.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {state.result.nutritionalSupport?.length > 0 && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 px-2">
-                                <Apple className="w-5 h-5 text-emerald-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Nutritional Support</h4>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-2">
-                                {state.result.nutritionalSupport.map((item: string, i: number) => (
-                                    <div key={i} className="flex items-center gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-100/50">
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{item}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {state.result.recommendations?.length > 0 && (
-                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 px-2">
-                                <Lightbulb className="w-5 h-5 text-yellow-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Recommendations</h4>
-                            </div>
-                            <div className="grid gap-3">
-                                {state.result.recommendations.map((rec: any, i: number) => (
-                                    <div key={i} className="flex gap-4 p-5 bg-white dark:bg-slate-800/60 rounded-[1.8rem] border border-slate-100 shadow-sm items-start">
-                                        <div className={cn("h-7 w-7 rounded-xl flex items-center justify-center shrink-0 text-[10px] font-black uppercase", 
-                                            rec.type === 'routine' ? "bg-blue-50 text-blue-500" : rec.type === 'product' ? "bg-purple-50 text-purple-500" : "bg-orange-50 text-orange-500")}>
-                                            {rec.type[0]}
-                                        </div>
-                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed">{rec.suggestion}</p>
                                     </div>
                                 ))}
                             </div>
@@ -326,7 +278,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error && state.timestamp > 0) updateScanStats();
+        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
@@ -340,7 +292,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                 formAction(formData);
             });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
+            toast({ variant: 'destructive', title: 'Optimization Error' });
         }
     };
 
@@ -360,7 +312,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                  <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Accident Description</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs, deep cut on knee, bleeding..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" required />
+                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" required />
                     </div>
                     
                     {!preview ? (
@@ -372,7 +324,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         </div>
                     ) : (
                         <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="Injury" width={800} height={600} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
+                            <Image src={preview} alt="Injury" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-orange-500" />}
                             <Button size="icon" variant="destructive" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
@@ -389,62 +341,32 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                     }} accept="image/*" />
 
                     <Button type="submit" disabled={isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-orange-500 to-red-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Emergency AI Scan...</> : "Start Emergency Scan"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Scanning...</> : "Start Emergency Scan"}
                     </Button>
                 </form>
             </div>
 
-            {state.error && (
-                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
-                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
-                </Alert>
-            )}
-
-            {state.result && (
+            {state?.result && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     {state.result.severity === 'high' && (
-                        <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-6 animate-pulse shadow-2xl">
+                        <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-6 animate-pulse">
                             <Siren className="h-8 w-8 mb-3" />
-                            <AlertTitle className="text-xl font-black uppercase tracking-tight">CRITICAL ALERT</AlertTitle>
-                            <AlertDescription className="text-sm font-bold leading-relaxed">{state.result.actionableAlert || "High severity detected. Seek medical help."}</AlertDescription>
+                            <AlertTitle className="text-xl font-black uppercase">CRITICAL ALERT</AlertTitle>
+                            <AlertDescription className="text-sm font-bold">{state.result.actionableAlert}</AlertDescription>
                         </Alert>
                     )}
                     <div className="space-y-8">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 px-2">
-                                <Bandage className="w-5 h-5 text-orange-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Injury Classification</h4>
-                            </div>
-                            <div className="flex items-center gap-4 px-2">
-                                <h3 className="text-base md:text-lg font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
-                                <Badge className={cn("font-black uppercase tracking-widest text-[8px] border-none px-2.5 py-0.5", 
-                                    state.result.severity === 'high' ? "bg-red-100 text-red-600" : state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600")}>
-                                    {state.result.severity}
-                                </Badge>
-                            </div>
+                        <div className="space-y-3 px-2">
+                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Classification</h4>
+                             <div className="flex items-center gap-4">
+                                <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <Badge className="bg-orange-100 text-orange-600 uppercase font-black text-[8px]">{state.result.severity}</Badge>
+                             </div>
                         </div>
-                        <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium px-2">
+                        <div className="prose prose-sm dark:prose-invert max-w-none px-2">
                             <ReactMarkdown>{state.result.summary || ''}</ReactMarkdown>
                         </div>
-                        {state.result.firstAidSteps?.length > 0 && (
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 px-2">
-                                    <ClipboardCheck className="w-5 h-5 text-orange-500" />
-                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Immediate First-Aid</h4>
-                                </div>
-                                <div className="grid gap-2">
-                                    {state.result.firstAidSteps.map((step: string, i: number) => (
-                                        <div key={i} className="flex gap-4 p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm items-start">
-                                            <div className="h-7 w-7 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0 font-black text-orange-500 text-[10px]">{i+1}</div>
-                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed">{step}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
@@ -455,30 +377,25 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
 function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
     const [preview, setPreview] = useState<string | null>(null);
-    const [fileType, setFileType] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error && state.timestamp > 0) updateScanStats();
+        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (!preview) {
-            toast({ variant: 'destructive', title: 'X-ray Required', description: 'Please upload an X-ray plate image.' });
-            return;
-        }
-
+        if (!preview) return;
         try {
             const compressed = await compressImage(preview);
             formData.set('photoDataUri', compressed);
-            formData.set('contentType', fileType || 'image/jpeg');
+            formData.set('contentType', 'image/jpeg');
             formData.set('language', lang);
             startTransition(() => {
                 formAction(formData);
             });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
+            toast({ variant: 'destructive', title: 'Error' });
         }
     };
 
@@ -497,15 +414,15 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             <div className="space-y-6">
                 <form action={handleFormAction} className="space-y-6">
                     {!preview ? (
-                        <div className="border-4 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className="border-4 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-blue-500">
                                 <Bone className="w-12 h-12" />
                             </div>
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">Upload X-Ray Plate</p>
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Upload X-Ray Plate</p>
                         </div>
                     ) : (
                         <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="X-ray" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
+                            <Image src={preview} alt="X-ray" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
                             <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
@@ -515,7 +432,6 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                     <input type="file" ref={fileInputRef} hidden onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                            setFileType(file.type);
                             const reader = new FileReader();
                             reader.onload = () => setPreview(reader.result as string);
                             reader.readAsDataURL(file);
@@ -524,61 +440,23 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Radiology Scan...</> : "Start Radiographic Analysis"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing...</> : "Start Radiology Analysis"}
                     </Button>
                 </form>
             </div>
 
-            {state.error && (
-                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
-                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
-                </Alert>
-            )}
-
-            {state.result && (
+            {state?.result && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    <div className="space-y-8">
-                        <div className="flex items-center justify-between px-2">
-                             <div className="space-y-1">
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Body Part</h4>
-                                <h3 className="text-2xl font-black text-[#1A365D] dark:text-slate-100">{state.result.bodyPart || 'Identified'}</h3>
-                             </div>
-                             <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center border border-blue-100/50">
-                                <Bone className="w-8 h-8 text-blue-500" />
-                             </div>
+                    <div className="space-y-8 px-2">
+                        <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Observation</h4>
+                        <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 border border-white/40 shadow-sm">
+                            <p className="text-base font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
                         </div>
-                        <div className="space-y-4">
-                             <div className="flex items-center gap-2 px-2">
-                                <Scan className="w-5 h-5 text-blue-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Clinical Observation</h4>
-                            </div>
-                            <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/40 shadow-sm">
-                                <p className="text-base font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
-                            </div>
-                        </div>
-                        {state.result.suggestedActions?.length > 0 && (
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 px-2">
-                                    <Lightbulb className="w-5 h-5 text-blue-500" />
-                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Immediate Care</h4>
-                                </div>
-                                <div className="grid gap-2">
-                                    {state.result.suggestedActions.map((action: string, i: number) => (
-                                        <div key={i} className="flex items-center gap-4 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100/50">
-                                            <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                                            <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{action}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
@@ -593,15 +471,11 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     const { toast } = useToast();
 
     useEffect(() => {
-        if (state.result && !state.error && state.timestamp > 0) updateScanStats();
+        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (!preview) {
-             toast({ variant: 'destructive', title: 'Report Required', description: 'Please upload a photo of the lab report.' });
-             return;
-        }
-
+        if (!preview) return;
         try {
             const compressed = await compressImage(preview);
             formData.set('imageDataUri', compressed);
@@ -610,7 +484,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 formAction(formData);
             });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Optimization Error', description: 'Could not process the image.' });
+            toast({ variant: 'destructive', title: 'Error' });
         }
     };
 
@@ -622,22 +496,22 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Report Analyst</h2>
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Deeper OCR Scan</p>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">OCR Lab Scan</p>
                 </div>
             </div>
 
             <div className="space-y-6">
                 <form action={handleFormAction} className="space-y-6">
                     {!preview ? (
-                        <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
                                 <FileText className="w-12 h-12" />
                             </div>
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">Drop Lab Report Here</p>
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Lab Report Here</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 group bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="Report" width={800} height={1000} className="w-full h-auto object-contain max-h-[500px]" style={{ objectFit: 'contain' }} />
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
+                            <Image src={preview} alt="Report" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
                             {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
                             <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                                 <X className="h-5 w-5" />
@@ -653,58 +527,28 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         }
                     }} accept="image/*" />
 
-                    <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Clinical Context</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Feeling extremely tired for 1 month..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
-                    </div>
-
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Extracting Data...</> : "Start Clinical Interpretation"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing...</> : "Start Clinical Interpretation"}
                     </Button>
                 </form>
             </div>
 
-            {state.error && (
-                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6 animate-in zoom-in-95">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle className="font-black uppercase text-xs tracking-widest">Scan Error</AlertTitle>
-                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
-                </Alert>
-            )}
-
-            {state.result && (
+            {state?.result && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    <div className="space-y-10">
-                        <div className="space-y-6">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 px-2">
-                                    <ClipboardCheck className="w-5 h-5 text-emerald-500" />
-                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Executive Summary</h4>
-                                </div>
-                                <h3 className="text-lg md:text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight leading-tight px-2">{state.result.summary}</h3>
-                            </div>
-                        </div>
+                    <div className="space-y-10 px-2">
+                        <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">{state.result.summary}</h3>
                         {state.result.interpretations?.length > 0 && (
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 px-2">
-                                    <Activity className="w-5 h-5 text-emerald-500" />
-                                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Biomarker Analysis</h4>
-                                </div>
-                                <div className="grid gap-2">
-                                    {state.result.interpretations.map((item: any, i: number) => (
-                                        <div key={i} className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm flex items-center justify-between gap-4">
-                                            <div className="min-w-0">
-                                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest truncate">{item.test}</p>
-                                                <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
-                                            </div>
-                                            <Badge className={cn("font-black text-[8px] uppercase tracking-widest border-none px-2 py-0.5", 
-                                                item.status === 'high' ? "bg-red-50 text-red-500" : item.status === 'low' ? "bg-orange-50 text-orange-500" : "bg-emerald-50 text-emerald-500")}>
-                                                {item.status}
-                                            </Badge>
+                            <div className="grid gap-2">
+                                {state.result.interpretations.map((item: any, i: number) => (
+                                    <div key={i} className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-slate-400">{item.test}</p>
+                                            <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
                                         </div>
-                                    ))}
-                                </div>
+                                        <Badge className="bg-emerald-50 text-emerald-500 uppercase text-[8px]">{item.status}</Badge>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
@@ -714,7 +558,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     );
 }
 
-// --- MAIN PAGE ---
+// --- MAIN PAGE COMPONENT ---
 
 export default function DiseaseScannerPage() {
     const [view, setView] = useState<ScannerView>('home');
@@ -735,7 +579,6 @@ export default function DiseaseScannerPage() {
     const t = {
         en: {
             greeting: `Hi ${userName.split(' ')[0]}`,
-            subGreeting: "Advanced Diagnostics",
             statsTitle: "Diagnostic Activity",
             lastScan: "Last Scan",
             reports: "Total Scans",
@@ -749,7 +592,6 @@ export default function DiseaseScannerPage() {
         },
         hi: {
             greeting: `नमस्ते ${userName.split(' ')[0]}`,
-            subGreeting: "उन्नत निदान",
             statsTitle: "नैदानिक गतिविधियाँ",
             lastScan: "पिछला स्कैन",
             reports: "कुल स्कैन",
