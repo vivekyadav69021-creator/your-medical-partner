@@ -1,86 +1,80 @@
-import { genkit, Genkit } from 'genkit';
+import { genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview Failover AI configuration for Your Medical Partner.
- * Implements API Key Rotation to handle 'Rate Limit' or 'Server Busy' errors.
+ * @fileOverview AI Configuration with Smart API Key Rotation.
+ * Intercepts AI calls to implement failover: if Key 1 fails, tries Key 2, etc.
  */
 
-// Array of 4 API keys provided for rotation logic
-const myApiKeys = [
-  "AIzaSyDmvBkdIs4qb_iR-zZN-ml9jdu_0NvYCAw",
-  "AIzaSyClhC9rBZnCBRYOrXgwB_mUhDQBFDXwP8w",
-  "AIzaSyBXrA_eF_nWnJvis9mUTxdyLuUusdJJxn4",
-  "AIzaSyAayCpzEbAwl1QNyfOLD30e1ze1r7QtE6Q"
-];
+// Load keys from environment variables
+const apiKeys = [
+  process.env.GEMINI_API_KEY_1,
+  process.env.GEMINI_API_KEY_2,
+  process.env.GEMINI_API_KEY_3,
+  process.env.GEMINI_API_KEY_4,
+].filter(Boolean) as string[];
 
-// Create multiple Genkit instances, each with a different API key
-const instances = myApiKeys.map(key => genkit({
+// Create separate Genkit instances for each key for isolated sessions
+const instances = apiKeys.map((key) => genkit({
   plugins: [googleAI({ apiKey: key })],
-  model: 'googleai/gemini-2.5-flash',
+  model: googleAI.model('gemini-2.5-flash'),
 }));
 
-/**
- * We export a Proxy of the Genkit instance.
- * This proxy intercepts 'definePrompt' and 'generate' calls to wrap them
- * in the failover/rotation logic.
- */
-export const ai = new Proxy(instances[0], {
-  get(target, prop, receiver) {
-    // Intercept prompt definitions to return a multi-key prompt executor
-    if (prop === 'definePrompt') {
-      return (config: any) => {
-        // Define the prompt on all underlying instances
-        const prompts = instances.map(inst => inst.definePrompt(config));
-        
-        // Return a wrapped function that tries each key sequentially on error
-        return async (input: any) => {
-          for (let i = 0; i < prompts.length; i++) {
-            try {
-              if (process.env.NODE_ENV !== 'production') {
-                console.log(`Attempting AI Prompt with Key ${i + 1}...`);
-              }
-              return await prompts[i](input);
-            } catch (error: any) {
-              console.error(`AI Key ${i + 1} failed:`, error.message);
+// Fallback instance (uses default GEMINI_API_KEY or empty config)
+const defaultAi = genkit({
+  plugins: [googleAI()],
+  model: googleAI.model('gemini-2.5-flash'),
+});
 
-              // If it's the last key, throw the final error
-              if (i === instances.length - 1) {
-                throw new Error("All API keys are exhausted. Please try again after some time.");
-              }
-              
-              console.log("Rotating to the next available API key...");
-              // Loop continues to next key
+/**
+ * PROXY HANDLER
+ * This intercepts calls to 'generate' and 'definePrompt' to implement automatic rotation.
+ */
+export const ai: any = new Proxy(defaultAi, {
+  get(target, prop, receiver) {
+    const pool = instances.length > 0 ? instances : [defaultAi];
+
+    // 1. Intercept direct generation (ai.generate)
+    if (prop === 'generate') {
+      return async (options: any) => {
+        let lastError = null;
+        for (let i = 0; i < pool.length; i++) {
+          try {
+            console.log(`[AI Rotation] Attempting generation with Key ${i + 1}/${pool.length}`);
+            return await pool[i].generate(options);
+          } catch (err: any) {
+            console.error(`[AI Rotation] Key ${i + 1} failed: ${err.message}`);
+            lastError = err;
+            if (i === pool.length - 1) throw new Error(`All AI instances failed. Latest: ${err.message}`);
+          }
+        }
+      };
+    }
+
+    // 2. Intercept defined prompts (ai.definePrompt)
+    if (prop === 'definePrompt') {
+      return (promptOptions: any) => {
+        // We define the same prompt on every instance in our pool
+        const promptFns = pool.map(inst => inst.definePrompt(promptOptions));
+        
+        // Return a single function that attempts execution across the pool
+        return async (input: any) => {
+          let lastError = null;
+          for (let i = 0; i < promptFns.length; i++) {
+            try {
+              return await promptFns[i](input);
+            } catch (err: any) {
+              console.error(`[AI Prompt Rotation] Execution with Key ${i + 1} failed: ${err.message}`);
+              lastError = err;
+              if (i === promptFns.length - 1) throw new Error(`All AI prompt instances failed. Latest: ${err.message}`);
             }
           }
         };
       };
     }
 
-    // Intercept direct generate calls (used in some features like STT)
-    if (prop === 'generate') {
-      return async (config: any) => {
-        for (let i = 0; i < instances.length; i++) {
-          try {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log(`Attempting direct generation with Key ${i + 1}...`);
-            }
-            return await instances[i].generate(config);
-          } catch (error: any) {
-            console.error(`AI Key ${i + 1} failed during generate:`, error.message);
+    return Reflect.get(target, prop, receiver);
+  }
+});
 
-            if (i === instances.length - 1) {
-              throw new Error("All API keys are exhausted. Please try again after some time.");
-            }
-            
-            console.log("Rotating to next key for generation...");
-          }
-        }
-      };
-    }
-
-    // Default behavior for other Genkit methods (defineFlow, defineTool, etc.)
-    const value = Reflect.get(target, prop, receiver);
-    return typeof value === 'function' ? value.bind(target) : value;
-  },
-}) as any as Genkit;
+export { z };

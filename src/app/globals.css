@@ -3,70 +3,93 @@
 @tailwind utilities;
 
 :root {
-  --background: 210 100% 98%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  /* Premium Medical Blue Theme - White & Blue focus */
+  --background: 210 100% 99%; /* Very Light Blue-White */
+  --foreground: 222 47% 11%; /* Deep Navy for Text */
+  
+  --card: 0 0% 100%; /* Pure White */
+  --card-foreground: 222 47% 11%;
+  
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 212 92% 59%;
+  --popover-foreground: 222 47% 11%;
+  
+  /* Main Primary Medical Blue: #2488E8 */
+  --primary: 210 80% 52%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
+  
+  --secondary: 210 40% 96.1%; /* Soft Blue-Gray */
   --secondary-foreground: 222.2 84% 4.9%;
+  
   --muted: 210 40% 96.1%;
   --muted-foreground: 215 20.2% 65.1%;
-  --accent: 261 46% 63%;
+  
+  /* Accent Color: #14CFBD (Teal/Mint for health) */
+  --accent: 174 82% 44%;
   --accent-foreground: 210 40% 98%;
+  
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
+  
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 212 92% 59%;
+  --ring: 210 80% 52%;
+  
   --radius: 1.5rem;
+  
+  /* Dashboard Gradient: Smooth White to Blue Transition */
   --dashboard-bg: linear-gradient(135deg, #E6F0FF 0%, #FDFBFF 50%, #FFE9F0 100%);
   
-  /* Sidebar Specific Variables */
+  /* Sidebar Variables */
   --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 222.2 84% 4.9%;
-  --sidebar-primary: 212 92% 59%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 210 80% 52%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 100% 97%;
-  --sidebar-accent-foreground: 212 92% 59%;
+  --sidebar-accent: 210 40% 96.1%;
+  --sidebar-accent-foreground: 222.2 84% 4.9%;
   --sidebar-border: 214.3 31.8% 91.4%;
-  --sidebar-ring: 212 92% 59%;
+  --sidebar-ring: 210 80% 52%;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
+  --background: 222 47% 4%;
   --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
+  
+  --card: 222 47% 6%;
   --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
+  
+  --popover: 222 47% 6%;
   --popover-foreground: 210 40% 98%;
-  --primary: 212 92% 59%;
+  
+  --primary: 210 80% 52%;
   --primary-foreground: 210 40% 98%;
+  
   --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
+  
+  --muted: 217.2 32.6% 12%;
   --muted-foreground: 215 20.2% 65.1%;
-  --accent: 261 46% 63%;
+  
+  --accent: 174 82% 44%;
   --accent-foreground: 210 40% 98%;
+  
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212 92% 59%;
+  
+  --border: 222 47% 12%;
+  --input: 222 47% 12%;
+  --ring: 210 80% 52%;
+  
   --dashboard-bg: linear-gradient(135deg, #0f172a 0%, #020617 50%, #1e1b4b 100%);
 
-  /* Dark Sidebar Variables */
-  --sidebar-background: 222.2 84% 4.9%;
+  /* Dark Sidebar */
+  --sidebar-background: 222 47% 4%;
   --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 212 92% 59%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 217.2 32.6% 17.5%;
-  --sidebar-accent-foreground: 212 92% 59%;
-  --sidebar-border: 217.2 32.6% 17.5%;
-  --sidebar-ring: 212 92% 59%;
+  --sidebar-primary: 210 80% 52%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217.2 32.6% 12%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 222 47% 12%;
+  --sidebar-ring: 210 80% 52%;
 }
 
 * {
@@ -75,13 +98,15 @@
   user-select: none;
 }
 
+/* Native App Feel */
 html, body {
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
   position: fixed;
   overscroll-behavior-y: none;
-  font-family: 'PT Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -95,6 +120,13 @@ main, .scroll-area, [data-radix-scroll-area-viewport] {
   overscroll-behavior-y: auto;
 }
 
+/* Fix for text rendering in articles and chat */
+article, p, li, h1, h2, h3, h4, h5, h6, span {
+  user-select: text !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
 input, textarea, [contenteditable="true"] {
   user-select: text;
 }
@@ -102,7 +134,7 @@ input, textarea, [contenteditable="true"] {
 @layer utilities {
   .neumorphic-card {
     @apply bg-card border border-white/50 dark:border-slate-800/50;
-    box-shadow: 6px 6px 16px rgba(163, 177, 198, 0.16), -6px -6px 16px rgba(255, 255, 255, 0.7);
+    box-shadow: 6px 6px 16px rgba(163, 177, 198, 0.12), -6px -6px 16px rgba(255, 255, 255, 0.7);
   }
 
   .dark .neumorphic-card {
@@ -126,5 +158,11 @@ input, textarea, [contenteditable="true"] {
     100% { transform: translateX(100%); }
   }
 
+  @keyframes scan-move {
+    0% { top: 0%; }
+    100% { top: 100%; }
+  }
+
   .animate-splash-gradient { animation: splash-gradient-slide 2.5s infinite linear; }
+  .animate-scan-line { animation: scan-move 2.5s ease-in-out infinite alternate; }
 }

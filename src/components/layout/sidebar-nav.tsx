@@ -18,6 +18,7 @@ import {
   ListTodo,
   Trophy,
   Wind,
+  Flower,
   Video,
   GraduationCap,
   Settings,
@@ -47,7 +48,7 @@ const yourHealthNav = [
 const learnNav = [
     { href: '/challenges', label: 'Health Challenges', icon: Trophy },
     { href: '/meditation-hub', label: 'Meditation Hub', icon: Wind },
-    { href: '/yoga-library', label: 'Yoga Library', icon: Wind },
+    { href: '/yoga-library', label: 'Yoga Library', icon: Flower },
     { href: '/video-tutorials', label: 'Video Library', icon: Video },
     { href: '/health-lessons', label: 'Health Lessons', icon: GraduationCap },
 ];
@@ -62,7 +63,7 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
     return (
         <div className="px-3 py-4">
             <h2 className={cn(
-                "mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#2488E8] opacity-50",
+                "mb-3 px-4 text-[11px] font-black uppercase tracking-[0.25em] text-[#2D3A5D]/60 dark:text-primary/80",
                 "group-data-[state=collapsed]:hidden"
             )}>
                 {title}
@@ -78,16 +79,16 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
                                 onClick={onLinkClick}
                                 tooltip={item.label}
                                 className={cn(
-                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1",
+                                    "transition-all duration-300 rounded-2xl px-4 py-6 mb-1 h-12 border border-transparent",
                                     isActive 
-                                        ? "bg-primary/10 text-primary shadow-sm border border-primary/20" 
-                                        : "hover:bg-primary/5 text-[#2D3A5D]/70 dark:text-slate-400"
+                                        ? "bg-primary text-white shadow-lg shadow-primary/25 border-none scale-[1.02]" 
+                                        : "hover:bg-primary/10 hover:border-primary/20 text-[#2D3A5D] dark:text-slate-300 font-bold"
                                 )}
                             >
-                                <Link href={item.href} className="flex items-center gap-3">
-                                    <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-[#2D3A5D]/40 dark:text-slate-500")} />
+                                <Link href={item.href} className="flex items-center gap-4">
+                                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-primary")} />
                                     <span className={cn(
-                                        "text-sm font-black tracking-tight",
+                                        "text-sm tracking-tight",
                                         "group-data-[state=collapsed]:hidden"
                                     )}>
                                         {item.label}
@@ -112,7 +113,7 @@ export function SidebarNav() {
   };
 
   return (
-    <div className="space-y-1 pb-10">
+    <div className="space-y-1 pb-10 bg-white dark:bg-slate-900">
         <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
         <NavSection title="Smart AI Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
         <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />

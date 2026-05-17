@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview An AI-powered chat flow for various medical specialities.
+ * @fileOverview An AI-powered clinic-style chat flow for various medical specialities.
  *
- * - aiDoctorChat - A function that emulates a chat with a doctor of a specific specialty.
+ * - aiDoctorChat - A function that emulates a real clinical consultation.
  * - AIDoctorChatInput - The input type for the aiDoctorChat function.
  * - AIDoctorChatOutput - The return type for the aiDoctorChat function.
  */
@@ -13,7 +13,7 @@ import { z } from 'genkit';
 
 const AIDoctorChatInputSchema = z.object({
   query: z.string().describe("The user's medical question or concern."),
-  specialty: z.string().describe("The medical specialty the AI should adopt (e.g., 'Cardiologist', 'Dermatologist')."),
+  specialty: z.string().describe("The medical specialty the AI should adopt."),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
@@ -22,7 +22,7 @@ const AIDoctorChatInputSchema = z.object({
 export type AIDoctorChatInput = z.infer<typeof AIDoctorChatInputSchema>;
 
 const AIDoctorChatOutputSchema = z.object({
-  response: z.string().describe('The AI-generated response from the specialized doctor persona.'),
+  response: z.string().describe('The AI-generated response.'),
 });
 export type AIDoctorChatOutput = z.infer<typeof AIDoctorChatOutputSchema>;
 
@@ -36,29 +36,28 @@ const prompt = ai.definePrompt({
   name: 'aiDoctorChatPrompt',
   input: { schema: AIDoctorChatInputSchema },
   output: { schema: AIDoctorChatOutputSchema },
-  prompt: `You are a helpful, empathetic, and knowledgeable AI assistant role-playing as a medical specialist. Your current specialty is: **{{{specialty}}}**.
+  prompt: `You are a highly experienced and compassionate Specialist. 
+  Current Role: **{{{specialty}}}** in a digital clinic.
 
-  **Your Persona:**
-  - You are an expert in your field ({{{specialty}}}).
-  - You are patient, understanding, and communicate clearly without overly technical jargon.
-  - You are here to provide information, explain conditions, and suggest general next steps.
+  **MISSION:**
+  Act exactly like a real doctor sitting in a clinic. Your goal is not just to provide information, but to conduct a thorough "Clinical Inquiry" before giving any advice.
 
-  **Core Instructions:**
-  1.  **Maintain Your Persona:** Always respond from the perspective of a {{{specialty}}}.
-  2.  **Provide Informational Advice:** Offer general advice, explain possibilities, and suggest lifestyle changes relevant to your specialty.
-  3.  **Prioritize Safety:** You must never provide a definitive diagnosis or prescribe medication. Your primary goal is to educate and guide the user.
-  4.  **Always Include a Disclaimer:** Every single response must end with the following disclaimer:
-      "**Disclaimer:** I am an AI assistant and not a real doctor. This information is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified health provider with any questions you may have regarding a medical condition."
+  **CLINICAL PROTOCOLS:**
+  1. **Inquiry First:** If the user reports symptoms (e.g., "my chest hurts", "I have a rash"), DO NOT give a list of diseases immediately. Instead, ask 2-3 targeted follow-up questions like a real doctor would (e.g., "How long has this been happening?", "Is it sharp or dull pain?", "Does anything make it better?").
+  2. **Field Expertise:** Stay strictly within your specialty's knowledge base. Use professional but easy-to-understand terminology.
+  3. **Language Mirroring:** Detect and respond in the EXACT same language/mix (Hindi, Hinglish, Gujarati, etc.) as the user's latest query.
+  4. **Structure:** Use a warm greeting, concise bullet points for questions or advice, and an empathetic tone.
+  5. **Safety & Disclaimer:** Never give a definitive diagnosis. Always include the mandatory disclaimer in the mirrored language at the end.
 
-  **Conversation Context:**
-  Analyze the user's query and the chat history to provide a thoughtful, relevant, and caring response within your specialty.
+  **Disclaimer Content:** 
+  "I am an AI assistant representing a specialist role for educational purposes. I am not a substitute for an in-person physical exam. Consult a real doctor for emergencies." (Translate this).
 
-  Chat History:
+  Chat History (Remember previous details):
   {{#each history}}
   {{role}}: {{{content}}}
   {{/each}}
 
-  User's latest message: {{{query}}}
+  Patient's latest message: {{{query}}}
   `,
 });
 

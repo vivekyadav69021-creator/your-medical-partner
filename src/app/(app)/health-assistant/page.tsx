@@ -1,59 +1,43 @@
-
 'use client';
 
-import React, { useActionState, useRef, useEffect, useState, useCallback } from 'react';
-import { useFormStatus } from 'react-dom';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
-    Send, 
-    User, 
+    SendHorizonal, 
     Loader2, 
-    Paperclip, 
+    Plus, 
     Mic, 
     MicOff, 
     X, 
     Volume2, 
-    StopCircle, 
-    ThumbsUp, 
-    ThumbsDown, 
-    Copy, 
-    PlusCircle, 
-    Trash2, 
-    BrainCircuit, 
-    Activity, 
     ShieldPlus,
     Search,
     Zap,
-    HeartPulse,
     History,
+    Menu,
+    Trash2,
+    Sparkles,
+    Activity,
+    Pill,
+    BrainCircuit,
+    Copy,
+    Image as ImageIcon,
+    Lightbulb,
+    ThumbsUp,
+    ThumbsDown,
+    ArrowLeft,
+    Globe,
+    Clock,
+    Square,
+    Stethoscope
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   Sheet,
   SheetContent,
@@ -64,15 +48,18 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Badge } from '@/components/ui/badge';
 
-
+// Types
 type Message = {
   role: 'user' | 'assistant';
   content: string;
   image?: string;
   mode?: string;
+  timestamp: number;
 };
 
 type Session = {
@@ -83,160 +70,254 @@ type Session = {
   specialty?: string;
 };
 
-const initialState = {
-  response: null,
-  error: null,
-};
-
-const initialSpeechState = {
-  transcript: null,
-  error: null,
-};
-
-const doctorSpecialties = [
-  "General Physician",
-  "Cardiologist",
-  "Dermatologist",
-  "Pediatrician",
-  "Neurologist",
-  "Oncologist",
-  "Gynecologist",
-  "Orthopedist",
-  "Endocrinologist",
-  "Psychiatrist",
-];
-
 type PulseMode = 'standard' | 'websearch' | 'deepthink' | 'proanalysis';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="rounded-2xl h-14 w-14 bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
-      {pending ? (
-        <Loader2 className="h-6 w-6 animate-spin" />
-      ) : (
-        <Send className="h-6 w-6" />
-      )}
-      <span className="sr-only">Send message</span>
-    </Button>
-  );
-}
+const doctorSpecialties = [
+  "General Physician", "Cardiologist", "Dermatologist", "Pediatrician",
+  "Neurologist", "Oncologist", "Gynecologist", "Orthopedist"
+];
 
-function FeedbackActions({ messageContent }: { messageContent: string }) {
-  const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+const suggestionPool = [
+    { label: "Minor burn first aid", query: "What are the first aid steps for a minor burn?", icon: Zap },
+    { label: "Keep heart healthy", query: "Give me 5 daily habits to keep my heart healthy.", icon: Sparkles },
+    { label: "Check my symptoms", query: "I have a headache and mild fever, what should I do?", icon: Activity },
+    { label: "Explain medicine", query: "What are the common side effects of Paracetamol 500mg?", icon: Pill },
+];
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(messageContent);
-    toast({ title: 'Copied to clipboard!' });
-  };
+const medicalSources = [
+  "WHO",
+  "Mayo Clinic",
+  "Harvard Health",
+  "Johns Hopkins",
+  "AIIMS India",
+  "NHS UK",
+  "The Lancet",
+  "Cleveland Clinic"
+];
+
+const initialState = { response: null, error: null, timestamp: 0 };
+const initialSpeechState = { transcript: null, error: null };
+
+export default function HealthAssistantPage() {
+  const [activeMode, setActiveMode] = useState<'general' | 'doctor'>('general');
+  const [historyTab, setHistoryTab] = useState<'general' | 'doctor'>('general');
+  const [specialty, setSpecialty] = useState<string>("General Physician");
+  const [pulseMode, setPulseMode] = useState<PulseMode>('standard');
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
   
-  const handleLike = () => {
-    toast({ title: 'Feedback received!', description: 'Thank you for helping us improve.' });
-  };
+  // TTS State
+  const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
 
-  const handleDislikeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    toast({ title: 'Feedback received!', description: 'Thank you for your detailed feedback.' });
-    setIsDialogOpen(false);
-  };
+  // Immersive Reading Mode State
+  const [isInputVisible, setIsInputVisible] = useState(true);
+  const lastScrollTop = useRef(0);
 
-  return (
-    <div className="mt-2 flex items-center gap-2">
-      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50" onClick={handleLike}>
-        <ThumbsUp className="h-4 w-4" />
-      </Button>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50">
-            <ThumbsDown className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="rounded-[1rem] border-none shadow-2xl">
-          <form onSubmit={handleDislikeSubmit}>
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black text-[#2D3A5D] dark:text-slate-100">Provide Additional Feedback</DialogTitle>
-              <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
-                Your feedback is valuable in helping us improve the AI.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-               <RadioGroup name="feedback-reason" defaultValue="not-helpful">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="not-helpful" id="r1" />
-                    <Label htmlFor="r1" className="font-bold text-slate-600 dark:text-slate-300">Not helpful</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="incorrect" id="r2" />
-                    <Label htmlFor="r2" className="font-bold text-slate-600 dark:text-slate-300">Factually incorrect</Label>
-                  </div>
-                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="offensive" id="r3" />
-                    <Label htmlFor="r3" className="font-bold text-slate-600 dark:text-slate-300">Harmful or offensive</Label>
-                  </div>
-                </RadioGroup>
-                <Textarea name="feedback-details" placeholder="Please provide any other details (optional)." className="rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner" />
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="rounded-full w-full font-black uppercase text-[10px] tracking-widest">Submit Feedback</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/50 dark:hover:bg-slate-700/50" onClick={handleCopy}>
-        <Copy className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-}
+  // Loading UI Enhancement States
+  const [loadingTimer, setLoadingTimer] = useState(0);
+  const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
 
+  const [generalSessions, setGeneralSessions] = useState<Session[]>([]);
+  const [doctorSessions, setDoctorSessions] = useState<Session[]>([]);
+  const [activeGeneralId, setActiveGeneralId] = useState<string | null>(null);
+  const [activeDoctorId, setActiveDoctorId] = useState<string | null>(null);
 
-function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMessage: string, onTranscript: (text: string) => void }) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('en-IN');
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const [generalState, generalFormAction, isGeneralPending] = useActionState(healthAssistantAction, initialState);
+  const [doctorState, doctorFormAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
 
-  const [speechState, speechFormAction, isTranscribing] = useActionState(speechToTextAction, initialSpeechState);
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
+  const queryInputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // Track processed timestamps to avoid loops
+  const lastProcessedGeneralTime = useRef<number>(0);
+  const lastProcessedDoctorTime = useRef<number>(0);
 
-  useEffect(() => {
-    const { transcript, error } = speechState;
-    if (transcript) {
-      onTranscript(transcript);
-      toast({ title: 'Transcription complete' });
-    }
-    if (error) {
-      toast({ variant: 'destructive', title: 'Transcription Failed', description: error });
-    }
-  }, [speechState, onTranscript, toast]);
+  const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
+  const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
+  const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions;
+  const activeSession = currentSessions.find(s => s.id === currentSessionId);
+  const hasMessages = (activeSession?.messages?.length || 0) > 0;
 
-  useEffect(() => {
-    synthRef.current = window.speechSynthesis;
-    return () => {
-        if (synthRef.current) synthRef.current.cancel();
-    };
+  const currentSuggestions = useMemo(() => {
+    return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
 
-  const handleSpeak = () => {
-    if (!synthRef.current || !lastAssistantMessage) return;
-    synthRef.current.cancel(); 
-    const utterance = new SpeechSynthesisUtterance(lastAssistantMessage.replace(/[*#_`]/g, ''));
-    utterance.lang = selectedLang;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    synthRef.current.speak(utterance);
+  // Sync AI responses
+  useEffect(() => {
+    if (!isGeneralPending && generalState.timestamp > lastProcessedGeneralTime.current) {
+        lastProcessedGeneralTime.current = generalState.timestamp;
+        if (generalState.response || generalState.error) {
+            const content = generalState.response || `Error: ${generalState.error}`;
+            setGeneralSessions(prev => prev.map(s => s.id === activeGeneralId ? {
+                ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+            } : s));
+        }
+    }
+  }, [generalState, isGeneralPending, activeGeneralId]);
+
+  useEffect(() => {
+    if (!isDoctorPending && doctorState.timestamp > lastProcessedDoctorTime.current) {
+        lastProcessedDoctorTime.current = doctorState.timestamp;
+        if (doctorState.response || doctorState.error) {
+            const content = doctorState.response || `Error: ${doctorState.error}`;
+            setDoctorSessions(prev => prev.map(s => s.id === activeDoctorId ? {
+                ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+            } : s));
+        }
+    }
+  }, [doctorState, isDoctorPending, activeDoctorId]);
+
+  // Loading UI Logic
+  useEffect(() => {
+    let timerInterval: NodeJS.Timeout;
+    let sourceInterval: NodeJS.Timeout;
+
+    if (isPending) {
+      setLoadingTimer(0);
+      setCurrentSourceIndex(0);
+      timerInterval = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
+      sourceInterval = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length), 2500);
+    }
+
+    return () => {
+      clearInterval(timerInterval);
+      clearInterval(sourceInterval);
+    };
+  }, [isPending]);
+
+  // Initial Data Load
+  useEffect(() => {
+    const savedGen = localStorage.getItem('healthAssistantSessions_general');
+    const savedDoc = localStorage.getItem('healthAssistantSessions_doctor');
+    if (savedGen) setGeneralSessions(JSON.parse(savedGen));
+    if (savedDoc) setDoctorSessions(JSON.parse(savedDoc));
+    setActiveGeneralId(null);
+    setActiveDoctorId(null);
+  }, []);
+
+  // Sync Persistent Storage
+  useEffect(() => {
+    if (generalSessions.length > 0) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
+    if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
+  }, [generalSessions, doctorSessions]);
+
+  // Immersive Reading Mode: Detect Scroll
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
+    const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+
+    const handleScroll = () => {
+        const currentTop = viewport.scrollTop;
+        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 20;
+        if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) setIsInputVisible(false);
+        else setIsInputVisible(true);
+        lastScrollTop.current = currentTop;
+    };
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [hasMessages]);
+
+  const handleNewChat = useCallback((modeOverride?: 'general' | 'doctor') => {
+    const targetMode = modeOverride || activeMode;
+    const id = `session-${Date.now()}`;
+    const newSession: Session = {
+      id,
+      title: targetMode === 'doctor' ? `${specialty}` : 'New Health Chat',
+      messages: [],
+      createdAt: Date.now(),
+      ...(targetMode === 'doctor' && { specialty }),
+    };
+
+    if (targetMode === 'general') { 
+        setGeneralSessions(prev => [newSession, ...prev]); 
+        setActiveGeneralId(id); 
+    } else { 
+        setDoctorSessions(prev => [newSession, ...prev]); 
+        setActiveDoctorId(id); 
+    }
+    setAttachedImage(null);
+    setIsInputVisible(true);
+  }, [activeMode, specialty]);
+
+  const onFormAction = (formData: FormData) => {
+    const query = (formData.get('query') as string) || '';
+    if (!query && !attachedImage) return;
+
+    const userMsg: Message = {
+        role: 'user',
+        content: query || 'Analyze attached image',
+        image: attachedImage || undefined,
+        mode: activeMode === 'general' ? pulseMode : undefined,
+        timestamp: Date.now()
+    };
+
+    let sid = currentSessionId;
+
+    if (!sid || (activeMode === 'doctor' && activeSession?.specialty !== specialty)) {
+        sid = `session-${Date.now()}`;
+        const newSession: Session = {
+            id: sid,
+            title: query ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : 'New Chat',
+            messages: [userMsg],
+            createdAt: Date.now(),
+            ...(activeMode === 'doctor' && { specialty }),
+        };
+
+        if (activeMode === 'general') {
+            setGeneralSessions(prev => [newSession, ...prev]);
+            setActiveGeneralId(sid);
+        } else {
+            setDoctorSessions(prev => [newSession, ...prev]);
+            setActiveDoctorId(sid);
+        }
+    } else {
+        const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
+        setter(prev => prev.map(s => s.id === sid ? {
+            ...s, 
+            messages: [...s.messages, userMsg],
+            title: s.messages.length === 0 ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : s.title
+        } : s));
+    }
+
+    const historyForAi = activeSession ? [...activeSession.messages, userMsg] : [userMsg];
+    formData.set('history', JSON.stringify(historyForAi));
+    if (attachedImage) formData.set('photoDataUri', attachedImage);
+
+    startTransition(() => {
+        if (activeMode === 'doctor') {
+            formData.set('specialty', specialty);
+            doctorFormAction(formData);
+        } else {
+            formData.set('mode', pulseMode);
+            generalFormAction(formData);
+        }
+    });
+
+    if (queryInputRef.current) {
+        queryInputRef.current.value = '';
+        queryInputRef.current.style.height = 'auto';
+    }
+    setAttachedImage(null);
+    setIsTyping(false);
+    setIsInputVisible(true);
   };
 
-  const handleStopSpeaking = () => {
-    if (synthRef.current) {
-      synthRef.current.cancel();
-      setIsSpeaking(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [speechState, speechFormAction] = useActionState(speechToTextAction, initialSpeechState);
+
+  useEffect(() => {
+    if (speechState.transcript && queryInputRef.current) {
+        queryInputRef.current.value = speechState.transcript;
+        setIsTyping(true);
     }
-  };
+  }, [speechState]);
 
   const startRecording = async () => {
     try {
@@ -252,612 +333,354 @@ function VoiceWidget({ lastAssistantMessage, onTranscript }: { lastAssistantMess
           const base64Audio = reader.result as string;
           const formData = new FormData();
           formData.append('audioDataUri', base64Audio);
-          speechFormAction(formData);
+          startTransition(() => { speechFormAction(formData); });
         };
         stream.getTracks().forEach(track => track.stop());
       };
       mediaRecorderRef.current.start();
       setIsRecording(true);
-      toast({ title: 'Listening...' });
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Mic Access Denied' });
-    }
+    } catch (e) { toast({ variant: 'destructive', title: 'Mic Access Denied' }); }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
     }
+  }, [activeSession?.messages, isPending]);
+
+  const handleToggleSpeech = (text: string, msgId: number) => {
+    if (!window.speechSynthesis) return;
+    if (speakingMsgId === msgId) { window.speechSynthesis.cancel(); setSpeakingMsgId(null); return; }
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/[*#_`]/g, '').trim();
+    const u = new SpeechSynthesisUtterance(clean);
+    u.rate = 0.95; u.onstart = () => setSpeakingMsgId(msgId); u.onend = () => setSpeakingMsgId(null);
+    window.speechSynthesis.speak(u);
   };
-  
+
   return (
-    <Card className="rounded-[1rem] neumorphic-card border-none mb-4 w-full">
-        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-2">
+    <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
+        <header className="h-16 border-b border-gray-100 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl z-50">
             <div className="flex items-center gap-2">
-                 <div className="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-white/50 dark:border-slate-700/50">
-                    <Select value={selectedLang} onValueChange={setSelectedLang}>
-                        <SelectTrigger className="w-[100px] h-8 text-[10px] font-black uppercase tracking-tighter bg-transparent border-none shadow-none focus:ring-0">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-none shadow-xl">
-                            <SelectItem value="en-IN">English</SelectItem>
-                            <SelectItem value="hi-IN">हिन्दी</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700", isSpeaking && "text-primary")} onClick={handleSpeak} disabled={isSpeaking || !lastAssistantMessage}>
-                        <Volume2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-50 dark:border-slate-700" onClick={handleStopSpeaking} disabled={!isSpeaking}>
-                        <StopCircle className="h-4 w-4" />
-                    </Button>
+                <SidebarTrigger className="h-10 w-10 rounded-2xl hover:bg-white/50 dark:hover:bg-[#3c4043] shadow-sm border border-white/20">
+                    <Menu className="w-5 h-5 text-gray-600 dark:text-[#c4c7c5]" />
+                </SidebarTrigger>
+                <div className="h-6 w-px bg-gray-200 dark:bg-[#3c4043] mx-1" />
+                <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-primary/10 rounded-xl shadow-inner">
+                        <ShieldPlus className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex flex-col -space-y-0.5">
+                        <h1 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-none">AI Health</h1>
+                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.25em]">Assistant</p>
+                    </div>
                 </div>
             </div>
-             <div className="flex items-center gap-2">
-                <Button 
-                    variant="ghost"
-                    size="sm"
-                    onClick={isRecording ? stopRecording : startRecording} 
-                    disabled={isTranscribing}
-                    className={cn(
-                        "rounded-full px-4 h-9 font-black text-[10px] uppercase tracking-widest border-none transition-all shadow-sm",
-                        isRecording ? "bg-red-500 text-white animate-pulse" : "bg-primary/10 text-primary hover:bg-primary/20"
-                    )}
-                >
-                  {isTranscribing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : (isRecording ? <MicOff className="h-3 w-3 mr-2" /> : <Mic className="h-3 w-3 mr-2" />)}
-                  {isRecording ? "Stop" : "Voice Input"}
-                </Button>
-            </div>
-        </CardContent>
-    </Card>
-  );
-}
 
-
-export default function HealthAssistantPage() {
-  const [generalSessions, setGeneralSessions] = useState<Session[]>([]);
-  const [doctorSessions, setDoctorSessions] = useState<Session[]>([]);
-  const [activeGeneralSessionId, setActiveGeneralSessionId] = useState<string | null>(null);
-  const [activeDoctorSessionId, setActiveDoctorSessionId] = useState<string | null>(null);
-
-  const [generalState, generalFormAction, isGeneralPending] = useActionState(healthAssistantAction, initialState);
-  const [doctorState, doctorFormAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
-  
-  const [activeMode, setActiveMode] = useState<'general' | 'doctor'>('general');
-  const [specialty, setSpecialty] = useState<string>("General Physician");
-  const [pulseMode, setPulseMode] = useState<PulseMode>('standard');
-
-  const formRef = useRef<HTMLFormElement>(null);
-  const queryInputRef = useRef<HTMLTextAreaElement>(null);
-
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
-  
-  const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
-  const sessions = activeMode === 'general' ? generalSessions : doctorSessions.filter(s => s.specialty === specialty);
-  const activeSessionId = activeMode === 'general' ? activeGeneralSessionId : activeDoctorSessionId;
-  const setSessions = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
-  const setActiveSessionId = activeMode === 'general' ? setActiveGeneralSessionId : setActiveDoctorSessionId;
-
-  const handleStateUpdate = useCallback((state: typeof initialState, mode: 'general' | 'doctor') => {
-      const currentSessionId = mode === 'general' ? activeGeneralSessionId : activeDoctorSessionId;
-      const setSessionList = mode === 'general' ? setGeneralSessions : setDoctorSessions;
-
-      if ((state.response || state.error) && currentSessionId) {
-          const content = state.response || `Sorry, an error occurred: ${state.error}`;
-          setSessionList(prev => prev.map(s => 
-              s.id === currentSessionId ? { ...s, messages: [...s.messages, { role: 'assistant', content }] } : s
-          ));
-      }
-  }, [activeGeneralSessionId, activeDoctorSessionId]);
-
-  useEffect(() => {
-      if (!isGeneralPending) handleStateUpdate(generalState, 'general');
-  }, [generalState, isGeneralPending, handleStateUpdate]);
-
-  useEffect(() => {
-      if (!isDoctorPending) handleStateUpdate(doctorState, 'doctor');
-  }, [doctorState, isDoctorPending, handleStateUpdate]);
-
-  useEffect(() => {
-    const loadSessions = (mode: 'general' | 'doctor') => {
-        const key = `healthAssistantSessions_${mode}`;
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            if (mode === 'general') {
-                setGeneralSessions(parsed);
-                if (parsed.length > 0) setActiveGeneralSessionId(parsed[0].id);
-                else handleNewChat();
-            } else {
-                setDoctorSessions(parsed);
-                const relevant = parsed.filter((s: Session) => s.specialty === specialty);
-                if (relevant.length > 0) setActiveDoctorSessionId(relevant[0].id);
-                else handleNewChat();
-            }
-        } else {
-            handleNewChat();
-        }
-    };
-    loadSessions('general');
-    loadSessions('doctor');
-  }, []);
-
-  useEffect(() => {
-    if (generalSessions.length > 0) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
-    if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
-  }, [generalSessions, doctorSessions]);
-
-  const handleNewChat = useCallback(() => {
-    const newSession: Session = {
-      id: `session-${Date.now()}`,
-      title: activeMode === 'doctor' ? `${specialty} Chat` : 'New Chat',
-      messages: [],
-      createdAt: Date.now(),
-      ...(activeMode === 'doctor' && { specialty }),
-    };
-
-    if (activeMode === 'general') {
-        setGeneralSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-        setActiveGeneralSessionId(newSession.id);
-    } else {
-        setDoctorSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-        setActiveDoctorSessionId(newSession.id);
-    }
-    setAttachedImage(null);
-  }, [activeMode, specialty]);
-
-  const handleDeleteChat = (sessionId: string) => {
-    setSessions(prev => prev.filter(s => s.id !== sessionId));
-    if (activeSessionId === sessionId) handleNewChat();
-  };
-  
-  const activeSession = sessions.find(s => s.id === activeSessionId);
-
-  const handleFormAction = (formData: FormData) => {
-    const query = formData.get('query') as string;
-    if (!query && !attachedImage) return;
-
-    let userMessage: Message = { 
-        role: 'user', 
-        content: query || 'Image analysis',
-        mode: activeMode === 'general' ? pulseMode : undefined 
-    };
-     if (attachedImage) {
-      userMessage.image = attachedImage;
-      formData.set('photoDataUri', attachedImage);
-    }
-    
-    setSessions(prev => prev.map(s => {
-      if (s.id === activeSessionId) {
-        const newTitle = (s.messages.length === 0 && query) ? query.substring(0, 30) : s.title;
-        return { ...s, messages: [...s.messages, userMessage], title: newTitle };
-      }
-      return s;
-    }));
-    
-    formData.set('history', JSON.stringify(activeSession?.messages || []));
-    
-    if (activeMode === 'doctor') {
-      formData.set('specialty', specialty);
-      doctorFormAction(formData);
-    } else {
-      formData.set('mode', pulseMode);
-      generalFormAction(formData);
-    }
-    
-    formRef.current?.reset();
-    if(queryInputRef.current) queryInputRef.current.value = '';
-    setAttachedImage(null);
-  }
-
-  const assistantImage = PlaceHolderImages.find(img => img.id === 'assistant-avatar');
-  const userImage = 'https://picsum.photos/seed/user/100/100';
-
-  return (
-    <div className="flex h-[calc(100vh-120px)] w-full gap-6 animate-in fade-in duration-500 overflow-hidden">
-        {/* Chat History Sidebar - Desktop Only */}
-        <Card className="hidden md:flex md:w-1/4 flex-col rounded-[1rem] neumorphic-card border-none p-2 overflow-hidden">
-            <CardHeader className="flex-row items-center justify-between pb-2 px-6 pt-6">
-                <CardTitle className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest">History</CardTitle>
-                <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 dark:bg-slate-800 border border-white/50 dark:border-slate-700/50" onClick={handleNewChat}>
-                    <PlusCircle className="h-5 w-5 text-primary" />
-                </Button>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-2">
-                <ScrollArea className="h-full px-2">
-                    <div className="space-y-3">
-                        {sessions.map(session => (
-                            <div 
-                                key={session.id} 
-                                className={cn(
-                                    "p-4 rounded-[1rem] cursor-pointer group flex items-center justify-between transition-all border border-transparent",
-                                    activeSessionId === session.id ? "bg-white dark:bg-slate-800 shadow-sm border-blue-50 dark:border-slate-700" : "hover:bg-white/40 dark:hover:bg-slate-700/40"
-                                )}
-                                onClick={() => setActiveSessionId(session.id)}
-                            >
-                                <div className="flex-1 overflow-hidden">
-                                  <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
-                                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 hover:bg-white/50 dark:hover:bg-slate-800/50">
+                        <History className="w-5 h-5 text-gray-500 dark:text-[#9aa0a6]" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[85vw] max-w-sm p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
+                    <SheetHeader className="p-8 pb-2">
+                        <SheetTitle className="text-primary uppercase font-black text-xs tracking-[0.2em]">Medical Records</SheetTitle>
+                    </SheetHeader>
+                    <div className="px-8 pb-4">
+                         <Tabs value={historyTab} onValueChange={(v) => setHistoryTab(v as any)} className="w-full">
+                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-gray-100/50 dark:bg-[#131314]/50 rounded-xl backdrop-blur-md">
+                                <TabsTrigger value="general" className="rounded-lg font-bold text-[10px] uppercase">Assistant</TabsTrigger>
+                                <TabsTrigger value="doctor" className="rounded-lg font-bold text-[10px] uppercase">Specialists</TabsTrigger>
+                            </TabsList>
+                         </Tabs>
+                    </div>
+                    <ScrollArea className="flex-1 p-8 pt-0">
+                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20 hover:bg-primary/5 transition-all" onClick={() => handleNewChat()}>
+                            <Plus className="mr-2 h-4 w-4" /> Start Fresh
+                        </Button>
+                        <div className="space-y-3 pb-20">
+                            {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
+                                <div key={session.id} 
+                                     onClick={() => {
+                                         if (historyTab === 'general') {
+                                             setActiveMode('general');
+                                             setActiveGeneralId(session.id);
+                                         } else { 
+                                             setActiveMode('doctor');
+                                             setActiveDoctorId(session.id); 
+                                             setSpecialty(session.specialty || "General Physician"); 
+                                         }
+                                     }}
+                                     className={cn("group p-5 rounded-[2rem] border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c]/40 border-transparent hover:bg-white/60")}>
+                                    <div className="pr-8">
+                                        <p className="text-xs font-bold truncate dark:text-[#e3e3e3]">{session.title}</p>
+                                        <p className="text-[8px] font-black text-gray-400 uppercase mt-1.5 flex items-center gap-1.5">
+                                            <Clock className="w-2.5 h-2.5" />
+                                            {formatDistanceToNow(session.createdAt, { addSuffix: true })}
+                                        </p>
+                                        {session.specialty && <Badge className="mt-2 text-[7px] bg-primary/10 text-primary border-none uppercase font-black">{session.specialty}</Badge>}
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); (historyTab === 'general' ? setGeneralSessions : setDoctorSessions)(prev => prev.filter(s => s.id !== session.id)); }}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
-                                    <Trash2 className="h-3.5 w-3.5" />
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </SheetContent>
+            </Sheet>
+        </header>
+
+        <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
+            {!hasMessages && !isPending ? (
+                <ScrollArea className="flex-1 w-full">
+                    <div className="flex flex-col justify-center items-center px-6 pt-10 pb-32 space-y-12 text-center max-w-sm mx-auto">
+                        <div className="space-y-6 flex flex-col items-center">
+                            <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[3rem] shadow-2xl border border-white/50 relative group">
+                                {activeMode === 'general' ? (
+                                    <ShieldPlus className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)] transition-transform duration-500 group-hover:scale-110" />
+                                ) : (
+                                    <Stethoscope className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)] transition-transform duration-500 group-hover:scale-110" />
+                                )}
+                                <div className="absolute inset-0 bg-primary/5 rounded-[3rem] animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-3xl font-black text-[#1A365D] dark:text-white tracking-tight">
+                                    {activeMode === 'doctor' ? `Chat with ${specialty}` : "How can I help?"}
+                                </h2>
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
+                                    {activeMode === 'doctor' ? 'Personal Clinical Inquiry' : 'Global Medical Intelligence'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {activeMode === 'general' ? (
+                             <div className="flex flex-col gap-3 w-full">
+                                {currentSuggestions.map((suggestion, idx) => (
+                                    <button key={idx} onClick={() => { const fd = new FormData(); fd.set('query', suggestion.query); onFormAction(fd); }}
+                                        className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-[2rem] text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full">
+                                        <div className="p-2 bg-primary/10 dark:bg-[#131314] rounded-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                                            <suggestion.icon className="w-4 h-4 text-primary group-hover:text-white" />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-slate-700 dark:text-[#c4c7c5] flex-1 line-clamp-1">{suggestion.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 bg-blue-50/50 dark:bg-blue-900/10 rounded-[3rem] border border-blue-100 dark:border-blue-800 border-dashed text-center">
+                                <p className="text-sm font-bold text-blue-600 dark:text-blue-300 leading-relaxed">
+                                    "I am your AI {specialty}. Tell me your symptoms or health concerns, and I will guide you with a clinical approach."
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="space-y-6 w-full pt-4">
+                             <div className="flex items-center justify-center gap-4 px-8">
+                                <div className="h-px bg-slate-200 dark:bg-[#3c4043] flex-1" />
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] whitespace-nowrap">Expert Specialists</p>
+                                <div className="h-px bg-slate-200 dark:bg-[#3c4043] flex-1" />
+                            </div>
+                            <div className="flex gap-2.5 overflow-x-auto pb-4 px-2 scrollbar-hide">
+                                {doctorSpecialties.map(spec => (
+                                    <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); setActiveDoctorId(null); }}
+                                            className={cn("h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm transition-all whitespace-nowrap",
+                                                activeMode === 'doctor' && specialty === spec ? "bg-primary text-white border-primary" : "bg-white/60 dark:bg-[#1e1f20]/60 border-white/50 dark:border-[#3c4043] dark:text-[#e3e3e3] hover:bg-primary/5")}>
+                                        {spec}
+                                    </Button>
+                                ))}
+                                <Button variant="ghost" onClick={() => setActiveMode('general')} className="h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <ArrowLeft className="w-3 h-3 mr-2" /> Back to Assistant
                                 </Button>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </ScrollArea>
-            </CardContent>
-        </Card>
-      
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0 w-full overflow-hidden">
-          <Tabs defaultValue="general" value={activeMode} onValueChange={(v) => setActiveMode(v as any)} className="flex-1 flex flex-col h-full w-full overflow-hidden">
-            <div className="flex items-center justify-between gap-2 md:gap-4 mb-3 md:mb-4 px-1 shrink-0">
-                <TabsList className="grid grid-cols-2 w-[180px] md:w-[300px] h-11 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-full border border-white/50 dark:border-slate-700/50 backdrop-blur-sm">
-                    <TabsTrigger value="general" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Assistant</TabsTrigger>
-                    <TabsTrigger value="doctor" className="rounded-full font-black text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">Specialist</TabsTrigger>
-                </TabsList>
-                
-                <div className="flex items-center gap-2">
-                    {activeMode === 'doctor' && (
-                        <div className="flex-1 max-w-[140px] md:max-w-[240px]">
-                            <Select value={specialty} onValueChange={setSpecialty}>
-                                <SelectTrigger className="h-11 rounded-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm font-black text-[9px] md:text-[10px] uppercase tracking-widest">
-                                    <div className="flex items-center gap-2 truncate">
-                                        <BrainCircuit className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary shrink-0" />
-                                        <SelectValue placeholder="Specialty" />
-                                    </div>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-none shadow-xl">
-                                    {doctorSpecialties.map(spec => (
-                                        <SelectItem key={spec} value={spec} className="font-bold text-xs">{spec}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-                    
-                    {/* Mobile History Button */}
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" className="md:hidden rounded-full h-11 w-11 bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 shadow-sm">
-                                <History className="h-5 w-5 text-primary" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 border-none rounded-l-[2rem]">
-                            <SheetHeader className="p-6 border-b">
-                                <SheetTitle className="text-lg font-black text-primary uppercase tracking-widest">Chat History</SheetTitle>
-                            </SheetHeader>
-                            <div className="flex-1 overflow-hidden h-[calc(100vh-80px)]">
-                                <ScrollArea className="h-full p-4">
-                                    <Button variant="outline" className="w-full rounded-2xl mb-6 font-bold" onClick={handleNewChat}>
-                                        <PlusCircle className="mr-2 h-4 w-4" /> New Chat
-                                    </Button>
-                                    <div className="space-y-4">
-                                        {sessions.map(session => (
-                                            <div 
-                                                key={session.id} 
-                                                className={cn(
-                                                    "p-4 rounded-2xl cursor-pointer group flex items-center justify-between transition-all border",
-                                                    activeSessionId === session.id ? "bg-primary/5 border-primary/20" : "bg-slate-50 dark:bg-slate-800/50 border-transparent"
-                                                )}
-                                                onClick={() => {
-                                                    setActiveSessionId(session.id);
-                                                    // Add any logic to close sheet if needed via state
-                                                }}
-                                            >
-                                                <div className="flex-1 overflow-hidden">
-                                                    <p className={cn("text-xs font-black truncate tracking-tight", activeSessionId === session.id ? "text-primary" : "text-[#2D3A5D] dark:text-slate-200")}>{session.title}</p>
-                                                    <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}</p>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-red-400" onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+            ) : (
+                <ScrollArea className="flex-1 px-4 md:px-8 py-10" ref={scrollAreaRef}>
+                    <div className="max-w-4xl mx-auto space-y-16 pb-64">
+                        {activeSession?.messages.map((m, i) => (
+                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-6 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
+                                {m.role === 'user' ? (
+                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                        {m.image && (
+                                            <div className="mb-4 rounded-[1.5rem] overflow-hidden border-2 border-white/20 shadow-lg">
+                                                <Image src={m.image} alt="Attached" width={300} height={300} className="w-full h-auto object-cover" />
                                             </div>
-                                        ))}
+                                        )}
+                                        <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{m.content}</p>
                                     </div>
-                                </ScrollArea>
+                                ) : (
+                                    <div className="flex flex-col items-start w-full group">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
+                                                {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
+                                            </div>
+                                            <div className="flex flex-col -space-y-1">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    {activeMode === 'doctor' ? specialty : 'Medical Assistant'}
+                                                </span>
+                                                {activeMode === 'doctor' && <span className="text-[8px] font-bold text-primary uppercase">Clinic Mode</span>}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex-1 w-full min-w-0">
+                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                                <ReactMarkdown>{m.content}</ReactMarkdown>
+                                            </article>
+                                            
+                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full transition-all border border-slate-100 dark:border-slate-800", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                                    {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
+                                                    <Copy className="w-4 h-4 text-slate-400" />
+                                                </Button>
+                                                <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsDown className="w-4 h-4 text-slate-400" /></Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </SheetContent>
-                    </Sheet>
-                </div>
-            </div>
+                        ))}
+                        {isPending && (
+                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
+                                        {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                            {activeMode === 'doctor' ? `Consulting ${specialty}...` : 'Generating...'}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
+                                            <Clock className="w-2.5 h-2.5 text-primary" />
+                                            <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-            <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
-                <div className="shrink-0">
-                  <VoiceWidget lastAssistantMessage={activeSession?.messages.filter(m => m.role === 'assistant').pop()?.content || ''} onTranscript={(t) => { if(queryInputRef.current) queryInputRef.current.value = t; }}/>
+                                <div className="space-y-4 w-full max-w-lg">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
+                                            {activeMode === 'doctor' ? `Accessing ${specialty} clinical protocols` : 'Tapping World Expert Data'}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
+                                        <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
+                                            <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
+                                            <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
+                                                Analyzing <span className="text-primary">{medicalSources[currentSourceIndex]}</span> guidelines
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2 pt-2">
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-3/4 animate-pulse" />
+                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-1/2 animate-pulse" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
+            )}
+        </main>
+
+        <div className={cn(
+            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-10",
+            !isInputVisible && hasMessages ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
+        )}>
+            <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-4">
+                {attachedImage && (
+                    <div className="mx-4 mb-1 flex animate-in zoom-in-95">
+                        <div className="relative group/thumb">
+                            <Image src={attachedImage} alt="Preview" width={100} height={100} className="rounded-[1.5rem] border-4 border-white dark:border-[#3c4043] shadow-2xl object-cover" />
+                            <Button variant="destructive" size="icon" className="absolute -top-3 -right-3 h-7 w-7 rounded-full shadow-lg" onClick={() => setAttachedImage(null)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
+                    <div className="flex-1 max-h-48 overflow-y-auto">
+                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Tell ${specialty} about your symptoms...` : "Ask anything about health..."}
+                            className="w-full min-h-[50px] max-h-[160px] px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none" rows={1}
+                            onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80 dark:border-[#3c4043]">
+                        <div className="flex items-center gap-1.5">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-11 w-11 rounded-full hover:bg-primary/5">
+                                <Plus className="h-6 w-6 text-slate-500" />
+                            </Button>
+                            <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setAttachedImage(ev.target?.result as string); r.readAsDataURL(file); } }} />
+                            {activeMode === 'general' && (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button type="button" variant="ghost" className="h-11 px-5 rounded-full gap-2.5 text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest bg-slate-50/80 dark:bg-slate-800/80">
+                                            <Zap className="h-4 w-4 text-primary" />
+                                            <span className="hidden sm:inline">Expert Modes</span>
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-72 rounded-[2.5rem] p-4 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
+                                            <PulseModeItem value="standard" label="Balanced Expert" icon={<ShieldPlus className="w-4 h-4"/>} />
+                                            <PulseModeItem value="websearch" label="Deep Web Search" icon={<Search className="w-4 h-4"/>} />
+                                            <PulseModeItem value="deepthink" label="Logical Reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
+                                            <PulseModeItem value="proanalysis" label="Pharmacist Analysis" icon={<Pill className="w-4 h-4"/>} />
+                                        </RadioGroup>
+                                    </PopoverContent>
+                                </Popover>
+                            )}
+                            {activeMode === 'doctor' && (
+                                <div className="px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
+                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Consulting: {specialty}</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                             {!isTyping && !isRecording && !attachedImage && (
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800">
+                                    <Mic className="w-5 h-5 text-primary" />
+                                </Button>
+                            )}
+                            {(isTyping || isRecording || attachedImage) && (
+                                <div className="flex items-center gap-3">
+                                    {isRecording && (
+                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
+                                            <MicOff className="w-5 h-5" />
+                                        </Button>
+                                    )}
+                                    <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
+                                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
-                
-                <TabsContent value="general" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full overflow-hidden">
-                    <ChatInterface 
-                        messages={activeSession?.messages || []}
-                        isPending={isPending}
-                        onFormAction={handleFormAction}
-                        formRef={formRef}
-                        queryInputRef={queryInputRef}
-                        attachedImage={attachedImage}
-                        setAttachedImage={setAttachedImage}
-                        userImage={userImage}
-                        assistantImage={assistantImage}
-                        pulseMode={pulseMode}
-                        setPulseMode={setPulseMode}
-                        title="Health Assistant"
-                        description="Symptoms, meds or health tips"
-                        placeholder="Ask me anything..."
-                        initialMessage="Hi! I'm your AI partner. How can I help you today?"
-                        Icon={ShieldPlus}
-                    />
-                </TabsContent>
-                
-                <TabsContent value="doctor" className="flex-1 m-0 h-full data-[state=active]:flex flex-col min-h-0 w-full overflow-hidden">
-                     <ChatInterface 
-                        messages={activeSession?.messages || []}
-                        isPending={isPending}
-                        onFormAction={handleFormAction}
-                        formRef={formRef}
-                        queryInputRef={queryInputRef}
-                        attachedImage={attachedImage}
-                        setAttachedImage={setAttachedImage}
-                        userImage={userImage}
-                        assistantImage={assistantImage}
-                        title={`AI ${specialty}`}
-                        description={`Specialized consultation`}
-                        placeholder={`Talk to the ${specialty}...`}
-                        initialMessage={`Greetings. I am your specialized AI ${specialty}. How may I assist you?`}
-                        Icon={BrainCircuit}
-                    />
-                </TabsContent>
-            </div>
-          </Tabs>
-      </div>
+            </form>
+        </div>
     </div>
   );
 }
 
-
-interface ChatInterfaceProps {
-    messages: Message[];
-    isPending: boolean;
-    onFormAction: (formData: FormData) => void;
-    formRef: React.RefObject<HTMLFormElement>;
-    queryInputRef: React.RefObject<HTMLTextAreaElement>;
-    attachedImage: string | null;
-    setAttachedImage: (image: string | null) => void;
-    userImage: string;
-    assistantImage?: { imageUrl: string, imageHint: string };
-    pulseMode?: PulseMode;
-    setPulseMode?: (mode: PulseMode) => void;
-    title: string;
-    description: string;
-    placeholder: string;
-    initialMessage: string;
-    Icon: React.ElementType;
-}
-
-function ChatInterface({
-    messages, isPending, onFormAction, formRef, queryInputRef,
-    attachedImage, setAttachedImage, userImage, assistantImage, pulseMode, setPulseMode,
-    title, description, placeholder, initialMessage, Icon
-}: ChatInterfaceProps) {
-    
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => setAttachedImage(e.target?.result as string);
-          reader.readAsDataURL(file);
-        }
-    };
-    
-    useEffect(() => {
-        if (scrollAreaRef.current) {
-          const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-          if (viewport) viewport.scrollTop = viewport.scrollHeight;
-        }
-    }, [messages, isPending]);
-
+function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string, icon: React.ReactNode }) {
     return (
-        <Card className="flex-1 flex flex-col rounded-[1rem] neumorphic-card border-none overflow-hidden min-h-0 w-full h-full">
-            <CardHeader className="px-4 md:px-8 pt-6 pb-4 shrink-0">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-2xl shrink-0">
-                            <Icon className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                            <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight truncate">{title}</CardTitle>
-                            <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{description}</CardDescription>
-                        </div>
-                    </div>
-                </div>
-            </CardHeader>
-            
-            <CardContent className="flex-1 overflow-hidden p-0 relative">
-                <ScrollArea className="h-full px-4 md:px-8 pb-8" ref={scrollAreaRef}>
-                    <div className="space-y-6">
-                        {messages.length === 0 && !isPending && (
-                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
-                                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-[2rem]">
-                                    <Icon className="w-12 h-12 text-[#2D3A5D] dark:text-slate-400" />
-                                </div>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-400 tracking-tight max-w-[200px]">{initialMessage}</p>
-                            </div>
-                        )}
-                        {messages.map((message, index) => (
-                            <div
-                                key={index}
-                                className={cn("flex items-start gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", message.role === 'user' ? 'flex-row-reverse' : '')}
-                            >
-                                <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0">
-                                    {message.role === 'assistant' ? (
-                                        <>
-                                            {assistantImage && <AvatarImage src={assistantImage.imageUrl} alt="AI" data-ai-hint={assistantImage.imageHint}/>}
-                                            <AvatarFallback className="bg-primary text-white"><Icon className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <AvatarImage src={userImage} alt="User" data-ai-hint="person face" />
-                                            <AvatarFallback className="bg-slate-200"><User className="w-4 h-4 md:w-5 md:h-5"/></AvatarFallback>
-                                        </>
-                                    )}
-                                </Avatar>
-                                <div
-                                    className={cn(
-                                        "max-w-full md:max-w-[85%] rounded-[1.2rem] px-4 md:px-6 py-3 md:py-4 shadow-sm",
-                                        message.role === 'user' 
-                                            ? "bg-primary text-white rounded-tr-none" 
-                                            : "bg-white dark:bg-slate-800 text-[#2D3A5D] dark:text-slate-100 rounded-tl-none border border-blue-50/30 dark:border-slate-700/50"
-                                    )}
-                                >
-                                    {message.image && (
-                                        <div className="mb-3 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-700">
-                                            <Image src={message.image} alt="User upload" width={300} height={300} className="w-full h-auto" />
-                                        </div>
-                                    )}
-                                    {message.role === 'user' && message.mode && message.mode !== 'standard' && (
-                                        <div className="flex items-center gap-1.5 mb-2 opacity-70">
-                                            <HeartPulse className="w-3 h-3 text-white animate-pulse" />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">Mode: {message.mode}</span>
-                                        </div>
-                                    )}
-                                    <article className="prose prose-sm dark:prose-invert max-none text-inherit leading-relaxed font-medium text-base">
-                                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                                    </article>
-                                    {message.role === 'assistant' && index === messages.length - 1 && !isPending && (
-                                        <FeedbackActions messageContent={message.content} />
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                        {isPending && (
-                            <div className="flex items-start gap-3 animate-pulse">
-                                <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 bg-primary/10">
-                                    <AvatarFallback className="bg-transparent"><Icon className="w-5 h-5 text-primary"/></AvatarFallback>
-                                </Avatar>
-                                <div className="bg-white dark:bg-slate-800 rounded-[1.2rem] rounded-tl-none px-4 md:px-6 py-3 md:py-4 border border-blue-50/30 dark:border-slate-700/50 flex items-center gap-3">
-                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI is thinking...</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-            
-            <CardFooter className="px-4 md:px-8 pb-6 md:pb-8 pt-4 flex-col items-stretch gap-4 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md border-t border-white/50 dark:border-slate-700/50 shrink-0">
-                {/* Active Mode Indicator Above Input */}
-                {pulseMode && pulseMode !== 'standard' && (
-                    <div className="flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 shadow-sm">
-                            <HeartPulse className="w-3.5 h-3.5 text-primary animate-pulse" />
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{pulseMode} Mode Active</span>
-                        </div>
-                    </div>
-                )}
-
-                {attachedImage && (
-                    <div className="relative inline-block w-20 h-20 group">
-                        <Image src={attachedImage} alt="Preview" width={80} height={80} className="rounded-xl border-4 border-white dark:border-slate-700 shadow-lg object-cover h-full w-full" />
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg scale-0 group-hover:scale-100 transition-transform"
-                            onClick={() => setAttachedImage(null)}
-                        >
-                            <X className="h-3 w-3" />
-                        </Button>
-                    </div>
-                )}
-                
-                <form
-                    ref={formRef}
-                    action={onFormAction}
-                    className="flex w-full items-end gap-2 md:gap-3"
-                >
-                    {/* Mode Selector Button - Independent */}
-                    {setPulseMode && (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0">
-                                    <PlusCircle className="h-7 w-7 text-primary" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-64 rounded-[1rem] border-none shadow-2xl p-4 dark:bg-slate-900" side="top" align="start">
-                                <div className="space-y-4">
-                                    <h4 className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 uppercase tracking-widest px-2">Assistant Pulse Modes</h4>
-                                    <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
-                                        <PulseModeItem value="standard" label="Standard" desc="General health advice" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                        <PulseModeItem value="websearch" label="Web Search" desc="Latest medical databases" icon={<Search className="w-4 h-4"/>} />
-                                        <PulseModeItem value="deepthink" label="Deep Think" desc="Analytical reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                        <PulseModeItem value="proanalysis" label="Pro Analysis" desc="Complex drug checks" icon={<Zap className="w-4 h-4"/>} />
-                                    </RadioGroup>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    )}
-
-                    {/* Independent Attachment Button */}
-                    <Button 
-                        type="button" 
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isPending}
-                        className="rounded-2xl h-14 w-14 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0"
-                    >
-                        <Paperclip className="h-6 w-6 text-slate-400" />
-                    </Button>
-
-                    <div className="flex-1 relative flex items-end bg-white dark:bg-slate-800 rounded-2xl px-2 shadow-inner min-h-[56px] overflow-hidden border border-slate-100 dark:border-slate-700">
-                        <Textarea
-                            id="chatInput"
-                            ref={queryInputRef}
-                            name="query"
-                            placeholder={placeholder}
-                            className="flex-1 min-h-[56px] max-h-[150px] p-4 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-base resize-none dark:text-slate-100"
-                            autoComplete="off"
-                            disabled={isPending}
-                            rows={1}
-                            onInput={(e) => {
-                                const target = e.target as HTMLTextAreaElement;
-                                target.style.height = 'auto';
-                                target.style.height = `${target.scrollHeight}px`;
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    formRef.current?.requestSubmit();
-                                }
-                            }}
-                        />
-                    </div>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                    <SubmitButton />
-                </form>
-                <div className="flex items-center justify-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    <Activity className="w-3 h-3 text-primary" />
-                    AI-powered health guidance
-                </div>
-            </CardFooter>
-        </Card>
-    )
-}
-
-function PulseModeItem({ value, label, desc, icon }: { value: PulseMode, label: string, desc: string, icon: React.ReactNode }) {
-    return (
-        <div className="flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent has-[:checked]:border-primary/20 has-[:checked]:bg-primary/5 group">
+        <div className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
             <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2 rounded-xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] shadow-sm group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900 transition-colors">
                 {icon}
             </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer">
-                <p className="font-black text-xs text-[#2D3A5D] dark:text-slate-100 leading-none">{label}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">{desc}</p>
+            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">
+                {label}
             </Label>
         </div>
     )

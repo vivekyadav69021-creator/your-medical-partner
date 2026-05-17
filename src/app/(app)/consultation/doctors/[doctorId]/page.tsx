@@ -6,7 +6,8 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { allDoctors, addAppointment, addDoctorReview, Appointment } from '@/app/(app)/consultation/page';
+import { addAppointment } from '@/app/(app)/consultation/page';
+import { allDoctors, type Appointment, type Review } from '@/lib/doctor-data';
 import {
   Card,
   CardContent,
@@ -79,7 +80,6 @@ export default function DoctorProfilePage() {
   const doctorId = params.doctorId as string;
   const { toast } = useToast();
 
-  // We need to use state to make reviews persistent across re-renders on the client
   const [doctor, setDoctor] = useState(() => allDoctors.find(d => d.id === doctorId));
   
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -90,15 +90,6 @@ export default function DoctorProfilePage() {
 
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
-
-  useEffect(() => {
-    // This effect ensures that if the doctor data in the "DB" (our hardcoded list) changes,
-    // we reflect it in the component state.
-    const updatedDoctor = allDoctors.find(d => d.id === doctorId);
-    if (JSON.stringify(updatedDoctor) !== JSON.stringify(doctor)) {
-      setDoctor(updatedDoctor);
-    }
-  }, [doctorId, doctor]);
 
   if (!doctor) {
     notFound();
@@ -131,13 +122,18 @@ export default function DoctorProfilePage() {
 
   const handleReviewSubmit = () => {
       if (reviewRating > 0 && reviewComment) {
-          const newReview = { user: 'You', rating: reviewRating, comment: reviewComment };
+          const newReview: Review = { user: 'You', rating: reviewRating, comment: reviewComment };
           
-          // This function updates the hardcoded `allDoctors` array
-          addDoctorReview(doctor.id, newReview);
-
-          // Trigger a re-render by updating state from the modified source
-          setDoctor({ ...allDoctors.find(d => d.id === doctorId)! });
+          setDoctor(prev => {
+              if (!prev) return prev;
+              const updatedReviews = [...prev.reviews, newReview];
+              const totalRating = updatedReviews.reduce((sum, r) => sum + r.rating, 0);
+              return {
+                  ...prev,
+                  reviews: updatedReviews,
+                  rating: totalRating / updatedReviews.length
+              };
+          });
 
           toast({
               title: "Review Submitted!",
@@ -157,7 +153,7 @@ export default function DoctorProfilePage() {
   
   const image = PlaceHolderImages.find(img => img.id === doctor.imageId);
   const reviewCount = doctor.reviews.length;
-  const avgRating = reviewCount > 0 ? doctor.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : doctor.rating;
+  const avgRating = doctor.rating;
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">

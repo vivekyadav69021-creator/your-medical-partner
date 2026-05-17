@@ -37,6 +37,7 @@ export async function healthAssistantAction(
       error:
         validatedFields.error.flatten().fieldErrors.query?.[0] ??
         'Invalid input.',
+      timestamp: Date.now(),
     };
   }
 
@@ -45,12 +46,14 @@ export async function healthAssistantAction(
     return {
       response: result.response,
       error: null,
+      timestamp: Date.now(),
     };
   } catch (e: any) {
     console.error("Health Assistant Action Error:", e);
     return {
       response: null,
       error: e.message || 'The AI model could not be reached. Please try again later.',
+      timestamp: Date.now(),
     };
   }
 }
@@ -104,6 +107,7 @@ export async function aiDoctorChatAction(
       error:
         validatedFields.error.flatten().fieldErrors.query?.[0] ??
         'Invalid input.',
+      timestamp: Date.now(),
     };
   }
 
@@ -112,12 +116,14 @@ export async function aiDoctorChatAction(
     return {
       response: result.response,
       error: null,
+      timestamp: Date.now(),
     };
   } catch (e: any) {
     console.error(e);
     return {
       response: null,
       error: e.message || 'The AI model could not be reached. Please try again later.',
+      timestamp: Date.now(),
     };
   }
 }
