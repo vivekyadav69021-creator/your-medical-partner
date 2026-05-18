@@ -24,8 +24,12 @@ import {
   Settings,
   Scan,
   ShieldPlus,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { Button } from '@/components/ui/button';
 
 const mainNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -106,19 +110,41 @@ const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href
 
 export function SidebarNav() {
   const { setOpenMobile } = useSidebar();
+  const auth = useAuth();
+  
   const handleLinkClick = () => {
     if (window.innerWidth < 768) {
       setOpenMobile(false);
     }
   };
 
+  const handleLogout = async () => {
+    try {
+        await signOut(auth);
+        localStorage.removeItem('userMedicalProfile_local');
+    } catch (e) {
+        console.error("Logout Error:", e);
+    }
+  };
+
   return (
-    <div className="space-y-1 pb-10 bg-white dark:bg-slate-900">
+    <div className="space-y-1 pb-10 flex flex-col h-full bg-white dark:bg-slate-900">
         <NavSection title="Main" items={mainNav} onLinkClick={handleLinkClick} />
         <NavSection title="Smart AI Tools" items={smartToolsNav} onLinkClick={handleLinkClick} />
         <NavSection title="Your Health" items={yourHealthNav} onLinkClick={handleLinkClick} />
         <NavSection title="Learn & Practice" items={learnNav} onLinkClick={handleLinkClick} />
         <NavSection title="Configuration" items={settingsNav} onLinkClick={handleLinkClick} />
+        
+        <div className="px-3 py-4 mt-auto">
+            <Button 
+                variant="ghost" 
+                className="w-full justify-start gap-4 px-4 py-6 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 font-bold border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-all"
+                onClick={handleLogout}
+            >
+                <LogOut className="w-5 h-5" />
+                <span className="group-data-[state=collapsed]:hidden tracking-tight">Sign Out</span>
+            </Button>
+        </div>
     </div>
   );
 }
