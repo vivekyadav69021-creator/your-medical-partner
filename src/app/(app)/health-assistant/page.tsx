@@ -105,6 +105,7 @@ export default function HealthAssistantPage() {
   const [pulseMode, setPulseMode] = useState<PulseMode>('standard');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   
   // TTS State
   const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
@@ -242,6 +243,7 @@ export default function HealthAssistantPage() {
     }
     setAttachedImage(null);
     setIsInputVisible(true);
+    setIsFocused(false);
   }, [activeMode, specialty]);
 
   const onFormAction = (formData: FormData) => {
@@ -305,6 +307,7 @@ export default function HealthAssistantPage() {
     setAttachedImage(null);
     setIsTyping(false);
     setIsInputVisible(true);
+    setIsFocused(false);
   };
 
   const [isRecording, setIsRecording] = useState(false);
@@ -316,6 +319,7 @@ export default function HealthAssistantPage() {
     if (speechState.transcript && queryInputRef.current) {
         queryInputRef.current.value = speechState.transcript;
         setIsTyping(true);
+        setIsFocused(true);
     }
   }, [speechState]);
 
@@ -436,7 +440,7 @@ export default function HealthAssistantPage() {
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full">
-                    <div className="flex flex-col justify-center items-center px-6 pt-10 pb-32 space-y-12 text-center max-w-sm mx-auto">
+                    <div className="flex flex-col justify-center items-center px-6 pt-10 pb-32 space-y-12 text-center max-sm:px-4 max-w-sm mx-auto">
                         <div className="space-y-6 flex flex-col items-center">
                             <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[3rem] shadow-2xl border border-white/50 relative group">
                                 {activeMode === 'general' ? (
@@ -611,7 +615,13 @@ export default function HealthAssistantPage() {
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
                     <div className="flex-1 max-h-48 overflow-y-auto">
                         <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Tell ${specialty} about your symptoms...` : "Ask anything about health..."}
-                            className="w-full min-h-[50px] max-h-[160px] px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none" rows={1}
+                            className={cn(
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300",
+                                (isFocused || isTyping || attachedImage) ? "min-h-[120px]" : "min-h-[46px]"
+                            )}
+                            rows={1}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
                             onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>

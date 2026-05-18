@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -64,7 +63,7 @@ type Session = {
 const mentalHealthSources = [
   "American Psychological Association (APA)",
   "Mental Health Foundation",
-  "National Institute of Mental Health (NIMH)",
+  "National Institutes of Mental Health (NIMH)",
   "Cognitive Behavioral Guidelines",
   "World Federation for Mental Health",
   "Mindful Awareness Research Center",
@@ -86,6 +85,7 @@ export default function AIPsychiatristPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [suggestionChips, setSuggestedChips] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   
   // UI Enhancements
   const [isInputVisible, setIsInputVisible] = useState(true);
@@ -186,6 +186,7 @@ export default function AIPsychiatristPage() {
     setActiveSessionId(id);
     setSuggestedChips([]);
     setIsInputVisible(true);
+    setIsFocused(false);
   }, []);
 
   const onFormAction = (formData: FormData | string) => {
@@ -232,6 +233,7 @@ export default function AIPsychiatristPage() {
     setSuggestedChips([]);
     setIsTyping(false);
     setIsInputVisible(true);
+    setIsFocused(false);
   };
 
   // Auto Scroll
@@ -252,6 +254,7 @@ export default function AIPsychiatristPage() {
     if (speechState.transcript && queryInputRef.current) {
         queryInputRef.current.value = speechState.transcript;
         setIsTyping(true);
+        setIsFocused(true);
     }
   }, [speechState]);
 
@@ -550,8 +553,13 @@ export default function AIPsychiatristPage() {
                             ref={queryInputRef}
                             name="query"
                             placeholder="Tell me whatever's on your heart..."
-                            className="w-full min-h-[50px] max-h-[160px] px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none"
+                            className={cn(
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300",
+                                (isFocused || isTyping) ? "min-h-[120px]" : "min-h-[46px]"
+                            )}
                             rows={1}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
                             onInput={(e) => {
                                 const target = e.target as HTMLTextAreaElement;
                                 target.style.height = 'auto';
