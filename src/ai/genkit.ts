@@ -11,7 +11,6 @@ const apiKeys = [
   process.env.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2,
   process.env.GEMINI_API_KEY_3,
-  process.env.GEMINI_API_KEY_4,
 ].filter(Boolean) as string[];
 
 // Create separate Genkit instances for each key for isolated sessions
