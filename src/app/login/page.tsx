@@ -20,48 +20,51 @@ import { cn } from '@/lib/utils';
 
 /**
  * Custom Advanced Medical Animation
- * Perfectly centered SVG + CSS Animation for branding focus.
+ * Perfectly contained and centered SVG + CSS Animation.
  */
 function AdvancedMedicalAnimation() {
   return (
-    <div className="relative w-full max-w-[340px] h-[340px] flex items-center justify-center pointer-events-none select-none">
-      {/* High-Tech Pulse Rings */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[120%] h-[120%] border border-primary/10 rounded-full animate-pulse [animation-duration:4s]" />
-        <div className="w-80 h-80 border-2 border-primary/20 rounded-full animate-ping [animation-duration:3s]" />
-        <div className="absolute w-64 h-64 border-2 border-primary/10 rounded-full animate-ping [animation-duration:2s]" />
+    <div className="relative w-full max-w-[300px] h-[300px] flex items-center justify-center pointer-events-none select-none">
+      {/* Contained High-Tech Pulse Rings */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-visible">
+        {/* Outer Soft Pulse */}
+        <div className="absolute w-full h-full border border-primary/10 rounded-full animate-pulse [animation-duration:3s]" />
+        {/* Middle Pulse */}
+        <div className="absolute w-[80%] h-[80%] border-2 border-primary/20 rounded-full animate-pulse [animation-duration:2s]" />
+        {/* Inner Wave (controlled expansion) */}
+        <div className="absolute w-[60%] h-[60%] border-2 border-primary/10 rounded-full animate-pulse [animation-duration:1.5s]" />
       </div>
 
       {/* Rotating Tech Rings */}
-      <div className="absolute w-full h-full border-t-2 border-l-2 border-primary/40 rounded-full animate-spin [animation-duration:8s]" />
-      <div className="absolute w-[85%] h-[85%] border-b-2 border-r-2 border-accent/30 rounded-full animate-spin [animation-duration:12s] [animation-direction:reverse]" />
+      <div className="absolute w-[75%] h-[75%] border-t-2 border-l-2 border-primary/40 rounded-full animate-spin [animation-duration:8s]" />
+      <div className="absolute w-[65%] h-[65%] border-b-2 border-r-2 border-accent/30 rounded-full animate-spin [animation-duration:12s] [animation-direction:reverse]" />
       
       {/* Central Branded Shield */}
-      <div className="relative z-10 p-12 bg-white/50 dark:bg-slate-900/60 backdrop-blur-3xl rounded-[4rem] shadow-[0_40px_80px_-15px_rgba(36,136,232,0.3)] border border-white dark:border-slate-800 flex items-center justify-center group overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent opacity-60 animate-pulse" />
+      <div className="relative z-10 p-10 bg-white/60 dark:bg-slate-900/70 backdrop-blur-3xl rounded-[3.5rem] shadow-[0_30px_60px_-12px_rgba(36,136,232,0.3)] border border-white dark:border-slate-800 flex items-center justify-center group overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent opacity-60" />
         
         {/* Animated Heart Symbol */}
         <div className="relative z-20 flex flex-col items-center gap-4">
             <div className="relative">
-                <HeartPulse className="h-28 w-24 text-primary drop-shadow-[0_0_30px_rgba(36,136,232,0.7)] animate-pulse" />
-                <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full animate-bounce shadow-[0_0_15px_rgba(20,207,189,1)]" />
+                <HeartPulse className="h-24 w-20 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)] animate-pulse" />
+                <div className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-accent rounded-full animate-bounce shadow-[0_0_12px_rgba(20,207,189,1)]" />
             </div>
             
             {/* Real-time Data Indicator */}
-            <div className="flex gap-1 items-end h-5">
+            <div className="flex gap-1 items-end h-4">
                 {[1, 2, 3, 4, 5, 6].map(i => (
                     <div 
                         key={i} 
-                        className="w-1.5 bg-primary/40 rounded-full animate-bounce" 
-                        style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.15}s` }} 
+                        className="w-1 bg-primary/40 rounded-full animate-bounce" 
+                        style={{ height: `${30 + Math.random() * 70}%`, animationDelay: `${i * 0.15}s` }} 
                     />
                 ))}
             </div>
         </div>
       </div>
 
-      {/* Radiant Glow Background */}
-      <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full scale-90 -z-10 animate-pulse" />
+      {/* Radiant Glow Background - contained blur */}
+      <div className="absolute inset-0 bg-primary/15 blur-[100px] rounded-full scale-90 -z-10" />
     </div>
   );
 }
@@ -159,18 +162,18 @@ export default function LoginPage() {
     <div className="h-[100dvh] w-full bg-gradient-to-br from-[#f0f7ff] via-[#ffffff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] flex flex-col items-center justify-start overflow-hidden relative font-body safe-top">
       {/* Ambient Visual Layers */}
       <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-15%] w-[700px] h-[700px] bg-primary/10 rounded-full blur-[160px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-15%] w-[600px] h-[600px] bg-blue-400/5 rounded-full blur-[140px]" />
+        <div className="absolute top-[-5%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[140px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-15%] w-[500px] h-[500px] bg-blue-400/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-12 overflow-y-auto scrollbar-hide">
         
         {/* Branded Hero Section */}
-        <div className="w-full flex flex-col items-center pt-6 animate-in fade-in zoom-in-95 duration-1000">
+        <div className="w-full flex flex-col items-center pt-8 animate-in fade-in zoom-in-95 duration-1000">
           
           <AdvancedMedicalAnimation />
 
-          <div className="text-center mt-4 space-y-5">
+          <div className="text-center mt-6 space-y-5">
              <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-blue-50/80 dark:bg-blue-900/30 rounded-full border border-blue-100/50 dark:border-blue-800 shadow-sm mx-auto">
                 <ShieldCheck className="w-4 h-4 text-primary animate-pulse" />
                 <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">Professional Gateway</span>
@@ -186,7 +189,7 @@ export default function LoginPage() {
         </div>
 
         {/* Dynamic Auth Controller */}
-        <div className="w-full max-w-md mt-10">
+        <div className="w-full max-w-md mt-8">
           {view === 'welcome' ? (
             <div className="w-full space-y-10 animate-in slide-in-from-bottom-10 fade-in duration-700">
               <div className="space-y-4 px-2">
