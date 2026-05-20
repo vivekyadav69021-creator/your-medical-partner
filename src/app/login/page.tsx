@@ -14,10 +14,58 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight, ShieldCheck, Sparkles, Activity, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Player } from '@lottiefiles/react-lottie-player';
+
+/**
+ * Custom Advanced Medical Animation
+ * Built with Pure SVG + Tailwind for 100% visibility and premium feel.
+ */
+function AdvancedMedicalAnimation() {
+  return (
+    <div className="relative w-full max-w-[320px] h-80 flex items-center justify-center perspective-1000">
+      {/* High-Tech Pulse Rings */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-64 h-64 border-2 border-primary/20 rounded-full animate-ping [animation-duration:3s]" />
+        <div className="absolute w-48 h-48 border-2 border-primary/10 rounded-full animate-ping [animation-duration:2s]" />
+        <div className="absolute w-32 h-32 border-2 border-primary/30 rounded-full animate-ping [animation-duration:4s]" />
+      </div>
+
+      {/* Rotating Neural/Tech Rings */}
+      <div className="absolute w-full h-full border-t-2 border-l-2 border-primary/40 rounded-full animate-spin [animation-duration:10s]" />
+      <div className="absolute w-[80%] h-[80%] border-b-2 border-r-2 border-accent/30 rounded-full animate-spin [animation-duration:15s] [animation-direction:reverse]" />
+      
+      {/* Central Glassmorphic Shield */}
+      <div className="relative z-10 p-10 bg-white/40 dark:bg-slate-900/60 backdrop-blur-3xl rounded-[3.5rem] shadow-2xl border border-white dark:border-slate-800 flex items-center justify-center group overflow-hidden transition-all duration-700 hover:scale-105 active:scale-95">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50 animate-pulse" />
+        
+        {/* The Heart of the App */}
+        <div className="relative z-20 flex flex-col items-center gap-2">
+            <HeartPulse className="h-24 w-24 text-primary drop-shadow-[0_0_30px_rgba(36,136,232,0.6)] animate-pulse" />
+            
+            {/* Dynamic Data Wave */}
+            <div className="flex gap-0.5 items-end h-4">
+                {[1, 2, 3, 4, 5].map(i => (
+                    <div 
+                        key={i} 
+                        className="w-1 bg-primary/40 rounded-full animate-bounce" 
+                        style={{ height: `${Math.random() * 100}%`, animationDelay: `${i * 0.1}s` }} 
+                    />
+                ))}
+            </div>
+        </div>
+
+        {/* Orbiting Interaction Points */}
+        <div className="absolute top-4 right-6 h-3 w-3 bg-accent rounded-full animate-bounce [animation-delay:0.2s] shadow-[0_0_10px_rgba(20,207,189,0.8)]" />
+        <div className="absolute bottom-8 left-6 h-2 w-2 bg-primary rounded-full animate-pulse [animation-delay:0.5s] shadow-[0_0_8px_rgba(36,136,232,0.8)]" />
+      </div>
+
+      {/* Decorative Aura Glow */}
+      <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full scale-75 -z-10 animate-pulse" />
+    </div>
+  );
+}
 
 type AuthView = 'welcome' | 'login' | 'signup';
 
@@ -118,31 +166,20 @@ export default function LoginPage() {
 
       <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-12 overflow-y-auto scrollbar-hide">
         
-        {/* Top Hero Section - Professional Illustration */}
+        {/* Top Hero Section - Premium Custom Animation */}
         <div className="w-full flex flex-col items-center pt-8 animate-in fade-in zoom-in-95 duration-1000">
-          <div className="relative w-full max-w-[320px] h-72 flex items-center justify-center">
-            {/* Glowing Aura behind the illustration */}
-            <div className="absolute inset-0 bg-primary/20 blur-[60px] rounded-full scale-[0.8] animate-pulse -z-10" />
-            
-            <Player
-              autoplay
-              loop
-              src="https://lottie.host/82a7a977-3e11-4475-9c98-1e43c5b8e912/7Xh2Y7vXG8.json"
-              style={{ height: '320px', width: '320px' }}
-              className="drop-shadow-2xl"
-            />
-          </div>
+          <AdvancedMedicalAnimation />
 
           <div className="text-center mt-6 space-y-4">
              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800/50 mb-1">
-                <HeartPulse className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-[10px] font-black text-primary uppercase tracking-[0.25em]">Healthcare Gateway</span>
+                <ShieldCheck className="w-4 h-4 text-primary animate-pulse" />
+                <span className="text-[10px] font-black text-primary uppercase tracking-[0.25em]">Professional Gateway</span>
              </div>
              <div className="space-y-1">
                 <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none">
                   <span className="text-primary">Medical</span> Partner
                 </h1>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.35em]">Professional Health Network</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.35em]">Advanced Diagnostic Network</p>
              </div>
           </div>
         </div>
