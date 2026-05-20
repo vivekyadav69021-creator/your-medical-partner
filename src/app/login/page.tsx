@@ -19,52 +19,42 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 /**
- * Custom Advanced Medical Animation
- * Perfectly contained and centered SVG + CSS Animation.
+ * Advanced Medical Animation - Refined for "Your Medical Partner"
+ * Features a smaller central card and clearly visible outward pulse waves.
  */
 function AdvancedMedicalAnimation() {
   return (
-    <div className="relative w-full max-w-[300px] h-[300px] flex items-center justify-center pointer-events-none select-none">
-      {/* Contained High-Tech Pulse Rings */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-visible">
-        {/* Outer Soft Pulse */}
-        <div className="absolute w-full h-full border border-primary/10 rounded-full animate-pulse [animation-duration:3s]" />
-        {/* Middle Pulse */}
-        <div className="absolute w-[80%] h-[80%] border-2 border-primary/20 rounded-full animate-pulse [animation-duration:2s]" />
-        {/* Inner Wave (controlled expansion) */}
-        <div className="absolute w-[60%] h-[60%] border-2 border-primary/10 rounded-full animate-pulse [animation-duration:1.5s]" />
+    <div className="relative w-full max-w-[280px] h-[280px] flex items-center justify-center pointer-events-none select-none">
+      
+      {/* Dynamic Outward Waves (Pulse) */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {/* Wave 1 */}
+        <div className="absolute w-24 h-24 bg-primary/20 rounded-full animate-ping [animation-duration:3s]" />
+        {/* Wave 2 */}
+        <div className="absolute w-32 h-32 border border-primary/10 rounded-full animate-ping [animation-duration:4s]" />
+        {/* Wave 3 */}
+        <div className="absolute w-40 h-40 border border-primary/5 rounded-full animate-ping [animation-duration:5s]" />
       </div>
 
-      {/* Rotating Tech Rings */}
-      <div className="absolute w-[75%] h-[75%] border-t-2 border-l-2 border-primary/40 rounded-full animate-spin [animation-duration:8s]" />
-      <div className="absolute w-[65%] h-[65%] border-b-2 border-r-2 border-accent/30 rounded-full animate-spin [animation-duration:12s] [animation-direction:reverse]" />
+      {/* Rotating High-Tech Rings */}
+      <div className="absolute w-[80%] h-[80%] border-t-2 border-primary/30 rounded-full animate-spin [animation-duration:10s]" />
+      <div className="absolute w-[70%] h-[70%] border-b-2 border-accent/20 rounded-full animate-spin [animation-duration:15s] [animation-direction:reverse]" />
       
-      {/* Central Branded Shield */}
-      <div className="relative z-10 p-10 bg-white/60 dark:bg-slate-900/70 backdrop-blur-3xl rounded-[3.5rem] shadow-[0_30px_60px_-12px_rgba(36,136,232,0.3)] border border-white dark:border-slate-800 flex items-center justify-center group overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent opacity-60" />
+      {/* Smaller Central Branded Shield */}
+      <div className="relative z-10 p-7 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-[2.8rem] shadow-[0_20px_50px_-10px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center group overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-60" />
         
-        {/* Animated Heart Symbol */}
-        <div className="relative z-20 flex flex-col items-center gap-4">
+        {/* Centered Heart Symbol */}
+        <div className="relative z-20 flex flex-col items-center">
             <div className="relative">
-                <HeartPulse className="h-24 w-20 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)] animate-pulse" />
-                <div className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-accent rounded-full animate-bounce shadow-[0_0_12px_rgba(20,207,189,1)]" />
-            </div>
-            
-            {/* Real-time Data Indicator */}
-            <div className="flex gap-1 items-end h-4">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div 
-                        key={i} 
-                        className="w-1 bg-primary/40 rounded-full animate-bounce" 
-                        style={{ height: `${30 + Math.random() * 70}%`, animationDelay: `${i * 0.15}s` }} 
-                    />
-                ))}
+                <HeartPulse className="h-16 w-16 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.5)] animate-pulse" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full animate-bounce shadow-[0_0_10px_rgba(20,207,189,1)]" />
             </div>
         </div>
       </div>
 
-      {/* Radiant Glow Background - contained blur */}
-      <div className="absolute inset-0 bg-primary/15 blur-[100px] rounded-full scale-90 -z-10" />
+      {/* Radiant Glow Background */}
+      <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-90 -z-10" />
     </div>
   );
 }
@@ -173,17 +163,17 @@ export default function LoginPage() {
           
           <AdvancedMedicalAnimation />
 
-          <div className="text-center mt-6 space-y-5">
+          <div className="text-center mt-4 space-y-5">
              <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-blue-50/80 dark:bg-blue-900/30 rounded-full border border-blue-100/50 dark:border-blue-800 shadow-sm mx-auto">
                 <ShieldCheck className="w-4 h-4 text-primary animate-pulse" />
                 <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">Professional Gateway</span>
              </div>
              
-             <div className="space-y-2">
+             <div className="space-y-1">
                 <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none select-none">
-                  <span className="text-primary">Medical</span> Partner
+                  Your <span className="text-primary">Medical</span> Partner
                 </h1>
-                <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-[0.45em] ml-1">Elite Diagnostic Network</p>
+                <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-[0.45em] ml-1">Elite Digital Health Companion</p>
              </div>
           </div>
         </div>
