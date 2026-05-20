@@ -14,9 +14,10 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight } from 'lucide-react';
+import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Player } from '@lottiefiles/react-lottie-player';
 
 type AuthView = 'welcome' | 'login' | 'signup';
 
@@ -38,7 +39,6 @@ export default function LoginPage() {
     setIsMounted(true);
   }, []);
 
-  // Redirect if user is already logged in
   useEffect(() => {
     if (isMounted && user) {
       router.replace('/dashboard');
@@ -52,29 +52,20 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (view === 'signup') {
-        if (!name.trim()) {
-          throw new Error('Please enter your full name.');
-        }
-        if (password.length < 6) {
-          throw new Error('Password should be at least 6 characters.');
-        }
+        if (!name.trim()) throw new Error('Please enter your full name.');
+        if (password.length < 6) throw new Error('Password should be at least 6 characters.');
 
-        // 1. Create User
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // 2. Update Auth Profile - DO THIS FIRST before any redirection
         await updateProfile(userCredential.user, { 
           displayName: name,
           photoURL: `https://picsum.photos/seed/${userCredential.user.uid}/400/400`
         });
 
-        // 3. Store name locally for instant persistence in context
         localStorage.setItem('userMedicalProfile_local', JSON.stringify({
             name: name,
             image: `https://picsum.photos/seed/${userCredential.user.uid}/400/400`
         }));
         
-        // 4. Create Firestore Profile
         const userProfileRef = doc(firestore, 'users', userCredential.user.uid, 'userProfiles', userCredential.user.uid);
         await setDoc(userProfileRef, {
           id: userCredential.user.uid,
@@ -86,34 +77,17 @@ export default function LoginPage() {
         
         toast({ title: 'Welcome!', description: "Your account has been created successfully." });
       } else {
-        // Login
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        // Clear old local data to fetch fresh from server
+        await signInWithEmailAndPassword(auth, email, password);
         localStorage.removeItem('userMedicalProfile_local');
         toast({ title: 'Welcome Back!', description: 'Logged in successfully.' });
       }
     } catch (error: any) {
       console.error("Auth Error:", error);
       let message = error.message;
+      if (error.code === 'auth/email-already-in-use') message = 'Email already registered.';
+      else if (error.code === 'auth/invalid-credential') message = 'Invalid email or password.';
       
-      // Handle Firebase specific error codes
-      if (error.code === 'auth/email-already-in-use') {
-        message = 'This email is already registered. Please sign in instead.';
-      } else if (error.code === 'auth/invalid-email') {
-        message = 'Please enter a valid email address.';
-      } else if (error.code === 'auth/weak-password') {
-        message = 'The password is too weak. Please use at least 6 characters.';
-      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        message = 'Invalid email or password. Please try again.';
-      } else if (error.message.includes('identity-toolkit-api')) {
-        message = "Authentication service is currently unavailable. Please try again later.";
-      }
-
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Failed',
-        description: message,
-      });
+      toast({ variant: 'destructive', title: 'Authentication Failed', description: message });
     } finally {
       setLoading(false);
     }
@@ -126,16 +100,7 @@ export default function LoginPage() {
       await signInAnonymously(auth);
       toast({ title: 'Logged in as Guest' });
     } catch (error: any) {
-      console.error("Guest Sign-in Error:", error);
-      let message = error.message;
-      if (error.message.includes('identity-toolkit-api')) {
-        message = "Guest mode is temporarily unavailable.";
-      }
-      toast({ 
-        variant: 'destructive', 
-        title: 'Guest Sign-in Failed', 
-        description: message 
-      });
+      toast({ variant: 'destructive', title: 'Guest Sign-in Failed', description: error.message });
     } finally {
       setLoading(false);
     }
@@ -144,148 +109,136 @@ export default function LoginPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F0F7FF] dark:bg-slate-950 flex flex-col items-center justify-center p-6 overflow-hidden relative font-body">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-400/10 rounded-full blur-[100px]" />
+    <div className="h-[100dvh] w-full bg-gradient-to-br from-[#f0f7ff] via-[#ffffff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] flex flex-col items-center justify-start overflow-hidden relative font-body safe-top">
+      {/* Dynamic Background */}
+      <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-400/10 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="w-full max-w-md space-y-12 flex flex-col items-center relative z-10">
+      <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-12 overflow-y-auto scrollbar-hide">
         
-        {/* Unique Brand Typography Design */}
-        <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000">
-          <div className="inline-flex items-center justify-center p-5 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-blue-100 dark:shadow-none mb-4 transform hover:rotate-6 transition-transform duration-500">
-            <HeartPulse className="h-16 w-16 text-[#2488E8] animate-pulse" />
+        {/* Top Hero Section */}
+        <div className="w-full flex flex-col items-center pt-4 animate-in fade-in zoom-in-95 duration-1000">
+          <div className="relative w-full max-w-[280px] h-64 flex items-center justify-center">
+            {/* Centered Professional Illustration */}
+            <Player
+              autoplay
+              loop
+              src="https://lottie.host/86d634d0-4081-4235-8664-8840df3f009e/Xm9nK5U6K6.json"
+              style={{ height: '300px', width: '300px' }}
+              className="drop-shadow-2xl"
+            />
           </div>
-          <div className="flex flex-col items-center">
-            <h1 className="text-6xl font-black tracking-tighter font-headline leading-[0.8] uppercase flex flex-col">
-              <span className="text-[#1A365D] dark:text-slate-300 self-start ml-2 opacity-80 text-3xl">Your</span>
-              <span className="text-[#2488E8] -mt-1 text-7xl">Medical</span>
-              <span className="text-[#1A365D] dark:text-slate-300 self-end mr-2 -mt-1 text-4xl">Partner</span>
-            </h1>
-            <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.5em] pt-6 flex items-center gap-2">
-              <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
-              Digital Health Companion
-              <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
-            </p>
+
+          <div className="text-center mt-4 space-y-3">
+             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800/50 mb-2">
+                <HeartPulse className="w-3.5 h-3.5 text-primary animate-pulse" />
+                <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Secure Medical Gateway</span>
+             </div>
+             <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none">
+               <span className="text-primary">Medical</span> Partner
+             </h1>
+             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em]">Your Digital Health Companion</p>
           </div>
         </div>
 
-        {view === 'welcome' ? (
-          <div className="w-full space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
-            <div className="w-full space-y-5 px-2">
-              <Button 
-                onClick={() => setView('signup')}
-                className="w-full h-16 rounded-[1.5rem] text-lg font-bold bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:shadow-2xl hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-200 dark:shadow-none border-none transition-all duration-300 flex items-center justify-between px-8"
-              >
-                <span>Create Account</span>
-                <ChevronRight className="h-6 w-6 opacity-50" />
-              </Button>
-              
-              <Button 
-                onClick={() => setView('login')}
-                variant="outline"
-                className="w-full h-16 rounded-[1.5rem] text-lg font-bold bg-white dark:bg-slate-900 border-none shadow-md text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-xl transition-all active:scale-95 duration-300"
-              >
-                Sign In
-              </Button>
-              
-              <div className="text-center pt-4">
+        {/* Auth Interface */}
+        <div className="w-full max-w-md mt-10">
+          {view === 'welcome' ? (
+            <div className="w-full space-y-6 animate-in slide-in-from-bottom-10 fade-in duration-700">
+              <div className="space-y-4 px-2">
+                <Button 
+                  onClick={() => setView('signup')}
+                  className="w-full h-16 rounded-3xl text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] hover:shadow-2xl active:scale-95 transition-all duration-500 border-none flex items-center justify-between px-8"
+                >
+                  <span>Get Started</span>
+                  <ChevronRight className="h-6 w-6 opacity-50" />
+                </Button>
+                
+                <Button 
+                  onClick={() => setView('login')}
+                  variant="outline"
+                  className="w-full h-16 rounded-3xl text-lg font-bold bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/50 dark:border-slate-800 shadow-lg text-[#1A365D] dark:text-slate-200 hover:bg-white/60 active:scale-95 duration-300"
+                >
+                  Sign In to Account
+                </Button>
+              </div>
+
+              <div className="flex flex-col items-center gap-4 pt-4">
+                <div className="flex items-center w-full gap-4 px-8 opacity-40">
+                  <div className="h-px bg-slate-400 flex-1" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Connect with</span>
+                  <div className="h-px bg-slate-400 flex-1" />
+                </div>
+                <div className="flex gap-6">
+                  <SocialButton icon={<Chrome className="h-5 w-5 text-red-500" />} />
+                  <SocialButton icon={<Apple className="h-5 w-5 text-slate-900 dark:text-white" />} />
+                  <SocialButton icon={<Facebook className="h-5 w-5 text-blue-600" />} />
+                </div>
                 <button 
                   onClick={handleGuestSignIn}
-                  disabled={loading}
-                  className="text-slate-400 font-black text-xs hover:text-primary uppercase tracking-widest transition-colors disabled:opacity-50"
+                  className="text-[10px] font-black text-slate-400 hover:text-primary uppercase tracking-[0.25em] transition-colors mt-4"
                 >
-                  {loading ? 'Entering...' : 'Explore as Guest'}
+                  Explore as Guest
                 </button>
               </div>
             </div>
-          </div>
-        ) : (
-          <Card className="w-full rounded-[3rem] border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-2 animate-in zoom-in-95 duration-500">
-            <CardContent className="p-8 space-y-8">
-              <div className="flex items-center gap-4">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white transition-colors" 
-                  onClick={() => setView('welcome')}
-                  disabled={loading}
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                  {view === 'login' ? 'Welcome Back' : 'Get Started'}
-                </h3>
-              </div>
+          ) : (
+            <Card className="w-full rounded-[2.5rem] border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl p-2 animate-in slide-in-from-right-10 fade-in duration-500">
+              <CardContent className="p-8 space-y-8">
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" className="rounded-full bg-slate-100 dark:bg-slate-800" onClick={() => setView('welcome')} disabled={loading}>
+                    <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:text-white" />
+                  </Button>
+                  <h3 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">
+                    {view === 'login' ? 'Login' : 'Create'}
+                  </h3>
+                </div>
 
-              <form onSubmit={handleAuthAction} className="space-y-6">
-                {view === 'signup' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Full Name</Label>
+                <form onSubmit={handleAuthAction} className="space-y-5">
+                  {view === 'signup' && (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Full Name</Label>
+                      <Input 
+                        placeholder="Rohan Kumar" 
+                        className="h-14 rounded-2xl bg-white/50 dark:bg-slate-800 border-none focus-visible:ring-primary text-lg px-6 shadow-inner"
+                        value={name} onChange={(e) => setName(e.target.value)} required disabled={loading}
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Email</Label>
                     <Input 
-                      id="name" 
-                      placeholder="e.g. Rohan Kumar" 
-                      className="h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus-visible:ring-primary text-slate-900 dark:text-white text-lg px-6 shadow-inner"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      disabled={loading}
+                      type="email" placeholder="name@example.com" 
+                      className="h-14 rounded-2xl bg-white/50 dark:bg-slate-800 border-none focus-visible:ring-primary text-lg px-6 shadow-inner"
+                      value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading}
                     />
                   </div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@email.com" 
-                    className="h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus-visible:ring-primary text-slate-900 dark:text-white text-lg px-6 shadow-inner"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Secure Password</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    placeholder="••••••••" 
-                    className="h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus-visible:ring-primary text-slate-900 dark:text-white text-lg px-6 shadow-inner"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className={cn(
-                    "w-full h-16 rounded-2xl text-lg font-bold mt-4 shadow-xl active:scale-95 transition-all duration-300",
-                    view === 'signup' ? "bg-gradient-to-r from-[#4A90E2] to-[#357ABD]" : "bg-primary"
-                  )}
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : (view === 'login' ? 'Login Now' : 'Join Now')}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Password</Label>
+                    <Input 
+                      type="password" placeholder="••••••••" 
+                      className="h-14 rounded-2xl bg-white/50 dark:bg-slate-800 border-none focus-visible:ring-primary text-lg px-6 shadow-inner"
+                      value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading}
+                    />
+                  </div>
+                  <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl text-lg font-black uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-all bg-primary">
+                    {loading ? <Loader2 className="animate-spin" /> : (view === 'login' ? 'Login' : 'Join Now')}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-        <div className="w-full pt-4 flex flex-col items-center space-y-8 animate-in fade-in duration-1000 delay-500">
-          <div className="flex items-center w-full gap-6 px-8">
-            <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Instant Access</span>
-            <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-          </div>
-          
-          <div className="flex items-center gap-8">
-            <SocialButton icon={<Chrome className="h-6 w-6 text-red-500" />} disabled={loading} />
-            <SocialButton icon={<Apple className="h-6 w-6 text-slate-900 dark:text-white" />} disabled={loading} />
-            <SocialButton icon={<Facebook className="h-6 w-6 text-blue-600" />} disabled={loading} />
-          </div>
+        {/* Footer Trust Badge */}
+        <div className="mt-12 flex flex-col items-center gap-4 text-slate-400">
+           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em]">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              HIPAA Compliant Cloud Security
+           </div>
+           <p className="text-[9px] font-bold text-center opacity-60">Your medical data is encrypted and private.</p>
         </div>
 
       </div>
@@ -297,11 +250,9 @@ function SocialButton({ icon, disabled }: { icon: React.ReactNode, disabled?: bo
   return (
     <button 
       disabled={disabled}
-      className="h-16 w-16 rounded-[1.5rem] bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 hover:shadow-2xl transition-all duration-300 border border-white dark:border-slate-800 group disabled:opacity-50 disabled:cursor-not-allowed"
+      className="h-14 w-14 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 border border-white dark:border-slate-800 disabled:opacity-50"
     >
-      <div className="group-hover:rotate-12 transition-transform duration-300">
-        {icon}
-      </div>
+      {icon}
     </button>
   );
 }
