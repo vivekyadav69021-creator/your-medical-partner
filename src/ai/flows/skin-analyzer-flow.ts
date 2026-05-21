@@ -1,29 +1,33 @@
 'use server';
 /**
- * @fileOverview Optimized Skin/Face Scanner Flow.
+ * @fileOverview Advanced Onboarding & Personalization Architect for Skin/Face Scanner.
  * 
- * - analyzeSkinImage - Provides fast, scientific, and personalized dermatological insights.
- * - SkinAnalysisInput - Integrated input with user context.
- * - SkinAnalysisOutput - Structured JSON response.
+ * - analyzeSkinImage - Provides precise, scientific, and personalized dermatological insights.
+ * - SkinAnalysisInput - Integrated input with user context and language selection.
+ * - SkinAnalysisOutput - Structured JSON response in simple consumer-friendly language.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const ConditionSchema = z.object({
-  name: z.string().describe('The identified skin condition (e.g., "Acne Vulgaris").'),
-  confidence: z.number().describe('Confidence level 0.0 to 1.0.'),
-  description: z.string().describe('Simple explanation of the condition.'),
-  biologicalLogic: z.string().describe('Scientific explanation using medical terminology.'),
+  name: z.string().describe('The name of the condition in simple terms (e.g., "Pimple/Acne" instead of "Acne Vulgaris").'),
+  simpleDescription: z.string().describe('A non-medical, easy-to-understand explanation of the condition.'),
+});
+
+const NutritionalSupportSchema = z.object({
+  item: z.string().describe('Common vitamin or food item (e.g., "Vitamin C", "Berries").'),
+  benefit: z.string().describe('Simple explanation of how it protects the skin.'),
 });
 
 const SkinAnalysisInputSchema = z.object({
   imageDataUri: z
     .string()
     .describe(
-      "A photo of the face as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of the face/skin as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  userQuery: z.string().optional().describe("User-reported symptoms or context."),
+  userQuery: z.string().optional().describe("User-reported symptoms like itching, duration, or triggers."),
+  language: z.enum(['en', 'hi']).optional().default('en').describe('The language for the entire output.'),
   userProfile: z.object({
     age: z.string().optional(),
     lifestyle: z.string().optional(),
@@ -33,16 +37,13 @@ const SkinAnalysisInputSchema = z.object({
 export type SkinAnalysisInput = z.infer<typeof SkinAnalysisInputSchema>;
 
 const SkinAnalysisOutputSchema = z.object({
-  overallAssessment: z.string().describe('High-level summary of the skin condition.'),
-  identifiedConditions: z.array(ConditionSchema).describe('List of potential conditions.'),
-  comparativeAnalysis: z.string().describe('Correlation between visual data and user text.'),
-  nutritionalSupport: z.array(z.string()).describe('Suggested vitamins or foods for this skin state.'),
-  interactionPrompt: z.string().optional().describe('Follow-up question if details are insufficient.'),
-  recommendations: z.array(z.object({
-    type: z.enum(['routine', 'product', 'lifestyle']),
-    suggestion: z.string(),
-  })),
-  disclaimer: z.string().describe('The mandatory clinical disclaimer.'),
+  overallAssessment: z.string().describe('A concise summary of the skin state.'),
+  potentialConditions: z.array(ConditionSchema).describe('Primary possibilities based on visual evidence.'),
+  biologicalLogic: z.string().describe('Simplified "Why" using analogies (e.g., pores like small drains).'),
+  comparativeAnalysis: z.string().describe('How visual data confirms or contradicts user text.'),
+  nutritionalSupport: z.array(NutritionalSupportSchema).describe('Vitamins or foods for skin health.'),
+  interactionPrompt: z.string().optional().describe('Contextual follow-up question if query is missing.'),
+  disclaimer: z.string().describe('Language-bound mandatory disclaimer.'),
 });
 export type SkinAnalysisOutput = z.infer<typeof SkinAnalysisOutputSchema>;
 
@@ -56,18 +57,31 @@ const prompt = ai.definePrompt({
   output: { schema: SkinAnalysisOutputSchema },
   prompt: `You are the Onboarding & Personalization Architect for the "Your Medical Partner" Skin/Face Scanner.
 
-**Operational Protocol:**
-- Analyze visual morphology, pigmentation, and texture in the provided image.
-- **Workflow Track 1 (Detect):** If no userQuery is provided, describe findings and ask for context in 'interactionPrompt'.
-- **Workflow Track 2 (Describe):** If userQuery is provided, prioritize reported symptoms to refine visual analysis.
-- **Biological Logic:** Explain the 'why' using medical terminology (e.g., "follicular plug formation").
-- **Data Linkage:** Personalize advice using provided Profile (Age: {{userProfile.age}}, Lifestyle: {{userProfile.lifestyle}}, Diet: {{userProfile.dietaryPreference}}).
+**MISSION:**
+Analyze the provided skin image and user context to deliver scientific yet consumer-friendly insights.
 
-**Compulsory Disclaimer:** "This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment".
+**LANGUAGE LOCK (CRITICAL):**
+Your ENTIRE response (all fields, headers, and descriptions) MUST be in: {{language}}.
+If 'hi', use fluent, simple, and natural Hindi.
+If 'en', use simple, clear English.
 
-**User Input:**
+**DIAGNOSTIC PROTOCOLS:**
+1. **Track 1 (Detect Mode):** If userQuery is missing, analyze morphology, distribution, and texture. descripcion. descriptively ask: "To provide a better analysis, can you tell us how it feels? Is it itchy, burning, or painful?" (Translate this to {{language}}).
+2. **Track 2 (Describe Mode):** If userQuery is present ("{{{userQuery}}}"), prioritize these symptoms to refine the visual analysis.
+
+**CONTENT RULES:**
+- **NO JARGON:** Every clinical term MUST be explained simply (e.g., instead of "sebum", use "natural skin oil").
+- **Biological Logic:** Use simple analogies (e.g., "Pores are like small drains that got clogged with dirt and oil").
+- **Comparative Analysis:** State clearly if the photo confirms what the user said (e.g., "You mentioned itching, and the redness in the photo suggests irritation rather than just dryness").
+- **Personalization:** Link advice to Profile: Age {{userProfile.age}}, Lifestyle {{userProfile.lifestyle}}, Diet {{userProfile.dietaryPreference}}.
+- **Nutritional Support:** Suggest vitamins (E, C, Zinc) or antioxidants with simple benefits.
+
+**Disclaimer (Use {{language}}):**
+English: "This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment."
+Hindi: "यह विश्लेषण केवल शैक्षिक उद्देश्यों के लिए है। प्रिस्क्रिप्शन-ग्रेड उपचार के लिए किसी त्वचा विशेषज्ञ (Dermatologist) से सलाह लें।"
+
+Current Input:
 Context: {{{userQuery}}}
-User Profile Data: Age {{userProfile.age}}, Lifestyle {{userProfile.lifestyle}}, Diet {{userProfile.dietaryPreference}}
 Image: {{media url=imageDataUri}}
 
 Respond ONLY in valid JSON matching the output schema.`,
@@ -87,24 +101,24 @@ const skinAnalyzerFlow = ai.defineFlow(
       });
       
       const output = response.output();
-      if (!output) throw new Error('AI failed to generate a valid dermatological response.');
+      if (!output) throw new Error('AI failed to generate skin analysis.');
       
-      return {
-        ...output,
-        disclaimer: output.disclaimer || "This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment."
-      };
+      return output;
     } catch (e: any) {
       console.error("Skin Flow Error:", e);
+      const isHindi = input.language === 'hi';
       return {
-        overallAssessment: "We encountered an issue during visual analysis. Please ensure the photo is well-lit and clear.",
-        identifiedConditions: [],
-        comparativeAnalysis: "Unable to cross-reference visual data with your description at this moment.",
-        nutritionalSupport: ["Vitamin E", "Zinc-rich foods"],
-        recommendations: [
-          { type: 'lifestyle', suggestion: "Keep the area clean and avoid using harsh chemicals until a professional exam." }
-        ],
-        disclaimer: "Analysis system is currently under maintenance or input image was invalid.",
-        interactionPrompt: "Could you try uploading a closer, clearer photo under natural light?",
+        overallAssessment: isHindi ? "हम इस समय आपकी त्वचा का विश्लेषण करने में असमर्थ हैं।" : "We are unable to analyze your skin at this moment.",
+        potentialConditions: [],
+        biologicalLogic: "",
+        comparativeAnalysis: "",
+        nutritionalSupport: [],
+        disclaimer: isHindi 
+          ? "यह विश्लेषण केवल शैक्षिक उद्देश्यों के लिए है। कृपया डॉक्टर से मिलें।" 
+          : "This analysis is for educational purposes. Please see a doctor.",
+        interactionPrompt: isHindi 
+          ? "कृपया एक साफ़ और स्पष्ट फोटो दोबारा अपलोड करने का प्रयास करें।" 
+          : "Please try uploading a clear photo again.",
       };
     }
   }

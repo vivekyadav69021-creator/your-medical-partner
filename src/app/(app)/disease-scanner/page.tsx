@@ -27,7 +27,8 @@ import {
   MessageCircle,
   Siren,
   ShieldAlert,
-  Plus
+  Plus,
+  Apple
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -115,9 +116,9 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     useEffect(() => {
         if (state?.result && !state?.error && state?.timestamp > 0) {
             updateScanStats();
-            toast({ title: "Analysis Complete" });
+            toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
         }
-    }, [state, toast]);
+    }, [state, toast, lang]);
 
     const handleFormAction = async (formData: FormData) => {
         if (!preview) return;
@@ -129,7 +130,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             formData.set('language', lang);
             startTransition(() => { formAction(formData); });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error' });
+            toast({ variant: 'destructive', title: lang === 'en' ? 'Error' : 'त्रुटि' });
         }
     };
 
@@ -140,8 +141,12 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
-                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Skin Architect</h2>
-                    <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest">Morphological Scan</p>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
+                        {lang === 'en' ? 'Skin Architect' : 'त्वचा विशेषज्ञ'}
+                    </h2>
+                    <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest">
+                        {lang === 'en' ? 'Scientific Analysis' : 'वैज्ञानिक विश्लेषण'}
+                    </p>
                 </div>
             </div>
 
@@ -151,7 +156,9 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-pink-400">
                             <ImageIcon className="w-12 h-12" />
                         </div>
-                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Upload Photo</p>
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">
+                            {lang === 'en' ? 'Tap to Upload Photo' : 'फोटो अपलोड करने के लिए टैप करें'}
+                        </p>
                         <input type="file" ref={fileInputRef} hidden onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -173,11 +180,17 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
                 <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Describe Symptoms</Label>
-                        <Textarea name="userQuery" placeholder={lang === 'en' ? "E.g., Itchy red patches since 2 days..." : "उदाहरण: 2 दिनों से खुजली वाले लाल धब्बे..."} className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">
+                            {lang === 'en' ? 'Describe Symptoms' : 'लक्षण बताएं'}
+                        </Label>
+                        <Textarea 
+                            name="userQuery" 
+                            placeholder={lang === 'en' ? "E.g., Itchy red patches since 2 days..." : "उदाहरण: 2 दिनों से खुजली वाले लाल धब्बे..."} 
+                            className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-base font-bold p-6" 
+                        />
                     </div>
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-pink-500 to-rose-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : (lang === 'en' ? "Start Scientific Analysis" : "वैज्ञानिक विश्लेषण शुरू करें")}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> {lang === 'en' ? 'AI Scanning...' : 'AI जांच कर रहा है...'}</> : (lang === 'en' ? "Start Scientific Analysis" : "वैज्ञानिक विश्लेषण शुरू करें")}
                     </Button>
                 </form>
             </div>
@@ -185,17 +198,74 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             {state?.result && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    {state.result.overallAssessment && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 px-2">
-                                <BrainCircuit className="w-5 h-5 text-pink-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Architect Verdict</h4>
-                            </div>
-                            <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium px-2">
-                                <ReactMarkdown>{state.result.overallAssessment}</ReactMarkdown>
+                    
+                    {state.result.interactionPrompt && (
+                        <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100 animate-pulse">
+                            <MessageCircle className="h-5 w-5 text-blue-500" />
+                            <AlertDescription className="font-bold text-blue-700 dark:text-blue-300">
+                                {state.result.interactionPrompt}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    <div className="space-y-4 px-2">
+                        <div className="flex items-center gap-2">
+                            <BrainCircuit className="w-5 h-5 text-pink-500" />
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">
+                                {lang === 'en' ? 'Architect Verdict' : 'विशेषज्ञ की राय'}
+                            </h4>
+                        </div>
+                        <p className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">
+                            {state.result.overallAssessment}
+                        </p>
+                    </div>
+
+                    <div className="grid gap-6">
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Potential Conditions' : 'संभावित स्थितियां'}
+                            </h4>
+                            <div className="grid gap-3">
+                                {state.result.potentialConditions?.map((cond: any, i: number) => (
+                                    <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm">
+                                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{cond.name}</p>
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">{cond.simpleDescription}</p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    )}
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Simplified Biological Logic' : 'सरल जैविक तर्क'}
+                            </h4>
+                            <div className="p-6 rounded-[2rem] bg-pink-50/30 dark:bg-pink-900/10 border border-pink-100/50">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                                    "{state.result.biologicalLogic}"
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Nutritional Support' : 'पोषण संबंधी सुझाव'}
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {state.result.nutritionalSupport?.map((nutri: any, i: number) => (
+                                    <div key={i} className="p-4 bg-white dark:bg-slate-900 rounded-2xl flex items-start gap-3 shadow-sm border border-slate-50 dark:border-slate-800">
+                                        <div className="h-8 w-8 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl flex items-center justify-center shrink-0">
+                                            <Apple className="h-4 w-4 text-emerald-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-[#1A365D] dark:text-slate-200 uppercase">{nutri.item}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 leading-tight">{nutri.benefit}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
