@@ -24,12 +24,10 @@ import {
   Activity,
   ChevronLeft,
   CheckCircle2,
-  ClipboardCheck,
-  Lightbulb,
-  Siren,
-  Apple,
   MessageCircle,
-  ShieldAlert
+  Siren,
+  ShieldAlert,
+  Plus
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -56,10 +54,6 @@ const updateScanStats = () => {
     }
 };
 
-/**
- * Optimizes image for server action payload limits
- * ULTRA-SAFE: 600px width and 0.4 quality for maximum stability and speed
- */
 const compressImage = (dataUri: string, maxWidth = 600): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
@@ -81,7 +75,6 @@ const compressImage = (dataUri: string, maxWidth = 600): Promise<string> => {
                 return;
             }
             ctx.drawImage(img, 0, 0, width, height);
-            // Low quality for fast transmission, still enough for AI Vision
             const compressed = canvas.toDataURL('image/jpeg', 0.4);
             resolve(compressed);
         };
@@ -111,7 +104,7 @@ function ScanAnimationOverlay({ color }: { color: string }) {
     );
 }
 
-// --- SCANNER SUB-COMPONENTS (Defined above main component for stability) ---
+// --- SCANNER SUB-COMPONENTS ---
 
 function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
@@ -122,35 +115,28 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     useEffect(() => {
         if (state?.result && !state?.error && state?.timestamp > 0) {
             updateScanStats();
-            toast({ title: "Analysis Complete", description: "Your skin report is ready below." });
+            toast({ title: "Analysis Complete" });
         }
     }, [state, toast]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (!preview) {
-            toast({ variant: 'destructive', title: 'Photo Required' });
-            return;
-        }
-        
+        if (!preview) return;
         try {
             const compressed = await compressImage(preview);
             const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
             if (savedProfile) formData.set('userProfile', savedProfile);
             formData.set('imageDataUri', compressed);
             formData.set('language', lang);
-            
-            startTransition(() => {
-                formAction(formData);
-            });
+            startTransition(() => { formAction(formData); });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Optimization Error' });
+            toast({ variant: 'destructive', title: 'Error' });
         }
     };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20 shrink-0">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
@@ -188,77 +174,28 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Describe Symptoms</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Itchy red patches since 2 days..." className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder={lang === 'en' ? "E.g., Itchy red patches since 2 days..." : "उदाहरण: 2 दिनों से खुजली वाले लाल धब्बे..."} className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-pink-500 to-rose-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : "Start Scientific Analysis"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : (lang === 'en' ? "Start Scientific Analysis" : "वैज्ञानिक विश्लेषण शुरू करें")}
                     </Button>
                 </form>
             </div>
-            
-            {state?.error && (
-                <Alert variant="destructive" className="rounded-[2rem] border-none bg-red-50 text-red-600 p-6">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertDescription className="text-sm font-bold">{state.error}</AlertDescription>
-                </Alert>
-            )}
 
             {state?.result && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    
-                    {state.result.interactionPrompt && (
-                        <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
-                            <MessageCircle className="h-5 w-5 text-blue-500" />
-                            <AlertDescription className="font-bold text-blue-700">{state.result.interactionPrompt}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 px-2">
-                            <BrainCircuit className="w-5 h-5 text-pink-500" />
-                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Architect Verdict</h4>
-                        </div>
-                        <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium px-2">
-                            <ReactMarkdown>{state.result.overallAssessment || ''}</ReactMarkdown>
-                        </div>
-                    </div>
-
-                    {state.result.comparativeAnalysis && (
+                    {state.result.overallAssessment && (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 px-2">
-                                <Activity className="w-5 h-5 text-pink-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Comparative Analysis</h4>
+                                <BrainCircuit className="w-5 h-5 text-pink-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Architect Verdict</h4>
                             </div>
-                            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
-                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed italic">
-                                    {state.result.comparativeAnalysis}
-                                </p>
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-medium px-2">
+                                <ReactMarkdown>{state.result.overallAssessment}</ReactMarkdown>
                             </div>
                         </div>
                     )}
-
-                    {state.result.identifiedConditions?.length > 0 && (
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 px-2">
-                                <Scan className="w-5 h-5 text-pink-500" />
-                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Potential Conditions</h4>
-                            </div>
-                            <div className="grid gap-4">
-                                {state.result.identifiedConditions.map((c: any, i: number) => (
-                                    <div key={i} className="space-y-3 border-l-4 border-pink-100 dark:border-pink-900/30 pl-6 py-1">
-                                        <div className="flex items-center justify-between">
-                                            <h5 className="font-black text-lg text-[#1A365D] dark:text-slate-100">{c.name}</h5>
-                                            <Badge className="bg-pink-50 text-pink-500 border-none font-black text-[8px] tracking-widest">CONF: {Math.round((c.confidence || 0) * 100)}%</Badge>
-                                        </div>
-                                        <p className="text-xs font-bold text-slate-500 leading-relaxed">"{c.biologicalLogic}"</p>
-                                        <p className="text-xs font-medium text-slate-400 leading-relaxed">{c.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
@@ -288,9 +225,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                 formData.set('imageDataUri', compressed);
             }
             formData.set('language', lang);
-            startTransition(() => {
-                formAction(formData);
-            });
+            startTransition(() => { formAction(formData); });
         } catch (e) {
             toast({ variant: 'destructive', title: 'Optimization Error' });
         }
@@ -312,7 +247,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                  <form action={handleFormAction} className="space-y-6">
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Accident Description</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Fell down stairs..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" required />
+                        <Textarea name="userQuery" placeholder={lang === 'en' ? "How did it happen? (e.g., Fell down stairs)" : "यह कैसे हुआ? (जैसे: सीढ़ियों से गिर गया)"} className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-base font-bold p-6" />
                     </div>
                     
                     {!preview ? (
@@ -341,7 +276,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                     }} accept="image/*" />
 
                     <Button type="submit" disabled={isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-orange-500 to-red-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Scanning...</> : "Start Emergency Scan"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : (lang === 'en' ? "Start Emergency Scan" : "इमरजेंसी स्कैन शुरू करें")}
                     </Button>
                 </form>
             </div>
@@ -349,6 +284,14 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
             {state?.result && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    {state.result.interactionPrompt && (
+                        <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
+                            <MessageCircle className="h-5 w-5 text-blue-500" />
+                            <AlertDescription className="font-bold text-blue-700">{state.result.interactionPrompt}</AlertDescription>
+                        </Alert>
+                    )}
+
                     {state.result.severity === 'high' && (
                         <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-6 animate-pulse">
                             <Siren className="h-8 w-8 mb-3" />
@@ -356,17 +299,44 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             <AlertDescription className="text-sm font-bold">{state.result.actionableAlert}</AlertDescription>
                         </Alert>
                     )}
+
                     <div className="space-y-8">
                         <div className="space-y-3 px-2">
-                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Classification</h4>
+                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Injury Type</h4>
                              <div className="flex items-center gap-4">
                                 <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
-                                <Badge className="bg-orange-100 text-orange-600 uppercase font-black text-[8px]">{state.result.severity}</Badge>
+                                <Badge className={cn("uppercase font-black text-[8px] border-none px-3", 
+                                    state.result.severity === 'high' ? "bg-red-100 text-red-600" : 
+                                    state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
+                                )}>
+                                    {state.result.severity}
+                                </Badge>
                              </div>
                         </div>
-                        <div className="prose prose-sm dark:prose-invert max-w-none px-2">
-                            <ReactMarkdown>{state.result.summary || ''}</ReactMarkdown>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Biological Logic</h4>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">"{state.result.biologicalLogic}"</p>
                         </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">First-Aid Steps</h4>
+                            <div className="space-y-3">
+                                {state.result.firstAidSteps.map((step: string, i: number) => (
+                                    <div key={i} className="flex gap-4 p-4 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20">
+                                        <span className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black shrink-0">{i+1}</span>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{step}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                            <ShieldAlert className="h-5 w-5 text-blue-500" />
+                            <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                                {state.result.disclaimer}
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 </div>
             )}
@@ -391,9 +361,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             formData.set('photoDataUri', compressed);
             formData.set('contentType', 'image/jpeg');
             formData.set('language', lang);
-            startTransition(() => {
-                formAction(formData);
-            });
+            startTransition(() => { formAction(formData); });
         } catch (e) {
             toast({ variant: 'destructive', title: 'Error' });
         }
@@ -402,7 +370,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
@@ -440,7 +408,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
@@ -458,6 +426,12 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                             <p className="text-base font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
                         </div>
                     </div>
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                        <ShieldAlert className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                            {state.result.disclaimer}
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
@@ -480,9 +454,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
             const compressed = await compressImage(preview);
             formData.set('imageDataUri', compressed);
             formData.set('language', lang);
-            startTransition(() => {
-                formAction(formData);
-            });
+            startTransition(() => { formAction(formData); });
         } catch (e) {
             toast({ variant: 'destructive', title: 'Error' });
         }
@@ -491,7 +463,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md border border-white/20">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
@@ -538,19 +510,17 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     <div className="space-y-10 px-2">
                         <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">{state.result.summary}</h3>
-                        {state.result.interpretations?.length > 0 && (
-                            <div className="grid gap-2">
-                                {state.result.interpretations.map((item: any, i: number) => (
-                                    <div key={i} className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[8px] font-black uppercase text-slate-400">{item.test}</p>
-                                            <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
-                                        </div>
-                                        <Badge className="bg-emerald-50 text-emerald-500 uppercase text-[8px]">{item.status}</Badge>
+                        <div className="grid gap-2">
+                            {state.result.interpretations?.map((item: any, i: number) => (
+                                <div key={i} className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[8px] font-black uppercase text-slate-400">{item.test}</p>
+                                        <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                    <Badge className="bg-emerald-50 text-emerald-500 uppercase text-[8px]">{item.status}</Badge>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
