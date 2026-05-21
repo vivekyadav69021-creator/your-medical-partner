@@ -23,14 +23,14 @@ const InjuryAnalysisInputSchema = z.object({
 export type InjuryAnalysisInput = z.infer<typeof InjuryAnalysisInputSchema>;
 
 const InjuryAnalysisOutputSchema = z.object({
-  classification: z.string().describe('Simplified classification of the injury in layman terms (e.g., A simple skin scrape).'),
-  severity: z.enum(['low', 'medium', 'high']).describe('Severity level of the injury.'),
-  biologicalLogic: z.string().describe('Very simple explanation of what the body is doing (e.g., sending blood to heal).'),
-  firstAidSteps: z.array(z.string()).describe('Numbered first-aid steps in simple language.'),
-  actionableAlert: z.string().optional().describe('Bold alert for high severity injuries in the selected language.'),
-  interactionPrompt: z.string().optional().describe('Contextual question if only an image is provided.'),
-  summary: z.string().describe('A concise Markdown summary of the analysis in simple terms.'),
-  disclaimer: z.string().describe('Language-bound mandatory disclaimer.'),
+  classification: z.string().describe('Layman classification (e.g., A shallow scrape).'),
+  severity: z.enum(['low', 'medium', 'high']).describe('Severity level.'),
+  biologicalLogic: z.string().describe('Simplified explanation of body healing.'),
+  firstAidSteps: z.array(z.string()).describe('Numbered first-aid steps.'),
+  actionableAlert: z.string().optional().describe('Emergency alert if high severity.'),
+  interactionPrompt: z.string().optional().describe('Specific follow-up question based on visible data.'),
+  summary: z.string().describe('Concise Markdown summary.'),
+  disclaimer: z.string().describe('Mandatory disclaimer.'),
 });
 export type InjuryAnalysisOutput = z.infer<typeof InjuryAnalysisOutputSchema>;
 
@@ -45,26 +45,34 @@ const prompt = ai.definePrompt({
   prompt: `You are the Emergency Response Specialist for the "Your Medical Partner" Injury Scanner.
 
 **YOUR MISSION:**
-Provide immediate risk assessment and first-aid guidance for traumatic injuries using EXTREMELY CLEAR, NON-MEDICAL language.
+Analyze the provided visual and textual data for traumatic injuries. You MUST provide a unique analysis based solely on the current input. DO NOT provide generic or repetitive responses.
 
-**OPERATIONAL PROTOCOLS:**
-1. **Language Lock:** Respond ENTIRELY in the selected language: {{language}}. If 'hi', use fluent, simple Hindi. If 'en', use simple English.
-2. **Two-Track Workflow:**
-   - **Track 1 (Detect):** If no userQuery is provided, scan the image for morphology (cuts, scrapes, burns) and signs of inflammation (redness, swelling). Populate 'interactionPrompt'.
-   - **Track 2 (Assisted):** If userQuery exists (e.g., "{{{userQuery}}}"), prioritize this context to assess the situation.
-3. **No Jargon Rule:** Avoid medical terms like "Erythema" or "Laceration". Use "Redness" or "Cut". Every technical observation MUST be followed by a simple explanation.
-4. **Biological Logic:** Explain the body's natural response simply (e.g., "The swelling is just your body's way of protecting the area while it fixes the tissue").
-5. **Emergency SOS:** If severity is HIGH, populate 'actionableAlert' suggesting "Emergency SOS" for nearby hospitals in Vapi.
+**SCANNING PROTOCOLS (STRICT):**
+1. **Visual Scan:** If an image is provided, examine specific morphology:
+   - Identify precise colors (angry red, purple bruising, yellowish debris).
+   - Look for texture (swelling, fluid, skin breaks, depth).
+   - Detect location (is it on a joint, finger, or torso?).
+2. **Contextual Cross-Reference:** Compare the image with the user's description: "{{{userQuery}}}".
+   - If the user says "I burned it," look for blister patterns.
+   - If they say "I fell," look for road rash or debris.
+3. **Language Lock:** Your entire response must be in: {{language}}. If 'hi', use simple and natural Hindi.
+4. **No Medical Jargon:** Use terms like "Redness" instead of "Erythema". Every technical observation MUST have a "meaning in simple words" attached.
+5. **Dynamic Interaction:** If the image is unclear or the query is short, use 'interactionPrompt' to ask a highly specific question (e.g., "The area looks quite swollen, can you move the joint easily?").
 
-**DISCLAIMER CONTENT (Match language):**
-- English: "This is an AI-generated first-aid guide for immediate awareness. If the injury is severe, seek professional medical treatment immediately."
-- Hindi: "यह तुरंत जागरूकता के लिए एक एआई-जनरेटेड प्राथमिक चिकित्सा (First-Aid) गाइड है। यदि चोट गंभीर है, तो तुरंत डॉक्टर या नजदीकी अस्पताल से संपर्क करें।"
+**Emergency Alerts:**
+- If severity is HIGH (heavy bleeding, exposed bone, 3rd-degree burn), populate 'actionableAlert' mentioning "Emergency SOS" to nearby hospitals in Vapi.
 
-**Input Data:**
-User Context: {{{userQuery}}}
-Image: {{#if imageDataUri}}{{media url=imageDataUri}}{{else}}No image provided.{{/if}}
+**Disclaimer (Use {{language}}):**
+English: "This is an AI-generated first-aid guide for immediate awareness. If the injury is severe, seek professional medical treatment immediately."
+Hindi: "यह तुरंत जागरूकता के लिए एक एआई-जनरेटेड प्राथमिक चिकित्सा (First-Aid) गाइड है। यदि चोट गंभीर है, तो तुरंत डॉक्टर या नजदीकी अस्पताल से संपर्क करें।"
 
-Respond in structured JSON matching the output schema.`,
+Current Input:
+Description: {{{userQuery}}}
+{{#if imageDataUri}}
+Injury Image: {{media url=imageDataUri}}
+{{/if}}
+
+Respond ONLY in the specified JSON format. Ensure every field is unique to this specific case.`,
 });
 
 const injuryAnalyzerFlow = ai.defineFlow(
@@ -77,25 +85,25 @@ const injuryAnalyzerFlow = ai.defineFlow(
     try {
       const response = await prompt(input);
       const output = response.output();
+      
       if (!output) throw new Error('Analysis failed.');
+      
       return output;
     } catch (e: any) {
       console.error("Injury Flow Error:", e);
       const isHindi = input.language === 'hi';
+      // More specific fallback to avoid "same answer" feel if something breaks
       return {
-        classification: isHindi ? "स्थिति स्पष्ट नहीं है" : "Unclear status",
+        classification: isHindi ? "स्थिति का आंकलन नहीं हो सका" : "Status unclear",
         severity: "low",
-        biologicalLogic: isHindi ? "हम अभी इस स्थिति का विश्लेषण नहीं कर पा रहे हैं।" : "We cannot analyze the situation at the moment.",
+        biologicalLogic: isHindi ? "हम इस समय आपकी चोट का विश्लेषण करने में असमर्थ हैं।" : "We are unable to analyze your injury at this moment.",
         firstAidSteps: isHindi 
-          ? ["चोट वाली जगह को साफ पानी से धोएं", "साफ कपड़े से ढकें", "दर्द बढ़ने पर डॉक्टर से मिलें"]
-          : ["Clean with water", "Cover with clean cloth", "Consult doctor if pain increases"],
-        interactionPrompt: isHindi 
-          ? "क्या आप बता सकते हैं कि यह चोट कैसे लगी? इससे हमें बेहतर सलाह देने में मदद मिलेगी।"
-          : "Could you tell us how this happened? This will help us provide better advice.",
-        summary: isHindi ? "एनालिसिस विफल रहा।" : "Analysis failed.",
+          ? ["चोट वाली जगह को साफ रखें", "हल्का दबाव डालें यदि रक्तस्राव हो", "जल्द से जल्द डॉक्टर से मिलें"]
+          : ["Keep the area clean", "Apply light pressure if bleeding", "Consult a doctor immediately"],
+        summary: isHindi ? "सिस्टम में तकनीकी समस्या है।" : "System technical issue.",
         disclaimer: isHindi
-          ? "यह तुरंत जागरूकता के लिए एक एआई-जनरेटेड प्राथमिक चिकित्सा (First-Aid) गाइड है। यदि चोट गंभीर है, तो तुरंत डॉक्टर या नजदीकी अस्पताल से संपर्क करें।"
-          : "This is an AI-generated first-aid guide for immediate awareness. If the injury is severe, seek professional medical treatment immediately.",
+          ? "यह तुरंत जागरूकता के लिए एक एआई-जनरेटेड गाइड है। कृपया डॉक्टर से मिलें।"
+          : "This is an AI guide. Please seek professional medical help.",
       };
     }
   }
