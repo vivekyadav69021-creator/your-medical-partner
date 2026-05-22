@@ -33,7 +33,11 @@ import {
   ExternalLink,
   Sparkles,
   Ban,
-  Utensils
+  Utensils,
+  User,
+  Calendar,
+  Stethoscope,
+  HeartPulse
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -658,6 +662,13 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         }
     };
 
+    // Group findings by category
+    const groupedFindings = state?.result?.findings?.reduce((acc: any, item: any) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
@@ -665,54 +676,170 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                     <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
                 </Button>
                 <div>
-                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Report Analyst</h2>
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">OCR Lab Scan</p>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Report Specialist</h2>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Advanced Lab OCR</p>
                 </div>
             </div>
 
             <div className="space-y-6">
-                <form action={handleFormAction} className="space-y-6">
-                    {!preview ? (
-                        <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
-                                <FileText className="w-12 h-12" />
-                            </div>
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Lab Report Here</p>
+                {!preview ? (
+                    <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
+                            <FileText className="w-12 h-12" />
                         </div>
-                    ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="Report" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
-                            {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
-                            <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
-                                <X className="h-5 w-5" />
-                            </Button>
-                        </div>
-                    )}
-                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Lab Report Here</p>
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                    </div>
+                ) : (
+                    <div className={cn(
+                        "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[500px] flex items-center justify-center",
+                        isAnalyzing ? "border-emerald-200 ring-8 ring-emerald-50/50" : "border-white dark:border-slate-800"
+                    )}>
+                        <Image src={preview} alt="Report" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
+                        {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
+                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
+                )}
 
+                <form action={handleFormAction} className="space-y-6">
+                    <div className="space-y-3">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Additional Context (Optional)</Label>
+                        <Textarea name="userQuery" placeholder="E.g., I have been feeling tired lately..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[100px] text-base font-bold p-6" />
+                    </div>
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing...</> : "Start Clinical Interpretation"}
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> {lang === 'en' ? 'Scanning Report...' : 'रिपोर्ट स्कैन हो रही है...'}</> : (lang === 'en' ? "Analyze My Report" : "रिपोर्ट का विश्लेषण करें")}
                     </Button>
                 </form>
             </div>
 
             {state?.result && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    <div className="space-y-10 px-2">
-                        <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">{state.result.summary}</h3>
-                        <div className="grid gap-2">
-                            {state.result.interpretations?.map((item: any, i: number) => (
-                                <div key={i} className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] flex items-center justify-between">
-                                    <div>
-                                        <p className="text-[8px] font-black uppercase text-slate-400">{item.test}</p>
-                                        <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{item.value}</p>
-                                    </div>
-                                    <Badge className="bg-emerald-50 text-emerald-500 uppercase text-[8px]">{item.status}</Badge>
-                                </div>
-                            ))}
+                    
+                    {/* Patient Details Header */}
+                    <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Patient Name</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><User className="w-3.5 h-3.5 text-primary" /> {state.result.patientDetails?.name || '-'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Age / Gender</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{state.result.patientDetails?.age || '-'} / {state.result.patientDetails?.gender || '-'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Report Date</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-primary" /> {state.result.patientDetails?.date || '-'}</p>
+                            </div>
+                             <div className="col-span-full pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Referring Physician / Clinic</p>
+                                <p className="text-sm font-black text-primary flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5" /> {state.result.patientDetails?.doctorName || 'Not Specified'}</p>
+                            </div>
                         </div>
+                    </Card>
+
+                    <div className="space-y-4 px-2">
+                        <div className="flex items-center gap-2">
+                            <HeartPulse className="w-5 h-5 text-emerald-500" />
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Executive Summary</h4>
+                        </div>
+                        <p className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">
+                            {state.result.summary}
+                        </p>
                     </div>
+
+                    {/* Findings by Category */}
+                    <div className="space-y-8">
+                        {groupedFindings && Object.entries(groupedFindings).map(([category, items]: [string, any]) => (
+                            <div key={category} className="space-y-4 px-2">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">{category}</h4>
+                                    <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1 ml-4" />
+                                </div>
+                                <div className="grid gap-3">
+                                    {items.map((item: any, i: number) => (
+                                        <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm group transition-all hover:bg-white hover:shadow-md">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{item.test}</p>
+                                                <Badge className={cn("uppercase text-[8px] font-black border-none px-3", 
+                                                    item.status === 'high' ? "bg-red-50 text-red-500" : 
+                                                    item.status === 'low' ? "bg-orange-50 text-orange-500" : 
+                                                    item.status === 'borderline' ? "bg-yellow-50 text-yellow-600" : "bg-emerald-50 text-emerald-600"
+                                                )}>
+                                                    {item.status}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-xl font-black text-primary">{item.value}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 italic">Ref: {item.range}</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{item.significance}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="space-y-8">
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Reasoning</h4>
+                            <div className="p-6 rounded-[2rem] bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                                    "{state.result.biologicalLogic}"
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Cure & Action Plan</h4>
+                            <div className="grid gap-4">
+                                {state.result.actionPlan?.map((plan: any, i: number) => (
+                                    <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2.2rem] border border-white dark:border-slate-800 shadow-xl relative overflow-hidden">
+                                        <div className="flex items-start gap-4">
+                                            <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
+                                                <CheckCircle2 className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{plan.title}</p>
+                                                <div className="space-y-2">
+                                                    {plan.steps.map((step: string, j: number) => (
+                                                        <div key={j} className="flex gap-2 items-start">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{step}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Precautions (What to Avoid)</h4>
+                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
+                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3">
+                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                        <ShieldAlert className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
+                            {state.result.disclaimer}
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
@@ -747,7 +874,7 @@ export default function DiseaseScannerPage() {
             skinTitle: "Skin Analysis",
             injuryTitle: "Injury & SOS",
             xrayTitle: "X-Ray Vision",
-            reportTitle: "Report Analyst",
+            reportTitle: "Report Specialist",
             startBtn: "Analyze Now",
             noScans: "Ready for scan"
         },
