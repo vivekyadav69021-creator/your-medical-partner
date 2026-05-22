@@ -156,7 +156,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             const reader = new FileReader();
             reader.onload = () => {
                 setPreview(reader.result as string);
-                // Clear input so selecting same file works again
                 if (fileInputRef.current) fileInputRef.current.value = '';
             };
             reader.readAsDataURL(file);
@@ -290,7 +289,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             </div>
                         </div>
 
-                        {/* Nutritional Support Section */}
                         {state.result.nutritionalSupport && state.result.nutritionalSupport.length > 0 && (
                             <div className="space-y-4 px-2">
                                 <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
@@ -310,7 +308,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             </div>
                         )}
 
-                        {/* Things to Avoid Section */}
                         {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
                             <div className="space-y-4 px-2">
                                 <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
@@ -394,6 +391,18 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPreview(reader.result as string);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
@@ -429,17 +438,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             </Button>
                         </div>
                     )}
-                    <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                setPreview(reader.result as string);
-                                if (fileInputRef.current) fileInputRef.current.value = '';
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    }} accept="image/*" />
+                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
 
                     <Button type="submit" disabled={isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-orange-500 to-red-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
                         {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : (lang === 'en' ? "Start Emergency Scan" : "इमरजेंसी स्कैन शुरू करें")}
@@ -497,6 +496,22 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             </div>
                         </div>
 
+                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                    {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
+                                </h4>
+                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
+                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3">
+                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                             <ShieldAlert className="h-5 w-5 text-blue-500" />
                             <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
@@ -533,6 +548,18 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPreview(reader.result as string);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
              <div className="flex items-center gap-4">
@@ -563,17 +590,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                             </Button>
                         </div>
                     )}
-                    <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                setPreview(reader.result as string);
-                                if (fileInputRef.current) fileInputRef.current.value = '';
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    }} accept="image/*" />
+                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
@@ -629,6 +646,18 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPreview(reader.result as string);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
@@ -659,17 +688,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             </Button>
                         </div>
                     )}
-                    <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                setPreview(reader.result as string);
-                                if (fileInputRef.current) fileInputRef.current.value = '';
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    }} accept="image/*" />
+                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
                         {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing...</> : "Start Clinical Interpretation"}
