@@ -171,7 +171,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 ) : (
                     <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
                         <Image src={preview} alt="Preview" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
-                        {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
