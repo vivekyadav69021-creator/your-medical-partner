@@ -957,15 +957,6 @@ export default function DiseaseScannerPage() {
                         <ScannerCard title={t.xrayTitle} slogan="Radiology" icon={Bone} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" btnColor="bg-blue-500" onClick={() => setView('xray')} btnText={t.startBtn} />
                         <ScannerCard title={t.reportTitle} slogan="OCR Lab" icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => setView('lab')} btnText={t.startBtn} />
                     </div>
-
-                    <div className="fixed bottom-24 left-0 right-0 flex justify-center z-40 px-6 pointer-events-none">
-                        <div className="pointer-events-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl rounded-full p-1 border border-white/40 dark:border-slate-800">
-                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" onClick={() => setLang('en')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest", lang === 'en' ? "bg-primary text-white" : "text-slate-400")}>EN</Button>
-                                <Button variant="ghost" size="sm" onClick={() => setLang('hi')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest", lang === 'hi' ? "bg-primary text-white" : "text-slate-400")}>हिन्दी</Button>
-                             </div>
-                        </div>
-                    </div>
                 </div>
             );
         }
@@ -978,6 +969,34 @@ export default function DiseaseScannerPage() {
                     {renderContent()}
                 </div>
             </main>
+
+            {/* Always-visible floating language selection toggle at bottom center */}
+            <div className="fixed bottom-10 left-0 right-0 flex justify-center z-50 px-6 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+                <div className="pointer-events-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1 transition-all duration-500 animate-in slide-in-from-bottom-5">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setLang('en')} 
+                        className={cn(
+                            "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
+                            lang === 'en' ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        )}
+                    >
+                        EN
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setLang('hi')} 
+                        className={cn(
+                            "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
+                            lang === 'hi' ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        )}
+                    >
+                        हिन्दी
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 }
