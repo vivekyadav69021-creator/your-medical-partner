@@ -115,14 +115,16 @@ const skinAnalyzerFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      console.log("[Skin Flow] Starting analysis...");
       const response = await prompt({
         ...input,
         userProfile: input.userProfile || { age: 'unknown', lifestyle: 'unknown', dietaryPreference: 'unknown' }
       });
       
-      const output = response.output();
+      const output = response.output; // FIXED: Accessing as property, not a function call
       if (!output) throw new Error('AI failed to generate skin analysis.');
       
+      console.log("[Skin Flow] Analysis successful.");
       return output;
     } catch (e: any) {
       console.error("Skin Flow Error:", e);

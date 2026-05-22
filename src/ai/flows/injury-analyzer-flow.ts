@@ -84,7 +84,7 @@ const injuryAnalyzerFlow = ai.defineFlow(
   async (input) => {
     try {
       const response = await prompt(input);
-      const output = response.output();
+      const output = response.output; // FIXED: Accessing as property
       
       if (!output) throw new Error('Analysis failed.');
       
@@ -92,7 +92,6 @@ const injuryAnalyzerFlow = ai.defineFlow(
     } catch (e: any) {
       console.error("Injury Flow Error:", e);
       const isHindi = input.language === 'hi';
-      // More specific fallback to avoid "same answer" feel if something breaks
       return {
         classification: isHindi ? "स्थिति का आंकलन नहीं हो सका" : "Status unclear",
         severity: "low",
