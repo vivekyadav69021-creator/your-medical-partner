@@ -45,7 +45,6 @@ export async function analyzeXrayAction(
       language: validatedFields.data.language,
     });
     
-    // Ensure we return a plain object
     return {
       result: JSON.parse(JSON.stringify(result)),
       error: result.status === 'error' ? (result.error || 'Analysis failed') : null,
@@ -69,6 +68,7 @@ const skinAnalysisSchema = z.object({
     lifestyle: z.string().optional(),
     dietaryPreference: z.string().optional(),
   }).optional(),
+  language: z.enum(['en', 'hi']).optional(),
 });
 
 export async function analyzeSkinImageAction(
@@ -85,6 +85,7 @@ export async function analyzeSkinImageAction(
     imageDataUri: formData.get('imageDataUri'),
     userQuery: (formData.get('userQuery') as string) || undefined,
     userProfile: userProfile,
+    language: (formData.get('language') as 'en' | 'hi') || 'en',
   });
 
   if (!validatedFields.success) {
@@ -138,8 +139,13 @@ export async function analyzeLabReportImageAction(
 
     try {
         const result = await analyzeLabReportImage(validatedFields.data);
+        // Deeply sanitize and serialize
+        const sanitizedResult = JSON.parse(JSON.stringify(result, (key, value) => {
+            return value === undefined ? null : value;
+        }));
+        
         return { 
-            result: JSON.parse(JSON.stringify(result)), 
+            result: sanitizedResult, 
             error: null,
             timestamp: Date.now()
         };

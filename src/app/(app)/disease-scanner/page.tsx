@@ -257,7 +257,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 {lang === 'en' ? 'Potential Conditions' : 'संभावित स्थितियां'}
                             </h4>
                             <div className="grid gap-3">
-                                {state.result.potentialConditions?.map((cond: any, i: number) => (
+                                {(state.result.potentialConditions || []).map((cond: any, i: number) => (
                                     <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm">
                                         <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{cond.name}</p>
                                         <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">{cond.simpleDescription}</p>
@@ -271,7 +271,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 {lang === 'en' ? 'Care & Treatment Guide' : 'देखभाल और उपचार मार्गदर्शिका'}
                             </h4>
                             <div className="grid gap-4">
-                                {state.result.careRecommendations?.map((care: any, i: number) => (
+                                {(state.result.careRecommendations || []).map((care: any, i: number) => (
                                     <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2.2rem] border border-white dark:border-slate-800 shadow-xl relative overflow-hidden group transition-all hover:scale-[1.02]">
                                         <div className="flex items-start gap-4">
                                             <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
@@ -299,7 +299,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                     {lang === 'en' ? 'Nutritional Support' : 'पोषण संबंधी सुझाव'}
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {state.result.nutritionalSupport.map((item: any, i: number) => (
+                                    {(state.result.nutritionalSupport || []).map((item: any, i: number) => (
                                         <div key={i} className="p-4 bg-emerald-50/40 dark:bg-emerald-950/10 rounded-[1.5rem] border border-emerald-100/50 flex gap-3">
                                             <Utensils className="h-4 w-4 text-emerald-500 shrink-0" />
                                             <div>
@@ -318,7 +318,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                     {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
                                 </h4>
                                 <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
-                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
                                         <div key={i} className="flex items-start gap-3">
                                             <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                                             <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
@@ -491,7 +491,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">First-Aid Steps</h4>
                             <div className="space-y-3">
-                                {state.result.firstAidSteps.map((step: string, i: number) => (
+                                {(state.result.firstAidSteps || []).map((step: string, i: number) => (
                                     <div key={i} className="flex gap-4 p-4 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20">
                                         <span className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black shrink-0">{i+1}</span>
                                         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{step}</p>
@@ -506,7 +506,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                                     {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
                                 </h4>
                                 <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
-                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
                                         <div key={i} className="flex items-start gap-3">
                                             <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                                             <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
@@ -662,10 +662,11 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         }
     };
 
-    // Group findings by category
-    const groupedFindings = state?.result?.findings?.reduce((acc: any, item: any) => {
-        if (!acc[item.category]) acc[item.category] = [];
-        acc[item.category].push(item);
+    // Group findings by category with safety fallback
+    const groupedFindings = (state?.result?.findings || []).reduce((acc: any, item: any) => {
+        const category = item.category || (lang === 'en' ? 'General' : 'सामान्य');
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(item);
         return acc;
     }, {});
 
@@ -752,14 +753,14 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
 
                     {/* Findings by Category */}
                     <div className="space-y-8">
-                        {groupedFindings && Object.entries(groupedFindings).map(([category, items]: [string, any]) => (
+                        {Object.entries(groupedFindings).map(([category, items]: [string, any]) => (
                             <div key={category} className="space-y-4 px-2">
                                 <div className="flex items-center justify-between">
                                     <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">{category}</h4>
                                     <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1 ml-4" />
                                 </div>
                                 <div className="grid gap-3">
-                                    {items.map((item: any, i: number) => (
+                                    {(items || []).map((item: any, i: number) => (
                                         <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm group transition-all hover:bg-white hover:shadow-md">
                                             <div className="flex items-center justify-between mb-2">
                                                 <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{item.test}</p>
@@ -785,7 +786,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
 
                     <div className="space-y-8">
                         <div className="space-y-4 px-2">
-                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Reasoning</h4>
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Clinical Reasoning</h4>
                             <div className="p-6 rounded-[2rem] bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50">
                                 <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
                                     "{state.result.biologicalLogic}"
@@ -794,9 +795,9 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         </div>
 
                         <div className="space-y-6 px-2">
-                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Cure & Action Plan</h4>
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Cure & Action Plan</h4>
                             <div className="grid gap-4">
-                                {state.result.actionPlan?.map((plan: any, i: number) => (
+                                {(state.result.actionPlan || []).map((plan: any, i: number) => (
                                     <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2.2rem] border border-white dark:border-slate-800 shadow-xl relative overflow-hidden">
                                         <div className="flex items-start gap-4">
                                             <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
@@ -805,7 +806,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                             <div className="space-y-3">
                                                 <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{plan.title}</p>
                                                 <div className="space-y-2">
-                                                    {plan.steps.map((step: string, j: number) => (
+                                                    {(plan.steps || []).map((step: string, j: number) => (
                                                         <div key={j} className="flex gap-2 items-start">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
                                                             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{step}</p>
@@ -823,7 +824,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             <div className="space-y-4 px-2">
                                 <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Precautions (What to Avoid)</h4>
                                 <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
-                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
                                         <div key={i} className="flex items-start gap-3">
                                             <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                                             <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
