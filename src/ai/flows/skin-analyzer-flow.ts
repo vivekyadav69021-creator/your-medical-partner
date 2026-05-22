@@ -50,6 +50,7 @@ const SkinAnalysisOutputSchema = z.object({
   comparativeAnalysis: z.string().describe('How visual data confirms or contradicts user text.'),
   careRecommendations: z.array(CareSuggestionSchema).describe('Step-by-step care guide including best safe OTC cream suggestions.'),
   nutritionalSupport: z.array(NutritionalSupportSchema).describe('Vitamins or foods for skin health.'),
+  thingsToAvoid: z.array(z.string()).describe('A list of activities, habits, or products the user must NOT use or do based on the condition.'),
   interactionPrompt: z.string().optional().describe('Contextual follow-up question if query is missing.'),
   disclaimer: z.string().describe('Language-bound mandatory disclaimer.'),
 });
@@ -86,20 +87,18 @@ const prompt = ai.definePrompt({
   prompt: `You are the Onboarding & Personalization Architect for the "Your Medical Partner" Skin/Face Scanner.
 
 **MISSION:**
-Analyze the provided skin image and user context to deliver scientific yet consumer-friendly insights. Provide a very detailed analysis and actionable care steps, including suggestions for safe over-the-counter (OTC) creams or ointments if appropriate (e.g., suggesting a mild antifungal for ringworm or calamine for rashes).
+Analyze the provided skin image and user context to deliver scientific yet consumer-friendly insights. Provide a very detailed analysis and actionable care steps.
 
 **LANGUAGE LOCK (CRITICAL):**
 Your ENTIRE response (all fields, headers, and descriptions) MUST be in: {{language}}.
 If 'hi', use fluent, simple, and natural Hindi.
 If 'en', use simple, clear English.
 
-**DIAGNOSTIC PROTOCOLS:**
-1. **Track 1 (Detect Mode):** If userQuery is missing, analyze morphology, distribution, and texture. 
-2. **Track 2 (Describe Mode):** If userQuery is present ("{{{userQuery}}}"), prioritize these symptoms to refine the visual analysis.
-
 **CONTENT RULES:**
 - **DETAILED RESPONSE:** Ensure 'detailedAnalysis' is thorough and informative.
-- **TREATMENT SUGGESTIONS:** In 'careRecommendations', suggest well-known safe OTC products like "Clotrimazole Cream" for fungal issues or "Benzoyl Peroxide" for acne, always with usage instructions.
+- **TREATMENT SUGGESTIONS:** In 'careRecommendations', suggest well-known safe OTC products like "Clotrimazole Cream" for fungal issues or "Benzoyl Peroxide" for acne.
+- **NUTRITIONAL SUPPORT:** Provide specific foods or vitamins that help this condition.
+- **THINGS TO AVOID:** List specific precautions (e.g., don't scratch, don't use harsh soap, avoid direct sun).
 - **NO JARGON:** Every clinical term MUST be explained simply.
 - **Biological Logic:** Use simple analogies.
 - **Personalization:** Link advice to Profile: Age {{userProfile.age}}, Lifestyle {{userProfile.lifestyle}}, Diet {{userProfile.dietaryPreference}}.
@@ -145,6 +144,7 @@ const skinAnalyzerFlow = ai.defineFlow(
         comparativeAnalysis: "",
         careRecommendations: [],
         nutritionalSupport: [],
+        thingsToAvoid: [],
         disclaimer: isHindi 
           ? "यह विश्लेषण केवल शैक्षिक उद्देश्यों के लिए है। कृपया डॉक्टर से मिलें।" 
           : "This analysis is for educational purposes. Please see a doctor.",

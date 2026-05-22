@@ -31,7 +31,9 @@ import {
   Apple,
   Pill,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Ban,
+  Utensils
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -144,9 +146,21 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
     const handleAskAssistant = () => {
         if (!state?.result) return;
-        // Save the current analysis result in session storage for the Assistant to use
         sessionStorage.setItem('last_skin_scan_result', JSON.stringify(state.result));
         router.push('/health-assistant?source=skin-scanner');
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPreview(reader.result as string);
+                // Clear input so selecting same file works again
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     return (
@@ -157,10 +171,10 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
-                        {lang === 'en' ? 'Skin Architect' : 'त्वचा विशेषज्ञ'}
+                        {lang === 'en' ? 'Skin Analysis' : 'त्वचा विश्लेषण'}
                     </h2>
                     <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest">
-                        {lang === 'en' ? 'Scientific Analysis' : 'वैज्ञानिक विश्लेषण'}
+                        Welcome to the Dermatology Digital Clinic
                     </p>
                 </div>
             </div>
@@ -174,14 +188,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">
                             {lang === 'en' ? 'Tap to Upload Photo' : 'फोटो अपलोड करने के लिए टैप करें'}
                         </p>
-                        <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (re) => setPreview(reader.result as string);
-                                reader.readAsDataURL(file);
-                            }
-                        }} accept="image/*" />
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
                     </div>
                 ) : (
                     <div className={cn(
@@ -230,7 +237,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         <div className="flex items-center gap-2">
                             <BrainCircuit className="w-5 h-5 text-pink-500" />
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">
-                                {lang === 'en' ? 'Architect Verdict' : 'विशेषज्ञ की राय'}
+                                {lang === 'en' ? 'Analysis Verdict' : 'विश्लेषण निष्कर्ष'}
                             </h4>
                         </div>
                         <p className="text-xl font-black text-[#1A365D] dark:text-slate-100 leading-tight">
@@ -283,6 +290,43 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             </div>
                         </div>
 
+                        {/* Nutritional Support Section */}
+                        {state.result.nutritionalSupport && state.result.nutritionalSupport.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                    {lang === 'en' ? 'Nutritional Support' : 'पोषण संबंधी सुझाव'}
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {state.result.nutritionalSupport.map((item: any, i: number) => (
+                                        <div key={i} className="p-4 bg-emerald-50/40 dark:bg-emerald-950/10 rounded-[1.5rem] border border-emerald-100/50 flex gap-3">
+                                            <Utensils className="h-4 w-4 text-emerald-500 shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{item.item}</p>
+                                                <p className="text-[11px] font-bold text-emerald-600/80 dark:text-emerald-400/80">{item.benefit}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Things to Avoid Section */}
+                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                    {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
+                                </h4>
+                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
+                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3">
+                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
                                 {lang === 'en' ? 'Simplified Biological Logic' : 'सरल जैविक तर्क'}
@@ -295,7 +339,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         </div>
                     </div>
 
-                    {/* Smart Handover Button */}
                     <div className="px-2 pt-4">
                          <Card className="rounded-[2.5rem] border-2 border-dashed border-primary/20 bg-primary/5 p-8 flex flex-col items-center text-center gap-6">
                             <div className="h-16 w-16 bg-white dark:bg-slate-900 rounded-3xl shadow-xl flex items-center justify-center text-primary relative">
@@ -390,7 +433,10 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         const file = e.target.files?.[0];
                         if (file) {
                             const reader = new FileReader();
-                            reader.onload = () => setPreview(reader.result as string);
+                            reader.onload = () => {
+                                setPreview(reader.result as string);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                            };
                             reader.readAsDataURL(file);
                         }
                     }} accept="image/*" />
@@ -521,14 +567,17 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                         const file = e.target.files?.[0];
                         if (file) {
                             const reader = new FileReader();
-                            reader.onload = () => setPreview(reader.result as string);
+                            reader.onload = () => {
+                                setPreview(reader.result as string);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                            };
                             reader.readAsDataURL(file);
                         }
                     }} accept="image/*" />
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-base font-bold p-6" />
                     </div>
 
                     <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
@@ -614,7 +663,10 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         const file = e.target.files?.[0];
                         if (file) {
                             const reader = new FileReader();
-                            reader.onload = () => setPreview(reader.result as string);
+                            reader.onload = () => {
+                                setPreview(reader.result as string);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                            };
                             reader.readAsDataURL(file);
                         }
                     }} accept="image/*" />
@@ -673,7 +725,7 @@ export default function DiseaseScannerPage() {
             lastScan: "Last Scan",
             reports: "Total Scans",
             healthScore: "Lab Status",
-            skinTitle: "Face & Skin",
+            skinTitle: "Skin Analysis",
             injuryTitle: "Injury & SOS",
             xrayTitle: "X-Ray Vision",
             reportTitle: "Report Analyst",
@@ -686,7 +738,7 @@ export default function DiseaseScannerPage() {
             lastScan: "पिछला स्कैन",
             reports: "कुल स्कैन",
             healthScore: "लैब स्थिति",
-            skinTitle: "फेस और स्किन",
+            skinTitle: "त्वचा विश्लेषण",
             injuryTitle: "इंजरी और SOS",
             xrayTitle: "एक्स-रे विजन",
             reportTitle: "रिपोर्ट विश्लेषण",
