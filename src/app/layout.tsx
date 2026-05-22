@@ -10,13 +10,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'MediMate',
+    title: 'Your Medical Partner',
   },
   formatDetection: {
     telephone: false,
   },
   icons: {
-    apple: 'https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=180&h=180&auto=format&fit=crop',
+    apple: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-192.png',
   }
 };
 
