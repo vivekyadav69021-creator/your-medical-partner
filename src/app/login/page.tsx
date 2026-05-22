@@ -29,22 +29,21 @@ import {
 } from '@/components/ui/select';
 
 /**
- * Advanced Medical Animation - Contained Waves
+ * Advanced Medical Animation - Contained Waves & Sleek Card
  */
 function AdvancedMedicalAnimation() {
   return (
-    <div className="relative w-full max-w-[260px] h-[260px] flex items-center justify-center pointer-events-none select-none overflow-hidden">
-      {/* Contained Waves */}
+    <div className="relative w-full max-w-[220px] h-[220px] flex items-center justify-center pointer-events-none select-none overflow-hidden">
+      {/* Contained Waves - Ping effect for visible pulse */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-20 h-20 bg-primary/20 rounded-full animate-ping [animation-duration:2s]" />
-        <div className="absolute w-28 h-28 bg-primary/10 rounded-full animate-ping [animation-duration:3s]" />
-        <div className="absolute w-40 h-40 border border-primary/10 rounded-full animate-pulse [animation-duration:4s]" />
+        <div className="absolute w-24 h-24 bg-primary/20 rounded-full animate-ping [animation-duration:3s]" />
+        <div className="absolute w-32 h-32 bg-primary/10 rounded-full animate-ping [animation-duration:4s]" />
       </div>
 
-      <div className="relative z-10 p-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[2.2rem] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden">
+      <div className="relative z-10 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[1.8rem] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden h-24 w-24">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
         <div className="relative z-20">
-          <HeartPulse className="h-12 w-12 text-primary drop-shadow-[0_0:10px_rgba(36,136,232,0.5)] animate-pulse" />
+          <HeartPulse className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(36,136,232,0.5)] animate-pulse" />
         </div>
       </div>
       <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-75 -z-10" />
@@ -114,8 +113,25 @@ export default function LoginPage() {
       setView('otp');
       toast({ title: 'OTP Sent', description: `A code has been sent to ${fullPhoneNumber}` });
     } catch (error: any) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to send OTP. Please try again.' });
+      console.error("Phone Auth Error:", error);
+      let errorMsg = 'Failed to send OTP. Please try again.';
+      
+      // Explicitly handle billing-not-enabled
+      if (error.code === 'auth/billing-not-enabled') {
+        errorMsg = 'Phone Login requires a Firebase Blaze plan. Please use Email login instead.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMsg = 'Too many attempts. Please try again later.';
+      } else if (error.code === 'auth/invalid-phone-number') {
+        errorMsg = 'The phone number provided is invalid.';
+      }
+      
+      toast({ 
+        variant: 'destructive', 
+        title: 'Connection Issue', 
+        description: errorMsg 
+      });
+
+      // Clear recaptcha on failure
       if ((window as any).recaptchaVerifier) {
           (window as any).recaptchaVerifier.clear();
           (window as any).recaptchaVerifier = null;
@@ -334,6 +350,7 @@ export default function LoginPage() {
                     <Button type="submit" disabled={loading} className="w-full h-16 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
                         {loading ? <Loader2 className="animate-spin" /> : 'Get OTP Code'}
                     </Button>
+                    <p className="text-[10px] text-center text-slate-400 mt-2">Note: Phone auth may require a Blaze plan.</p>
                   </form>
                 )}
 
