@@ -28,7 +28,10 @@ import {
   Siren,
   ShieldAlert,
   Plus,
-  Apple
+  Apple,
+  Pill,
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -39,7 +42,7 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import ReactMarkdown from 'react-markdown';
+import { useRouter } from 'next/navigation';
 
 // --- UTILITIES ---
 
@@ -92,10 +95,7 @@ const initialInjuryState = { result: null, error: null, timestamp: 0 };
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
-            {/* Subtle Pulse Overlay */}
             <div className={cn("absolute inset-0 opacity-[0.08] animate-pulse", color.replace('text-', 'bg-'))} />
-            
-            {/* Simple Moving Beam */}
             <div 
                 className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-50", color)} 
                 style={{ 
@@ -103,13 +103,10 @@ function ScanAnimationOverlay({ color }: { color: string }) {
                     boxShadow: '0 0 12px 1px currentColor' 
                 }}
             />
-
-            {/* Corner Markers */}
             <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
             <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
             <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
             <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
-            
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.1)_100%)]" />
         </div>
     );
@@ -122,6 +119,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         if (state?.result && !state?.error && state?.timestamp > 0) {
@@ -142,6 +140,13 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
         } catch (e) {
             toast({ variant: 'destructive', title: lang === 'en' ? 'Error' : 'त्रुटि' });
         }
+    };
+
+    const handleAskAssistant = () => {
+        if (!state?.result) return;
+        // Save the current analysis result in session storage for the Assistant to use
+        sessionStorage.setItem('last_skin_scan_result', JSON.stringify(state.result));
+        router.push('/health-assistant?source=skin-scanner');
     };
 
     return (
@@ -184,10 +189,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         isAnalyzing ? "border-pink-200 ring-8 ring-pink-50/50" : "border-white dark:border-slate-800"
                     )}>
                         <Image src={preview} alt="Preview" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
-                        
-                        {/* Subtle Diagnostic Animation */}
                         {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
-
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
@@ -212,7 +214,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             </div>
 
             {state?.result && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     
                     {state.result.interactionPrompt && (
@@ -231,12 +233,15 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 {lang === 'en' ? 'Architect Verdict' : 'विशेषज्ञ की राय'}
                             </h4>
                         </div>
-                        <p className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">
+                        <p className="text-xl font-black text-[#1A365D] dark:text-slate-100 leading-tight">
                             {state.result.overallAssessment}
                         </p>
+                        <div className="prose prose-sm dark:prose-invert max-w-full text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                            {state.result.detailedAnalysis}
+                        </div>
                     </div>
 
-                    <div className="grid gap-6">
+                    <div className="grid gap-8">
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
                                 {lang === 'en' ? 'Potential Conditions' : 'संभावित स्थितियां'}
@@ -253,6 +258,33 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Care & Treatment Guide' : 'देखभाल और उपचार मार्गदर्शिका'}
+                            </h4>
+                            <div className="grid gap-4">
+                                {state.result.careRecommendations?.map((care: any, i: number) => (
+                                    <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2.2rem] border border-white dark:border-slate-800 shadow-xl relative overflow-hidden group transition-all hover:scale-[1.02]">
+                                        <div className="flex items-start gap-4">
+                                            <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
+                                                <Pill className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{care.title}</p>
+                                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{care.description}</p>
+                                                {care.productSuggestion && (
+                                                    <div className="mt-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800">
+                                                        <p className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Recommended OTC Product</p>
+                                                        <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{care.productSuggestion}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
                                 {lang === 'en' ? 'Simplified Biological Logic' : 'सरल जैविक तर्क'}
                             </h4>
                             <div className="p-6 rounded-[2rem] bg-pink-50/30 dark:bg-pink-900/10 border border-pink-100/50">
@@ -261,25 +293,27 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                 </p>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="space-y-4 px-2">
-                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
-                                {lang === 'en' ? 'Nutritional Support' : 'पोषण संबंधी सुझाव'}
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {state.result.nutritionalSupport?.map((nutri: any, i: number) => (
-                                    <div key={i} className="p-4 bg-white dark:bg-slate-900 rounded-2xl flex items-start gap-3 shadow-sm border border-slate-50 dark:border-slate-800">
-                                        <div className="h-8 w-8 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl flex items-center justify-center shrink-0">
-                                            <Apple className="h-4 w-4 text-emerald-500" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-[#1A365D] dark:text-slate-200 uppercase">{nutri.item}</p>
-                                            <p className="text-[10px] font-bold text-slate-400 leading-tight">{nutri.benefit}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                    {/* Smart Handover Button */}
+                    <div className="px-2 pt-4">
+                         <Card className="rounded-[2.5rem] border-2 border-dashed border-primary/20 bg-primary/5 p-8 flex flex-col items-center text-center gap-6">
+                            <div className="h-16 w-16 bg-white dark:bg-slate-900 rounded-3xl shadow-xl flex items-center justify-center text-primary relative">
+                                <Activity className="w-8 h-8" />
+                                <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
                             </div>
-                        </div>
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Need More Details?</h3>
+                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                                    {lang === 'en' 
+                                        ? "Talk to our AI Health Assistant about this specific analysis for a deeper conversation." 
+                                        : "इस विशेष विश्लेषण के बारे में अधिक बातचीत के लिए हमारे एआई स्वास्थ्य सहायक से बात करें।"}
+                                </p>
+                            </div>
+                            <Button onClick={handleAskAssistant} className="rounded-full h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95">
+                                Ask Assistant <ExternalLink className="ml-2 h-4 w-4" />
+                            </Button>
+                         </Card>
                     </div>
 
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">

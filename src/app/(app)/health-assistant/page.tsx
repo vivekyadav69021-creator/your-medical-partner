@@ -30,7 +30,8 @@ import {
     Globe,
     Clock,
     Square,
-    Stethoscope
+    Stethoscope,
+    FileSearch
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -52,6 +53,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
+import { useSearchParams } from 'next/navigation';
 
 // Types
 type Message = {
@@ -107,6 +109,8 @@ export default function HealthAssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
+  const searchParams = useSearchParams();
+
   // TTS State
   const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
 
@@ -144,6 +148,36 @@ export default function HealthAssistantPage() {
   const currentSuggestions = useMemo(() => {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
+
+  // Context Handover Logic
+  useEffect(() => {
+    const source = searchParams.get('source');
+    if (source === 'skin-scanner') {
+        const contextData = sessionStorage.getItem('last_skin_scan_result');
+        if (contextData) {
+            const parsedContext = JSON.parse(contextData);
+            const prompt = `I just used the Skin Scanner and it found: "${parsedContext.overallAssessment}". 
+            
+Can you provide more details about this condition and the care recommendations mentioned: 
+${parsedContext.careRecommendations.map((c: any) => `- ${c.title}: ${c.description}`).join('\n')}
+
+I'd like to understand more about the long-term management and if there's anything else I should know.`;
+
+            // Clear context so it doesn't trigger again on refresh
+            sessionStorage.removeItem('last_skin_scan_result');
+
+            // Trigger a new chat with this context
+            const fd = new FormData();
+            fd.set('query', prompt);
+            onFormAction(fd);
+            
+            toast({
+                title: "Scan Context Imported",
+                description: "The Assistant is now analyzing your skin scan result."
+            });
+        }
+    }
+  }, [searchParams]);
 
   // Sync AI responses
   useEffect(() => {
@@ -384,9 +418,10 @@ export default function HealthAssistantPage() {
 
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 hover:bg-white/50 dark:hover:bg-slate-800/50">
-                        <History className="w-5 h-5 text-gray-500 dark:text-[#9aa0a6]" />
-                    </Button>
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-[#3c4043]/40 border border-white/20 shadow-sm hover:bg-white/60 transition-all">
+                        <History className="w-4 h-4 text-gray-500" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">History</span>
+                    </button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[85vw] max-w-sm p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
                     <SheetHeader className="p-8 pb-2">
