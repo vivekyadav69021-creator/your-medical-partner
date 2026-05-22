@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  icons: {
+    apple: 'https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=180&h=180&auto=format&fit=crop',
+  }
 };
 
 // Precise viewport settings for 100% native app feel

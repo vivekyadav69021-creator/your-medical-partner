@@ -12,13 +12,13 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: 'portrait',
     icons: [
       {
-        src: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=192&h=192&auto=format&fit=crop',
+        src: 'https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=192&h=192&auto=format&fit=crop',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=512&h=512&auto=format&fit=crop',
+        src: 'https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=512&h=512&auto=format&fit=crop',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any'
