@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-192.png',
+    icon: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-192.png',
   }
 };
 
