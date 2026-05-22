@@ -7,18 +7,18 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Your Digital Health Companion with AI Insights',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#FDFBFF',
+    background_color: '#F0F7FF',
     theme_color: '#2488E8',
     orientation: 'portrait',
     icons: [
       {
-        src: 'https://picsum.photos/seed/medimate-192/192/192',
+        src: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=192&h=192&auto=format&fit=crop',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: 'https://picsum.photos/seed/medimate-512/512/512',
+        src: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=512&h=512&auto=format&fit=crop',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any'
@@ -29,12 +29,12 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: 'AI Assistant',
         url: '/health-assistant',
-        icons: [{ src: 'https://picsum.photos/seed/shortcut-ai/96/96', sizes: '96x96' }]
+        icons: [{ src: 'https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=96&h=96&auto=format&fit=crop', sizes: '96x96' }]
       },
       {
         name: 'Scanner',
         url: '/disease-scanner',
-        icons: [{ src: 'https://picsum.photos/seed/shortcut-scan/96/96', sizes: '96x96' }]
+        icons: [{ src: 'https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=96&h=96&auto=format&fit=crop', sizes: '96x96' }]
       }
     ]
   };
