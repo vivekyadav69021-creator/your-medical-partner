@@ -169,8 +169,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
-                    <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
@@ -410,8 +410,8 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
-                    <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Injury Specialist</h2>
@@ -567,8 +567,8 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
-                    <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Radiology AI</h2>
@@ -673,8 +673,8 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0">
-                    <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Report Specialist</h2>
@@ -763,7 +763,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                     {(items || []).map((item: any, i: number) => (
                                         <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm group transition-all hover:bg-white hover:shadow-md">
                                             <div className="flex items-center justify-between mb-2">
-                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{item.test}</p>
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{item.test}</p>
                                                 <Badge className={cn("uppercase text-[8px] font-black border-none px-3", 
                                                     item.status === 'high' ? "bg-red-50 text-red-500" : 
                                                     item.status === 'low' ? "bg-orange-50 text-orange-500" : 
@@ -804,7 +804,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                                 <CheckCircle2 className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="space-y-3">
-                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{plan.title}</p>
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{plan.title}</p>
                                                 <div className="space-y-2">
                                                     {(plan.steps || []).map((step: string, j: number) => (
                                                         <div key={j} className="flex gap-2 items-start">
@@ -957,6 +957,34 @@ export default function DiseaseScannerPage() {
                         <ScannerCard title={t.xrayTitle} slogan="Radiology" icon={Bone} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" btnColor="bg-blue-500" onClick={() => setView('xray')} btnText={t.startBtn} />
                         <ScannerCard title={t.reportTitle} slogan="OCR Lab" icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => setView('lab')} btnText={t.startBtn} />
                     </div>
+
+                    {/* Language Selection specifically for Dashboard view */}
+                    <div className="flex justify-center pt-4">
+                        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setLang('en')} 
+                                className={cn(
+                                    "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
+                                    lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                            >
+                                EN
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setLang('hi')} 
+                                className={cn(
+                                    "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
+                                    lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                            >
+                                हिन्दी
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -969,34 +997,6 @@ export default function DiseaseScannerPage() {
                     {renderContent()}
                 </div>
             </main>
-
-            {/* Always-visible floating language selection toggle at bottom center */}
-            <div className="fixed bottom-10 left-0 right-0 flex justify-center z-50 px-6 pointer-events-none pb-[env(safe-area-inset-bottom)]">
-                <div className="pointer-events-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1 transition-all duration-500 animate-in slide-in-from-bottom-5">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setLang('en')} 
-                        className={cn(
-                            "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
-                            lang === 'en' ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                        )}
-                    >
-                        EN
-                    </Button>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setLang('hi')} 
-                        className={cn(
-                            "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
-                            lang === 'hi' ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                        )}
-                    >
-                        हिन्दी
-                    </Button>
-                </div>
-            </div>
         </div>
     );
 }
