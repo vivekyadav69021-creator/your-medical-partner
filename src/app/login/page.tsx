@@ -29,24 +29,30 @@ import {
 } from '@/components/ui/select';
 
 /**
- * Advanced Medical Animation - Contained Waves & Sleek Card
+ * Advanced Medical Animation - Staggered Ripples & Sleek Heart
  */
 function AdvancedMedicalAnimation() {
   return (
-    <div className="relative w-full max-w-[220px] h-[220px] flex items-center justify-center pointer-events-none select-none overflow-hidden">
-      {/* Contained Waves - Ping effect for visible pulse */}
+    <div className="relative w-full max-w-[280px] h-[280px] flex items-center justify-center pointer-events-none select-none overflow-hidden">
+      {/* Contained Waves/Ripples - Circular effect radiating from center */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-24 h-24 bg-primary/20 rounded-full animate-ping [animation-duration:3s]" />
-        <div className="absolute w-32 h-32 bg-primary/10 rounded-full animate-ping [animation-duration:4s]" />
+        {/* Ripple 1 */}
+        <div className="absolute w-28 h-28 bg-primary/25 rounded-full animate-ping [animation-duration:3s]" />
+        {/* Ripple 2 - Staggered */}
+        <div className="absolute w-28 h-28 bg-primary/15 rounded-full animate-ping [animation-duration:3s] [animation-delay:1s]" />
+        {/* Ripple 3 - Staggered */}
+        <div className="absolute w-28 h-28 bg-primary/5 rounded-full animate-ping [animation-duration:3s] [animation-delay:2s]" />
       </div>
 
-      <div className="relative z-10 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[1.8rem] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden h-24 w-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+      <div className="relative z-10 p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl rounded-[2.2rem] shadow-[0_30px_60px_-15px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden h-28 w-28">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
         <div className="relative z-20">
-          <HeartPulse className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(36,136,232,0.5)] animate-pulse" />
+          <HeartPulse className="h-12 w-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.6)] animate-pulse" />
         </div>
       </div>
-      <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-75 -z-10" />
+      
+      {/* Background Soft Glow Aura */}
+      <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full scale-100 -z-10 animate-pulse" />
     </div>
   );
 }
