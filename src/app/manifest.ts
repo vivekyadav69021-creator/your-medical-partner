@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Your Medical Partner',
-    short_name: 'Medical Partner',
+    short_name: 'Your Medical Partner',
     description: 'Your Reliable Digital Health Companion with AI Insights',
     start_url: '/dashboard',
     display: 'standalone',
