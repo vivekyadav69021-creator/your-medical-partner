@@ -92,15 +92,25 @@ const initialInjuryState = { result: null, error: null, timestamp: 0 };
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
+            {/* Subtle Pulse Overlay */}
+            <div className={cn("absolute inset-0 opacity-[0.08] animate-pulse", color.replace('text-', 'bg-'))} />
+            
+            {/* Simple Moving Beam */}
             <div 
-                className={cn("absolute left-0 right-0 h-1.5 animate-scan-line z-[60]", color)} 
+                className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-50", color)} 
                 style={{ 
                     backgroundColor: 'currentColor',
-                    boxShadow: '0 0 25px 4px currentColor, 0 0 10px 1px white' 
+                    boxShadow: '0 0 12px 1px currentColor' 
                 }}
             />
-            <div className="absolute inset-0 opacity-[0.1] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] dark:opacity-[0.15]" />
-            <div className={cn("absolute inset-0 opacity-[0.05] animate-pulse", color.replace('text-', 'bg-'))} />
+
+            {/* Corner Markers */}
+            <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
+            <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
+            <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
+            <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
+            
+            <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.1)_100%)]" />
         </div>
     );
 }
@@ -169,8 +179,15 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         }} accept="image/*" />
                     </div>
                 ) : (
-                    <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
+                    <div className={cn(
+                        "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[500px] flex items-center justify-center",
+                        isAnalyzing ? "border-pink-200 ring-8 ring-pink-50/50" : "border-white dark:border-slate-800"
+                    )}>
                         <Image src={preview} alt="Preview" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
+                        
+                        {/* Subtle Diagnostic Animation */}
+                        {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
+
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
