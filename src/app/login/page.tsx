@@ -17,9 +17,16 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight, ShieldCheck, Phone, Smartphone, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight, ShieldCheck, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 /**
  * Advanced Medical Animation - Contained Waves
@@ -27,18 +34,20 @@ import { cn } from '@/lib/utils';
 function AdvancedMedicalAnimation() {
   return (
     <div className="relative w-full max-w-[260px] h-[260px] flex items-center justify-center pointer-events-none select-none overflow-hidden">
+      {/* Contained Waves */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-20 h-20 bg-primary/10 rounded-full animate-ping [animation-duration:2.5s]" />
-        <div className="absolute w-32 h-32 border border-primary/5 rounded-full animate-pulse [animation-duration:4s]" />
+        <div className="absolute w-20 h-20 bg-primary/20 rounded-full animate-ping [animation-duration:2s]" />
+        <div className="absolute w-28 h-28 bg-primary/10 rounded-full animate-ping [animation-duration:3s]" />
+        <div className="absolute w-40 h-40 border border-primary/10 rounded-full animate-pulse [animation-duration:4s]" />
       </div>
 
-      <div className="relative z-10 p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.3)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden">
+      <div className="relative z-10 p-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[2.2rem] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
         <div className="relative z-20">
-          <HeartPulse className="h-14 w-14 text-primary drop-shadow-[0_0_12px_rgba(36,136,232,0.4)] animate-pulse" />
+          <HeartPulse className="h-12 w-12 text-primary drop-shadow-[0_0:10px_rgba(36,136,232,0.5)] animate-pulse" />
         </div>
       </div>
-      <div className="absolute inset-0 bg-primary/5 blur-[60px] rounded-full scale-75 -z-10" />
+      <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-75 -z-10" />
     </div>
   );
 }
@@ -50,7 +59,8 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,20 +98,21 @@ export default function LoginPage() {
     e.preventDefault();
     if (loading) return;
     
-    // Basic validation
-    if (!phoneNumber.startsWith('+')) {
-      toast({ variant: 'destructive', title: 'Invalid Format', description: 'Please include country code (e.g. +91)' });
+    if (mobileNumber.length < 7) {
+      toast({ variant: 'destructive', title: 'Invalid Number', description: 'Please enter a valid mobile number.' });
       return;
     }
+
+    const fullPhoneNumber = `${countryCode}${mobileNumber}`;
 
     setLoading(true);
     try {
       setupRecaptcha();
       const verifier = (window as any).recaptchaVerifier;
-      const result = await signInWithPhoneNumber(auth, phoneNumber, verifier);
+      const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
       setConfirmationResult(result);
       setView('otp');
-      toast({ title: 'OTP Sent', description: `A code has been sent to ${phoneNumber}` });
+      toast({ title: 'OTP Sent', description: `A code has been sent to ${fullPhoneNumber}` });
     } catch (error: any) {
       console.error(error);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to send OTP. Please try again.' });
@@ -122,7 +133,6 @@ export default function LoginPage() {
     try {
       const result = await confirmationResult.confirm(otp);
       toast({ title: 'Success', description: 'Logged in successfully.' });
-      // New phone users might need profile setup
       if (result.user.metadata.creationTime === result.user.metadata.lastSignInTime) {
           localStorage.setItem('userMedicalProfile_local', JSON.stringify({
               name: 'Guest User',
@@ -292,17 +302,34 @@ export default function LoginPage() {
 
                 {view === 'phone' && (
                   <form onSubmit={handleSendOtp} className="space-y-6">
-                    <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-6">Phone Number</Label>
-                        <div className="relative">
-                            <Smartphone className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
-                            <Input 
-                                type="tel" placeholder="+91 98765 43210" 
-                                className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-lg pl-14 pr-8 shadow-inner"
-                                value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required disabled={loading}
-                            />
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Country & Mobile Number</Label>
+                        <div className="flex gap-2">
+                            <Select value={countryCode} onValueChange={setCountryCode}>
+                                <SelectTrigger className="w-[100px] h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none shadow-inner font-black text-sm">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="+91">+91 (IN)</SelectItem>
+                                    <SelectItem value="+1">+1 (US)</SelectItem>
+                                    <SelectItem value="+44">+44 (UK)</SelectItem>
+                                    <SelectItem value="+971">+971 (UAE)</SelectItem>
+                                    <SelectItem value="+61">+61 (AU)</SelectItem>
+                                    <SelectItem value="+65">+65 (SG)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <div className="relative flex-1">
+                                <Smartphone className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
+                                <Input 
+                                    type="tel" placeholder="98765 43210" 
+                                    className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-lg pl-14 pr-8 shadow-inner font-bold"
+                                    value={mobileNumber} 
+                                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} 
+                                    required disabled={loading}
+                                />
+                            </div>
                         </div>
-                        <p className="text-[9px] text-slate-400 px-6 italic font-medium">Use +91 followed by your number</p>
+                        <p className="text-[9px] text-slate-400 px-2 italic font-medium">OTP will be sent to your mobile</p>
                     </div>
                     <Button type="submit" disabled={loading} className="w-full h-16 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
                         {loading ? <Loader2 className="animate-spin" /> : 'Get OTP Code'}
@@ -320,7 +347,7 @@ export default function LoginPage() {
                                 type="text" placeholder="Enter 6-digit OTP" 
                                 className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-center text-2xl tracking-[0.5em] font-black shadow-inner"
                                 maxLength={6}
-                                value={otp} onChange={(e) => setOtp(e.target.value)} required disabled={loading}
+                                value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} required disabled={loading}
                             />
                         </div>
                     </div>
