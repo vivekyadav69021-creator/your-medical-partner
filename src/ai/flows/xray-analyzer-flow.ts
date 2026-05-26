@@ -1,10 +1,10 @@
 'use server';
 /**
- * @fileOverview Radiographic Analysis Specialist for X-ray Scanner.
+ * @fileOverview Senior Radiographic Analysis Specialist for X-ray Scanner.
  * 
- * - analyzeXray - Provides high-level preliminary insights and structural analysis of X-rays.
+ * - analyzeXray - Provides deep, systematic preliminary insights and structural analysis of X-rays.
  * - AnalyzeXrayInput - Input including X-ray image and optional user description.
- * - AnalyzeXrayOutput - Structured clinical observations and biological reasoning.
+ * - AnalyzeXrayOutput - Structured clinical observations, anatomical identification, and biological reasoning.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,10 +26,11 @@ export type AnalyzeXrayInput = z.infer<typeof AnalyzeXrayInputSchema>;
 
 const AnalyzeXrayOutputSchema = z.object({
   status: z.enum(['ok', 'error']).describe('The status of the analysis.'),
-  bodyPart: z.string().describe('Identified body part or bone structure.'),
-  observation: z.string().describe('Precise description of radiographic findings.'),
-  biologicalReasoning: z.string().describe('Clinical logic explaining the observed structural changes.'),
-  suggestedActions: z.array(z.string()).describe('Non-prescription stabilizing steps.'),
+  bodyPart: z.string().describe('Identified body part or bone structure (e.g., Distal Radius, Lumbar Spine).'),
+  observation: z.string().describe('A very detailed description of radiographic findings. Mention alignment, cortical integrity, and joint spaces.'),
+  clinicalImplications: z.string().describe('What these findings suggest in medical terms (e.g., Potential hairline fracture, osteophyte formation).'),
+  biologicalReasoning: z.string().describe('Clinical logic explaining why these changes might have occurred based on the mechanism of injury.'),
+  suggestedActions: z.array(z.string()).describe('Non-prescription stabilizing steps like R.I.C.E protocol or immobilization.'),
   interactionPrompt: z.string().optional().describe('Follow-up question for low-quality or low-context scans.'),
   disclaimer: z.string().describe('Mandatory radiographic disclaimer.'),
   error: z.string().optional().describe('Error message if status is "error".'),
@@ -46,14 +47,20 @@ const prompt = ai.definePrompt({
   name: 'analyzeXrayPrompt',
   input: { schema: AnalyzeXrayInputSchema },
   output: { schema: AnalyzeXrayOutputSchema },
-  prompt: `You are the Radiographic Analysis Specialist for the "Your Medical Partner" X-ray Scanner.
+  prompt: `You are a Senior Radiographic Analysis Specialist with over 20 years of experience in Radiology.
 
-**Operational Protocols:**
-- **Track 1 (Discovery):** If userQuery is missing, identify the bone structure (e.g., Clavicle, Femur) and scan for anomalies like fractures or lung densities.
-- **Track 2 (Contextual):** If userQuery is provided (e.g., "fell from height"), prioritize the scan based on the mechanism of injury to find subtle stress lines or misalignment.
-- **Observation:** Be precise (e.g., "Discontinuity in the distal radius cortices").
-- **Biological Reasoning:** Explain the 'why' using clinical logic (e.g., "Stress concentration at the epiphysis suggests high-impact trauma").
-- **Suggested Actions:** Provide non-prescription stabilizing advice (e.g., "Immobilize", "Cold pack").
+**YOUR MISSION:**
+Provide a deep, systematic review of the provided X-ray image. Do not be vague. Use professional terminology and explain it for the user.
+
+**SCANNING PROTOCOLS (STRICT):**
+1. **Anatomical Identification:** Identify the specific bone or joint structure shown (e.g., "Left Knee - Lateral View").
+2. **Systematic Review:**
+   - **A (Alignment):** Check for dislocations, subluxations, or abnormal angulation.
+   - **B (Bone Quality):** Look for cortical breaks (fractures), lucencies (densities), or lesions.
+   - **C (Cartilage/Joints):** Check if joint spaces are preserved or narrowed.
+   - **S (Soft Tissue):** Identify swelling or abnormal shadows.
+3. **Contextual Correlation:** Use the user's description: "{{{userQuery}}}" to focus the scan. If they mention a fall, look for subtle stress lines.
+4. **Language Lock:** Respond entirely in {{language}}. If 'hi', use natural and professional Hindi.
 
 **Mandatory Radiographic Disclaimer:** "This is an AI-powered preliminary scan for awareness. AI can misinterpret shadows or lighting in X-rays. Please consult a certified Radiologist or Orthopedic Surgeon for a final official diagnosis."
 
@@ -61,7 +68,7 @@ Language: {{language}}
 Context: {{{userQuery}}}
 Image: {{media url=image.url}}
 
-Respond in structured JSON.`,
+Respond ONLY in structured JSON matching the output schema. Provide a very detailed 'observation' field.`,
 });
 
 const analyzeXrayFlow = ai.defineFlow(
@@ -72,13 +79,16 @@ const analyzeXrayFlow = ai.defineFlow(
   },
   async input => {
     try {
-        const { output } = await prompt(input);
+        const response = await prompt(input);
+        const output = response.output;
         if (!output) throw new Error('Radiographic analysis failed.');
         
         return {
             ...output,
             status: 'ok',
-            disclaimer: "This is an AI-powered preliminary scan for awareness. AI can misinterpret shadows or lighting in X-rays. Please consult a certified Radiologist or Orthopedic Surgeon for a final official diagnosis."
+            disclaimer: input.language === 'hi' 
+              ? "यह जागरूकता के लिए एक एआई-पावर्ड प्रारंभिक स्कैन है। एआई एक्स-रे में छाया या रोशनी को गलत समझ सकता है। अंतिम निदान के लिए कृपया प्रमाणित रेडियोलॉजिस्ट या आर्थोपेडिक सर्जन से परामर्श लें।"
+              : "This is an AI-powered preliminary scan for awareness. AI can misinterpret shadows or lighting in X-rays. Please consult a certified Radiologist or Orthopedic Surgeon for a final official diagnosis."
         };
     } catch(e: any) {
         console.error("X-ray analysis flow error:", e);
@@ -86,6 +96,7 @@ const analyzeXrayFlow = ai.defineFlow(
             status: 'error', 
             bodyPart: 'Unknown',
             observation: '',
+            clinicalImplications: '',
             biologicalReasoning: '',
             suggestedActions: [],
             disclaimer: "Analysis failed.",

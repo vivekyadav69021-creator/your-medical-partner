@@ -37,7 +37,12 @@ import {
   User,
   Calendar,
   Stethoscope,
-  HeartPulse
+  HeartPulse,
+  Pencil,
+  Crop,
+  Check,
+  RotateCcw,
+  Eraser
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -64,7 +69,7 @@ const updateScanStats = () => {
     }
 };
 
-const compressImage = (dataUri: string, maxWidth = 600): Promise<string> => {
+const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
         img.onload = () => {
@@ -85,7 +90,7 @@ const compressImage = (dataUri: string, maxWidth = 600): Promise<string> => {
                 return;
             }
             ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.4);
+            const compressed = canvas.toDataURL('image/jpeg', 0.5);
             resolve(compressed);
         };
         img.onerror = () => reject(new Error("Image failed to load"));
@@ -114,6 +119,193 @@ function ScanAnimationOverlay({ color }: { color: string }) {
             <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
             <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.1)_100%)]" />
+        </div>
+    );
+}
+
+// --- IMAGE EDITOR COMPONENT ---
+
+interface ImageEditorProps {
+    image: string;
+    onSave: (editedImage: string) => void;
+    onCancel: () => void;
+}
+
+function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [tool, setTool] = useState<'pencil' | 'crop'>('pencil');
+    const [cropRect, setCropRect] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const img = new (window as any).Image();
+        img.src = image;
+        img.onload = () => {
+            imgRef.current = img;
+            // Set canvas size based on container and aspect ratio
+            const containerWidth = Math.min(window.innerWidth - 40, 600);
+            const scale = containerWidth / img.width;
+            canvas.width = containerWidth;
+            canvas.height = img.height * scale;
+            
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+    }, [image]);
+
+    const startAction = (e: React.MouseEvent | React.TouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
+
+        if (tool === 'pencil') {
+            setIsDrawing(true);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.strokeStyle = '#ef4444'; // Red
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+        } else if (tool === 'crop') {
+            setCropRect({ x, y, w: 0, h: 0 });
+            setIsDrawing(true);
+        }
+    };
+
+    const doAction = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
+
+        if (tool === 'pencil') {
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        } else if (tool === 'crop' && cropRect) {
+            // Visualize crop area in a separate layer if needed, or just track coords
+            setCropRect(prev => prev ? { ...prev, w: x - prev.x, h: y - prev.y } : null);
+        }
+    };
+
+    const stopAction = () => {
+        setIsDrawing(false);
+    };
+
+    const handleReset = () => {
+        const canvas = canvasRef.current;
+        if (!canvas || !imgRef.current) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(imgRef.current, 0, 0, canvas.width, canvas.height);
+        setCropRect(null);
+    };
+
+    const handleSave = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        if (tool === 'crop' && cropRect && Math.abs(cropRect.w) > 10 && Math.abs(cropRect.h) > 10) {
+            // Create a temporary canvas for the cropped area
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            if (!tempCtx) return;
+
+            const finalX = cropRect.w > 0 ? cropRect.x : cropRect.x + cropRect.w;
+            const finalY = cropRect.h > 0 ? cropRect.y : cropRect.y + cropRect.h;
+            const finalW = Math.abs(cropRect.w);
+            const finalH = Math.abs(cropRect.h);
+
+            tempCanvas.width = finalW;
+            tempCanvas.height = finalH;
+            tempCtx.drawImage(canvas, finalX, finalY, finalW, finalH, 0, 0, finalW, finalH);
+            onSave(tempCanvas.toDataURL('image/jpeg', 0.9));
+        } else {
+            onSave(canvas.toDataURL('image/jpeg', 0.9));
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4">
+            <div className="w-full max-w-2xl flex items-center justify-between mb-4">
+                <Button variant="ghost" onClick={onCancel} className="text-white hover:bg-white/10 rounded-full h-12 w-12 p-0">
+                    <X className="h-6 w-6" />
+                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        variant={tool === 'pencil' ? 'default' : 'outline'} 
+                        onClick={() => setTool('pencil')} 
+                        className={cn("rounded-full h-10 px-4", tool === 'pencil' ? "bg-red-500" : "text-white border-white/20")}
+                    >
+                        <Pencil className="h-4 w-4 mr-2" /> Pencil
+                    </Button>
+                    <Button 
+                        variant={tool === 'crop' ? 'default' : 'outline'} 
+                        onClick={() => setTool('crop')} 
+                        className={cn("rounded-full h-10 px-4", tool === 'crop' ? "bg-blue-500" : "text-white border-white/20")}
+                    >
+                        <Crop className="h-4 w-4 mr-2" /> Crop
+                    </Button>
+                </div>
+                <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600 rounded-full px-6 h-10 font-bold uppercase tracking-widest">
+                    Done
+                </Button>
+            </div>
+
+            <div className="relative bg-white/5 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <canvas 
+                    ref={canvasRef}
+                    onMouseDown={startAction}
+                    onMouseMove={doAction}
+                    onMouseUp={stopAction}
+                    onMouseLeave={stopAction}
+                    onTouchStart={startAction}
+                    onTouchMove={doAction}
+                    onTouchEnd={stopAction}
+                    className={cn("cursor-crosshair", tool === 'pencil' ? "touch-none" : "")}
+                />
+                {tool === 'crop' && cropRect && (
+                    <div 
+                        className="absolute border-2 border-dashed border-blue-400 bg-blue-400/20 pointer-events-none"
+                        style={{
+                            left: cropRect.w > 0 ? cropRect.x : cropRect.x + cropRect.w,
+                            top: cropRect.h > 0 ? cropRect.y : cropRect.y + cropRect.h,
+                            width: Math.abs(cropRect.w),
+                            height: Math.abs(cropRect.h)
+                        }}
+                    />
+                )}
+            </div>
+
+            <div className="mt-8 flex gap-6">
+                <Button variant="ghost" onClick={handleReset} className="text-white/60 hover:text-white flex flex-col items-center gap-2 h-auto py-2">
+                    <RotateCcw className="h-6 w-6" />
+                    <span className="text-[10px] font-black uppercase">Reset</span>
+                </Button>
+                {tool === 'pencil' && (
+                     <div className="flex flex-col items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-red-500 border-2 border-white" />
+                        <span className="text-[10px] font-black uppercase text-white/40">Color</span>
+                     </div>
+                )}
+            </div>
+            <p className="mt-6 text-white/40 text-[11px] font-bold uppercase tracking-widest">
+                {tool === 'pencil' ? 'Draw to highlight areas' : 'Drag to select area to crop'}
+            </p>
         </div>
     );
 }
@@ -531,7 +723,9 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
 
 function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
+    const [originalImage, setOriginalImage] = useState<string | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
@@ -548,7 +742,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             formData.set('language', lang);
             startTransition(() => { formAction(formData); });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error' });
+            toast({ variant: 'destructive', title: 'Error processing image' });
         }
     };
 
@@ -557,22 +751,38 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
         if (file) {
             const reader = new FileReader();
             reader.onload = () => {
+                setOriginalImage(reader.result as string);
                 setPreview(reader.result as string);
+                setIsEditing(true); // Open editor immediately
                 if (fileInputRef.current) fileInputRef.current.value = '';
             };
             reader.readAsDataURL(file);
         }
     };
 
+    const handleSaveEdit = (edited: string) => {
+        setPreview(edited);
+        setIsEditing(false);
+        toast({ title: lang === 'en' ? "Image Prepared" : "इमेज तैयार है" });
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+             {isEditing && originalImage && (
+                <ImageEditor 
+                    image={originalImage} 
+                    onSave={handleSaveEdit} 
+                    onCancel={() => { setIsEditing(false); if(!preview) setOriginalImage(null); }} 
+                />
+             )}
+
              <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
                     <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Radiology AI</h2>
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Structural Scan</p>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Structural Scan & Vision</p>
                 </div>
             </div>
 
@@ -584,41 +794,97 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                 <Bone className="w-12 h-12" />
                             </div>
                             <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Upload X-Ray Plate</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Editor will open automatically</p>
                         </div>
                     ) : (
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black/5 max-h-[500px] flex items-center justify-center">
-                            <Image src={preview} alt="X-ray" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
-                            {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
-                            <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
-                                <X className="h-5 w-5" />
-                            </Button>
+                        <div className="space-y-4">
+                            <div className={cn(
+                                "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[500px] flex items-center justify-center",
+                                isAnalyzing ? "border-blue-200 ring-8 ring-blue-50/50" : "border-white dark:border-slate-800"
+                            )}>
+                                <Image src={preview} alt="X-ray" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
+                                {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
+                                <div className={cn("absolute top-6 right-6 flex gap-2", isAnalyzing && "hidden")}>
+                                    <Button type="button" size="icon" onClick={() => setIsEditing(true)} className="rounded-full h-10 w-10 bg-white/90 text-primary shadow-lg backdrop-blur-md">
+                                        <Pencil className="h-5 w-5" />
+                                    </Button>
+                                    <Button type="button" variant="destructive" size="icon" className="rounded-full h-10 w-10 shadow-lg" onClick={() => { setPreview(null); setOriginalImage(null); }}>
+                                        <X className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                            </div>
+                            {!isAnalyzing && (
+                                <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    Tap pencil icon to highlight fractures or crop
+                                </p>
+                            )}
                         </div>
                     )}
                     <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
-                        <Textarea name="userQuery" placeholder="E.g., Severe pain in wrist after fall..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-base font-bold p-6" />
+                        <Textarea name="userQuery" placeholder="E.g., Fall from height, persistent joint pain..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
                     </div>
 
-                    <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing...</> : "Start Radiology Analysis"}
+                    <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-600 to-indigo-700 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing Structural Data...</> : "Start Radiology Analysis"}
                     </Button>
                 </form>
             </div>
 
             {state?.result && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
-                    <div className="space-y-8 px-2">
-                        <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Observation</h4>
-                        <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 border border-white/40 shadow-sm">
-                            <p className="text-base font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                    
+                    <div className="space-y-6">
+                        <div className="space-y-2 px-2">
+                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Anatomical Findings</h4>
+                             <p className="text-xl font-black text-[#1A365D] dark:text-slate-100">{state.result.bodyPart}</p>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <div className="flex items-center gap-2">
+                                <FileSearch className="w-5 h-5 text-blue-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Detailed Observation</h4>
+                            </div>
+                            <div className="p-6 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 border border-white dark:border-slate-800 shadow-sm">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Implications</h4>
+                            <div className="p-6 rounded-[2.5rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50">
+                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300 leading-relaxed">{state.result.clinicalImplications}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Biological Reasoning</h4>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed px-2">
+                                {state.result.biologicalReasoning}
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Immediate Care Steps</h4>
+                            <div className="grid gap-3">
+                                {(state.result.suggestedActions || []).map((action: string, i: number) => (
+                                    <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-white/20 shadow-sm">
+                                        <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                                            <Check className="h-4 w-4" />
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{action}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
+
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
-                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
                             {state.result.disclaimer}
                         </AlertDescription>
                     </Alert>
