@@ -148,7 +148,6 @@ function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
         img.src = image;
         img.onload = () => {
             imgRef.current = img;
-            // Set canvas size based on container and aspect ratio
             const containerWidth = Math.min(window.innerWidth - 40, 600);
             const scale = containerWidth / img.width;
             canvas.width = containerWidth;
@@ -158,46 +157,47 @@ function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
         };
     }, [image]);
 
-    const startAction = (e: React.MouseEvent | React.TouchEvent) => {
+    const getPos = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
+        if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
-        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
-        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
+        const clientX = ('touches' in e) ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = ('touches' in e) ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    };
+
+    const startAction = (e: React.MouseEvent | React.TouchEvent) => {
+        const pos = getPos(e);
+        const ctx = canvasRef.current?.getContext('2d');
+        if (!ctx) return;
 
         if (tool === 'pencil') {
             setIsDrawing(true);
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.strokeStyle = '#ef4444'; // Red
+            ctx.moveTo(pos.x, pos.y);
+            ctx.strokeStyle = '#ef4444'; 
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
         } else if (tool === 'crop') {
-            setCropRect({ x, y, w: 0, h: 0 });
+            setCropRect({ x: pos.x, y: pos.y, w: 0, h: 0 });
             setIsDrawing(true);
         }
     };
 
     const doAction = (e: React.MouseEvent | React.TouchEvent) => {
         if (!isDrawing) return;
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        const pos = getPos(e);
+        const ctx = canvasRef.current?.getContext('2d');
         if (!ctx) return;
 
-        const rect = canvas.getBoundingClientRect();
-        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
-        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
-
         if (tool === 'pencil') {
-            ctx.lineTo(x, y);
+            ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
         } else if (tool === 'crop' && cropRect) {
-            // Visualize crop area in a separate layer if needed, or just track coords
-            setCropRect(prev => prev ? { ...prev, w: x - prev.x, h: y - prev.y } : null);
+            setCropRect(prev => prev ? { ...prev, w: pos.x - prev.x, h: pos.y - prev.y } : null);
         }
     };
 
@@ -220,7 +220,6 @@ function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
         if (!canvas) return;
 
         if (tool === 'crop' && cropRect && Math.abs(cropRect.w) > 10 && Math.abs(cropRect.h) > 10) {
-            // Create a temporary canvas for the cropped area
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
             if (!tempCtx) return;
@@ -296,12 +295,6 @@ function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
                     <RotateCcw className="h-6 w-6" />
                     <span className="text-[10px] font-black uppercase">Reset</span>
                 </Button>
-                {tool === 'pencil' && (
-                     <div className="flex flex-col items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-red-500 border-2 border-white" />
-                        <span className="text-[10px] font-black uppercase text-white/40">Color</span>
-                     </div>
-                )}
             </div>
             <p className="mt-6 text-white/40 text-[11px] font-bold uppercase tracking-widest">
                 {tool === 'pencil' ? 'Draw to highlight areas' : 'Drag to select area to crop'}
@@ -751,9 +744,10 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
         if (file) {
             const reader = new FileReader();
             reader.onload = () => {
-                setOriginalImage(reader.result as string);
-                setPreview(reader.result as string);
-                setIsEditing(true); // Open editor immediately
+                const result = reader.result as string;
+                setOriginalImage(result);
+                setPreview(result);
+                setIsEditing(true); 
                 if (fileInputRef.current) fileInputRef.current.value = '';
             };
             reader.readAsDataURL(file);
@@ -845,7 +839,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 
                         <div className="space-y-4 px-2">
                             <div className="flex items-center gap-2">
-                                <FileSearch className="w-5 h-5 text-blue-500" />
+                                <FileText className="w-5 h-5 text-blue-500" />
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Detailed Observation</h4>
                             </div>
                             <div className="p-6 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 border border-white dark:border-slate-800 shadow-sm">
@@ -928,7 +922,6 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         }
     };
 
-    // Group findings by category with safety fallback
     const groupedFindings = (state?.result?.findings || []).reduce((acc: any, item: any) => {
         const category = item.category || (lang === 'en' ? 'General' : 'सामान्य');
         if (!acc[category]) acc[category] = [];
@@ -985,7 +978,6 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     
-                    {/* Patient Details Header */}
                     <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-6">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                             <div className="space-y-1">
@@ -1017,7 +1009,6 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         </p>
                     </div>
 
-                    {/* Findings by Category */}
                     <div className="space-y-8">
                         {Object.entries(groupedFindings).map(([category, items]: [string, any]) => (
                             <div key={category} className="space-y-4 px-2">
@@ -1224,7 +1215,6 @@ export default function DiseaseScannerPage() {
                         <ScannerCard title={t.reportTitle} slogan="OCR Lab" icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => setView('lab')} btnText={t.startBtn} />
                     </div>
 
-                    {/* Language Selection specifically for Dashboard view */}
                     <div className="flex justify-center pt-4">
                         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
                             <Button 
