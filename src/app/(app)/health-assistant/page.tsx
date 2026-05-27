@@ -109,6 +109,9 @@ export default function HealthAssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
+  // Logic for search vs simple thinking
+  const [isQuestionType, setIsQuestionType] = useState(false);
+
   const searchParams = useSearchParams();
 
   // TTS State
@@ -163,10 +166,8 @@ ${parsedContext.careRecommendations.map((c: any) => `- ${c.title}: ${c.descripti
 
 I'd like to understand more about the long-term management and if there's anything else I should know.`;
 
-            // Clear context so it doesn't trigger again on refresh
             sessionStorage.removeItem('last_skin_scan_result');
 
-            // Trigger a new chat with this context
             const fd = new FormData();
             fd.set('query', prompt);
             onFormAction(fd);
@@ -283,6 +284,10 @@ I'd like to understand more about the long-term management and if there's anythi
   const onFormAction = (formData: FormData) => {
     const query = (formData.get('query') as string) || '';
     if (!query && !attachedImage) return;
+
+    // Detect if the message is a question or informational inquiry
+    const isQuestion = query.length > 15 || /\?|what|how|why|explain|tell|detail|medicine|disease|treatment|symptom|किस|क्या|कैसे|क्यों|इलाज|बीमारी|दवाई/i.test(query);
+    setIsQuestionType(isQuestion);
 
     const userMsg: Message = {
         role: 'user',
@@ -423,7 +428,7 @@ I'd like to understand more about the long-term management and if there's anythi
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">History</span>
                     </button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] max-w-sm p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
+                <SheetContent side="right" className="w-[85vw] max-sm:w-full p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
                     <SheetHeader className="p-8 pb-2">
                         <SheetTitle className="text-primary uppercase font-black text-xs tracking-[0.2em]">Medical Records</SheetTitle>
                     </SheetHeader>
@@ -593,7 +598,7 @@ I'd like to understand more about the long-term management and if there's anythi
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                            {activeMode === 'doctor' ? `Consulting ${specialty}...` : 'Generating...'}
+                                            {isQuestionType ? (activeMode === 'doctor' ? `Consulting ${specialty}...` : 'विश्वसनीय चिकित्सा स्रोतों की जांच की जा रही है...') : 'Thinking...'}
                                         </span>
                                         <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
                                             <Clock className="w-2.5 h-2.5 text-primary" />
@@ -602,29 +607,31 @@ I'd like to understand more about the long-term management and if there's anythi
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 w-full max-w-lg">
-                                    <div className="flex items-center gap-2 px-1">
-                                        <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
-                                            {activeMode === 'doctor' ? `Accessing ${specialty} clinical protocols` : 'Tapping World Expert Data'}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
-                                        <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
-                                            <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                            <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                Analyzing <span className="text-primary">{medicalSources[currentSourceIndex]}</span> guidelines
-                                            </p>
+                                {isQuestionType && (
+                                    <div className="space-y-4 w-full max-w-lg animate-in fade-in duration-500">
+                                        <div className="flex items-center gap-2 px-1">
+                                            <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
+                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
+                                                {activeMode === 'doctor' ? `Accessing ${specialty} clinical protocols` : 'Tapping World Expert Data'}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
+                                            <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
+                                                <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
+                                                <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
+                                                    Analyzing <span className="text-primary">{medicalSources[currentSourceIndex]}</span> guidelines
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-2 pt-2">
+                                            <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
+                                            <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-3/4 animate-pulse" />
+                                            <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-1/2 animate-pulse" />
                                         </div>
                                     </div>
-                                    
-                                    <div className="space-y-2 pt-2">
-                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
-                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-3/4 animate-pulse" />
-                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-1/2 animate-pulse" />
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         )}
                     </div>

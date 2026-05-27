@@ -60,16 +60,6 @@ type Session = {
   mood?: string;
 };
 
-const mentalHealthSources = [
-  "American Psychological Association (APA)",
-  "Mental Health Foundation",
-  "National Institutes of Mental Health (NIMH)",
-  "Cognitive Behavioral Guidelines",
-  "World Federation for Mental Health",
-  "Mindful Awareness Research Center",
-  "Counseling & Support Experts"
-];
-
 const mentalPrompts = [
     { label: "Feeling Anxious", query: "I've been feeling quite anxious lately and I need someone to talk to.", icon: CloudRain, color: "text-blue-400" },
     { label: "Stress at Work", query: "Work is getting very stressful and I'm finding it hard to manage.", icon: Wind, color: "text-teal-400" },
@@ -91,7 +81,6 @@ export default function AIPsychiatristPage() {
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
   const [loadingTimer, setLoadingTimer] = useState(0);
-  const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
   const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
 
   const [state, formAction, isPending] = useActionState(aiPsychiatristAction, initialState);
@@ -140,19 +129,11 @@ export default function AIPsychiatristPage() {
   // Thinking Animation Logic
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
-    let sourceInterval: NodeJS.Timeout;
-
     if (isPending) {
       setLoadingTimer(0);
-      setCurrentSourceIndex(0);
       timerInterval = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
-      sourceInterval = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % mentalHealthSources.length), 2500);
     }
-
-    return () => {
-      clearInterval(timerInterval);
-      clearInterval(sourceInterval);
-    };
+    return () => clearInterval(timerInterval);
   }, [isPending]);
 
   // Immersive Reading Logic
@@ -472,36 +453,21 @@ export default function AIPsychiatristPage() {
                         {isPending && (
                              <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300 mt-12">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
-                                        <Sparkles className="w-4.5 h-4.5 text-primary" />
+                                    <div className="size-12 flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 rounded-2xl shadow-inner border border-rose-100 dark:border-rose-900/50">
+                                        <Heart className="w-6 h-6 text-rose-500 fill-rose-500 animate-pulse" />
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Listening...</span>
-                                        <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
-                                            <Clock className="w-2.5 h-2.5 text-primary" />
+                                    <div className="flex flex-col -space-y-0.5">
+                                        <span className="text-[11px] font-black text-rose-500 uppercase tracking-[0.2em]">Mind Companion</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">I am listening to you...</span>
                                             <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="space-y-4 w-full max-w-lg">
-                                    <div className="flex items-center gap-2 px-1">
-                                        <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Cross-checking Empathy Data</span>
-                                    </div>
-                                    
-                                    <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
-                                        <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
-                                            <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                            <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                Checking: <span className="text-primary">{mentalHealthSources[currentSourceIndex]}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 pt-2">
-                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
-                                        <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-2/3 animate-pulse" />
-                                    </div>
+                                <div className="flex gap-1.5 ml-4">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-bounce [animation-delay:-0.3s]" />
+                                    <div className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-bounce [animation-delay:-0.15s]" />
+                                    <div className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-bounce" />
                                 </div>
                             </div>
                         )}
