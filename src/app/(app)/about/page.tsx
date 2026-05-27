@@ -22,17 +22,11 @@ import {
   Database,
   AlertTriangle,
   Mail,
-  Wind,
-  Flower,
-  Trophy,
-  ListTodo,
-  MapPin,
-  GraduationCap,
-  Sparkles,
   Zap,
-  Activity
+  Sparkles,
+  User,
+  Cpu
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export default function AboutPage() {
   return (
@@ -63,101 +57,61 @@ export default function AboutPage() {
           <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-8">
             <CardHeader className="px-0 pt-0">
               <CardTitle className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight flex items-center gap-3">
-                <Info className="w-6 h-6 text-primary" /> Our Mission
+                <Info className="w-6 h-6 text-primary" /> Our Story
               </CardTitle>
             </CardHeader>
             <CardContent className="px-0 space-y-6 text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
               <p>
-                <strong>Your Medical Partner</strong> was built to democratize high-quality medical information. We bridge the gap between complex clinical data and patient understanding by using state-of-the-art Generative AI.
+                <strong>Your Medical Partner</strong> was founded by <strong>Shailesh Yadav</strong> with a vision to democratize high-quality medical information. We bridge the gap between complex clinical data and patient understanding.
               </p>
               <p>
-                Our platform integrates trusted medical sources (WHO, Mayo Clinic, Harvard) with advanced diagnostic tools, ensuring that every user has a reliable first point of contact for their health concerns, anytime and anywhere.
+                Our platform utilizes proprietary <strong>Fine-tuned AI Models</strong> optimized specifically for medical interpretation, ensuring that every user has a reliable first point of contact for their health concerns.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                <HighlightCard icon={ShieldCheck} title="High Authority" desc="Medically-vetted data from the world's most elite institutions." />
-                <HighlightCard icon={Zap} title="Instant Intelligence" desc="Real-time interpretation of X-rays, skin issues, and lab reports." />
+                <HighlightCard icon={User} title="Founder" desc="Shailesh Yadav" />
+                <HighlightCard icon={Cpu} title="AI Technology" desc="Proprietary Fine-tuned Models" />
+                <HighlightCard icon={ShieldCheck} title="High Authority" desc="Vetted by elite medical institutions." />
+                <HighlightCard icon={Zap} title="Instant Intel" desc="Real-time analysis of clinical data." />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Features Tab - EXTENDED */}
+        {/* Features Tab */}
         <TabsContent value="features" className="mt-8 space-y-12">
-          {/* Section 1: AI Diagnostics */}
           <div className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <Scan className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-wider">Smart AI Diagnostics</h3>
             </div>
             <div className="grid gap-4">
-              <FeatureDetail 
-                title="X-Ray Vision" 
-                desc="Deep radiographic analysis using neural networks to identify structural issues, alignment, and joint spaces with a detailed clinical observation report."
-              />
-              <FeatureDetail 
-                title="Skin & Face Scanner" 
-                desc="Advanced dermatological analysis that identifies potential skin conditions and provides personalized OTC care suggestions and nutritional advice."
-              />
-              <FeatureDetail 
-                title="Lab Report Specialist" 
-                desc="Converts complex blood work and pathology reports into simple, categorized language, identifying biomarkers and providing actionable health plans."
-              />
-              <FeatureDetail 
-                title="Injury & Emergency SOS" 
-                desc="Assesses the severity of traumatic injuries, provides immediate first-aid steps, and lists critical things to avoid to prevent further damage."
-              />
+              <FeatureDetail title="X-Ray Vision" desc="Deep radiographic analysis using neural networks to identify structural issues and joint spaces." />
+              <FeatureDetail title="Skin & Face Scanner" desc="Dermatological analysis that identifies skin conditions and provides personalized OTC suggestions." />
+              <FeatureDetail title="Lab Report Specialist" desc="Converts complex blood work into simple language, identifying biomarkers and health plans." />
+              <FeatureDetail title="Injury & Emergency SOS" desc="Assesses severity of traumatic injuries and provides immediate first-aid steps." />
             </div>
           </div>
 
-          {/* Section 2: Clinical Services */}
           <div className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <Stethoscope className="w-5 h-5 text-rose-500" />
               <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-wider">Consultation & Store</h3>
             </div>
             <div className="grid gap-4">
-              <FeatureDetail 
-                title="Tele-Consultation Hub" 
-                desc="Direct booking and encrypted video call access to top-tier Indian and International specialists across various medical fields."
-              />
-              <FeatureDetail 
-                title="Smart Medical Store" 
-                desc="A full-featured e-pharmacy with AI-powered prescription recognition. Simply upload a photo to identify and order prescribed medicines instantly."
-              />
-              <FeatureDetail 
-                title="Nearby Hospital Finder" 
-                desc="Real-time interactive map that locates nearby hospitals and clinics, providing one-tap navigation via Google Maps."
-              />
+              <FeatureDetail title="Tele-Consultation Hub" desc="Direct booking to top-tier Indian and International specialists via video call." />
+              <FeatureDetail title="Smart Medical Store" desc="Pharmacy with AI prescription recognition to identify and order medicines instantly." />
             </div>
           </div>
 
-          {/* Section 3: Wellness & Intelligence */}
           <div className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <BrainCircuit className="w-5 h-5 text-teal-500" />
               <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-wider">Wellness & Intelligence</h3>
             </div>
             <div className="grid gap-4">
-              <FeatureDetail 
-                title="AI Health Assistant" 
-                desc="A polyglot voice assistant with expert modes (Web Search, Deep Think) to answer medical questions using elite global data sources."
-              />
-              <FeatureDetail 
-                title="AI Psychiatrist (Mind Companion)" 
-                desc="A safe, empathetic, and polyglot space to discuss mental health. It tracks your mood and provides supportive dialogue in your native language."
-              />
-              <FeatureDetail 
-                title="Meditation Hub & Mood Tracker" 
-                desc="Guided meditation sessions tailored to your current emotional state, suggested by an intelligent AI analyzer."
-              />
-              <FeatureDetail 
-                title="Health Challenges & Lessons" 
-                desc="Gamified learning modules with quizzes and certificates, plus an AI Health Planner for personalized diet and fitness routines."
-              />
-              <FeatureDetail 
-                title="Yoga Library" 
-                desc="A comprehensive database of yoga poses with detailed step-by-step instructions, benefits, and category classifications."
-              />
+              <FeatureDetail title="AI Health Assistant" desc="Polyglot voice assistant with expert modes using global data sources." />
+              <FeatureDetail title="AI Psychiatrist" desc="A safe, empathetic space for mental health discussions in your native language." />
+              <FeatureDetail title="Meditation & Yoga" desc="AI-suggested meditation and a comprehensive library of yoga poses with instructions." />
             </div>
           </div>
         </TabsContent>
@@ -171,23 +125,9 @@ export default function AboutPage() {
             </div>
             
             <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-8 space-y-6">
-              <div className="space-y-6">
-                <PrivacyPoint 
-                  icon={Fingerprint} 
-                  title="Local-First Identity" 
-                  desc="Most of your medical profile data is stored on your device. We only sync essential records with high-level encryption to provide a seamless multi-device experience." 
-                />
-                <PrivacyPoint 
-                  icon={Database} 
-                  title="No Data Monetization" 
-                  desc="Your medical history, uploaded X-rays, and lab reports are NEVER sold to advertisers. Your health privacy is our highest priority." 
-                />
-                <PrivacyPoint 
-                  icon={ShieldCheck} 
-                  title="Secure AI Processing" 
-                  desc="Images and audio processed by our AI models are handled through secure, isolated API channels and are not used to train public datasets." 
-                />
-              </div>
+              <PrivacyPoint icon={Fingerprint} title="Local-First Identity" desc="Most of your medical profile data is stored on your device. Only essential records are encrypted in the cloud." />
+              <PrivacyPoint icon={Database} title="No Data Monetization" desc="Your history, X-rays, and reports are NEVER sold. Your health privacy is our highest priority." />
+              <PrivacyPoint icon={ShieldCheck} title="Secure AI Processing" desc="Processed by our fine-tuned internal models; your data is never used to train public datasets." />
             </Card>
           </section>
 
@@ -202,21 +142,20 @@ export default function AboutPage() {
                 <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-100 dark:border-amber-900 flex gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
                   <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 leading-relaxed uppercase">
-                    <strong>Critical Medical Disclaimer:</strong> This application is an informational tool only. AI analysis is NOT a clinical diagnosis. Always verify results with a human physician. In case of acute emergency, call 112 or visit the nearest ER immediately.
+                    <strong>Critical Medical Disclaimer:</strong> This application is an informational tool only. AI analysis is NOT a clinical diagnosis. Founder **Shailesh Yadav** advises verifying all results with a human physician.
                   </p>
                 </div>
                 <ul className="list-disc pl-5 space-y-3">
-                  <li>User must be 18+ to book medical consultations or order pharmacy products.</li>
-                  <li>We do not provide direct prescriptions; all AI findings must be reviewed by a certified doctor.</li>
-                  <li>Misuse of AI for illegal content or self-harm will result in permanent account termination.</li>
-                  <li>Consultation fees are processed through secure gateways and follow our refund policy.</li>
+                  <li>User must be 18+ to book medical consultations.</li>
+                  <li>We do not provide direct prescriptions; AI findings must be reviewed by a doctor.</li>
+                  <li>Misuse of AI for self-harm will result in account termination.</li>
                 </ul>
               </div>
             </Card>
           </section>
 
           <section className="text-center py-10 space-y-4">
-             <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Have a privacy concern?</p>
+             <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Founded by Shailesh Yadav</p>
              <a href="mailto:support@medicalpartner.app" className="inline-flex items-center gap-2 text-primary font-black text-sm hover:underline">
                <Mail className="w-4 h-4" /> support@medicalpartner.app
              </a>
