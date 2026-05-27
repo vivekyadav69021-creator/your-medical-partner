@@ -25,6 +25,7 @@ import {
   Scan,
   ShieldPlus,
   LogOut,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/firebase';
@@ -59,6 +60,7 @@ const learnNav = [
 
 const settingsNav = [
     { href: '/profile', label: 'Settings', icon: Settings },
+    { href: '/about', label: 'About & Privacy', icon: Info },
 ];
 
 const NavSection = ({ title, items, onLinkClick }: { title: string, items: {href: string, label: string, icon: React.ElementType}[], onLinkClick?: () => void}) => {
