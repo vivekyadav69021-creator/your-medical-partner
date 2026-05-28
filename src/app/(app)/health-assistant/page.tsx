@@ -111,6 +111,7 @@ export default function HealthAssistantPage() {
   
   // Logic for search vs simple thinking
   const [isQuestionType, setIsQuestionType] = useState(false);
+  const [detectedLang, setDetectedLang] = useState<'en' | 'hi'>('en');
 
   const searchParams = useSearchParams();
 
@@ -284,6 +285,10 @@ I'd like to understand more about the long-term management and if there's anythi
   const onFormAction = (formData: FormData) => {
     const query = (formData.get('query') as string) || '';
     if (!query && !attachedImage) return;
+
+    // Language Detection: Check for Hindi characters
+    const isHindi = /[\u0900-\u097F]/.test(query);
+    setDetectedLang(isHindi ? 'hi' : 'en');
 
     // Detect if the message is a question or informational inquiry
     const isQuestion = query.length > 15 || /\?|what|how|why|explain|tell|detail|medicine|disease|treatment|symptom|किस|क्या|कैसे|क्यों|इलाज|बीमारी|दवाई/i.test(query);
@@ -597,8 +602,17 @@ I'd like to understand more about the long-term management and if there's anythi
                                         {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                            {isQuestionType ? (activeMode === 'doctor' ? `Consulting ${specialty}...` : 'विश्वसनीय चिकित्सा स्रोतों की जांच की जा रही है...') : 'Thinking...'}
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center">
+                                            {isQuestionType 
+                                              ? (activeMode === 'doctor' 
+                                                  ? (detectedLang === 'hi' ? `डॉ. ${specialty} से परामर्श किया जा रहा है` : `Consulting Dr. ${specialty}`) 
+                                                  : (detectedLang === 'hi' ? 'चिकित्सा स्रोतों की जांच' : 'Analyzing medical sources'))
+                                              : (detectedLang === 'hi' ? 'सोच रहा हूँ' : 'Thinking')}
+                                            <span className="flex gap-0.5 ml-1.5">
+                                              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                                              <span className="animate-bounce" style={{ animationDelay: '200ms' }}>.</span>
+                                              <span className="animate-bounce" style={{ animationDelay: '400ms' }}>.</span>
+                                            </span>
                                         </span>
                                         <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
                                             <Clock className="w-2.5 h-2.5 text-primary" />
@@ -612,7 +626,7 @@ I'd like to understand more about the long-term management and if there's anythi
                                         <div className="flex items-center gap-2 px-1">
                                             <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
                                             <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
-                                                {activeMode === 'doctor' ? `Accessing ${specialty} clinical protocols` : 'Tapping World Expert Data'}
+                                                {activeMode === 'doctor' ? (detectedLang === 'hi' ? 'नियमों की जांच' : 'Accessing clinical protocols') : (detectedLang === 'hi' ? 'विशेषज्ञ डेटा तक पहुँच' : 'Tapping World Expert Data')}
                                             </span>
                                         </div>
                                         
@@ -620,7 +634,7 @@ I'd like to understand more about the long-term management and if there's anythi
                                             <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
                                                 <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
                                                 <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                    Analyzing <span className="text-primary">{medicalSources[currentSourceIndex]}</span> guidelines
+                                                    {detectedLang === 'hi' ? 'विश्लेषण किया जा रहा है' : 'Analyzing'} <span className="text-primary">{medicalSources[currentSourceIndex]}</span> {detectedLang === 'hi' ? 'दिशानिर्देश' : 'guidelines'}
                                                 </p>
                                             </div>
                                         </div>
