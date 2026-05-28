@@ -31,7 +31,9 @@ import {
     Clock,
     Square,
     Stethoscope,
-    FileSearch
+    FileSearch,
+    ChevronRight,
+    Trophy
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -60,7 +62,7 @@ type Message = {
   role: 'user' | 'assistant';
   content: string;
   image?: string;
-  mode?: string;
+  mode?: PulseMode;
   timestamp: number;
 };
 
@@ -73,6 +75,13 @@ type Session = {
 };
 
 type PulseMode = 'standard' | 'websearch' | 'deepthink' | 'proanalysis';
+
+const modeConfig = {
+    standard: { label: "Balanced Expert", icon: ShieldPlus, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+    websearch: { label: "Deep Web Search", icon: Search, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+    deepthink: { label: "Logical Reasoning", icon: BrainCircuit, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+    proanalysis: { label: "Pharmacist Analysis", icon: Pill, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
+};
 
 const doctorSpecialties = [
   "General Physician", "Cardiologist", "Dermatologist", "Pediatrician",
@@ -188,11 +197,11 @@ I'd like to understand more about the long-term management and if there's anythi
         if (generalState.response || generalState.error) {
             const content = generalState.response || `Error: ${generalState.error}`;
             setGeneralSessions(prev => prev.map(s => s.id === activeGeneralId ? {
-                ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
+                ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now(), mode: pulseMode }]
             } : s));
         }
     }
-  }, [generalState, isGeneralPending, activeGeneralId]);
+  }, [generalState, isGeneralPending, activeGeneralId, pulseMode]);
 
   useEffect(() => {
     if (!isDoctorPending && doctorState.timestamp > lastProcessedDoctorTime.current) {
@@ -570,7 +579,14 @@ I'd like to understand more about the long-term management and if there's anythi
                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                     {activeMode === 'doctor' ? specialty : 'Medical Assistant'}
                                                 </span>
-                                                {activeMode === 'doctor' && <span className="text-[8px] font-bold text-primary uppercase">Clinic Mode</span>}
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    {activeMode === 'doctor' && <span className="text-[8px] font-bold text-primary uppercase">Clinic Mode</span>}
+                                                    {m.mode && (
+                                                        <Badge variant="outline" className="text-[7px] px-1.5 py-0 h-3.5 border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-tighter">
+                                                            {modeConfig[m.mode].label}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         
@@ -669,6 +685,17 @@ I'd like to understand more about the long-term management and if there's anythi
                     </div>
                 )}
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
+                    
+                    {/* Active Mode Indicator Badge Above Input */}
+                    {activeMode === 'general' && (
+                        <div className="flex items-center gap-2 px-5 py-1 animate-in slide-in-from-bottom-1 fade-in duration-500">
+                             <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", pulseMode === 'standard' ? "bg-blue-500" : pulseMode === 'websearch' ? "bg-emerald-500" : pulseMode === 'deepthink' ? "bg-purple-500" : "bg-orange-500")} />
+                             <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                Active Protocol: <span className={cn(modeConfig[pulseMode].color)}>{modeConfig[pulseMode].label}</span>
+                             </span>
+                        </div>
+                    )}
+
                     <div className="flex-1 max-h-48 overflow-y-auto">
                         <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Tell ${specialty} about your symptoms...` : "Ask anything about health..."}
                             className={cn(
@@ -690,13 +717,21 @@ I'd like to understand more about the long-term management and if there's anythi
                             {activeMode === 'general' && (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className="h-11 px-5 rounded-full gap-2.5 text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest bg-slate-50/80 dark:bg-slate-800/80">
-                                            <Zap className="h-4 w-4 text-primary" />
-                                            <span className="hidden sm:inline">Expert Modes</span>
+                                        <Button type="button" variant="ghost" className={cn(
+                                            "h-11 px-5 rounded-full gap-2.5 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            modeConfig[pulseMode].bg,
+                                            modeConfig[pulseMode].color
+                                        )}>
+                                            {React.createElement(modeConfig[pulseMode].icon, { className: "h-3.5 w-3.5" })}
+                                            <span className="hidden sm:inline">{modeConfig[pulseMode].label}</span>
+                                            <ChevronRight className="h-3 w-3 rotate-90 opacity-40" />
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-72 rounded-[2.5rem] p-4 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
-                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
+                                        <div className="mb-4 px-2">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Select Intelligence Engine</h4>
+                                        </div>
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => { setPulseMode(v as PulseMode); toast({ title: `${modeConfig[v as PulseMode].label} Activated` }); }} className="gap-2">
                                             <PulseModeItem value="standard" label="Balanced Expert" icon={<ShieldPlus className="w-4 h-4"/>} />
                                             <PulseModeItem value="websearch" label="Deep Web Search" icon={<Search className="w-4 h-4"/>} />
                                             <PulseModeItem value="deepthink" label="Logical Reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
@@ -725,7 +760,7 @@ I'd like to understand more about the long-term management and if there's anythi
                                         </Button>
                                     )}
                                     <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
-                                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
+                                        {isPending ? <Loader2 className="h-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                     </Button>
                                 </div>
                             )}
@@ -743,7 +778,7 @@ function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string
         <div className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
             <RadioGroupItem value={value} id={value} className="sr-only" />
             <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] shadow-sm group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900 transition-colors">
-                {icon}
+                {React.cloneElement(icon as React.ReactElement, { className: cn("w-4 h-4", value === 'standard' ? "text-blue-500" : value === 'websearch' ? "text-emerald-500" : value === 'deepthink' ? "text-purple-500" : "text-orange-500") })}
             </div>
             <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">
                 {label}
