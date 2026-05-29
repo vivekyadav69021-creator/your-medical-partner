@@ -28,6 +28,10 @@ const FoodAnalysisOutputSchema = z.object({
   logicHi: z.string().describe('Simple biological explanation in Hindi (no jargon).'),
   tipEn: z.string().describe('Actionable health tip in English.'),
   tipHi: z.string().describe('Actionable health tip in Hindi.'),
+  idealForEn: z.string().describe('Who should ideally eat this (e.g. athletes, diabetics) in English.'),
+  idealForHi: z.string().describe('Who should ideally eat this in Hindi.'),
+  precautionsEn: z.string().describe('Future health effects or things to watch out for in English.'),
+  precautionsHi: z.string().describe('Future health effects or things to watch out for in Hindi.'),
 });
 export type FoodAnalysisOutput = z.infer<typeof FoodAnalysisOutputSchema>;
 
@@ -42,13 +46,15 @@ const prompt = ai.definePrompt({
   prompt: `You are the Expert Nutritionist for "Your Medical Partner".
 
 **MISSION:**
-Analyze the food input (image or text) and provide a nutritional breakdown.
+Analyze the food input (image or text) and provide a nutritional breakdown. 
+You must avoid all AI-specific branding or mention of underlying models.
 
 **STRICT RULES:**
-1. **NO MEDICAL JARGON:** Do not say "high glycemic index". Say "converts to energy quickly, making you hungry sooner".
-2. **LAYMAN LOGIC:** Explain the biological impact of this specific meal in simple terms.
-3. **DUAL LANGUAGE:** Provide 'logicHi' and 'tipHi' in natural, conversational Hindi, and 'logicEn' and 'tipEn' in simple English.
-4. **ACCURACY:** Estimate calories and macros as accurately as possible for the identified portion size.
+1. **NO MEDICAL JARGON:** Do not use complex terms. Explain the biological impact of this specific meal in simple terms.
+2. **IDEAL CONSUMERS:** Identify which type of people (e.g., people wanting weight loss, muscle gain, or those with specific conditions) should eat this.
+3. **FUTURE HEALTH IMPACT:** Mention if regular consumption could lead to specific health issues or benefits in the long run.
+4. **DUAL LANGUAGE:** Provide 'logic', 'tip', 'idealFor', and 'precautions' in both natural Hindi and simple English.
+5. **ACCURACY:** Estimate calories and macros as accurately as possible for the identified portion size.
 
 Current Input:
 {{#if imageDataUri}}
@@ -58,7 +64,7 @@ Food Image: {{media url=imageDataUri}}
 Manual Entry: {{{textQuery}}}
 {{/if}}
 
-Respond ONLY in the specified JSON format.`,
+Respond ONLY in the specified JSON format. Ensure all fields are unique to this meal.`,
 });
 
 const foodAnalyzerFlow = ai.defineFlow(
