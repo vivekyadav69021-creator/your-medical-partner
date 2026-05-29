@@ -26,6 +26,7 @@ import {
   ShieldPlus,
   LogOut,
   Info,
+  Apple
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/firebase';
@@ -40,6 +41,7 @@ const smartToolsNav = [
     { href: '/health-assistant', label: 'AI Health Assistant', icon: ShieldPlus },
     { href: '/ai-psychiatrist', label: 'AI Psychiatrist', icon: BrainCircuit },
     { href: '/disease-scanner', label: 'Disease Scanner', icon: Scan },
+    { href: '/food-scanner', label: 'Food AI Scanner', icon: Apple },
 ];
 
 const yourHealthNav = [

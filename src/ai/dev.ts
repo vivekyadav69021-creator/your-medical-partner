@@ -13,3 +13,4 @@ import '@/ai/flows/feature-assistant-flow.ts';
 import '@/ai/flows/skin-analyzer-flow.ts';
 import '@/ai/flows/ai-doctor-chat-flow.ts';
 import '@/ai/flows/injury-analyzer-flow.ts';
+import '@/ai/flows/food-analyzer-flow.ts';
