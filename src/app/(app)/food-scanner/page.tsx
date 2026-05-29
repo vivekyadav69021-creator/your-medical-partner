@@ -76,34 +76,34 @@ export default function FoodScannerPage() {
     <div className="min-h-[100dvh] bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] pb-32 animate-in fade-in duration-1000 font-body overflow-y-auto overflow-x-hidden">
       <div className="max-w-4xl mx-auto px-4 pt-6 space-y-8">
         
-        {/* Modern Header with Scanning App Logo */}
-        <div className="flex items-center justify-between gap-4 p-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] shadow-sm border border-white/40 dark:border-slate-800/40 mx-1 safe-top">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="rounded-full bg-white dark:bg-slate-800 shadow-sm shrink-0 h-11 w-11">
+        {/* Robust Responsive Header with Scanning App Logo */}
+        <div className="flex items-center justify-between gap-2 md:gap-4 p-4 md:p-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] shadow-sm border border-white/40 dark:border-slate-800/40 mx-1 safe-top">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+            <Link href="/dashboard" className="shrink-0">
+              <Button variant="ghost" size="icon" className="rounded-full bg-white dark:bg-slate-800 shadow-sm h-10 w-10 md:h-11 md:w-11">
                 <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:text-white" />
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
-                <HeartPulse className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              <div className="relative h-9 w-9 md:h-10 md:w-10 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                <Utensils className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 <div className="absolute left-0 right-0 h-0.5 bg-primary/40 animate-scan-line z-10" />
               </div>
-              <div>
-                <h1 className="text-xl font-black text-[#1A365D] dark:text-white tracking-tight leading-none">Nutri-Scan</h1>
-                <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mt-1">Smart Food Analysis</p>
+              <div className="min-w-0">
+                <h1 className="text-lg md:text-xl font-black text-[#1A365D] dark:text-white tracking-tight leading-none truncate">Nutri-Scan</h1>
+                <p className="text-[8px] md:text-[9px] font-black text-primary uppercase tracking-[0.1em] md:tracking-[0.2em] mt-1 truncate">Smart Food Analysis</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-full border border-white/20 flex items-center gap-1">
+          <div className="bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-full border border-white/20 flex items-center gap-0.5 md:gap-1 shrink-0">
             <button 
                 onClick={() => setLang('en')}
-                className={cn("rounded-full px-4 py-1.5 text-[10px] font-black uppercase transition-all duration-300", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
+                className={cn("rounded-full px-3 md:px-4 py-1 md:py-1.5 text-[9px] md:text-[10px] font-black uppercase transition-all duration-300", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
             >EN</button>
             <button 
                 onClick={() => setLang('hi')}
-                className={cn("rounded-full px-4 py-1.5 text-[10px] font-black uppercase transition-all duration-300", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
+                className={cn("rounded-full px-3 md:px-4 py-1 md:py-1.5 text-[9px] md:text-[10px] font-black uppercase transition-all duration-300", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
             >हिन्दी</button>
           </div>
         </div>
