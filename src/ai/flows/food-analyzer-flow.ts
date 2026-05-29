@@ -51,13 +51,14 @@ const prompt = ai.definePrompt({
 
 **STRICT EVALUATION PROTOCOLS:**
 
-1. **Zero Variance Data Guarantee:**
-   - Use standardized, scientifically verified nutritional averages for standard portions. 
-   - Values must be deterministic and static for identical meals across all requests.
+1. **Precision Detection:**
+   - Carefully examine the visual inputs (if image) or text description. Identify standard portions accurately.
+   - If an image is provided, focus on all components on the plate.
 
 2. **Strict Nutritional Mathematics:**
    - You MUST ensure: Total Calories = (4 * Protein) + (4 * Carbs) + (9 * Fats).
-   - If the numbers do not match this formula exactly, recalculate until they do.
+   - Use standardized, scientifically verified nutritional averages for standard portions. 
+   - Values must be deterministic.
 
 3. **No Medical Jargon Rule:**
    - Translate heavy physiological terms into heart-warming, conversational layman terms.

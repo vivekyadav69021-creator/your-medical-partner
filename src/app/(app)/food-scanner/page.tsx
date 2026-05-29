@@ -58,7 +58,9 @@ export default function FoodScannerPage() {
   };
 
   const onFormSubmit = (formData: FormData) => {
+    // If we have a preview but the formData doesn't have it (because it's not a standard input)
     if (preview) formData.set('imageDataUri', preview);
+    formData.set('textQuery', textQuery);
     formData.set('language', lang);
     startTransition(() => { formAction(formData); });
   };
@@ -104,7 +106,7 @@ export default function FoodScannerPage() {
     <div className="min-h-[100dvh] bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] pb-32 animate-in fade-in duration-1000 font-body overflow-y-auto overflow-x-hidden">
       <div className="max-w-6xl mx-auto px-4 pt-6 space-y-8">
         
-        {/* Module A: The Input Zone Header */}
+        {/* Header Section */}
         <div className="flex items-center justify-between gap-4 p-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] shadow-sm border border-white/40 dark:border-slate-800/40 mx-1 safe-top">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Link href="/dashboard" className="shrink-0">
@@ -136,10 +138,10 @@ export default function FoodScannerPage() {
           </div>
         </div>
 
-        {/* Desktop Balanced 3-Column Layout */}
+        {/* 3-Column Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-1">
           
-          {/* Column 1: Input Zone (Desktop: col-span-4) */}
+          {/* Column 1: Input Zone */}
           <div className="lg:col-span-4 space-y-6">
             <Card className="rounded-[3rem] border-none shadow-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl p-6 h-fit">
                <div className="relative mb-6">
@@ -190,13 +192,13 @@ export default function FoodScannerPage() {
                 </form>
             </Card>
 
-            <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6">
+            <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 flex flex-col items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <p className="text-[9px] font-black uppercase text-blue-400 tracking-wider text-center">{t.guarantee}</p>
             </Alert>
           </div>
 
-          {/* Module B & C Results (Desktop: col-span-8) */}
+          {/* Results Zone */}
           <div className="lg:col-span-8 space-y-8">
             {!state?.result && !isAnalyzing ? (
                 <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-12 opacity-30 animate-pulse">
@@ -208,7 +210,7 @@ export default function FoodScannerPage() {
             ) : state?.result && (
                 <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700">
                     
-                    {/* Module B: Nutrient Breakdown Dashboard */}
+                    {/* Nutrient Dashboard */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Energy Circle */}
                         <Card className="rounded-[3rem] border-none bg-white dark:bg-slate-900 p-10 shadow-xl flex flex-col items-center justify-center text-center">
@@ -236,7 +238,7 @@ export default function FoodScannerPage() {
                         </Card>
                     </div>
 
-                    {/* Module C: Biological Logic & Advice */}
+                    {/* Biological Logic & Advice */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <Card className="rounded-[3rem] border-none bg-white dark:bg-slate-900 p-8 shadow-xl space-y-6">
                             <div className="flex items-center gap-3">
@@ -275,7 +277,7 @@ export default function FoodScannerPage() {
                         </Card>
                     </div>
 
-                    {/* Module D: Friendship Callback Bridge */}
+                    {/* Sync Button */}
                     <div className="flex flex-col items-center gap-4 pt-6">
                         <Button 
                             onClick={handleSyncEcosystem}
@@ -308,5 +310,26 @@ function MacroBar({ label, value, max, color }: any) {
         />
       </div>
     </div>
+  );
+}
+
+function UserCheck(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <polyline points="16 11 18 13 22 9" />
+    </svg>
   );
 }
