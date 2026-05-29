@@ -5,18 +5,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Camera, 
   Search, 
   Loader2, 
   X, 
-  Flame, 
   Activity,
   ArrowLeft,
   CheckCircle2,
   Utensils,
-  Scale,
   ShieldCheck,
   AlertCircle,
   UserCheck,
@@ -57,8 +55,9 @@ export default function FoodScannerPage() {
     }
   };
 
-  const onFormSubmit = (formData: FormData) => {
-    // If we have a preview but the formData doesn't have it (because it's not a standard input)
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData();
     if (preview) formData.set('imageDataUri', preview);
     formData.set('textQuery', textQuery);
     formData.set('language', lang);
@@ -171,7 +170,7 @@ export default function FoodScannerPage() {
                 )}
               </div>
 
-              <form action={onFormSubmit} className="space-y-4">
+              <form onSubmit={onFormSubmit} className="space-y-4">
                   <div className="relative group">
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
                     <Input 
@@ -194,7 +193,7 @@ export default function FoodScannerPage() {
 
             <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 flex flex-col items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                <p className="text-[9px] font-black uppercase text-blue-400 tracking-wider text-center">{t.guarantee}</p>
+                <AlertDescription className="text-[9px] font-black uppercase text-blue-400 tracking-wider text-center">{t.guarantee}</AlertDescription>
             </Alert>
           </div>
 
@@ -310,26 +309,5 @@ function MacroBar({ label, value, max, color }: any) {
         />
       </div>
     </div>
-  );
-}
-
-function UserCheck(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <polyline points="16 11 18 13 22 9" />
-    </svg>
   );
 }
