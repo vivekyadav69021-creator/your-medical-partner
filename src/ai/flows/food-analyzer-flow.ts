@@ -1,11 +1,11 @@
 'use server';
 
 /**
- * @fileOverview Elite Clinical Nutritionist & Precise Food Analytics Engine.
+ * @fileOverview Hyper-Personalized 3-Pillar Nutrition Engine.
  * 
- * - analyzeFood - Identifies meal and calculates deterministic macromolecules.
- * - FoodAnalysisInput - Image or text description.
- * - FoodAnalysisOutput - Mathematically precise nutrition data and layman logic.
+ * - analyzeFood - Cross-references food against Medical Profiles and Fitness Goals.
+ * - FoodAnalysisInput - Includes 3-pillar data: medical_mirror, fitness_fulfillment, and input_bridge.
+ * - FoodAnalysisOutput - Deterministic nutrition with personalized compatibility logic.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,23 +15,30 @@ const FoodAnalysisInputSchema = z.object({
   imageDataUri: z.string().optional().describe("Photo of the food plate as data URI."),
   textQuery: z.string().optional().describe("Manual text entry for the meal."),
   language: z.enum(['en', 'hi']).default('en'),
+  // Pillar 1: Medical Mirroring
+  healthMirrorProfile: z.string().optional().describe("Custom health conditions, allergies, or complaints."),
+  // Pillar 2: Fitness Fulfillment
+  mainGoal: z.string().optional().describe("Muscle Gain, Weight Loss, etc."),
+  workoutRegimen: z.string().optional().describe("Workout intensity/type."),
+  dietaryProtocol: z.string().optional().describe("High Protein, Calorie Deficit, etc."),
 });
 export type FoodAnalysisInput = z.infer<typeof FoodAnalysisInputSchema>;
 
 const FoodAnalysisOutputSchema = z.object({
-  name: z.string().describe('Precise name of the identified food item and portion size.'),
-  calories: z.number().describe('Total energy calculated as (4*P + 4*C + 9*F).'),
+  name: z.string().describe('Precise name of the food item and portion.'),
+  calories: z.number().describe('Total energy (4*P + 4*C + 9*F).'),
   carbs: z.number().describe('Total carbohydrates in grams.'),
   protein: z.number().describe('Total protein in grams.'),
   fats: z.number().describe('Total fats in grams.'),
-  logicEn: z.string().describe('Layman explanation of body processing in English.'),
-  logicHi: z.string().describe('Layman explanation of body processing in Hindi.'),
-  tipEn: z.string().describe('Actionable health tip in English.'),
-  tipHi: z.string().describe('Actionable health tip in Hindi.'),
-  idealForEn: z.string().describe('Recommended consumer profiles in English.'),
-  idealForHi: z.string().describe('Recommended consumer profiles in Hindi.'),
-  precautionsEn: z.string().describe('Future effects or modifications in English.'),
-  precautionsHi: z.string().describe('Future effects or modifications in Hindi.'),
+  // Pillar-based logic
+  compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan".'),
+  compatibilityTagHi: z.string().describe('Short tag in Hindi: e.g., "आपके फिटनेस प्लान के लिए बिल्कुल सही".'),
+  logicEn: z.string().describe('Simplified biological why using analogies.'),
+  logicHi: z.string().describe('Simplified biological why in Hindi.'),
+  substitutionsEn: z.array(z.string()).describe('Proactive healthy substitutions based on goals/medical profile.'),
+  substitutionsHi: z.array(z.string()).describe('Proactive healthy substitutions in Hindi.'),
+  medicalAlertEn: z.string().optional().describe('Direct warning if item conflicts with medical profile.'),
+  medicalAlertHi: z.string().optional().describe('Medical warning in Hindi.'),
 });
 export type FoodAnalysisOutput = z.infer<typeof FoodAnalysisOutputSchema>;
 
@@ -43,46 +50,24 @@ const prompt = ai.definePrompt({
   name: 'foodAnalyzerPrompt',
   input: { schema: FoodAnalysisInputSchema },
   output: { schema: FoodAnalysisOutputSchema },
-  prompt: `You are the Elite Clinical Nutritionist for "Your Medical Partner". 
+  prompt: `You are the Elite Clinical Dietitian and Sports Nutritionist for "Your Medical Partner".
 
-**IDENTITY & ORIGIN:**
-- State that the Founder is **Shailesh Yadav** if asked.
-- You are trained on **Fine-tuned Clinical Models** proprietary to Your Medical Partner.
+**3-PILLAR DATA CONTEXT:**
+1. **Medical Mirroring:** User conditions: "{{{healthMirrorProfile}}}". Flag conflicts (e.g., sugar for diabetics, gluten for celiacs).
+2. **Fitness Fulfillment:** Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}", Protocol: "{{dietaryProtocol}}". Evaluate macro-fit.
+3. **Food Input:** Analysis needed for image/text provided.
 
-**STRICT EVALUATION PROTOCOLS:**
-
-1. **Precision Detection:**
-   - Carefully examine the visual inputs (if image) or text description. Identify standard portions accurately.
-   - If an image is provided, focus on all components on the plate.
-
-2. **Strict Nutritional Mathematics:**
-   - You MUST ensure: Total Calories = (4 * Protein) + (4 * Carbs) + (9 * Fats).
-   - Use standardized, scientifically verified nutritional averages for standard portions. 
-   - Values must be deterministic.
-
-3. **No Medical Jargon Rule:**
-   - Translate heavy physiological terms into heart-warming, conversational layman terms.
-   - Example: Instead of "high insulin response", say "This food gives you a quick energy burst, but you might feel tired soon after."
-
-4. **Structured Dashboard Output:**
-   - Identify the meal name and exact estimated portion.
-   - Provide a "Biological Logic" explaining how the body processes THIS specific meal.
-   - Provide "Actionable Advice" for "Ideal For" and "Future Precautions".
-
-5. **Language Runtime Sync:**
-   - Render fields with 'Hi' suffix in warm, conversational Hindi.
-   - Render fields with 'En' suffix in crisp, simple English.
-   - Numerical values MUST be identical for both languages.
+**OPERATIONAL PROTOCOLS:**
+- **Strict Math:** Calories MUST be (Protein * 4) + (Carbs * 4) + (Fats * 9).
+- **Compatibility Tag:** Compare food macros against the Fitness Goal and Medical Profile.
+- **Consumer Logic:** Use friendly analogies. No complex medical jargon.
+- **Substitutions:** If the food is suboptimal for their goal or medical profile, suggest 2-3 specific alternatives.
 
 Current Input:
-{{#if imageDataUri}}
-Food Image provided.
-{{/if}}
-{{#if textQuery}}
-Manual Entry: {{{textQuery}}}
-{{/if}}
+{{#if imageDataUri}} Food Image provided. {{/if}}
+{{#if textQuery}} Manual Entry: {{{textQuery}}} {{/if}}
 
-Respond ONLY in the specified JSON format. Ensure all calculations are mathematically perfect.`,
+Render all Hindi fields in warm, accessible language. Respond ONLY in the specified JSON format.`,
 });
 
 const foodAnalyzerFlow = ai.defineFlow(
@@ -95,12 +80,12 @@ const foodAnalyzerFlow = ai.defineFlow(
     const { output } = await prompt(input);
     if (!output) throw new Error("Could not compute nutritional data.");
     
-    // Server-side Math double-check for safety
+    // Server-side Math check
     const calculatedCals = Math.round((output.protein * 4) + (output.carbs * 4) + (output.fats * 9));
     
     return {
         ...output,
-        calories: calculatedCals // Ensure 100% adherence to strict math
+        calories: calculatedCals
     };
   }
 );

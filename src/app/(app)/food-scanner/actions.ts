@@ -7,6 +7,10 @@ const foodScannerSchema = z.object({
   imageDataUri: z.string().optional(),
   textQuery: z.string().optional(),
   language: z.enum(['en', 'hi']).optional(),
+  healthMirrorProfile: z.string().optional(),
+  mainGoal: z.string().optional(),
+  workoutRegimen: z.string().optional(),
+  dietaryProtocol: z.string().optional(),
 }).refine(data => data.imageDataUri || data.textQuery, {
   message: "Please provide either an image or a text description.",
 });
@@ -15,19 +19,28 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
   const imageDataUri = formData.get('imageDataUri') as string || undefined;
   const textQuery = formData.get('textQuery') as string || undefined;
   const language = (formData.get('language') as 'en' | 'hi') || 'en';
+  
+  const healthMirrorProfile = formData.get('healthMirrorProfile') as string || undefined;
+  const mainGoal = formData.get('mainGoal') as string || undefined;
+  const workoutRegimen = formData.get('workoutRegimen') as string || undefined;
+  const dietaryProtocol = formData.get('dietaryProtocol') as string || undefined;
 
-  const validated = foodScannerSchema.safeParse({ imageDataUri, textQuery, language });
+  const validated = foodScannerSchema.safeParse({ 
+    imageDataUri, 
+    textQuery, 
+    language,
+    healthMirrorProfile,
+    mainGoal,
+    workoutRegimen,
+    dietaryProtocol
+  });
 
   if (!validated.success) {
     return { result: null, error: validated.error.errors[0].message, timestamp: Date.now() };
   }
 
   try {
-    const result = await analyzeFood({
-        imageDataUri: validated.data.imageDataUri,
-        textQuery: validated.data.textQuery,
-        language: validated.data.language,
-    } as FoodAnalysisInput);
+    const result = await analyzeFood(validated.data as FoodAnalysisInput);
     
     return {
       result: JSON.parse(JSON.stringify(result)),
