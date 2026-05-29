@@ -33,6 +33,7 @@ const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 export default function FoodScannerPage() {
   const [state, formAction, isAnalyzing] = useActionState(analyzeFoodAction, initialAnalysisState);
   const [preview, setPreview] = useState<string | null>(null);
+  const [textQuery, setTextQuery] = useState('');
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -62,7 +63,6 @@ export default function FoodScannerPage() {
 
   const handleSyncEcosystem = () => {
     if (!state?.result) return;
-    // Mock callback to global state/bridge
     toast({
       title: "Health Bridge Triggered",
       description: "Meal added to My Day. Reward streaks updated.",
@@ -145,13 +145,15 @@ export default function FoodScannerPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input 
                       name="textQuery"
+                      value={textQuery}
+                      onChange={(e) => setTextQuery(e.target.value)}
                       placeholder="Type your meal here..." 
                       className="rounded-2xl h-14 pl-12 bg-slate-50 dark:bg-slate-800 border-none shadow-inner text-sm font-bold"
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    disabled={isAnalyzing || (!preview && !queryInputRef.current?.value)}
+                    disabled={isAnalyzing || (!preview && !textQuery.trim())}
                     className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-xl active:scale-95 transition-all"
                   >
                     {isAnalyzing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing vision...</> : 'Identify Meal'}
