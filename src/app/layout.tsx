@@ -7,12 +7,6 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'Your Medical Partner',
   description: 'Your Digital Health Companion',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Your Medical Partner',
-  },
   formatDetection: {
     telephone: false,
   },
@@ -22,14 +16,12 @@ export const metadata: Metadata = {
   }
 };
 
-// Precise viewport settings for 100% native app feel
 export const viewport: Viewport = {
   themeColor: '#2488E8',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover', // Ensures app uses the entire screen including the notch
 };
 
 export default function RootLayout({
@@ -46,10 +38,6 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossOrigin=""/>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin=""></script>
-        {/* Native App Meta Tags */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="antialiased selection:bg-primary/20 overflow-hidden touch-none h-[100dvh] w-screen fixed inset-0 font-body">
         <ThemeProvider
