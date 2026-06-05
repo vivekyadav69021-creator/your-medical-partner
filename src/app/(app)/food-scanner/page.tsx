@@ -26,7 +26,8 @@ import {
   FileText,
   Activity,
   Milk,
-  Sparkles
+  Sparkles,
+  Info
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -75,7 +76,11 @@ export default function FoodScannerPage() {
       const reader = new FileReader();
       reader.onload = () => {
         setPreview(reader.result as string);
-        // Do NOT automatically submit. We need the user to label the meal now.
+        // Prompt user to label the meal
+        toast({
+            title: lang === 'en' ? "Identify Your Meal" : "भोजन की पहचान करें",
+            description: lang === 'en' ? "Please type what is in the photo for 100% accuracy." : "सटीकता के लिए कृपया लिखें कि फोटो में क्या है।"
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -83,6 +88,17 @@ export default function FoodScannerPage() {
 
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Mandatory Validation: If photo exists, name must be typed
+    if (preview && !textLabel.trim()) {
+        toast({ 
+            variant: 'destructive', 
+            title: lang === 'en' ? "Identity Required" : "पहचान आवश्यक", 
+            description: lang === 'en' ? "Please type what is in the photo to proceed." : "कृपया आगे बढ़ने के लिए लिखें कि फोटो में क्या है।" 
+        });
+        return;
+    }
+
     if (!textLabel.trim() && !preview) {
         toast({ 
             variant: 'destructive', 
@@ -91,6 +107,7 @@ export default function FoodScannerPage() {
         });
         return;
     }
+
     const formData = new FormData();
     if (preview) formData.set('imageDataUri', preview);
     formData.set('textQuery', textLabel || "Unidentified Meal");
@@ -124,7 +141,8 @@ export default function FoodScannerPage() {
         modeMeal: "Meal",
         modeBarcode: "Barcode",
         modeLabel: "Label (OCR)",
-        guarantee: "Deterministic range-based calculations applied to all results."
+        guarantee: "Deterministic range-based calculations applied to all results.",
+        mandatoryHint: "Labeling your meal is mandatory for 100% accurate AI detection."
     },
     hi: {
         title: "न्यूट्री-स्कैन प्रो",
@@ -146,7 +164,8 @@ export default function FoodScannerPage() {
         modeMeal: "भोजन",
         modeBarcode: "बारकोड",
         modeLabel: "लेबल (OCR)",
-        guarantee: "सभी परिणामों पर सटीक रेंज-आधारित गणना लागू की गई है।"
+        guarantee: "सभी परिणामों पर सटीक रेंज-आधारित गणना लागू की गई है।",
+        mandatoryHint: "100% सटीक AI पहचान के लिए अपने भोजन का नाम लिखना अनिवार्य है।"
     }
   }[lang];
 
@@ -200,21 +219,36 @@ export default function FoodScannerPage() {
             </section>
         )}
 
-        {/* Meal Identification - Required if photo exists, Optional if not */}
+        {/* Meal Identification - Required if photo exists */}
         <section className="space-y-4">
             <div className="space-y-2">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">
-                    {preview ? "Identify Your Meal (Required)" : "Direct Search"}
-                </h2>
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80">
+                        {preview ? "Identify Your Meal (Mandatory)" : "Direct Search"}
+                    </h2>
+                    {preview && (
+                        <div className="flex items-center gap-1 text-[8px] font-black text-rose-500 uppercase tracking-widest bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                           <AlertCircle className="w-2.5 h-2.5" /> Required
+                        </div>
+                    )}
+                </div>
                 <div className="relative">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
                     <Input 
                         value={textLabel} 
                         onChange={(e) => setTextLabel(e.target.value)} 
                         placeholder={preview ? t.scanPlaceholder : t.placeholder} 
-                        className="rounded-[2.5rem] h-20 pl-16 pr-8 bg-white dark:bg-slate-900 border-none shadow-2xl text-lg font-bold placeholder:text-slate-300 focus-visible:ring-4 focus-visible:ring-primary/10 transition-all" 
+                        className={cn(
+                            "rounded-[2.5rem] h-20 pl-16 pr-8 bg-white dark:bg-slate-900 border-none shadow-2xl text-lg font-bold placeholder:text-slate-300 focus-visible:ring-4 transition-all",
+                            preview && !textLabel ? "ring-4 ring-rose-100 dark:ring-rose-900/20" : "focus-visible:ring-primary/10"
+                        )} 
                     />
                 </div>
+                {preview && (
+                    <p className="text-[9px] font-bold text-slate-400 px-6 italic flex items-center gap-2">
+                        <Info className="w-3 h-3" /> {t.mandatoryHint}
+                    </p>
+                )}
             </div>
         </section>
 

@@ -62,7 +62,11 @@ const prompt = ai.definePrompt({
 **GROUND TRUTH PROTOCOL:**
 - The user has provided a text label: "{{{textQuery}}}". 
 - You MUST treat this label as the ground truth of what the food item is.
-- If an image is provided, use it to verify the portion size, ingredients, and specific preparation style based on the label.
+- If an image is provided, use it as a verification tool to:
+    1. Identify internal components/objects not mentioned (e.g., extra butter, toppings, side sauces).
+    2. Confirm portion size based on visual scale.
+    3. Detect ingredients that might be hidden or implied.
+- Your final nutritional analysis must be a synthesis of BOTH the user's label and the visual object detection.
 
 **SCAN MODE:** {{{scanType}}}
 
@@ -83,8 +87,10 @@ const prompt = ai.definePrompt({
 **LANGUAGE:** Render all Hindi fields in warm, clear, conversational Hindi. Use English for English mode.
 
 Current Input:
-{{#if imageDataUri}} Image provided. {{/if}}
-Food Label provided by user: "{{{textQuery}}}"
+{{#if imageDataUri}} 
+Image provided: {{media url=imageDataUri}} 
+{{/if}}
+Food Label provided by user (Mandatory Context): "{{{textQuery}}}"
 
 Respond ONLY in the specified JSON format.`,
 });
