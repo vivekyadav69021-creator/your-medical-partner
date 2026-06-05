@@ -27,7 +27,8 @@ import {
   Milk,
   Sparkles,
   Info,
-  ExternalLink
+  ExternalLink,
+  ShieldAlert
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -83,12 +84,6 @@ export default function FoodScannerPage() {
       const reader = new FileReader();
       reader.onload = () => {
         setPreview(reader.result as string);
-        if (scanMode === 'standard') {
-            toast({
-                title: lang === 'en' ? "Identify Your Meal" : "भोजन की पहचान करें",
-                description: lang === 'en' ? "Please type what is in the photo for 100% accuracy." : "सटीकता के लिए कृपया लिखें कि फोटो में क्या है।"
-            });
-        }
       };
       reader.readAsDataURL(file);
     }
@@ -97,7 +92,6 @@ export default function FoodScannerPage() {
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // For standard mode, labeling is mandatory if a photo is provided
     if (scanMode === 'standard' && preview && !textLabel.trim()) {
         toast({ 
             variant: 'destructive', 
@@ -107,7 +101,6 @@ export default function FoodScannerPage() {
         return;
     }
 
-    // For standard mode, at least one input is needed
     if (scanMode === 'standard' && !textLabel.trim() && !preview) {
         toast({ 
             variant: 'destructive', 
@@ -117,7 +110,6 @@ export default function FoodScannerPage() {
         return;
     }
 
-    // For barcode/ocr mode, photo is mandatory
     if (scanMode !== 'standard' && !preview) {
         toast({
             variant: 'destructive',
@@ -129,7 +121,6 @@ export default function FoodScannerPage() {
 
     const formData = new FormData();
     if (preview) formData.set('imageDataUri', preview);
-    // Use text label if standard, otherwise generic label for non-standard visual modes
     formData.set('textQuery', scanMode === 'standard' ? (textLabel || "Unidentified Meal") : `Visual ${scanMode} scan`);
     formData.set('language', lang);
     formData.set('scanType', scanMode);
@@ -149,37 +140,37 @@ export default function FoodScannerPage() {
         placeholder: "Type meal name (e.g., 2 Roti, Dal)",
         scanPlaceholder: "What's in the photo? (e.g. 2 Idlis)",
         startBtn: "Analyze Diet",
-        logic: "Clinical Biological Logic",
-        subs: "Safe Alternatives",
-        macros: "Macro Breakdown",
-        micros: "Micro Nutrients",
+        logic: "Simple Explanation",
+        subs: "Better Choices For You",
+        macros: "Body's Core Fuel",
+        micros: "Essential Minerals",
         vitamins: "Vitamins Detected",
         scanModes: "Select Scan Mode",
         modeMeal: "Meal",
         modeBarcode: "Barcode",
         modeLabel: "Label",
-        guarantee: "Deterministic range-based calculations applied to all results.",
-        mandatoryHint: "Labeling your meal is mandatory for 100% accurate AI detection."
+        guarantee: "Safe and simple advice for everyone.",
+        mandatoryHint: "Labeling your meal helps AI provide 100% accurate info."
     },
     hi: {
         title: "न्यूट्री-स्कैन प्रो",
-        slogan: "सटीक क्लिनिकल पोषण",
+        slogan: "सटीक पोषण जानकारी",
         medicalTitle: "मेडिकल प्रोफाइल (वैकल्पिक)",
         medicalDesc: "जैसे: मधुमेह, उच्च रक्तचाप...",
         placeholder: "भोजन का नाम लिखें (जैसे: 2 रोटी, दाल)",
         scanPlaceholder: "फोटो में क्या है? (जैसे: 2 इडली)",
-        startBtn: "आहार विश्लेषण",
-        logic: "क्लिनिकल बायोलॉजिकल लॉजिक",
-        subs: "सुरक्षित विकल्प",
-        macros: "मैक्रो विवरण",
-        micros: "सूक्ष्म पोषक तत्व",
+        startBtn: "आहार की जांच करें",
+        logic: "आसान शब्दों में समझें",
+        subs: "आपके लिए बेहतर विकल्प",
+        macros: "शरीर की मुख्य ऊर्जा",
+        micros: "जरूरी मिनरल्स",
         vitamins: "पाए गए विटामिन",
         scanModes: "स्कैन मोड चुनें",
         modeMeal: "भोजन",
         modeBarcode: "बारकोड",
         modeLabel: "लेबल",
-        guarantee: "सभी परिणामों पर सटीक रेंज-आधारित गणना लागू की गई है।",
-        mandatoryHint: "100% सटीक AI पहचान के लिए अपने भोजन का नाम लिखना अनिवार्य है।"
+        guarantee: "सभी के लिए सुरक्षित और सरल सलाह।",
+        mandatoryHint: "भोजन का नाम लिखने से एआई 100% सटीक जानकारी देता है।"
     }
   }[lang];
 
@@ -190,9 +181,9 @@ export default function FoodScannerPage() {
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
              <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white/50 dark:bg-[#3c4043] shadow-sm border border-white/20 shrink-0">
+              <button className="rounded-full h-11 w-11 bg-white/50 dark:bg-[#3c4043] shadow-sm border border-white/20 shrink-0 flex items-center justify-center">
                 <ArrowLeft className="h-6 w-6 text-[#1A365D] dark:text-white" />
-              </Button>
+              </button>
             </Link>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
@@ -232,12 +223,11 @@ export default function FoodScannerPage() {
             )}
 
             <section className="space-y-6">
-                {/* Search Bar / Identification Box - Only visible in Standard Mode */}
                 {scanMode === 'standard' && (
                     <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
                         <div className="flex items-center justify-between px-2">
                             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80">
-                                {preview ? "Identify Your Meal (Required)" : "Direct Search"}
+                                {preview ? "Tell AI What This Is (Mandatory)" : "Direct Search"}
                             </h2>
                         </div>
                         <div className="relative">
@@ -278,7 +268,7 @@ export default function FoodScannerPage() {
                         <UserCheck className="h-5 w-5 text-primary" />
                         <div className="text-left">
                             <h3 className="text-[11px] font-black text-[#1A365D] dark:text-white uppercase tracking-wider">{t.medicalTitle}</h3>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase">Health Mirror Settings</p>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase">Personalize Your Result</p>
                         </div>
                     </div>
                     <ChevronDown className={cn("h-4 w-4 text-slate-300 transition-transform", showSettings && "rotate-180")} />
@@ -287,7 +277,7 @@ export default function FoodScannerPage() {
                 {showSettings && (
                     <div className="p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6 animate-in fade-in slide-in-from-top-2">
                         <div className="space-y-2">
-                            <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Profile Mirroring</Label>
+                            <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Chronic Conditions or Allergies</Label>
                             <Textarea 
                                 value={healthMirror}
                                 onChange={(e) => setHealthMirror(e.target.value)}
@@ -297,7 +287,7 @@ export default function FoodScannerPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Goal</Label>
+                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Main Goal</Label>
                                 <Select value={mainGoal} onValueChange={setMainGoal}>
                                     <SelectTrigger className="rounded-xl h-11 bg-white dark:bg-slate-900 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
                                     <SelectContent className="rounded-xl border-none">
@@ -323,7 +313,7 @@ export default function FoodScannerPage() {
                 )}
 
                 <Button onClick={() => onFormSubmit({ preventDefault: () => {} } as any)} disabled={isAnalyzing || (scanMode === 'standard' && !textLabel.trim() && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                    {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Processing...</> : t.startBtn}
+                    {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Analyzing...</> : t.startBtn}
                 </Button>
             </section>
           </>
@@ -339,9 +329,9 @@ export default function FoodScannerPage() {
                         <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{localResult.name}</h2>
                         <div className={cn(
                             "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
-                            localResult.medicalAlertEn ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
+                            (lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
                         )}>
-                            {localResult.medicalAlertEn ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                            {(lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
                             {lang === 'en' ? localResult.compatibilityTagEn : localResult.compatibilityTagHi}
                         </div>
                     </div>
@@ -378,10 +368,10 @@ export default function FoodScannerPage() {
                     </div>
                 </section>
 
-                {localResult.medicalAlertEn && (
+                {(lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) && (
                     <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
                         <Ban className="h-10 w-10" />
-                        <h3 className="text-xl font-black uppercase tracking-widest">Medical Warning</h3>
+                        <h3 className="text-xl font-black uppercase tracking-widest">Safety Alert</h3>
                         <p className="text-sm font-bold leading-relaxed">
                             {lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi}
                         </p>
@@ -415,7 +405,7 @@ export default function FoodScannerPage() {
 
                 <Alert className="rounded-[3rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-8 border-dashed border-2 border-blue-100 dark:border-blue-800">
                     <div className="flex flex-col items-center gap-4 text-center">
-                        <ShieldCheck className="h-8 w-8 text-primary opacity-40" />
+                        <ShieldAlert className="h-8 w-8 text-primary opacity-40" />
                         <p className="text-[10px] font-black uppercase text-blue-500/80 tracking-[0.3em] leading-relaxed">
                             {t.guarantee}
                         </p>

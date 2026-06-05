@@ -40,12 +40,12 @@ const FoodAnalysisOutputSchema = z.object({
   // Pillar-based logic
   compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan".'),
   compatibilityTagHi: z.string().describe('Short tag in Hindi.'),
-  logicEn: z.string().describe('Simplified biological why using analogies.'),
-  logicHi: z.string().describe('Simplified biological why in Hindi.'),
-  substitutionsEn: z.array(z.string()).describe('Proactive healthy substitutions.'),
-  substitutionsHi: z.array(z.string()).describe('Proactive healthy substitutions in Hindi.'),
-  medicalAlertEn: z.string().optional().describe('Direct warning if item conflicts with medical profile.'),
-  medicalAlertHi: z.string().optional().describe('Medical warning in Hindi.'),
+  logicEn: z.string().describe('Extremely simple explanation using home-style analogies. No medical jargon.'),
+  logicHi: z.string().describe('Extremely simple explanation in Hindi using home-style analogies. No medical jargon.'),
+  substitutionsEn: z.array(z.string()).describe('Simple healthy substitutions.'),
+  substitutionsHi: z.array(z.string()).describe('Simple healthy substitutions in Hindi.'),
+  medicalAlertEn: z.string().optional().describe('Direct warning in simple English if item conflicts with medical profile.'),
+  medicalAlertHi: z.string().optional().describe('Direct warning in simple Hindi if item conflicts with medical profile.'),
 });
 export type FoodAnalysisOutput = z.infer<typeof FoodAnalysisOutputSchema>;
 
@@ -60,37 +60,33 @@ const prompt = ai.definePrompt({
   prompt: `You are the Elite Clinical Dietitian & Precise Food Analytics Engine for "Your Medical Partner".
 
 **GROUND TRUTH PROTOCOL:**
-- The user has provided a text label: "{{{textQuery}}}". 
-- You MUST treat this label as the ground truth of what the food item is.
-- If an image is provided, use it as a verification tool to:
-    1. Identify internal components/objects not mentioned (e.g., extra butter, toppings, side sauces).
-    2. Confirm portion size based on visual scale.
-    3. Detect ingredients that might be hidden or implied.
-- Your final nutritional analysis must be a synthesis of BOTH the user's label and the visual object detection.
+- The user provided label: "{{{textQuery}}}". 
+- Treat this label as the primary source of truth.
+- If an image is provided, use it to confirm portion size and detect extra ingredients (like butter or oil).
+
+**NO MEDICAL JARGON POLICY (STRICT):**
+- You MUST NOT use words like "hyperglycemia", "glucogenic", "cardiovascular", "electrolytes", "metabolism", etc.
+- Instead, use words like "Blood sugar", "Heart health", "Body's battery", "Repair blocks".
+- Use analogies like: "This is premium fuel for your body's engine" or "This acts like a sponge for fats".
 
 **SCAN MODE:** {{{scanType}}}
 
 **3-PILLAR DATA CONTEXT:**
 1. **Medical Mirroring:** User conditions: "{{{healthMirrorProfile}}}". Cross-reference sodium, potassium, and fats against these conditions.
 2. **Fitness Fulfillment:** Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}", Protocol: "{{dietaryProtocol}}".
-3. **Visual Input:** If scanType is 'barcode', identify the product from the barcode. If 'ocr', read the nutrition table strictly.
 
 **STRICT NUTRITIONAL MATHEMATICS:**
 - You MUST return a RANGE for all values (e.g., "12g - 15g").
-- Ensure Total Calories ≈ (4 * Protein) + (4 * Carbs) + (9 * Fats). Do not output mismatched math.
-- MICRO-NUTRIENTS: You MUST estimate Calcium, Potassium, Iron, and Sodium. 
 
-**MEDICAL CONFLICTS:**
-- If a user has Hypertension, high Sodium must trigger a BOLD medical alert and a "DO NOT EAT" recommendation.
-- If a user has Diabetes, high Carbs/Sugar must trigger an alert.
-
-**LANGUAGE:** Render all Hindi fields in warm, clear, conversational Hindi. Use English for English mode.
+**LANGUAGE & CLARITY:**
+- Render all Hindi fields in warm, clear, and very simple "Home-style" Hindi.
+- If a user has a medical condition, explain the conflict like a family friend, not a textbook.
 
 Current Input:
 {{#if imageDataUri}} 
 Image provided: {{media url=imageDataUri}} 
 {{/if}}
-Food Label provided by user (Mandatory Context): "{{{textQuery}}}"
+Food Label provided by user: "{{{textQuery}}}"
 
 Respond ONLY in the specified JSON format.`,
 });
