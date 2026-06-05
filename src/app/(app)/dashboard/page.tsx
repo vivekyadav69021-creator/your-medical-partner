@@ -28,7 +28,8 @@ import {
   Circle,
   AlertCircle,
   Plus,
-  Sparkles
+  Sparkles,
+  Apple
 } from 'lucide-react';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -127,10 +128,10 @@ export default function DashboardPage() {
             iconBg="bg-blue-50 dark:bg-blue-900/30"
           />
           <ServiceCard 
-            title="Expert Doctor" 
-            slogan="Video Consult" 
-            icon={Stethoscope} 
-            href="/consultation" 
+            title="Food Scanner" 
+            slogan="AI Nutrition Lab" 
+            icon={Apple} 
+            href="/food-scanner" 
             color="from-pink-500 to-rose-600" 
             bg="bg-pink-50/50 dark:bg-pink-900/10" 
             border="border-pink-100 dark:border-pink-800/50"
