@@ -28,7 +28,8 @@ import {
   Sparkles,
   Info,
   ExternalLink,
-  ShieldAlert
+  ShieldAlert,
+  RotateCcw
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -63,9 +64,7 @@ export default function FoodScannerPage() {
 
   // Reset isolated state when switching modes
   useEffect(() => {
-    setPreview(null);
-    setTextLabel('');
-    setLocalResult(null);
+    handleRefresh();
   }, [scanMode]);
 
   useEffect(() => {
@@ -77,6 +76,14 @@ export default function FoodScannerPage() {
       toast({ variant: 'destructive', title: "Analysis Error", description: state.error });
     }
   }, [state, lang, toast]);
+
+  const handleRefresh = () => {
+    setPreview(null);
+    setTextLabel('');
+    setLocalResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -175,13 +182,13 @@ export default function FoodScannerPage() {
   }[lang];
 
   return (
-    <div className="min-h-[100dvh] w-full bg-background pb-32 animate-in fade-in duration-500 font-body overflow-y-auto scrollbar-hide">
+    <div className="min-h-[100dvh] w-full bg-[#f0f4ff] dark:bg-slate-950 pb-32 animate-in fade-in duration-500 font-body overflow-y-auto scrollbar-hide" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
       
-      <header className="sticky top-0 z-50 px-4 pt-4 pb-4 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl border-b border-white/10 safe-top">
+      <header className="sticky top-0 z-50 px-4 pt-4 pb-4 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl border-b border-white/20 safe-top">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
              <Link href="/dashboard">
-              <button className="rounded-full h-11 w-11 bg-white/50 dark:bg-[#3c4043] shadow-sm border border-white/20 shrink-0 flex items-center justify-center">
+              <button className="rounded-full h-11 w-11 bg-white/60 dark:bg-[#3c4043]/60 shadow-sm border border-white/20 shrink-0 flex items-center justify-center">
                 <ArrowLeft className="h-6 w-6 text-[#1A365D] dark:text-white" />
               </button>
             </Link>
@@ -194,9 +201,14 @@ export default function FoodScannerPage() {
             </div>
           </div>
           
-          <div className="bg-white/60 dark:bg-slate-800/60 p-1 rounded-full border border-white/20 shadow-inner flex items-center gap-1 shrink-0">
-            <button onClick={() => setLang('en')} className={cn("rounded-full px-3 py-1.5 text-[9px] font-black uppercase transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</button>
-            <button onClick={() => setLang('hi')} className={cn("rounded-full px-3 py-1.5 text-[9px] font-black uppercase transition-all", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400")}>हिन्दी</button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={handleRefresh} className="rounded-full h-10 w-10 bg-white/60 dark:bg-slate-800/60 border border-white/20 shadow-sm">
+                <RotateCcw className="h-4 w-4 text-primary" />
+            </Button>
+            <div className="bg-white/60 dark:bg-slate-800/60 p-1 rounded-full border border-white/20 shadow-inner flex items-center gap-1 shrink-0">
+                <button onClick={() => setLang('en')} className={cn("rounded-full px-3 py-1.5 text-[9px] font-black uppercase transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</button>
+                <button onClick={() => setLang('hi')} className={cn("rounded-full px-3 py-1.5 text-[9px] font-black uppercase transition-all", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400")}>हिन्दी</button>
+            </div>
           </div>
         </div>
       </header>
@@ -204,7 +216,7 @@ export default function FoodScannerPage() {
       <main className="max-w-2xl mx-auto px-4 pt-6 space-y-8">
 
         <section className="space-y-4">
-             <div className="flex items-center gap-2 p-1.5 bg-slate-100/50 dark:bg-slate-900/50 rounded-full border border-white/10 overflow-x-auto scrollbar-hide">
+             <div className="flex items-center gap-2 p-1.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-full border border-white/20 overflow-x-auto scrollbar-hide shadow-sm">
                 <ScanModePill active={scanMode === 'standard'} icon={Utensils} label={t.modeMeal} onClick={() => setScanMode('standard')} />
                 <ScanModePill active={scanMode === 'barcode'} icon={Barcode} label={t.modeBarcode} onClick={() => setScanMode('barcode')} />
                 <ScanModePill active={scanMode === 'ocr'} icon={FileText} label={t.modeLabel} onClick={() => setScanMode('ocr')} />
@@ -237,7 +249,7 @@ export default function FoodScannerPage() {
                                 onChange={(e) => setTextLabel(e.target.value)} 
                                 placeholder={preview ? t.scanPlaceholder : t.placeholder} 
                                 className={cn(
-                                    "rounded-[2rem] h-16 pl-16 pr-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all",
+                                    "rounded-[2rem] h-16 pl-16 pr-8 bg-white/80 dark:bg-slate-900/80 border border-white/40 dark:border-slate-800 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all backdrop-blur-xl",
                                     preview && !textLabel ? "border-rose-300 ring-4 ring-rose-50" : "focus-visible:ring-primary/10"
                                 )} 
                             />
@@ -262,10 +274,12 @@ export default function FoodScannerPage() {
 
                 <button 
                     onClick={() => setShowSettings(!showSettings)} 
-                    className="w-full flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 transition-all active:scale-[0.98]"
+                    className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm transition-all active:scale-[0.98]"
                 >
                     <div className="flex items-center gap-3">
-                        <UserCheck className="h-5 w-5 text-primary" />
+                        <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                            <UserCheck className="h-5 w-5" />
+                        </div>
                         <div className="text-left">
                             <h3 className="text-[11px] font-black text-[#1A365D] dark:text-white uppercase tracking-wider">{t.medicalTitle}</h3>
                             <p className="text-[8px] font-bold text-slate-400 uppercase">Personalize Your Result</p>
@@ -275,21 +289,21 @@ export default function FoodScannerPage() {
                 </button>
 
                 {showSettings && (
-                    <div className="p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6 animate-in fade-in slide-in-from-top-2">
+                    <div className="p-6 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-inner space-y-6 animate-in fade-in slide-in-from-top-2">
                         <div className="space-y-2">
                             <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Chronic Conditions or Allergies</Label>
                             <Textarea 
                                 value={healthMirror}
                                 onChange={(e) => setHealthMirror(e.target.value)}
                                 placeholder={t.medicalDesc}
-                                className="rounded-xl bg-white dark:bg-slate-900 border-none shadow-sm font-bold text-sm min-h-[80px]"
+                                className="rounded-xl bg-white/80 dark:bg-slate-800/80 border-none shadow-sm font-bold text-sm min-h-[80px]"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                                 <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Main Goal</Label>
                                 <Select value={mainGoal} onValueChange={setMainGoal}>
-                                    <SelectTrigger className="rounded-xl h-11 bg-white dark:bg-slate-900 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="rounded-xl h-11 bg-white/80 dark:bg-slate-800/80 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
                                     <SelectContent className="rounded-xl border-none">
                                         <SelectItem value="Muscle Gain">Muscle Gain</SelectItem>
                                         <SelectItem value="Weight Loss">Weight Loss</SelectItem>
@@ -300,7 +314,7 @@ export default function FoodScannerPage() {
                             <div className="space-y-1.5">
                                  <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Workout</Label>
                                 <Select value={workout} onValueChange={setWorkout}>
-                                    <SelectTrigger className="rounded-xl h-11 bg-white dark:bg-slate-900 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="rounded-xl h-11 bg-white/80 dark:bg-slate-800/80 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
                                     <SelectContent className="rounded-xl border-none">
                                         <SelectItem value="Heavy Lifting">Strength</SelectItem>
                                         <SelectItem value="Cardio">Cardio</SelectItem>
@@ -329,7 +343,7 @@ export default function FoodScannerPage() {
                         <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{localResult.name}</h2>
                         <div className={cn(
                             "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
-                            (lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
+                            (lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
                         )}>
                             {(lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
                             {lang === 'en' ? localResult.compatibilityTagEn : localResult.compatibilityTagHi}
@@ -338,7 +352,7 @@ export default function FoodScannerPage() {
                 </section>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <section className="p-6 rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center gap-5">
+                    <section className="p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 flex items-center gap-5 shadow-sm">
                         <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                             <Zap className="h-6 w-6" />
                         </div>
@@ -349,7 +363,7 @@ export default function FoodScannerPage() {
                         </div>
                     </section>
 
-                    <section className="flex items-center justify-around p-6 rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <section className="flex items-center justify-around p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm">
                         <MacroMini label="Carbs" val={localResult.carbs} color="bg-amber-400" />
                         <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
                         <MacroMini label="Protein" val={localResult.protein} color="bg-emerald-400" />
@@ -360,7 +374,7 @@ export default function FoodScannerPage() {
 
                 <section className="space-y-4">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">{t.micros}</h4>
-                    <div className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm grid grid-cols-2 gap-8">
+                    <div className="p-8 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm grid grid-cols-2 gap-8">
                         <MicroItem label="Calcium" val={localResult.microNutrients.calcium} icon={Milk} />
                         <MicroItem label="Potassium" val={localResult.microNutrients.potassium} icon={Activity} />
                         <MicroItem label="Iron" val={localResult.microNutrients.iron} icon={ShieldCheck} />
@@ -380,7 +394,7 @@ export default function FoodScannerPage() {
 
                 <section className="space-y-4 px-2">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{t.logic}</h4>
-                    <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 backdrop-blur-sm border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
                         "{lang === 'en' ? localResult.logicEn : localResult.logicHi}"
                     </div>
                 </section>
@@ -389,7 +403,7 @@ export default function FoodScannerPage() {
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">{t.subs}</h4>
                     <div className="space-y-3">
                         {(lang === 'en' ? localResult.substitutionsEn : localResult.substitutionsHi).map((sub: string, i: number) => (
-                            <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm group">
+                            <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm group">
                                 <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
                                     <Sparkles className="h-4 w-4" />
                                 </div>
@@ -399,9 +413,11 @@ export default function FoodScannerPage() {
                     </div>
                 </section>
 
-                <Button variant="ghost" onClick={() => setLocalResult(null)} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-400 hover:text-primary">
-                    Start New Analysis
-                </Button>
+                <div className="flex flex-col gap-4">
+                    <Button variant="ghost" onClick={handleRefresh} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
+                        <RotateCcw className="mr-2 h-4 w-4" /> Start New Analysis
+                    </Button>
+                </div>
 
                 <Alert className="rounded-[3rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-8 border-dashed border-2 border-blue-100 dark:border-blue-800">
                     <div className="flex flex-col items-center gap-4 text-center">
@@ -438,7 +454,7 @@ function ActionTile({ icon: Icon, label, onClick, color }: any) {
     return (
         <button 
             onClick={onClick}
-            className="h-28 rounded-[2rem] bg-slate-50 dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group"
+            className="h-28 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-xl border border-white/40 dark:border-slate-800 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group"
         >
             <div className={cn(
                 "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
@@ -465,7 +481,7 @@ function MacroMini({ label, val, color }: any) {
 function MicroItem({ label, val, icon: Icon }: any) {
     return (
         <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md flex items-center justify-center text-slate-400 shrink-0">
                 <Icon className="h-5 w-5" />
             </div>
             <div>
