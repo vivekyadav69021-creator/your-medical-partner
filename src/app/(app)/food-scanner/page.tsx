@@ -50,7 +50,6 @@ export default function FoodScannerPage() {
   const [scanMode, setScanMode] = useState<ScanMode>('standard');
   const [localResult, setLocalResult] = useState<any>(null);
   
-  // Pillar 1 & 2 Local States
   const [healthMirror, setHealthMirror] = useState('');
   const [mainGoal, setMainGoal] = useState('Maintain Health');
   const [workout, setWorkout] = useState('Sedentary');
@@ -61,7 +60,7 @@ export default function FoodScannerPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // ISOLATION LOGIC: Reset everything when mode changes
+  // Reset isolated state when switching modes
   useEffect(() => {
     setPreview(null);
     setTextLabel('');
@@ -84,10 +83,12 @@ export default function FoodScannerPage() {
       const reader = new FileReader();
       reader.onload = () => {
         setPreview(reader.result as string);
-        toast({
-            title: lang === 'en' ? "Identify Your Meal" : "भोजन की पहचान करें",
-            description: lang === 'en' ? "Please type what is in the photo for 100% accuracy." : "सटीकता के लिए कृपया लिखें कि फोटो में क्या है।"
-        });
+        if (scanMode === 'standard') {
+            toast({
+                title: lang === 'en' ? "Identify Your Meal" : "भोजन की पहचान करें",
+                description: lang === 'en' ? "Please type what is in the photo for 100% accuracy." : "सटीकता के लिए कृपया लिखें कि फोटो में क्या है।"
+            });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -96,7 +97,8 @@ export default function FoodScannerPage() {
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (preview && !textLabel.trim()) {
+    // For standard mode, labeling is mandatory if a photo is provided
+    if (scanMode === 'standard' && preview && !textLabel.trim()) {
         toast({ 
             variant: 'destructive', 
             title: lang === 'en' ? "Identity Required" : "पहचान आवश्यक", 
@@ -105,7 +107,8 @@ export default function FoodScannerPage() {
         return;
     }
 
-    if (!textLabel.trim() && !preview) {
+    // For standard mode, at least one input is needed
+    if (scanMode === 'standard' && !textLabel.trim() && !preview) {
         toast({ 
             variant: 'destructive', 
             title: lang === 'en' ? "Input Required" : "इनपुट आवश्यक", 
@@ -114,9 +117,20 @@ export default function FoodScannerPage() {
         return;
     }
 
+    // For barcode/ocr mode, photo is mandatory
+    if (scanMode !== 'standard' && !preview) {
+        toast({
+            variant: 'destructive',
+            title: lang === 'en' ? "Photo Required" : "फोटो आवश्यक",
+            description: lang === 'en' ? "Please take a photo to analyze." : "विश्लेषण के लिए कृपया फोटो लें।"
+        });
+        return;
+    }
+
     const formData = new FormData();
     if (preview) formData.set('imageDataUri', preview);
-    formData.set('textQuery', textLabel || "Unidentified Meal");
+    // Use text label if standard, otherwise generic label for non-standard visual modes
+    formData.set('textQuery', scanMode === 'standard' ? (textLabel || "Unidentified Meal") : `Visual ${scanMode} scan`);
     formData.set('language', lang);
     formData.set('scanType', scanMode);
     formData.set('healthMirrorProfile', healthMirror);
@@ -172,7 +186,6 @@ export default function FoodScannerPage() {
   return (
     <div className="min-h-[100dvh] w-full bg-background pb-32 animate-in fade-in duration-500 font-body overflow-y-auto scrollbar-hide">
       
-      {/* Native-Feel Header */}
       <header className="sticky top-0 z-50 px-4 pt-4 pb-4 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl border-b border-white/10 safe-top">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -199,7 +212,6 @@ export default function FoodScannerPage() {
 
       <main className="max-w-2xl mx-auto px-4 pt-6 space-y-8">
 
-        {/* Horizontal Mode Selection (Native Pill Style) */}
         <section className="space-y-4">
              <div className="flex items-center gap-2 p-1.5 bg-slate-100/50 dark:bg-slate-900/50 rounded-full border border-white/10 overflow-x-auto scrollbar-hide">
                 <ScanModePill active={scanMode === 'standard'} icon={Utensils} label={t.modeMeal} onClick={() => setScanMode('standard')} />
@@ -208,7 +220,6 @@ export default function FoodScannerPage() {
              </div>
         </section>
 
-        {/* Input Interface - Hidden if result exists */}
         {!localResult && (
           <>
             {!preview && (
@@ -221,25 +232,28 @@ export default function FoodScannerPage() {
             )}
 
             <section className="space-y-6">
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between px-2">
-                        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80">
-                            {preview ? "Identify Your Meal (Required)" : "Direct Search"}
-                        </h2>
+                {/* Search Bar / Identification Box - Only visible in Standard Mode */}
+                {scanMode === 'standard' && (
+                    <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80">
+                                {preview ? "Identify Your Meal (Required)" : "Direct Search"}
+                            </h2>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                            <Input 
+                                value={textLabel} 
+                                onChange={(e) => setTextLabel(e.target.value)} 
+                                placeholder={preview ? t.scanPlaceholder : t.placeholder} 
+                                className={cn(
+                                    "rounded-[2rem] h-16 pl-16 pr-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all",
+                                    preview && !textLabel ? "border-rose-300 ring-4 ring-rose-50" : "focus-visible:ring-primary/10"
+                                )} 
+                            />
+                        </div>
                     </div>
-                    <div className="relative">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                        <Input 
-                            value={textLabel} 
-                            onChange={(e) => setTextLabel(e.target.value)} 
-                            placeholder={preview ? t.scanPlaceholder : t.placeholder} 
-                            className={cn(
-                                "rounded-[2rem] h-16 pl-16 pr-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all",
-                                preview && !textLabel ? "border-rose-300 ring-4 ring-rose-50" : "focus-visible:ring-primary/10"
-                            )} 
-                        />
-                    </div>
-                </div>
+                )}
 
                 {preview && (
                     <div className="relative aspect-square max-h-[350px] mx-auto rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 animate-in zoom-in-95">
@@ -308,14 +322,13 @@ export default function FoodScannerPage() {
                     </div>
                 )}
 
-                <Button onClick={() => onFormSubmit({ preventDefault: () => {} } as any)} disabled={isAnalyzing || (!textLabel.trim() && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
+                <Button onClick={() => onFormSubmit({ preventDefault: () => {} } as any)} disabled={isAnalyzing || (scanMode === 'standard' && !textLabel.trim() && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
                     {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Processing...</> : t.startBtn}
                 </Button>
             </section>
           </>
         )}
 
-        {/* Isolated Results View */}
         {localResult && (
             <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700 pb-20">
                 <section className="flex flex-col items-center text-center gap-4">
@@ -400,10 +413,14 @@ export default function FoodScannerPage() {
                     Start New Analysis
                 </Button>
 
-                <div className="p-6 rounded-[2rem] bg-blue-50/20 border border-dashed border-blue-100 text-center space-y-2">
-                    <ShieldCheck className="h-6 w-6 text-primary/40 mx-auto" />
-                    <p className="text-[9px] font-black uppercase text-blue-400/80 tracking-widest leading-relaxed">{t.guarantee}</p>
-                </div>
+                <Alert className="rounded-[3rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-8 border-dashed border-2 border-blue-100 dark:border-blue-800">
+                    <div className="flex flex-col items-center gap-4 text-center">
+                        <ShieldCheck className="h-8 w-8 text-primary opacity-40" />
+                        <p className="text-[10px] font-black uppercase text-blue-500/80 tracking-[0.3em] leading-relaxed">
+                            {t.guarantee}
+                        </p>
+                    </div>
+                </Alert>
             </div>
         )}
 
