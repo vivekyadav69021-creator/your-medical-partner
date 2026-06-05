@@ -7,6 +7,7 @@ const foodScannerSchema = z.object({
   imageDataUri: z.string().optional(),
   textQuery: z.string().optional(),
   language: z.enum(['en', 'hi']).optional(),
+  scanType: z.enum(['standard', 'barcode', 'ocr']).optional(),
   healthMirrorProfile: z.string().optional(),
   mainGoal: z.string().optional(),
   workoutRegimen: z.string().optional(),
@@ -19,6 +20,7 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
   const imageDataUri = formData.get('imageDataUri') as string || undefined;
   const textQuery = formData.get('textQuery') as string || undefined;
   const language = (formData.get('language') as 'en' | 'hi') || 'en';
+  const scanType = (formData.get('scanType') as 'standard' | 'barcode' | 'ocr') || 'standard';
   
   const healthMirrorProfile = formData.get('healthMirrorProfile') as string || undefined;
   const mainGoal = formData.get('mainGoal') as string || undefined;
@@ -29,6 +31,7 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
     imageDataUri, 
     textQuery, 
     language,
+    scanType,
     healthMirrorProfile,
     mainGoal,
     workoutRegimen,
