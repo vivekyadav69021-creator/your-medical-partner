@@ -98,7 +98,6 @@ export default function FoodScannerPage() {
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [state, formAction, isAnalyzing] = useActionState(analyzeFoodAction, initialAnalysisState);
   
-  // Isolated Local Result State to ensure data doesn't leak between views
   const [currentResult, setCurrentResult] = useState<any>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [textLabel, setTextLabel] = useState('');
@@ -112,7 +111,6 @@ export default function FoodScannerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Sync AI response to local result only for the current view
   useEffect(() => {
     if (state?.result && !state?.error && state?.timestamp > 0) {
       setCurrentResult(state.result);
@@ -132,7 +130,7 @@ export default function FoodScannerPage() {
 
   const handleModeSwitch = (newView: ViewMode) => {
     setView(newView);
-    resetAll(); // Pure isolation: Clear everything when switching modes
+    resetAll();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +146,7 @@ export default function FoodScannerPage() {
     e.preventDefault();
     
     if (view === 'meal' && !textLabel.trim() && !preview) {
-        toast({ variant: 'destructive', title: lang === 'en' ? "Input Required" : "विवरण आवश्यक है", description: lang === 'en' ? "Please provide a name or a photo." : "कृपया नाम या फोटो प्रदान करें।" });
+        toast({ variant: 'destructive', title: lang === 'en' ? "Input Required" : "विवरण आवश्यक है" });
         return;
     }
     
@@ -207,7 +205,7 @@ export default function FoodScannerPage() {
     if (view === 'home') {
         return (
             <div className="space-y-8 animate-in fade-in duration-700 pb-32">
-                <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top">
+                <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top mt-2">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                         <Link href="/dashboard">
                             <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white/50 shadow-sm border border-white/20 shrink-0">
@@ -271,7 +269,7 @@ export default function FoodScannerPage() {
     }
 
     return (
-        <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top">
+        <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => handleModeSwitch('home')} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
                     <ArrowLeft className="h-6 w-6" />
@@ -289,7 +287,6 @@ export default function FoodScannerPage() {
                 )}
             </div>
 
-            {/* Sub-mode Navigation (Horizontal Row) */}
             <div className="flex gap-2.5 overflow-x-auto pb-2 px-1 scrollbar-hide">
                 <button onClick={() => handleModeSwitch('meal')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'meal' ? "bg-primary text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Meal Scan</button>
                 <button onClick={() => handleModeSwitch('barcode')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'barcode' ? "bg-pink-500 text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Barcode</button>
@@ -298,13 +295,23 @@ export default function FoodScannerPage() {
 
             <div className="space-y-6">
                 {!preview ? (
-                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-                        <div className={cn("p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl group-hover:scale-110 transition-transform", view === 'meal' ? "text-blue-400" : view === 'barcode' ? "text-pink-400" : "text-emerald-400")}>
-                            {view === 'barcode' ? <Barcode className="w-12 h-12" /> : view === 'ocr' ? <FileText className="w-12 h-12" /> : <Camera className="w-12 h-12" />}
+                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+                        <div className="flex gap-8 mb-6">
+                            <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform">
+                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-primary">
+                                    <Camera className="w-8 h-8" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase text-slate-500">Camera</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform">
+                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-pink-500">
+                                    <ImageIcon className="w-8 h-8" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase text-slate-500">Gallery</span>
+                            </div>
                         </div>
-                        <div className="text-center space-y-1">
+                        <div className="text-center">
                             <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Capture or Pick Photo</p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Camera & Gallery supported</p>
                         </div>
                         <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
                     </div>
