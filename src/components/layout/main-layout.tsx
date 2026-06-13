@@ -21,9 +21,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isHealthAssistant = pathname === '/health-assistant';
   const isPsychiatrist = pathname === '/ai-psychiatrist';
   const isDiseaseScanner = pathname === '/disease-scanner';
+  const isFoodScanner = pathname === '/food-scanner';
   
-  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner;
-  const hideSidebar = isDiseaseScanner; // Hide sidebar completely for scanner as per request
+  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner;
+  const hideSidebar = isDiseaseScanner || isFoodScanner; // Hide sidebar completely for scanner as per request
 
   return (
     <SidebarProvider defaultOpen={!hideSidebar}>
