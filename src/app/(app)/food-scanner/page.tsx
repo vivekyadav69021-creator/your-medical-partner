@@ -4,7 +4,7 @@ import React, { useActionState, useRef, useState, useEffect, startTransition } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Camera, 
   Loader2, 
@@ -12,12 +12,10 @@ import {
   ArrowLeft,
   CheckCircle2,
   Utensils,
-  ShieldCheck,
   AlertCircle,
   Zap,
   UserCheck,
   ChevronDown,
-  TrendingUp,
   Image as ImageIcon,
   Search,
   Ban,
@@ -26,10 +24,13 @@ import {
   Activity,
   Milk,
   Sparkles,
-  Info,
   ExternalLink,
   ShieldAlert,
-  RotateCcw
+  RotateCcw,
+  ChevronLeft,
+  HeartPulse,
+  Pill,
+  Scan
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -39,431 +40,31 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useUserProfile } from '@/context/user-profile-context';
+import { formatDistanceToNow } from 'date-fns';
 
 const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 
-type ScanMode = 'standard' | 'barcode' | 'ocr';
+type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
 
-export default function FoodScannerPage() {
-  const [state, formAction, isAnalyzing] = useActionState(analyzeFoodAction, initialAnalysisState);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [textLabel, setTextLabel] = useState('');
-  const [lang, setLang] = useState<'en' | 'hi'>('en');
-  const [scanMode, setScanMode] = useState<ScanMode>('standard');
-  const [localResult, setLocalResult] = useState<any>(null);
-  
-  const [healthMirror, setHealthMirror] = useState('');
-  const [mainGoal, setMainGoal] = useState('Maintain Health');
-  const [workout, setWorkout] = useState('Sedentary');
-  const [protocol, setProtocol] = useState('Clean Eating');
-  const [showSettings, setShowSettings] = useState(false);
+// --- SUB-COMPONENTS FOR CLEANER CODE ---
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-
-  // Reset isolated state when switching modes
-  useEffect(() => {
-    handleRefresh();
-  }, [scanMode]);
-
-  useEffect(() => {
-    if (state?.result && !state?.error && state?.timestamp > 0) {
-      setLocalResult(state.result);
-      toast({ title: lang === 'en' ? "Analysis Ready ✨" : "विश्लेषण तैयार है ✨" });
-    }
-    if (state?.error) {
-      toast({ variant: 'destructive', title: "Analysis Error", description: state.error });
-    }
-  }, [state, lang, toast]);
-
-  const handleRefresh = () => {
-    setPreview(null);
-    setTextLabel('');
-    setLocalResult(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (scanMode === 'standard' && preview && !textLabel.trim()) {
-        toast({ 
-            variant: 'destructive', 
-            title: lang === 'en' ? "Identity Required" : "पहचान आवश्यक", 
-            description: lang === 'en' ? "Please type what is in the photo to proceed." : "कृपया आगे बढ़ने के लिए लिखें कि फोटो में क्या है।" 
-        });
-        return;
-    }
-
-    if (scanMode === 'standard' && !textLabel.trim() && !preview) {
-        toast({ 
-            variant: 'destructive', 
-            title: lang === 'en' ? "Input Required" : "इनपुट आवश्यक", 
-            description: lang === 'en' ? "Please provide a photo or type the meal name." : "कृपया फोटो दें या खाने का नाम लिखें।" 
-        });
-        return;
-    }
-
-    if (scanMode !== 'standard' && !preview) {
-        toast({
-            variant: 'destructive',
-            title: lang === 'en' ? "Photo Required" : "फोटो आवश्यक",
-            description: lang === 'en' ? "Please take a photo to analyze." : "विश्लेषण के लिए कृपया फोटो लें।"
-        });
-        return;
-    }
-
-    const formData = new FormData();
-    if (preview) formData.set('imageDataUri', preview);
-    formData.set('textQuery', scanMode === 'standard' ? (textLabel || "Unidentified Meal") : `Visual ${scanMode} scan`);
-    formData.set('language', lang);
-    formData.set('scanType', scanMode);
-    formData.set('healthMirrorProfile', healthMirror);
-    formData.set('mainGoal', mainGoal);
-    formData.set('workoutRegimen', workout);
-    formData.set('dietaryProtocol', protocol);
-    startTransition(() => { formAction(formData); });
-  };
-
-  const t = {
-    en: {
-        title: "Nutri-Scan Pro",
-        slogan: "Precision Clinical Nutrition",
-        medicalTitle: "Medical Profile (Optional)",
-        medicalDesc: "E.g., Diabetes, High Blood Pressure...",
-        placeholder: "Type meal name (e.g., 2 Roti, Dal)",
-        scanPlaceholder: "What's in the photo? (e.g. 2 Idlis)",
-        startBtn: "Analyze Diet",
-        logic: "Simple Explanation",
-        subs: "Better Choices For You",
-        macros: "Body's Core Fuel",
-        micros: "Essential Minerals",
-        vitamins: "Vitamins Detected",
-        scanModes: "Select Scan Mode",
-        modeMeal: "Meal",
-        modeBarcode: "Barcode",
-        modeLabel: "Label",
-        guarantee: "Safe and simple advice for everyone.",
-        mandatoryHint: "Labeling your meal helps AI provide 100% accurate info."
-    },
-    hi: {
-        title: "न्यूट्री-स्कैन प्रो",
-        slogan: "सटीक पोषण जानकारी",
-        medicalTitle: "मेडिकल प्रोफाइल (वैकल्पिक)",
-        medicalDesc: "जैसे: मधुमेह, उच्च रक्तचाप...",
-        placeholder: "भोजन का नाम लिखें (जैसे: 2 रोटी, दाल)",
-        scanPlaceholder: "फोटो में क्या है? (जैसे: 2 इडली)",
-        startBtn: "आहार की जांच करें",
-        logic: "आसान शब्दों में समझें",
-        subs: "आपके लिए बेहतर विकल्प",
-        macros: "शरीर की मुख्य ऊर्जा",
-        micros: "जरूरी मिनरल्स",
-        vitamins: "पाए गए विटामिन",
-        scanModes: "स्कैन मोड चुनें",
-        modeMeal: "भोजन",
-        modeBarcode: "बारकोड",
-        modeLabel: "लेबल",
-        guarantee: "सभी के लिए सुरक्षित और सरल सलाह।",
-        mandatoryHint: "भोजन का नाम लिखने से एआई 100% सटीक जानकारी देता है।"
-    }
-  }[lang];
-
-  return (
-    <div className="min-h-[100dvh] w-full bg-[#f0f4ff] dark:bg-slate-950 pb-32 animate-in fade-in duration-500 font-body overflow-y-auto scrollbar-hide" style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
-      
-      <header className="sticky top-0 z-50 px-4 pt-4 pb-4 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl border-b border-white/20 safe-top">
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-             <Link href="/dashboard">
-              <button className="rounded-full h-11 w-11 bg-white/60 dark:bg-[#3c4043]/60 shadow-sm border border-white/20 shrink-0 flex items-center justify-center">
-                <ArrowLeft className="h-6 w-6 text-[#1A365D] dark:text-white" />
-              </button>
-            </Link>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                  <Utensils className="h-5 w-5 text-primary" />
-                  <h1 className="text-lg font-black text-[#1A365D] dark:text-white tracking-tight truncate">{t.title}</h1>
-              </div>
-              <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em] truncate">{t.slogan}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={handleRefresh} className="rounded-full h-10 w-10 bg-white/60 dark:bg-slate-800/60 border border-white/20 shadow-sm">
-                <RotateCcw className="h-4 w-4 text-primary" />
-            </Button>
-            <div className="bg-white/60 dark:bg-slate-800/60 p-1 rounded-full border border-white/20 shadow-inner flex items-center gap-1 shrink-0">
-                <button onClick={() => setLang('en')} className={cn("rounded-full px-3 py-1.5 text-[9px] font-black uppercase transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</button>
-                <button onClick={() => setLang('hi')} className={cn("rounded-full px-3 py-1.5 text-[9px] font-black uppercase transition-all", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400")}>हिन्दी</button>
-            </div>
-          </div>
+function ScanAnimationOverlay({ color }: { color: string }) {
+    return (
+        <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
+            <div className={cn("absolute inset-0 opacity-[0.08] animate-pulse", color.replace('text-', 'bg-'))} />
+            <div 
+                className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-50", color)} 
+                style={{ 
+                    backgroundColor: 'currentColor',
+                    boxShadow: '0 0 12px 1px currentColor' 
+                }}
+            />
+            <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
+            <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
+            <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
+            <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
         </div>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-4 pt-6 space-y-8">
-
-        <section className="space-y-4">
-             <div className="flex items-center gap-2 p-1.5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-full border border-white/20 overflow-x-auto scrollbar-hide shadow-sm">
-                <ScanModePill active={scanMode === 'standard'} icon={Utensils} label={t.modeMeal} onClick={() => setScanMode('standard')} />
-                <ScanModePill active={scanMode === 'barcode'} icon={Barcode} label={t.modeBarcode} onClick={() => setScanMode('barcode')} />
-                <ScanModePill active={scanMode === 'ocr'} icon={FileText} label={t.modeLabel} onClick={() => setScanMode('ocr')} />
-             </div>
-        </section>
-
-        {!localResult && (
-          <>
-            {!preview && (
-                <section className="grid grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-500">
-                    <ActionTile icon={Camera} label="Open Camera" onClick={() => cameraInputRef.current?.click()} color="primary" />
-                    <ActionTile icon={ImageIcon} label="Gallery" onClick={() => fileInputRef.current?.click()} color="accent" />
-                    <input type="file" ref={cameraInputRef} hidden accept="image/*" capture="environment" onChange={handleFileChange} />
-                    <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
-                </section>
-            )}
-
-            <section className="space-y-6">
-                {scanMode === 'standard' && (
-                    <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                        <div className="flex items-center justify-between px-2">
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80">
-                                {preview ? "Tell AI What This Is (Mandatory)" : "Direct Search"}
-                            </h2>
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                            <Input 
-                                value={textLabel} 
-                                onChange={(e) => setTextLabel(e.target.value)} 
-                                placeholder={preview ? t.scanPlaceholder : t.placeholder} 
-                                className={cn(
-                                    "rounded-[2rem] h-16 pl-16 pr-8 bg-white/80 dark:bg-slate-900/80 border border-white/40 dark:border-slate-800 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all backdrop-blur-xl",
-                                    preview && !textLabel ? "border-rose-300 ring-4 ring-rose-50" : "focus-visible:ring-primary/10"
-                                )} 
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {preview && (
-                    <div className="relative aspect-square max-h-[350px] mx-auto rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 animate-in zoom-in-95">
-                        <Image src={preview} alt="Meal" fill className="object-cover" />
-                        {isAnalyzing && (
-                            <div className="absolute inset-0 z-20">
-                                <div className="absolute left-0 right-0 h-1 bg-primary shadow-[0_0_15px_rgba(36,136,232,1)] animate-scan-line z-30" />
-                                <div className="absolute inset-0 bg-primary/10 animate-pulse" />
-                            </div>
-                        )}
-                        <Button size="icon" variant="destructive" className={cn("absolute top-5 right-5 rounded-full h-10 w-10 z-40 shadow-xl", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
-                            <X className="h-5 w-5" />
-                        </Button>
-                    </div>
-                )}
-
-                <button 
-                    onClick={() => setShowSettings(!showSettings)} 
-                    className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm transition-all active:scale-[0.98]"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                            <UserCheck className="h-5 w-5" />
-                        </div>
-                        <div className="text-left">
-                            <h3 className="text-[11px] font-black text-[#1A365D] dark:text-white uppercase tracking-wider">{t.medicalTitle}</h3>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase">Personalize Your Result</p>
-                        </div>
-                    </div>
-                    <ChevronDown className={cn("h-4 w-4 text-slate-300 transition-transform", showSettings && "rotate-180")} />
-                </button>
-
-                {showSettings && (
-                    <div className="p-6 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-inner space-y-6 animate-in fade-in slide-in-from-top-2">
-                        <div className="space-y-2">
-                            <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Chronic Conditions or Allergies</Label>
-                            <Textarea 
-                                value={healthMirror}
-                                onChange={(e) => setHealthMirror(e.target.value)}
-                                placeholder={t.medicalDesc}
-                                className="rounded-xl bg-white/80 dark:bg-slate-800/80 border-none shadow-sm font-bold text-sm min-h-[80px]"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Main Goal</Label>
-                                <Select value={mainGoal} onValueChange={setMainGoal}>
-                                    <SelectTrigger className="rounded-xl h-11 bg-white/80 dark:bg-slate-800/80 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent className="rounded-xl border-none">
-                                        <SelectItem value="Muscle Gain">Muscle Gain</SelectItem>
-                                        <SelectItem value="Weight Loss">Weight Loss</SelectItem>
-                                        <SelectItem value="Health Maintenance">General Health</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                 <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Workout</Label>
-                                <Select value={workout} onValueChange={setWorkout}>
-                                    <SelectTrigger className="rounded-xl h-11 bg-white/80 dark:bg-slate-800/80 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent className="rounded-xl border-none">
-                                        <SelectItem value="Heavy Lifting">Strength</SelectItem>
-                                        <SelectItem value="Cardio">Cardio</SelectItem>
-                                        <SelectItem value="Sedentary">None</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <Button onClick={() => onFormSubmit({ preventDefault: () => {} } as any)} disabled={isAnalyzing || (scanMode === 'standard' && !textLabel.trim() && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                    {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Analyzing...</> : t.startBtn}
-                </Button>
-            </section>
-          </>
-        )}
-
-        {localResult && (
-            <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700 pb-20">
-                <section className="flex flex-col items-center text-center gap-4">
-                    <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/10 shadow-inner">
-                        <Activity className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{localResult.name}</h2>
-                        <div className={cn(
-                            "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
-                            (lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
-                        )}>
-                            {(lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                            {lang === 'en' ? localResult.compatibilityTagEn : localResult.compatibilityTagHi}
-                        </div>
-                    </div>
-                </section>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <section className="p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 flex items-center gap-5 shadow-sm">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                            <Zap className="h-6 w-6" />
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Energy</p>
-                            <p className="text-2xl font-black text-[#1A365D] dark:text-white">{localResult.calories}</p>
-                            <p className="text-[9px] font-bold text-slate-400">{localResult.portion}</p>
-                        </div>
-                    </section>
-
-                    <section className="flex items-center justify-around p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm">
-                        <MacroMini label="Carbs" val={localResult.carbs} color="bg-amber-400" />
-                        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
-                        <MacroMini label="Protein" val={localResult.protein} color="bg-emerald-400" />
-                        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
-                        <MacroMini label="Fats" val={localResult.fats} color="bg-rose-400" />
-                    </section>
-                </div>
-
-                <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">{t.micros}</h4>
-                    <div className="p-8 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm grid grid-cols-2 gap-8">
-                        <MicroItem label="Calcium" val={localResult.microNutrients.calcium} icon={Milk} />
-                        <MicroItem label="Potassium" val={localResult.microNutrients.potassium} icon={Activity} />
-                        <MicroItem label="Iron" val={localResult.microNutrients.iron} icon={ShieldCheck} />
-                        <MicroItem label="Sodium" val={localResult.microNutrients.sodium} icon={AlertCircle} />
-                    </div>
-                </section>
-
-                {(lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi) && (
-                    <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
-                        <Ban className="h-10 w-10" />
-                        <h3 className="text-xl font-black uppercase tracking-widest">Safety Alert</h3>
-                        <p className="text-sm font-bold leading-relaxed">
-                            {lang === 'en' ? localResult.medicalAlertEn : localResult.medicalAlertHi}
-                        </p>
-                    </div>
-                )}
-
-                <section className="space-y-4 px-2">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{t.logic}</h4>
-                    <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 backdrop-blur-sm border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
-                        "{lang === 'en' ? localResult.logicEn : localResult.logicHi}"
-                    </div>
-                </section>
-
-                <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">{t.subs}</h4>
-                    <div className="space-y-3">
-                        {(lang === 'en' ? localResult.substitutionsEn : localResult.substitutionsHi).map((sub: string, i: number) => (
-                            <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-sm group">
-                                <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                                    <Sparkles className="h-4 w-4" />
-                                </div>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{sub}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                <div className="flex flex-col gap-4">
-                    <Button variant="ghost" onClick={handleRefresh} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
-                        <RotateCcw className="mr-2 h-4 w-4" /> Start New Analysis
-                    </Button>
-                </div>
-
-                <Alert className="rounded-[3rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-8 border-dashed border-2 border-blue-100 dark:border-blue-800">
-                    <div className="flex flex-col items-center gap-4 text-center">
-                        <ShieldAlert className="h-8 w-8 text-primary opacity-40" />
-                        <p className="text-[10px] font-black uppercase text-blue-500/80 tracking-[0.3em] leading-relaxed">
-                            {t.guarantee}
-                        </p>
-                    </div>
-                </Alert>
-            </div>
-        )}
-
-      </main>
-    </div>
-  );
-}
-
-function ScanModePill({ active, icon: Icon, label, onClick }: any) {
-    return (
-        <button 
-            onClick={onClick} 
-            className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full transition-all duration-300",
-                active ? "bg-white dark:bg-slate-800 shadow-md text-primary" : "text-slate-400 hover:text-slate-600"
-            )}
-        >
-            <Icon className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{label}</span>
-        </button>
-    );
-}
-
-function ActionTile({ icon: Icon, label, onClick, color }: any) {
-    return (
-        <button 
-            onClick={onClick}
-            className="h-28 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-xl border border-white/40 dark:border-slate-800 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group"
-        >
-            <div className={cn(
-                "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-                color === 'primary' ? "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white" : "bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white"
-            )}>
-                <Icon className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#1A365D] dark:text-white">{label}</span>
-        </button>
     );
 }
 
@@ -475,7 +76,7 @@ function MacroMini({ label, val, color }: any) {
                 <span className={cn("h-1.5 w-1.5 rounded-full", color)} /> {label}
             </p>
         </div>
-    )
+    );
 }
 
 function MicroItem({ label, val, icon: Icon }: any) {
@@ -489,5 +90,398 @@ function MicroItem({ label, val, icon: Icon }: any) {
                 <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{val}</p>
             </div>
         </div>
-    )
+    );
+}
+
+// --- MAIN SCANNER PAGE COMPONENT ---
+
+export default function FoodScannerPage() {
+  const [view, setView] = useState<ViewMode>('home');
+  const { userName, userImage } = useUserProfile();
+  const [lang, setLang] = useState<'en' | 'hi'>('en');
+  const [state, formAction, isAnalyzing] = useActionState(analyzeFoodAction, initialAnalysisState);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [textLabel, setTextLabel] = useState('');
+  
+  // Profile settings for personalization
+  const [healthMirror, setHealthMirror] = useState('');
+  const [mainGoal, setMainGoal] = useState('Maintain Health');
+  const [workout, setWorkout] = useState('Sedentary');
+  const [protocol, setProtocol] = useState('Clean Eating');
+  const [showSettings, setShowSettings] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (state?.result && !state?.error && state?.timestamp > 0) {
+      toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
+    }
+  }, [state, lang, toast]);
+
+  const handleModeSwitch = (newView: ViewMode) => {
+    setView(newView);
+    setPreview(null);
+    setTextLabel('');
+    // State Resetting is managed by individual components if needed, 
+    // but here we just clear local previews.
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (view === 'meal' && !textLabel.trim()) {
+        toast({ variant: 'destructive', title: lang === 'en' ? "Name Required" : "नाम अनिवार्य है" });
+        return;
+    }
+    if (!preview) {
+        toast({ variant: 'destructive', title: lang === 'en' ? "Photo Required" : "फोटो आवश्यक है" });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.set('imageDataUri', preview);
+    formData.set('textQuery', textLabel || `Nutri ${view} scan`);
+    formData.set('language', lang);
+    formData.set('scanType', view === 'meal' ? 'standard' : view);
+    formData.set('healthMirrorProfile', healthMirror);
+    formData.set('mainGoal', mainGoal);
+    formData.set('workoutRegimen', workout);
+    formData.set('dietaryProtocol', protocol);
+    
+    startTransition(() => { formAction(formData); });
+  };
+
+  const t = {
+    en: {
+        greeting: `Hi ${userName.split(' ')[0]}`,
+        statsTitle: "Nutrition Activity",
+        lastScan: "Last Analysis",
+        scans: "Total Meals",
+        status: "Engine Status",
+        mealTitle: "Meal Analysis",
+        barcodeTitle: "Barcode Vision",
+        ocrTitle: "Label Specialist",
+        mealSlogan: "Identify & Quantify",
+        barcodeSlogan: "Packet Scanning",
+        ocrSlogan: "Ingredient OCR",
+        startBtn: "Analyze Now",
+        noScans: "Ready to scan"
+    },
+    hi: {
+        greeting: `नमस्ते ${userName.split(' ')[0]}`,
+        statsTitle: "पोषण गतिविधि",
+        lastScan: "पिछला विश्लेषण",
+        scans: "कुल भोजन",
+        status: "इंजन स्थिति",
+        mealTitle: "भोजन विश्लेषण",
+        barcodeTitle: "बारकोड विजन",
+        ocrTitle: "लेबल विशेषज्ञ",
+        mealSlogan: "पहचान और मात्रा",
+        barcodeSlogan: "पैकेट स्कैनिंग",
+        ocrSlogan: "सामग्री OCR",
+        startBtn: "अभी विश्लेषण करें",
+        noScans: "स्कैन के लिए तैयार"
+    }
+  }[lang];
+
+  const renderContent = () => {
+    if (view === 'home') {
+        return (
+            <div className="space-y-8 animate-in fade-in duration-700 pb-32">
+                {/* Custom Native Header */}
+                <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top mt-2">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <Link href="/dashboard">
+                            <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white/50 shadow-sm border border-white/20 shrink-0">
+                                <ChevronLeft className="h-6 w-6 text-[#1A365D]" />
+                            </Button>
+                        </Link>
+                        <div className="space-y-0.5 min-w-0">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-pink-50/80 dark:bg-pink-900/20 rounded-full border border-pink-100/50 mb-0.5">
+                                <Utensils className="w-2.5 h-2.5 text-pink-500" />
+                                <span className="text-[8px] font-black text-pink-600 uppercase tracking-[0.2em]">Nutri-Scan Pro</span>
+                            </div>
+                            <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight truncate">{t.greeting} 👋</h1>
+                        </div>
+                    </div>
+                    <Link href="/profile" className="shrink-0 ml-4">
+                        <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg overflow-hidden shrink-0">
+                            <img src={userImage} alt={userName} className="h-full w-full object-cover" />
+                        </div>
+                    </Link>
+                </div>
+
+                {/* Stats Card */}
+                <div className="rounded-[2.5rem] border-none shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 overflow-hidden mx-1 p-8">
+                    <div className="pb-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500/80 flex items-center gap-2">
+                            <Activity className="w-3.5 h-3.5 text-primary" />
+                            {t.statsTitle}
+                        </h4>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.lastScan}</p>
+                            <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-200 truncate">{t.noScans}</p>
+                        </div>
+                        <div className="space-y-1 border-x border-slate-100/50 dark:border-slate-800/50 px-2">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.scans}</p>
+                            <p className="text-sm font-black text-primary">0</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.status}</p>
+                            <div className="flex justify-center">
+                                <Badge className="bg-emerald-50 text-emerald-600 text-[9px] font-black border-none px-2.5 py-0.5 rounded-full">ACTIVE</Badge>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Service Grid */}
+                <div className="grid grid-cols-2 gap-5 px-1">
+                    <ScannerGridCard title={t.mealTitle} slogan={t.mealSlogan} icon={Utensils} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" btnColor="bg-blue-500" onClick={() => handleModeSwitch('meal')} btnText={t.startBtn} />
+                    <ScannerGridCard title={t.barcodeTitle} slogan={t.barcodeSlogan} icon={Barcode} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" btnColor="bg-pink-500" onClick={() => handleModeSwitch('barcode')} btnText={t.startBtn} />
+                    <ScannerGridCard title={t.ocrTitle} slogan={t.ocrSlogan} icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => handleModeSwitch('ocr')} btnText={t.startBtn} />
+                </div>
+
+                {/* Language Toggle */}
+                <div className="flex justify-center pt-4">
+                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setLang('en')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setLang('hi')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400")}>हिन्दी</Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+            {/* Inner View Header */}
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={() => { setView('home'); startTransition(() => { initialAnalysisState.result = null; }); }} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
+                        {view === 'meal' ? t.mealTitle : view === 'barcode' ? t.barcodeTitle : t.ocrTitle}
+                    </h2>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{t.slogan}</p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                {/* Mandatory Image Picker */}
+                {!preview ? (
+                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className={cn("p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl", view === 'meal' ? "text-blue-400" : view === 'barcode' ? "text-pink-400" : "text-emerald-400")}>
+                            {view === 'barcode' ? <Barcode className="w-12 h-12" /> : view === 'ocr' ? <FileText className="w-12 h-12" /> : <Camera className="w-12 h-12" />}
+                        </div>
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Capture {view.toUpperCase()}</p>
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                    </div>
+                ) : (
+                    <div className={cn(
+                        "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[400px] flex items-center justify-center",
+                        isAnalyzing ? "ring-8 ring-primary/20" : "border-white dark:border-slate-800"
+                    )}>
+                        <Image src={preview} alt="Input" width={600} height={800} className="w-full h-auto object-contain max-h-[400px]" />
+                        {isAnalyzing && <ScanAnimationOverlay color={view === 'meal' ? "text-blue-500" : view === 'barcode' ? "text-pink-500" : "text-emerald-500"} />}
+                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
+                )}
+
+                <form onSubmit={onFormSubmit} className="space-y-6">
+                    {view === 'meal' && (
+                        <div className="space-y-3 animate-in slide-in-from-top-2">
+                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Identify Your Meal (Mandatory)</Label>
+                             <div className="relative">
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                                <Input 
+                                    value={textLabel} 
+                                    onChange={(e) => setTextLabel(e.target.value)} 
+                                    placeholder="E.g., 2 Roti and Paneer Bhurji" 
+                                    className={cn(
+                                        "rounded-[2rem] h-16 pl-16 pr-8 bg-white/80 dark:bg-slate-900/80 border border-white/40 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all",
+                                        !textLabel && preview ? "border-rose-300 ring-4 ring-rose-50" : "focus-visible:ring-primary/10"
+                                    )} 
+                                />
+                             </div>
+                        </div>
+                    )}
+
+                    {/* Settings Toggle */}
+                    <button type="button" onClick={() => setShowSettings(!showSettings)} className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><UserCheck className="h-5 w-5" /></div>
+                            <div className="text-left">
+                                <h3 className="text-[11px] font-black text-[#1A365D] dark:text-white uppercase tracking-wider">Health Profile</h3>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase">Personalize Analysis</p>
+                            </div>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 text-slate-300 transition-transform", showSettings && "rotate-180")} />
+                    </button>
+
+                    {showSettings && (
+                        <div className="p-6 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 shadow-inner space-y-4 animate-in fade-in">
+                            <div className="space-y-1.5">
+                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Conditions/Allergies</Label>
+                                <Textarea value={healthMirror} onChange={e => setHealthMirror(e.target.value)} placeholder="E.g., Diabetes, Nut Allergy" className="rounded-xl bg-white/80 dark:bg-slate-800/80 border-none font-bold text-sm min-h-[80px]" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Select value={mainGoal} onValueChange={setMainGoal}>
+                                    <SelectTrigger className="rounded-xl h-11 bg-white border-none font-bold text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent><SelectItem value="Weight Loss">Weight Loss</SelectItem><SelectItem value="Muscle Gain">Muscle Gain</SelectItem><SelectItem value="Health Maintenance">Maintenance</SelectItem></SelectContent>
+                                </Select>
+                                <Select value={workout} onValueChange={setWorkout}>
+                                    <SelectTrigger className="rounded-xl h-11 bg-white border-none font-bold text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent><SelectItem value="Heavy Lifting">Heavy Lifting</SelectItem><SelectItem value="Sedentary">Sedentary</SelectItem><SelectItem value="Cardio">Cardio</SelectItem></SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+
+                    <Button type="submit" disabled={isAnalyzing || (!textLabel && view === 'meal')} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Analyzing Visuals...</> : "Start Clinical Scan"}
+                    </Button>
+                </form>
+            </div>
+
+            {/* Results Section */}
+            {state?.result && (
+                <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    <section className="flex flex-col items-center text-center gap-4">
+                        <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/10 shadow-inner">
+                            <Activity className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{state.result.name}</h2>
+                            <div className={cn(
+                                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
+                                (lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
+                            )}>
+                                {(lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                {lang === 'en' ? state.result.compatibilityTagEn : state.result.compatibilityTagHi}
+                            </div>
+                        </div>
+                    </section>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 flex items-center gap-5 shadow-sm">
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Zap className="h-6 w-6" /></div>
+                            <div>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estimated Energy</p>
+                                <p className="text-2xl font-black text-[#1A365D] dark:text-white">{state.result.calories}</p>
+                                <p className="text-[9px] font-bold text-slate-400">{state.result.portion}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-around p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
+                            <MacroMini label="Carbs" val={state.result.carbs} color="bg-amber-400" />
+                            <div className="h-8 w-px bg-slate-200" />
+                            <MacroMini label="Protein" val={state.result.protein} color="bg-emerald-400" />
+                            <div className="h-8 w-px bg-slate-200" />
+                            <MacroMini label="Fats" val={state.result.fats} color="bg-rose-400" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 px-2">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Micro-Nutrient Breakdown</h4>
+                        <div className="p-8 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 shadow-sm grid grid-cols-2 gap-8">
+                            <MicroItem label="Calcium" val={state.result.microNutrients?.calcium} icon={Milk} />
+                            <MicroItem label="Potassium" val={state.result.microNutrients?.potassium} icon={Activity} />
+                            <MicroItem label="Iron" val={state.result.microNutrients?.iron} icon={Sparkles} />
+                            <MicroItem label="Sodium" val={state.result.microNutrients?.sodium} icon={AlertCircle} />
+                        </div>
+                    </div>
+
+                    {(lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) && (
+                        <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
+                            <Ban className="h-10 w-10" />
+                            <h3 className="text-xl font-black uppercase tracking-widest">Safety Advisory</h3>
+                            <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi}</p>
+                        </div>
+                    )}
+
+                    <div className="space-y-4 px-2">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Scientific Explanation' : 'सरल व्याख्या'}</h4>
+                        <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                            "{lang === 'en' ? state.result.logicEn : state.result.logicHi}"
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 px-2">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Healthier Substitutions' : 'बेहतर विकल्प'}</h4>
+                        <div className="space-y-3">
+                            {(lang === 'en' ? state.result.substitutionsEn : state.result.substitutionsHi || []).map((sub: string, i: number) => (
+                                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
+                                    <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary"><Sparkles className="h-4 w-4" /></div>
+                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{sub}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <Button variant="ghost" onClick={() => { setPreview(null); setTextLabel(''); startTransition(() => { initialAnalysisState.result = null; }); }} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
+                            <RotateCcw className="mr-2 h-4 w-4" /> Start New Analysis
+                        </Button>
+                    </div>
+
+                    <Alert className="rounded-[3rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-8 border-dashed border-2 border-blue-100">
+                        <div className="flex flex-col items-center gap-4 text-center">
+                            <ShieldAlert className="h-8 w-8 text-primary opacity-40" />
+                            <p className="text-[10px] font-black uppercase text-blue-500/80 tracking-[0.3em] leading-relaxed">
+                                AI analysis is based on typical values. Always verify with your clinical dietitian for medically complex cases.
+                            </p>
+                        </div>
+                    </Alert>
+                </div>
+            )}
+        </div>
+    );
+  };
+
+  return (
+    <div className="h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] fixed inset-0 overflow-hidden font-body">
+        <main className="h-full overflow-y-auto scroll-smooth scrollbar-hide">
+            <div className="max-w-2xl mx-auto p-4 pt-4 min-h-full">
+                {renderContent()}
+            </div>
+        </main>
+    </div>
+  );
+}
+
+function ScannerGridCard({ title, slogan, icon: Icon, gradient, iconColor, btnColor, onClick, btnText }: any) {
+    return (
+        <div className={cn("rounded-[3rem] border-none shadow-lg group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md", gradient)} onClick={onClick}>
+            <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+            <div className="p-6 flex flex-col items-center gap-4 text-center relative z-10">
+                <div className="w-16 h-16 rounded-[1.8rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
+                   <Icon className={cn("w-8 h-8", iconColor)} />
+                </div>
+                <div className="space-y-1.5 w-full">
+                    <h3 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h3>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{slogan}</p>
+                    <div className={cn("w-full rounded-2xl py-2 mt-3 text-[9px] font-black uppercase tracking-widest text-white shadow-xl transition-all duration-300 group-hover:shadow-primary/20", btnColor)}>
+                        {btnText}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
