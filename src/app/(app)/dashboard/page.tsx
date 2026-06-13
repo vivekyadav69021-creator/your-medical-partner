@@ -27,9 +27,9 @@ import {
   AlertCircle,
   Plus,
   Apple,
-  Sparkles,
   Hospital,
-  UserCheck
+  UserCheck,
+  Stethoscope
 } from 'lucide-react';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const savedAppts = localStorage.getItem('appointments');
-    if (savedAppts) setAppointments(JSON.parse(savedAppts).slice(0, 1));
+    if (savedAppts) setAppointments(JSON.parse(savedAppts).slice(0, 2));
 
     const savedTasks = localStorage.getItem('guest_planner_tasks');
     if (savedTasks) setTasks(JSON.parse(savedTasks).slice(0, 3));
@@ -72,7 +72,7 @@ export default function DashboardPage() {
   }, [userName, toast]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 space-y-7 pb-32 font-body safe-top">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 space-y-7 pb-32 font-body safe-top overflow-x-hidden">
       
       {/* Premium Account Card Header */}
       <div className="mx-2 p-5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl rounded-[2.5rem] border border-white dark:border-slate-800 shadow-xl flex items-center justify-between gap-4 transition-all hover:shadow-primary/5">
@@ -107,20 +107,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Essential Health Services - Optimized Vertical Grid */}
+      {/* Essential Health Services Section */}
       <div className="space-y-4 px-2">
         <div className="flex items-center justify-between px-3">
             <div className="flex items-center gap-2">
                 <div className="h-1.5 w-6 bg-primary rounded-full" />
-                <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-400 uppercase tracking-[0.25em]">Health Intelligence</h3>
+                <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-400 uppercase tracking-[0.25em]">Essential Health Services</h3>
             </div>
-            <Sparkles className="w-3.5 h-3.5 text-primary/40 animate-pulse" />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <MiniServiceCard 
             title="AI Assistant" 
-            slogan="Personal Health Intel"
+            slogan="Health Intel"
             icon={ShieldPlus} 
             href="/health-assistant" 
             color="text-blue-500" 
@@ -138,7 +137,7 @@ export default function DashboardPage() {
           />
           <MiniServiceCard 
             title="Disease Scan" 
-            slogan="Advanced Imaging"
+            slogan="Deep Diagnostics"
             icon={Scan} 
             href="/disease-scanner" 
             color="text-amber-500" 
@@ -147,7 +146,7 @@ export default function DashboardPage() {
           />
           <MiniServiceCard 
             title="Pharmacy" 
-            slogan="Smart Med Store"
+            slogan="Smart Store"
             icon={Store} 
             href="/store" 
             color="text-purple-500" 
@@ -164,8 +163,8 @@ export default function DashboardPage() {
             delay="delay-200"
           />
           <MiniServiceCard 
-            title="Hospital" 
-            slogan="Emergency Radar"
+            title="Emergency" 
+            slogan="Nearby Care"
             icon={Hospital} 
             href="/nearby-hospital" 
             color="text-red-500" 
@@ -173,11 +172,73 @@ export default function DashboardPage() {
             delay="delay-300"
           />
         </div>
+
+        {/* Dynamic Theme Base Animation */}
+        <div className="relative h-1 w-full overflow-hidden mt-2 px-2 opacity-50">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-pink-400 to-blue-400 w-[200%] animate-splash-gradient rounded-full blur-[2px]" />
+        </div>
       </div>
 
       {/* Main Agenda Section */}
-      <div className="grid grid-cols-1 gap-6 px-2">
+      <div className="grid grid-cols-1 gap-8 px-2 pt-2">
         
+        {/* Doctor Appointment List - Updated Look */}
+        <div className="space-y-4">
+            <div className="flex items-center justify-between px-4">
+                <div className="flex items-center gap-2">
+                    <div className="h-4 w-1 bg-primary rounded-full" />
+                    <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-100 uppercase tracking-[0.2em]">Doctor Consultations</h3>
+                </div>
+                <Link href="/consultation" className="text-[9px] font-black uppercase text-primary tracking-widest hover:underline">Manage All</Link>
+            </div>
+            
+            <div className="space-y-3">
+                {appointments.length > 0 ? (
+                    appointments.map((appt, i) => (
+                        <Link href="/consultation" key={i} className="block active:scale-[0.98] transition-all group">
+                            <div className="p-5 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl flex items-center gap-5 relative overflow-hidden">
+                                {/* Side accent line */}
+                                <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
+                                
+                                <div className="h-14 w-14 rounded-3xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-primary shadow-inner shrink-0 relative">
+                                    <Stethoscope className="w-7 h-7" />
+                                    <div className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse" />
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 truncate uppercase tracking-tight">{appt.doctorName}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-2">{appt.specialty}</p>
+                                    
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                            <Calendar className="w-3 h-3 text-primary" />
+                                            <span className="text-[9px] font-black text-slate-600 dark:text-slate-300">{appt.date}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                            <Clock className="w-3 h-3 text-primary" />
+                                            <span className="text-[9px] font-black text-slate-600 dark:text-slate-300">{appt.time}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:bg-primary group-hover:text-white transition-all">
+                                    <ChevronRight className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </Link>
+                    ))
+                ) : (
+                    <div className="p-8 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 bg-white/30 dark:bg-slate-900/30 text-center animate-in fade-in duration-1000">
+                        <Calendar className="h-8 w-8 text-slate-200 mx-auto mb-3" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No Active Appointments</p>
+                        <Link href="/consultation">
+                            <Button variant="link" className="text-[10px] uppercase font-black tracking-widest mt-2 h-auto p-0">Book Specialist</Button>
+                        </Link>
+                    </div>
+                )}
+            </div>
+        </div>
+
         {/* Health Pulse Card */}
         <Card className="rounded-[2.8rem] border-none shadow-2xl bg-white dark:bg-slate-900 overflow-hidden border border-slate-50/50 dark:border-slate-800/50 animate-in zoom-in-95 duration-1000">
             <CardHeader className="flex flex-row items-center justify-between pb-2 px-7 pt-7">
@@ -211,41 +272,6 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-
-        {/* Schedule & Tasks */}
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-4">
-                <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.25em]">Upcoming Session</h3>
-                <Link href="/consultation" className="h-6 px-3 rounded-full bg-primary/10 flex items-center text-[8px] font-black text-primary uppercase tracking-widest transition-colors hover:bg-primary/20">Manage</Link>
-            </div>
-            {appointments.length > 0 ? (
-              appointments.map((appt, i) => (
-                <Link href="/consultation" key={i} className="block active:scale-[0.97] transition-all">
-                    <div className="mx-1 p-5 rounded-[2.2rem] bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/20 shadow-xl flex items-center gap-5 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                        <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-primary shadow-inner shrink-0 z-10">
-                            <Calendar className="w-6 h-6" />
-                        </div>
-                        <div className="flex-1 min-w-0 z-10">
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 truncate uppercase tracking-tight">{appt.doctorName}</p>
-                            <div className="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase mt-1">
-                                <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-primary" /> {appt.time}</span>
-                                <span className="text-emerald-500 font-black">• CONFIRMED</span>
-                            </div>
-                        </div>
-                        <div className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-50 dark:bg-slate-800 transition-transform group-hover:translate-x-1">
-                            <ChevronRight className="w-5 h-5 text-slate-300" />
-                        </div>
-                    </div>
-                </Link>
-              ))
-            ) : (
-                <div className="mx-1 p-6 rounded-[2.2rem] border-dashed border-2 border-slate-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-center animate-in fade-in duration-1000">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No Active Bookings Today</p>
-                </div>
-            )}
-          </div>
 
           {/* Today's Planner List */}
           <Card className="rounded-[2.5rem] border-none shadow-2xl bg-white dark:bg-slate-900 mx-1 p-2 animate-in slide-in-from-bottom-4 duration-1000">
@@ -283,7 +309,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </Card>
-        </div>
       </div>
 
       {/* Emergency Quick Action - Enhanced for Native */}
@@ -320,19 +345,12 @@ function MiniServiceCard({ title, slogan, icon: Icon, href, color, bg, delay }: 
         bg,
         "border-white/80 dark:border-slate-800/80 hover:shadow-xl hover:bg-white dark:hover:bg-slate-800"
       )}>
-        {/* Glow effect on hover */}
-        <div className={cn("absolute -top-10 -right-10 h-24 w-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity", color.replace('text-', 'bg-'))} />
-        
         <div className={cn("h-14 w-14 rounded-3xl shadow-xl flex items-center justify-center bg-white dark:bg-slate-900 transition-all duration-700 group-hover:rotate-12 group-hover:scale-110 mb-4", color)}>
           <Icon className="w-7 h-7" />
         </div>
         <div className="w-full">
           <h4 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-tight mb-1">{title}</h4>
           <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] leading-none opacity-80">{slogan}</p>
-        </div>
-        
-        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-             <div className={cn("h-1 w-8 rounded-full", color.replace('text-', 'bg-'))} />
         </div>
       </div>
     </Link>
