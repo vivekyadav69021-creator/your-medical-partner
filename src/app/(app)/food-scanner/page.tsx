@@ -97,6 +97,9 @@ export default function FoodScannerPage() {
   const { userName, userImage } = useUserProfile();
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [state, formAction, isAnalyzing] = useActionState(analyzeFoodAction, initialAnalysisState);
+  
+  // Isolated Local Result State to ensure data doesn't leak between views
+  const [currentResult, setCurrentResult] = useState<any>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [textLabel, setTextLabel] = useState('');
   
@@ -109,8 +112,10 @@ export default function FoodScannerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Sync AI response to local result only for the current view
   useEffect(() => {
     if (state?.result && !state?.error && state?.timestamp > 0) {
+      setCurrentResult(state.result);
       toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
     }
     if (state?.error) {
@@ -118,11 +123,16 @@ export default function FoodScannerPage() {
     }
   }, [state, lang, toast]);
 
-  const handleModeSwitch = (newView: ViewMode) => {
-    setView(newView);
+  const resetAll = () => {
     setPreview(null);
     setTextLabel('');
+    setCurrentResult(null);
     setShowSettings(false);
+  };
+
+  const handleModeSwitch = (newView: ViewMode) => {
+    setView(newView);
+    resetAll(); // Pure isolation: Clear everything when switching modes
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +147,6 @@ export default function FoodScannerPage() {
   const onFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Meal scan can work with just text, but others need images
     if (view === 'meal' && !textLabel.trim() && !preview) {
         toast({ variant: 'destructive', title: lang === 'en' ? "Input Required" : "विवरण आवश्यक है", description: lang === 'en' ? "Please provide a name or a photo." : "कृपया नाम या फोटो प्रदान करें।" });
         return;
@@ -198,7 +207,6 @@ export default function FoodScannerPage() {
     if (view === 'home') {
         return (
             <div className="space-y-8 animate-in fade-in duration-700 pb-32">
-                {/* Native Header - Positioned at top */}
                 <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                         <Link href="/dashboard">
@@ -221,7 +229,6 @@ export default function FoodScannerPage() {
                     </Link>
                 </div>
 
-                {/* Stats Card */}
                 <div className="rounded-[2.5rem] border-none shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 overflow-hidden mx-1 p-8">
                     <div className="pb-4">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500/80 flex items-center gap-2">
@@ -247,14 +254,12 @@ export default function FoodScannerPage() {
                     </div>
                 </div>
 
-                {/* Service Grid */}
                 <div className="grid grid-cols-2 gap-5 px-1">
                     <ScannerGridCard title={t.mealTitle} slogan={t.mealSlogan} icon={Utensils} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" btnColor="bg-blue-500" onClick={() => handleModeSwitch('meal')} btnText={t.startBtn} />
                     <ScannerGridCard title={t.barcodeTitle} slogan={t.barcodeSlogan} icon={Barcode} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" btnColor="bg-pink-500" onClick={() => handleModeSwitch('barcode')} btnText={t.startBtn} />
                     <ScannerGridCard title={t.ocrTitle} slogan={t.ocrSlogan} icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => handleModeSwitch('ocr')} btnText={t.startBtn} />
                 </div>
 
-                {/* Language Toggle */}
                 <div className="flex justify-center pt-4">
                     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => setLang('en')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</Button>
@@ -267,26 +272,31 @@ export default function FoodScannerPage() {
 
     return (
         <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top">
-            {/* Inner View Header - Fixed Positioning */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => { setView('home'); startTransition(() => { initialAnalysisState.result = null; initialAnalysisState.error = null; }); }} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                <Button variant="ghost" size="icon" onClick={() => handleModeSwitch('home')} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
                     <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
                         {view === 'meal' ? t.mealTitle : view === 'barcode' ? t.barcodeTitle : t.ocrTitle}
                     </h2>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{t.slogan}</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{view === 'meal' ? t.mealSlogan : view === 'barcode' ? t.barcodeSlogan : t.ocrSlogan}</p>
                 </div>
-                {state?.result && (
-                     <Button variant="ghost" size="icon" onClick={() => { setPreview(null); setTextLabel(''); startTransition(() => { initialAnalysisState.result = null; }); }} className="ml-auto rounded-full h-10 w-10 bg-white/40 shadow-sm border border-white/20">
+                {(currentResult || preview || textLabel) && (
+                     <Button variant="ghost" size="icon" onClick={resetAll} className="ml-auto rounded-full h-10 w-10 bg-white/40 shadow-sm border border-white/20">
                         <RotateCcw className="h-5 w-5 text-primary" />
                     </Button>
                 )}
             </div>
 
+            {/* Sub-mode Navigation (Horizontal Row) */}
+            <div className="flex gap-2.5 overflow-x-auto pb-2 px-1 scrollbar-hide">
+                <button onClick={() => handleModeSwitch('meal')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'meal' ? "bg-primary text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Meal Scan</button>
+                <button onClick={() => handleModeSwitch('barcode')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'barcode' ? "bg-pink-500 text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Barcode</button>
+                <button onClick={() => handleModeSwitch('ocr')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'ocr' ? "bg-emerald-500 text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Label OCR</button>
+            </div>
+
             <div className="space-y-6">
-                {/* Mandatory Image Picker - Accessible for both Camera and Gallery */}
                 {!preview ? (
                     <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
                         <div className={cn("p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl group-hover:scale-110 transition-transform", view === 'meal' ? "text-blue-400" : view === 'barcode' ? "text-pink-400" : "text-emerald-400")}>
@@ -314,28 +324,19 @@ export default function FoodScannerPage() {
                 <form onSubmit={onFormSubmit} className="space-y-6">
                     {view === 'meal' && (
                         <div className="space-y-3 animate-in slide-in-from-top-2">
-                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Identify Your Meal (Mandatory for Accuracy)</Label>
+                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Identify Your Meal (Or Search Directly)</Label>
                              <div className="relative">
                                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
                                 <Input 
                                     value={textLabel} 
                                     onChange={(e) => setTextLabel(e.target.value)} 
-                                    placeholder="E.g., 2 Roti and Paneer Bhurji" 
-                                    className={cn(
-                                        "rounded-[2rem] h-16 pl-16 pr-8 bg-white/80 dark:bg-slate-900/80 border border-white/40 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all",
-                                        !textLabel && preview ? "border-rose-300 ring-4 ring-rose-50" : "focus-visible:ring-primary/10"
-                                    )} 
+                                    placeholder="E.g., Paneer Butter Masala" 
+                                    className="rounded-[2rem] h-16 pl-16 pr-8 bg-white/80 dark:bg-slate-900/80 border border-white/40 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all focus-visible:ring-primary/10" 
                                 />
                              </div>
-                             {!preview && !textLabel && (
-                                <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest px-4">
-                                    Tip: You can search directly by name even without a photo
-                                </p>
-                             )}
                         </div>
                     )}
 
-                    {/* Personalization Toggle */}
                     <button type="button" onClick={() => setShowSettings(!showSettings)} className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><UserCheck className="h-5 w-5" /></div>
@@ -372,9 +373,8 @@ export default function FoodScannerPage() {
                 </form>
             </div>
 
-            {/* Results Section */}
-            {state?.result && (
-                <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700">
+            {currentResult && (
+                <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700 mt-12 pb-20">
                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                     
                     <section className="flex flex-col items-center text-center gap-4">
@@ -382,13 +382,13 @@ export default function FoodScannerPage() {
                             <Activity className="h-8 w-8 text-primary" />
                         </div>
                         <div className="space-y-1.5">
-                            <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{state.result.name}</h2>
+                            <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{currentResult.name}</h2>
                             <div className={cn(
                                 "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
-                                (lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
+                                (lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
                             )}>
-                                {(lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                                {lang === 'en' ? state.result.compatibilityTagEn : state.result.compatibilityTagHi}
+                                {(lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                {lang === 'en' ? currentResult.compatibilityTagEn : currentResult.compatibilityTagHi}
                             </div>
                         </div>
                     </section>
@@ -398,49 +398,49 @@ export default function FoodScannerPage() {
                             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Zap className="h-6 w-6" /></div>
                             <div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estimated Energy</p>
-                                <p className="text-2xl font-black text-[#1A365D] dark:text-white">{state.result.calories}</p>
-                                <p className="text-[9px] font-bold text-slate-400">{state.result.portion}</p>
+                                <p className="text-2xl font-black text-[#1A365D] dark:text-white">{currentResult.calories}</p>
+                                <p className="text-[9px] font-bold text-slate-400">{currentResult.portion}</p>
                             </div>
                         </div>
 
                         <div className="flex items-center justify-around p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
-                            <MacroMini label="Carbs" val={state.result.carbs} color="bg-amber-400" />
+                            <MacroMini label="Carbs" val={currentResult.carbs} color="bg-amber-400" />
                             <div className="h-8 w-px bg-slate-200" />
-                            <MacroMini label="Protein" val={state.result.protein} color="bg-emerald-400" />
+                            <MacroMini label="Protein" val={currentResult.protein} color="bg-emerald-400" />
                             <div className="h-8 w-px bg-slate-200" />
-                            <MacroMini label="Fats" val={state.result.fats} color="bg-rose-400" />
+                            <MacroMini label="Fats" val={currentResult.fats} color="bg-rose-400" />
                         </div>
                     </div>
 
                     <div className="space-y-4 px-2">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Micro-Nutrient Breakdown</h4>
                         <div className="p-8 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 shadow-sm grid grid-cols-2 gap-8">
-                            <MicroItem label="Calcium" val={state.result.microNutrients?.calcium} icon={Milk} />
-                            <MicroItem label="Potassium" val={state.result.microNutrients?.potassium} icon={Activity} />
-                            <MicroItem label="Iron" val={state.result.microNutrients?.iron} icon={Sparkles} />
-                            <MicroItem label="Sodium" val={state.result.microNutrients?.sodium} icon={AlertCircle} />
+                            <MicroItem label="Calcium" val={currentResult.microNutrients?.calcium} icon={Milk} />
+                            <MicroItem label="Potassium" val={currentResult.microNutrients?.potassium} icon={Activity} />
+                            <MicroItem label="Iron" val={currentResult.microNutrients?.iron} icon={Sparkles} />
+                            <MicroItem label="Sodium" val={currentResult.microNutrients?.sodium} icon={AlertCircle} />
                         </div>
                     </div>
 
-                    {(lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) && (
+                    {(lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) && (
                         <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
                             <Ban className="h-10 w-10" />
                             <h3 className="text-xl font-black uppercase tracking-widest">Safety Advisory</h3>
-                            <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi}</p>
+                            <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi}</p>
                         </div>
                     )}
 
                     <div className="space-y-4 px-2">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Scientific Explanation' : 'सरल व्याख्या'}</h4>
                         <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
-                            "{lang === 'en' ? state.result.logicEn : state.result.logicHi}"
+                            "{lang === 'en' ? currentResult.logicEn : currentResult.logicHi}"
                         </div>
                     </div>
 
                     <div className="space-y-4 px-2">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Healthier Substitutions' : 'बेहतर विकल्प'}</h4>
                         <div className="space-y-3">
-                            {(lang === 'en' ? (state.result.substitutionsEn || []) : (state.result.substitutionsHi || [])).map((sub: string, i: number) => (
+                            {(lang === 'en' ? (currentResult.substitutionsEn || []) : (currentResult.substitutionsHi || [])).map((sub: string, i: number) => (
                                 <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
                                     <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary"><Sparkles className="h-4 w-4" /></div>
                                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{sub}</p>
@@ -450,7 +450,7 @@ export default function FoodScannerPage() {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                        <Button variant="ghost" onClick={() => { setPreview(null); setTextLabel(''); startTransition(() => { initialAnalysisState.result = null; initialAnalysisState.error = null; }); }} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
+                        <Button variant="ghost" onClick={resetAll} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
                             <RotateCcw className="mr-2 h-4 w-4" /> Start New Analysis
                         </Button>
                     </div>
