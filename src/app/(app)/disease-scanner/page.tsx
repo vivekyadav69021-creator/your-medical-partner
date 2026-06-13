@@ -42,7 +42,8 @@ import {
   Crop,
   Check,
   RotateCcw,
-  Eraser
+  Eraser,
+  Layers
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -890,7 +891,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 
 function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
-    const [preview, setPreview] = useState<string | null>(null);
+    const [previews, setPreviews] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
@@ -899,27 +900,33 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     }, [state]);
 
     const handleFormAction = async (formData: FormData) => {
-        if (!preview) return;
+        if (previews.length === 0) return;
         try {
-            const compressed = await compressImage(preview);
-            formData.set('imageDataUri', compressed);
+            const compressedImages = await Promise.all(previews.map(p => compressImage(p)));
+            formData.set('images', JSON.stringify(compressedImages));
             formData.set('language', lang);
             startTransition(() => { formAction(formData); });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error' });
+            toast({ variant: 'destructive', title: 'Error processing images' });
         }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreview(reader.result as string);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-            };
-            reader.readAsDataURL(file);
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setPreviews(prev => [...prev, reader.result as string].slice(0, 5)); // Limit to 5 pages
+                };
+                reader.readAsDataURL(file);
+            });
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
+
+    const removePreview = (index: number) => {
+        setPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
     const groupedFindings = (state?.result?.findings || []).reduce((acc: any, item: any) => {
@@ -937,29 +944,48 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 </Button>
                 <div>
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Report Specialist</h2>
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Advanced Lab OCR</p>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Multi-Page Lab OCR</p>
                 </div>
             </div>
 
             <div className="space-y-6">
-                {!preview ? (
+                {previews.length === 0 ? (
                     <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                         <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
-                            <FileText className="w-12 h-12" />
+                            <Layers className="w-12 h-12" />
                         </div>
-                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Lab Report Here</p>
-                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Report Page(s)</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Multiple pages supported</p>
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" multiple />
                     </div>
                 ) : (
-                    <div className={cn(
-                        "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[500px] flex items-center justify-center",
-                        isAnalyzing ? "border-emerald-200 ring-8 ring-emerald-50/50" : "border-white dark:border-slate-800"
-                    )}>
-                        <Image src={preview} alt="Report" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
-                        {isAnalyzing && <ScanAnimationOverlay color="text-emerald-500" />}
-                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
-                            <X className="h-5 w-5" />
-                        </Button>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {previews.map((src, idx) => (
+                                <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white dark:border-slate-800 shadow-md group">
+                                    <Image src={src} alt={`Page ${idx + 1}`} fill className="object-cover" />
+                                    <div className="absolute top-2 left-2 bg-black/60 text-white text-[8px] font-black px-2 py-0.5 rounded-full backdrop-blur-sm">PAGE {idx+1}</div>
+                                    {!isAnalyzing && (
+                                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 rounded-full h-7 w-7 shadow-lg" onClick={() => removePreview(idx)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                            {previews.length < 5 && !isAnalyzing && (
+                                <button onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-2xl border-2 border-dashed border-emerald-100 dark:border-emerald-900/40 flex flex-col items-center justify-center gap-2 bg-emerald-50/20 text-emerald-500 hover:bg-emerald-50 transition-colors">
+                                    <Plus className="h-6 w-6" />
+                                    <span className="text-[8px] font-black uppercase">Add Page</span>
+                                </button>
+                            )}
+                        </div>
+                        
+                        {isAnalyzing && (
+                            <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div className="absolute inset-0 bg-emerald-500 animate-splash-gradient" />
+                            </div>
+                        )}
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" multiple />
                     </div>
                 )}
 
@@ -968,8 +994,8 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Additional Context (Optional)</Label>
                         <Textarea name="userQuery" placeholder="E.g., I have been feeling tired lately..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[100px] text-base font-bold p-6" />
                     </div>
-                    <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> {lang === 'en' ? 'Scanning Report...' : 'रिपोर्ट स्कैन हो रही है...'}</> : (lang === 'en' ? "Analyze My Report" : "रिपोर्ट का विश्लेषण करें")}
+                    <Button type="submit" disabled={previews.length === 0 || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> {lang === 'en' ? 'Processing all pages...' : 'सभी पन्नों का विश्लेषण हो रहा है...'}</> : (lang === 'en' ? `Analyze ${previews.length} Pages` : `${previews.length} पन्नों का विश्लेषण करें`)}
                     </Button>
                 </form>
             </div>

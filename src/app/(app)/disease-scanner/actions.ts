@@ -114,7 +114,7 @@ export async function analyzeSkinImageAction(
 }
 
 const labReportImageSchema = z.object({
-  imageDataUri: z.string().min(1, 'Please upload an image.'),
+  images: z.array(z.string()).min(1, 'Please upload at least one report page.'),
   userQuery: z.string().optional(),
   language: z.enum(['en', 'hi']).optional(),
 });
@@ -123,8 +123,16 @@ export async function analyzeLabReportImageAction(
   prevState: any,
   formData: FormData
 ) {
+    const imagesString = formData.get('images') as string;
+    let images = [];
+    try {
+        images = imagesString ? JSON.parse(imagesString) : [];
+    } catch (e) {
+        console.error("Error parsing images array:", e);
+    }
+
     const validatedFields = labReportImageSchema.safeParse({
-        imageDataUri: formData.get('imageDataUri'),
+        images,
         userQuery: (formData.get('userQuery') as string) || undefined,
         language: (formData.get('language') as 'en' | 'hi') || 'en',
     });
@@ -132,7 +140,7 @@ export async function analyzeLabReportImageAction(
     if (!validatedFields.success) {
         return {
             result: null,
-            error: 'Invalid input.',
+            error: validatedFields.error.errors[0].message || 'Invalid input.',
             timestamp: Date.now(),
         };
     }
