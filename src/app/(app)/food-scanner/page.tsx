@@ -31,7 +31,8 @@ import {
   HeartPulse,
   Pill,
   Scan,
-  LayoutGrid
+  LayoutGrid,
+  Maximize
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -48,21 +49,44 @@ const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 
 type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
 
-function ScanAnimationOverlay({ color }: { color: string }) {
+/**
+ * High-tech scanning line animation overlay
+ */
+function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isBarcode?: boolean }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
-            <div className={cn("absolute inset-0 opacity-[0.08] animate-pulse", color.replace('text-', 'bg-'))} />
+            {/* Ambient Pulse */}
+            <div className={cn("absolute inset-0 opacity-[0.1] animate-pulse", color.replace('text-', 'bg-'))} />
+            
+            {/* Moving Laser Line */}
             <div 
-                className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-50", color)} 
+                className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-80", color)} 
                 style={{ 
                     backgroundColor: 'currentColor',
-                    boxShadow: '0 0 12px 1px currentColor' 
+                    boxShadow: '0 0 15px 2px currentColor' 
                 }}
             />
+
+            {/* Target Area Box for Barcode/Label */}
+            {isBarcode && (
+                <div className="absolute inset-0 flex items-center justify-center p-12">
+                    <div className="w-full h-48 border-2 border-dashed border-white/40 rounded-2xl relative">
+                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white rounded-tl-lg" />
+                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white rounded-tr-lg" />
+                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white rounded-bl-lg" />
+                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white rounded-br-lg" />
+                    </div>
+                </div>
+            )}
+
+            {/* Corner Markers */}
             <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
             <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
             <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
             <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
+            
+            {/* Dark Vignette */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.2)_100%)]" />
         </div>
     );
 }
@@ -310,8 +334,10 @@ export default function FoodScannerPage() {
                                 <span className="text-[10px] font-black uppercase text-slate-500">Gallery</span>
                             </div>
                         </div>
-                        <div className="text-center">
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Capture or Pick Photo</p>
+                        <div className="text-center px-4">
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">
+                                {view === 'barcode' ? "Align Barcode in Center" : view === 'ocr' ? "Focus on Ingredient List" : "Tap to Capture or Pick Photo"}
+                            </p>
                         </div>
                         <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
                     </div>
@@ -321,7 +347,15 @@ export default function FoodScannerPage() {
                         isAnalyzing ? "ring-8 ring-primary/20" : "border-white dark:border-slate-800"
                     )}>
                         <Image src={preview} alt="Input" width={600} height={800} className="w-full h-auto object-contain max-h-[400px]" />
-                        {isAnalyzing && <ScanAnimationOverlay color={view === 'meal' ? "text-blue-500" : view === 'barcode' ? "text-pink-500" : "text-emerald-500"} />}
+                        
+                        {/* High-tech Scanning UI */}
+                        {isAnalyzing && (
+                            <ScanAnimationOverlay 
+                                color={view === 'meal' ? "text-blue-500" : view === 'barcode' ? "text-pink-500" : "text-emerald-500"} 
+                                isBarcode={view !== 'meal'}
+                            />
+                        )}
+
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
@@ -375,7 +409,12 @@ export default function FoodScannerPage() {
                     )}
 
                     <Button type="submit" disabled={isAnalyzing || (view === 'meal' && !textLabel && !preview) || (view !== 'meal' && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Analyzing Visuals...</> : "Start Clinical Scan"}
+                        {isAnalyzing ? (
+                            <div className="flex items-center gap-3">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span className="animate-pulse">Analyzing Visuals...</span>
+                            </div>
+                        ) : "Start Clinical Scan"}
                     </Button>
                 </form>
             </div>
