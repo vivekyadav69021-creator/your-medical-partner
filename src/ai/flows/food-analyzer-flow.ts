@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -61,8 +62,9 @@ const prompt = ai.definePrompt({
 
 **GROUND TRUTH PROTOCOL:**
 - The user provided label: "{{{textQuery}}}". 
-- Treat this label as the primary source of truth.
-- If an image is provided, use it to confirm portion size and detect extra ingredients (like butter or oil).
+- Treat this label as a major source of truth.
+- If an image is provided, examine it visually. Identify objects like extra oil, butter, garnishing, or side items (like chutney or salad) that the user might have missed in the text.
+- If ONLY a label is provided, provide analysis based on typical preparation styles for that dish.
 
 **NO MEDICAL JARGON POLICY (STRICT):**
 - You MUST NOT use words like "hyperglycemia", "glucogenic", "cardiovascular", "electrolytes", "metabolism", etc.
@@ -86,7 +88,7 @@ Current Input:
 {{#if imageDataUri}} 
 Image provided: {{media url=imageDataUri}} 
 {{/if}}
-Food Label provided by user: "{{{textQuery}}}"
+Food Label/Search Query provided by user: "{{{textQuery}}}"
 
 Respond ONLY in the specified JSON format.`,
 });

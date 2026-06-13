@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, startTransition } from 'react';
@@ -24,13 +25,13 @@ import {
   Activity,
   Milk,
   Sparkles,
-  ExternalLink,
   ShieldAlert,
   RotateCcw,
   ChevronLeft,
   HeartPulse,
   Pill,
-  Scan
+  Scan,
+  LayoutGrid
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -46,8 +47,6 @@ import { formatDistanceToNow } from 'date-fns';
 const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 
 type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
-
-// --- SUB-COMPONENTS FOR CLEANER CODE ---
 
 function ScanAnimationOverlay({ color }: { color: string }) {
     return (
@@ -93,8 +92,6 @@ function MicroItem({ label, val, icon: Icon }: any) {
     );
 }
 
-// --- MAIN SCANNER PAGE COMPONENT ---
-
 export default function FoodScannerPage() {
   const [view, setView] = useState<ViewMode>('home');
   const { userName, userImage } = useUserProfile();
@@ -103,7 +100,6 @@ export default function FoodScannerPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [textLabel, setTextLabel] = useState('');
   
-  // Profile settings for personalization
   const [healthMirror, setHealthMirror] = useState('');
   const [mainGoal, setMainGoal] = useState('Maintain Health');
   const [workout, setWorkout] = useState('Sedentary');
@@ -117,14 +113,16 @@ export default function FoodScannerPage() {
     if (state?.result && !state?.error && state?.timestamp > 0) {
       toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
     }
+    if (state?.error) {
+      toast({ variant: 'destructive', title: lang === 'en' ? "Scan Failed" : "स्कैन विफल", description: state.error });
+    }
   }, [state, lang, toast]);
 
   const handleModeSwitch = (newView: ViewMode) => {
     setView(newView);
     setPreview(null);
     setTextLabel('');
-    // State Resetting is managed by individual components if needed, 
-    // but here we just clear local previews.
+    setShowSettings(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,17 +136,20 @@ export default function FoodScannerPage() {
 
   const onFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (view === 'meal' && !textLabel.trim()) {
-        toast({ variant: 'destructive', title: lang === 'en' ? "Name Required" : "नाम अनिवार्य है" });
+    
+    // Meal scan can work with just text, but others need images
+    if (view === 'meal' && !textLabel.trim() && !preview) {
+        toast({ variant: 'destructive', title: lang === 'en' ? "Input Required" : "विवरण आवश्यक है", description: lang === 'en' ? "Please provide a name or a photo." : "कृपया नाम या फोटो प्रदान करें।" });
         return;
     }
-    if (!preview) {
+    
+    if (view !== 'meal' && !preview) {
         toast({ variant: 'destructive', title: lang === 'en' ? "Photo Required" : "फोटो आवश्यक है" });
         return;
     }
 
     const formData = new FormData();
-    formData.set('imageDataUri', preview);
+    if (preview) formData.set('imageDataUri', preview);
     formData.set('textQuery', textLabel || `Nutri ${view} scan`);
     formData.set('language', lang);
     formData.set('scanType', view === 'meal' ? 'standard' : view);
@@ -174,7 +175,7 @@ export default function FoodScannerPage() {
         barcodeSlogan: "Packet Scanning",
         ocrSlogan: "Ingredient OCR",
         startBtn: "Analyze Now",
-        noScans: "Ready to scan"
+        noScans: "Ready for scan"
     },
     hi: {
         greeting: `नमस्ते ${userName.split(' ')[0]}`,
@@ -197,8 +198,8 @@ export default function FoodScannerPage() {
     if (view === 'home') {
         return (
             <div className="space-y-8 animate-in fade-in duration-700 pb-32">
-                {/* Custom Native Header */}
-                <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top mt-2">
+                {/* Native Header - Positioned at top */}
+                <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                         <Link href="/dashboard">
                             <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white/50 shadow-sm border border-white/20 shrink-0">
@@ -265,10 +266,10 @@ export default function FoodScannerPage() {
     }
 
     return (
-        <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
-            {/* Inner View Header */}
+        <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top">
+            {/* Inner View Header - Fixed Positioning */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => { setView('home'); startTransition(() => { initialAnalysisState.result = null; }); }} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                <Button variant="ghost" size="icon" onClick={() => { setView('home'); startTransition(() => { initialAnalysisState.result = null; initialAnalysisState.error = null; }); }} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
                     <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div>
@@ -277,17 +278,25 @@ export default function FoodScannerPage() {
                     </h2>
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest">{t.slogan}</p>
                 </div>
+                {state?.result && (
+                     <Button variant="ghost" size="icon" onClick={() => { setPreview(null); setTextLabel(''); startTransition(() => { initialAnalysisState.result = null; }); }} className="ml-auto rounded-full h-10 w-10 bg-white/40 shadow-sm border border-white/20">
+                        <RotateCcw className="h-5 w-5 text-primary" />
+                    </Button>
+                )}
             </div>
 
             <div className="space-y-6">
-                {/* Mandatory Image Picker */}
+                {/* Mandatory Image Picker - Accessible for both Camera and Gallery */}
                 {!preview ? (
-                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                        <div className={cn("p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl", view === 'meal' ? "text-blue-400" : view === 'barcode' ? "text-pink-400" : "text-emerald-400")}>
+                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+                        <div className={cn("p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl group-hover:scale-110 transition-transform", view === 'meal' ? "text-blue-400" : view === 'barcode' ? "text-pink-400" : "text-emerald-400")}>
                             {view === 'barcode' ? <Barcode className="w-12 h-12" /> : view === 'ocr' ? <FileText className="w-12 h-12" /> : <Camera className="w-12 h-12" />}
                         </div>
-                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Capture {view.toUpperCase()}</p>
-                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                        <div className="text-center space-y-1">
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Tap to Capture or Pick Photo</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Camera & Gallery supported</p>
+                        </div>
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
                     </div>
                 ) : (
                     <div className={cn(
@@ -305,7 +314,7 @@ export default function FoodScannerPage() {
                 <form onSubmit={onFormSubmit} className="space-y-6">
                     {view === 'meal' && (
                         <div className="space-y-3 animate-in slide-in-from-top-2">
-                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Identify Your Meal (Mandatory)</Label>
+                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Identify Your Meal (Mandatory for Accuracy)</Label>
                              <div className="relative">
                                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
                                 <Input 
@@ -318,10 +327,15 @@ export default function FoodScannerPage() {
                                     )} 
                                 />
                              </div>
+                             {!preview && !textLabel && (
+                                <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest px-4">
+                                    Tip: You can search directly by name even without a photo
+                                </p>
+                             )}
                         </div>
                     )}
 
-                    {/* Settings Toggle */}
+                    {/* Personalization Toggle */}
                     <button type="button" onClick={() => setShowSettings(!showSettings)} className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><UserCheck className="h-5 w-5" /></div>
@@ -352,7 +366,7 @@ export default function FoodScannerPage() {
                         </div>
                     )}
 
-                    <Button type="submit" disabled={isAnalyzing || (!textLabel && view === 'meal')} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
+                    <Button type="submit" disabled={isAnalyzing || (view === 'meal' && !textLabel && !preview) || (view !== 'meal' && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
                         {isAnalyzing ? <><Loader2 className="mr-3 h-5 w-5 animate-spin" /> Analyzing Visuals...</> : "Start Clinical Scan"}
                     </Button>
                 </form>
@@ -426,7 +440,7 @@ export default function FoodScannerPage() {
                     <div className="space-y-4 px-2">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Healthier Substitutions' : 'बेहतर विकल्प'}</h4>
                         <div className="space-y-3">
-                            {(lang === 'en' ? state.result.substitutionsEn : state.result.substitutionsHi || []).map((sub: string, i: number) => (
+                            {(lang === 'en' ? (state.result.substitutionsEn || []) : (state.result.substitutionsHi || [])).map((sub: string, i: number) => (
                                 <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
                                     <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary"><Sparkles className="h-4 w-4" /></div>
                                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{sub}</p>
@@ -436,7 +450,7 @@ export default function FoodScannerPage() {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                        <Button variant="ghost" onClick={() => { setPreview(null); setTextLabel(''); startTransition(() => { initialAnalysisState.result = null; }); }} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
+                        <Button variant="ghost" onClick={() => { setPreview(null); setTextLabel(''); startTransition(() => { initialAnalysisState.result = null; initialAnalysisState.error = null; }); }} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
                             <RotateCcw className="mr-2 h-4 w-4" /> Start New Analysis
                         </Button>
                     </div>
@@ -458,7 +472,7 @@ export default function FoodScannerPage() {
   return (
     <div className="h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] fixed inset-0 overflow-hidden font-body">
         <main className="h-full overflow-y-auto scroll-smooth scrollbar-hide">
-            <div className="max-w-2xl mx-auto p-4 pt-4 min-h-full">
+            <div className="max-w-2xl mx-auto p-4 min-h-full">
                 {renderContent()}
             </div>
         </main>

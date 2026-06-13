@@ -1,3 +1,4 @@
+
 'use server';
 
 import { analyzeFood, FoodAnalysisInput } from '@/ai/flows/food-analyzer-flow';
@@ -13,7 +14,7 @@ const foodScannerSchema = z.object({
   workoutRegimen: z.string().optional(),
   dietaryProtocol: z.string().optional(),
 }).refine(data => data.imageDataUri || data.textQuery, {
-  message: "Please provide either an image or a text description.",
+  message: "Please provide either a photo or a name to analyze.",
 });
 
 export async function analyzeFoodAction(prevState: any, formData: FormData) {
@@ -52,6 +53,6 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
     };
   } catch (e: any) {
     console.error("Food Action Error:", e);
-    return { result: null, error: "Analysis failed. Please try a clearer description or photo.", timestamp: Date.now() };
+    return { result: null, error: "Analysis failed. The AI model could not identify the food. Please try again with more details.", timestamp: Date.now() };
   }
 }
