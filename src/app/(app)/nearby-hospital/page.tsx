@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -21,7 +20,6 @@ import {
     Hospital as HospitalIcon, 
     Search,
     ChevronLeft,
-    Activity,
     RotateCcw,
     ShieldAlert,
     Loader2,
@@ -34,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// API Configuration - Updated with highly inclusive medical categories
+// TomTom Master Key - czghQOGKafhd2gnuLjpMzF2bIly8lhp3
 const TOMTOM_API_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || 'czghQOGKafhd2gnuLjpMzF2bIly8lhp3';
 
 type Hospital = {
@@ -140,7 +138,7 @@ export default function NearbyHospitalPage() {
     if (!L) return null;
     return new L.DivIcon({
       className: 'custom-user-icon',
-      html: `<div class="relative"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-40"></div><div class="relative w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div></div>`,
+      html: `<div class="relative"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-40"></div><div class="relative w-4 w-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div></div>`,
       iconSize: [20, 20],
       iconAnchor: [10, 10],
     });
@@ -159,43 +157,42 @@ export default function NearbyHospitalPage() {
   const fetchHospitals = useCallback(async (lat: number, lon: number) => {
     setIsLoading(true);
     setErrorMessage(null);
-    setStatus('Scanning all medical facilities...');
+    setStatus('Scanning medical nodes...');
 
     try {
+      // Using /search/2/search/ endpoint which is more standard and avoids some 403 restrictions
       // categorySet 7311 = Hospital/Polyclinic, 9361 = Medical Clinic, 7324 = Healthcare/Emergency Service
       const categorySet = '7311,9361,7324';
-      const url = `https://api.tomtom.com/search/2/categorySearch/medical.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=${categorySet}&limit=50&view=Unified`;
+      const url = `https://api.tomtom.com/search/2/search/hospital.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=${categorySet}&limit=50&view=Unified`;
       
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`API Error (${response.status})`);
+      
+      if (!response.ok) {
+          if (response.status === 403) {
+              throw new Error("API Access Forbidden (403). Please verify your TomTom API Key and enabled services.");
+          }
+          throw new Error(`API Error (${response.status})`);
+      }
 
       const data = await response.json();
       const results = data?.results || [];
       
-      // Sort by distance
-      const sortedResults = results.sort((a: any, b: any) => a.dist - b.dist);
+      const sortedResults = results.sort((a: any, b: any) => (a?.dist || 0) - (b?.dist || 0));
       
       setHospitals(sortedResults);
-      setStatus(sortedResults.length === 0 ? `No facilities in ${parseInt(radius)/1000}km.` : `Found ${sortedResults.length} medical hubs.`);
+      setStatus(sortedResults.length === 0 ? `No nodes in ${parseInt(radius)/1000}km.` : `Linked with ${sortedResults.length} hubs.`);
       
-      if (sortedResults.length === 0) {
-          toast({
-              title: "No Results Found",
-              description: "Try increasing the search radius to 10km or 20km.",
-              variant: "default"
-          });
-      }
     } catch (error: any) {
       console.error("Fetch Error:", error);
-      setErrorMessage("Could not connect to medical servers. Please try again.");
+      setErrorMessage(error.message || "Connection failed. Please check your signal.");
     } finally {
       setIsLoading(false);
     }
-  }, [radius, toast]);
+  }, [radius]);
 
   const handleGetLocation = useCallback(() => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setErrorMessage("GPS Module not detected on this device.");
+      setErrorMessage("GPS Module not detected.");
       return;
     }
 
@@ -210,14 +207,13 @@ export default function NearbyHospitalPage() {
       },
       (error) => {
         setIsLoading(false);
-        let msg = "GPS Signal Denied. Please enable location permissions.";
-        if (error.code === 3) msg = "GPS Signal Timeout. Try again.";
+        let msg = "GPS Signal Denied.";
+        if (error.code === 3) msg = "GPS Signal Timeout.";
         setErrorMessage(msg);
-        toast({ variant: "destructive", title: "Location Error", description: msg });
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
-  }, [fetchHospitals, toast]);
+  }, [fetchHospitals]);
 
   useEffect(() => {
     handleGetLocation();
@@ -245,7 +241,6 @@ export default function NearbyHospitalPage() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-body safe-top">
       
-      {/* Premium Hub Header */}
       <header className="sticky top-0 z-[1000] px-5 py-4 bg-white/70 dark:bg-[#1e1f20]/70 backdrop-blur-3xl border-b border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="active:scale-90 transition-transform">
@@ -265,20 +260,17 @@ export default function NearbyHospitalPage() {
             size="icon" 
             onClick={handleGetLocation} 
             disabled={isLoading}
-            className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm active:rotate-180 transition-transform duration-500"
+            className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm transition-transform"
           >
             <RotateCcw className={cn("h-4.5 w-4.5 text-primary", isLoading && "animate-spin")} />
           </Button>
-          <Button onClick={handleCallEmergency} variant="destructive" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest px-6 h-11 shadow-lg shadow-red-500/20 active:scale-95 transition-all">
+          <Button onClick={handleCallEmergency} variant="destructive" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest px-6 h-11 shadow-lg active:scale-95 transition-all">
             <Siren className="w-4 h-4 mr-2 animate-pulse" /> SOS
           </Button>
         </div>
       </header>
 
-      {/* Main Radar Screen */}
       <div className="flex-1 flex flex-col min-h-0 relative">
-        
-        {/* Radar Map Section */}
         <div className="relative w-full h-[45vh] bg-slate-100 z-10 border-b border-slate-100 dark:border-slate-800">
             {userLocation ? (
                 <MapComponent 
@@ -300,12 +292,11 @@ export default function NearbyHospitalPage() {
                 </div>
             )}
             
-            {/* Range Controls Overlay */}
             <div className="absolute bottom-8 left-5 right-5 z-[1000] flex gap-3">
                  <div className="relative flex-1">
                     <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
-                        placeholder="Search nearby medical nodes..."
+                        placeholder="Search medical hubs..."
                         className="rounded-full h-12 pl-12 bg-white/95 dark:bg-slate-900/95 border-none shadow-2xl text-[11px] font-bold backdrop-blur-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -325,7 +316,6 @@ export default function NearbyHospitalPage() {
             </div>
         </div>
 
-        {/* Clinical Stream Section */}
         <div className="flex-1 bg-white dark:bg-slate-950 rounded-t-[3rem] -mt-8 z-20 shadow-[0_-15px_50px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border-t border-slate-50 dark:border-slate-800">
             <div className="px-8 pt-8 pb-3 shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -403,7 +393,6 @@ export default function NearbyHospitalPage() {
         </div>
       </div>
 
-      {/* High-Alert Error HUD */}
       {errorMessage && (
         <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-md p-6 flex items-center justify-center animate-in fade-in duration-300">
              <Alert className="rounded-[3rem] border-none bg-white dark:bg-slate-900 p-10 shadow-2xl max-w-sm animate-in zoom-in-95 duration-500 text-center flex flex-col items-center">
