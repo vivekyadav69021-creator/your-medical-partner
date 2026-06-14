@@ -34,13 +34,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Dynamic import for Leaflet to avoid SSR issues
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
-const useMap = dynamic(() => import('react-leaflet').then(mod => mod.useMap), { ssr: false });
-
 // API Configuration
 const TOMTOM_API_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || 'czghQOGKafhd2gnuLjpMzF2bIly8lhp3';
 
@@ -61,29 +54,88 @@ type Hospital = {
 };
 
 /**
- * Component to handle map center updates
+ * CLIENT-ONLY MAP COMPONENT
+ * This ensures Leaflet is only loaded and executed in the browser.
  */
-function ChangeView({ center }: { center: [number, number] }) {
-  const map = (useMap as any)();
-  useEffect(() => {
-    if (center && map) {
-      map.setView(center, 14);
-    }
-  }, [center, map]);
-  return null;
-}
+const MapComponent = dynamic(() => Promise.resolve(({ center, hospitals, userIcon, hospitalIcon, openInMaps }: any) => {
+  const { MapContainer, TileLayer, Marker, Popup, useMap } = require('react-leaflet');
+  
+  // Custom component to handle camera movement
+  function ChangeView({ center }: { center: [number, number] }) {
+    const map = useMap();
+    useEffect(() => {
+      if (center && map && typeof map.setView === 'function') {
+        map.setView(center, 14);
+      }
+    }, [center, map]);
+    return null;
+  }
+
+  if (!center) return null;
+
+  return (
+    <MapContainer center={center} zoom={14} className="w-full h-full" zoomControl={false}>
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution='&copy; OpenStreetMap'
+      />
+      <ChangeView center={center} />
+      
+      {/* User Location Marker */}
+      <Marker position={center} icon={userIcon}>
+        <Popup>You are here</Popup>
+      </Marker>
+      
+      {/* Hospital POI Markers */}
+      {hospitals?.map((h: Hospital) => (
+        <Marker 
+          key={h.id} 
+          position={[h.position.lat, h.position.lon]}
+          icon={hospitalIcon}
+        >
+          <Popup>
+            <div className="p-2 space-y-2">
+              <p className="font-black text-xs uppercase text-slate-800">{h.poi.name}</p>
+              <Button 
+                size="sm" 
+                className="w-full h-8 text-[9px] uppercase font-black bg-primary" 
+                onClick={() => openInMaps(h)}
+              >
+                Navigate
+              </Button>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+}), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Waking Satellites...</p>
+    </div>
+  )
+});
 
 export default function NearbyHospitalPage() {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>('Initializing...');
+  const [status, setStatus] = useState<string>('Standby');
   const [radius, setRadius] = useState<string>('5000');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
-  const L = typeof window !== 'undefined' ? require('leaflet') : null;
+  // Handle Leaflet L instance safely
+  const [L, setL] = useState<any>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setL(require('leaflet'));
+    }
+  }, []);
 
   const userIcon = useMemo(() => {
     if (!L) return null;
@@ -111,19 +163,19 @@ export default function NearbyHospitalPage() {
     setStatus('Scanning medical network...');
 
     try {
-      const url = `https://api.tomtom.com/search/2/poiSearch/hospital.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=7311&limit=20`;
+      const url = `https://api.tomtom.com/search/2/poiSearch/hospital.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=7311&limit=25`;
       
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`API Error: ${response.status}`);
+      if (!response.ok) throw new Error(`Network Signal Weak (${response.status})`);
 
       const data = await response.json();
       const results = data?.results || [];
       
       setHospitals(results);
-      setStatus(results.length === 0 ? `No facilities found within ${parseInt(radius)/1000}km.` : `Found ${results.length} clinical nodes.`);
+      setStatus(results.length === 0 ? `No nodes in ${parseInt(radius)/1000}km.` : `Linked to ${results.length} facilities.`);
     } catch (error: any) {
-      setErrorMessage(error?.message || "Failed to reach servers.");
-      toast({ variant: "destructive", title: "Search Failed", description: "Could not fetch nearby facilities." });
+      setErrorMessage(error?.message || "Failed to reach medical servers.");
+      toast({ variant: "destructive", title: "Search Failed", description: error?.message });
     } finally {
       setIsLoading(false);
     }
@@ -131,12 +183,12 @@ export default function NearbyHospitalPage() {
 
   const handleGetLocation = useCallback(() => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setErrorMessage("Geolocation is not supported.");
+      setErrorMessage("GPS Module not detected.");
       return;
     }
 
     setIsLoading(true);
-    setStatus('Acquiring GPS coordinates...');
+    setStatus('Handshaking with GPS...');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -146,27 +198,27 @@ export default function NearbyHospitalPage() {
       },
       (error) => {
         setIsLoading(false);
-        let msg = "Location access denied. Please enable location services.";
-        if (error.code === 3) msg = "GPS lookup timed out. Try again.";
+        let msg = "GPS Signal Denied. Enable location.";
+        if (error.code === 3) msg = "GPS Handshake Timeout.";
         setErrorMessage(msg);
-        toast({ variant: "destructive", title: "Location Error", description: msg });
       },
-      { timeout: 10000, enableHighAccuracy: true }
+      { timeout: 8000, enableHighAccuracy: true }
     );
-  }, [fetchHospitals, toast]);
+  }, [fetchHospitals]);
 
   useEffect(() => {
     handleGetLocation();
   }, [handleGetLocation]);
 
   const handleCallEmergency = () => {
-    if (confirm('Start emergency call to 112?')) {
+    if (confirm('Initiate Emergency Protocol 112?')) {
       window.location.href = 'tel:112';
     }
   };
 
   const openInMaps = (h: Hospital) => {
-    const { lat, lon } = h?.position || {};
+    const lat = h?.position?.lat;
+    const lon = h?.position?.lon;
     if (lat && lon) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
     }
@@ -180,166 +232,145 @@ export default function NearbyHospitalPage() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-body safe-top">
       
-      {/* Premium Header */}
-      <header className="sticky top-0 z-[1000] px-4 py-4 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-2xl border-b border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* Premium Hub Header */}
+      <header className="sticky top-0 z-[1000] px-5 py-4 bg-white/70 dark:bg-[#1e1f20]/70 backdrop-blur-3xl border-b border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
           <Link href="/dashboard" className="active:scale-90 transition-transform">
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+            <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
               <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-white" />
             </Button>
           </Link>
           <div className="space-y-0.5">
-            <h1 className="text-lg font-black text-[#1A365D] dark:text-white tracking-tight uppercase leading-none">Emergency Hub</h1>
-            <p className="text-[7px] font-black text-primary uppercase tracking-[0.2em]">Clinical Node Radar</p>
+            <h1 className="text-xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase leading-none">Emergency Hub</h1>
+            <p className="text-[8px] font-black text-primary uppercase tracking-[0.25em]">{status}</p>
           </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2.5">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={handleGetLocation} 
             disabled={isLoading}
-            className="rounded-full h-10 w-10 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm active:rotate-180 transition-transform duration-500"
+            className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm active:rotate-180 transition-transform duration-500"
           >
-            <RotateCcw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
+            <RotateCcw className={cn("h-4.5 w-4.5 text-primary", isLoading && "animate-spin")} />
           </Button>
-          <Button onClick={handleCallEmergency} variant="destructive" size="sm" className="rounded-full font-black text-[9px] uppercase tracking-widest px-5 h-10 shadow-lg shadow-red-500/20 active:scale-95 transition-all">
-            <Siren className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> SOS
+          <Button onClick={handleCallEmergency} variant="destructive" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest px-6 h-11 shadow-lg shadow-red-500/20 active:scale-95 transition-all">
+            <Siren className="w-4 h-4 mr-2 animate-pulse" /> SOS
           </Button>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Main Radar Screen */}
+      <div className="flex-1 flex flex-col min-h-0 relative">
         
-        {/* Large Map Screen */}
-        <div className="relative w-full h-[40vh] md:h-[50vh] bg-slate-200 z-10">
+        {/* Full Radar Map Screen */}
+        <div className="relative w-full h-[45vh] md:h-[55vh] bg-slate-100 z-10">
             {userLocation ? (
-                <MapContainer 
+                <MapComponent 
                     center={userLocation} 
-                    zoom={14} 
-                    className="w-full h-full"
-                    zoomControl={false}
-                >
-                    <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                    />
-                    <ChangeView center={userLocation} />
-                    
-                    {/* User Marker */}
-                    {userIcon && <Marker position={userLocation} icon={userIcon}><Popup>Your Location</Popup></Marker>}
-                    
-                    {/* Hospital Markers */}
-                    {hospitalIcon && filteredHospitals.map(hospital => (
-                        <Marker 
-                            key={hospital.id} 
-                            position={[hospital.position.lat, hospital.position.lon]}
-                            icon={hospitalIcon}
-                        >
-                            <Popup>
-                                <div className="p-1 space-y-2">
-                                    <p className="font-black text-xs uppercase text-slate-800">{hospital.poi.name}</p>
-                                    <Button size="sm" className="w-full h-7 text-[8px] uppercase font-black" onClick={() => openInMaps(hospital)}>Directions</Button>
-                                </div>
-                            </Popup>
-                        </Marker>
-                    ))}
-                </MapContainer>
+                    hospitals={filteredHospitals}
+                    userIcon={userIcon}
+                    hospitalIcon={hospitalIcon}
+                    openInMaps={openInMaps}
+                />
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 gap-4">
-                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Searching Satellites...</p>
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 gap-5">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+                        <div className="relative p-5 bg-white dark:bg-slate-800 rounded-full shadow-xl">
+                            <LocateFixed className="h-8 w-8 text-primary" />
+                        </div>
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] animate-pulse">Syncing GPS Coordinates...</p>
                 </div>
             )}
             
-            {/* Map Overlay Controls */}
-            <div className="absolute bottom-6 left-4 right-4 z-[1000] flex gap-3">
+            {/* Range Controls Overlay */}
+            <div className="absolute bottom-8 left-5 right-5 z-[1000] flex gap-3">
                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
-                        placeholder="Search nearby..."
-                        className="rounded-full h-11 pl-10 bg-white/90 dark:bg-slate-900/90 border-none shadow-xl text-xs font-bold backdrop-blur-md"
+                        placeholder="Filter facilities..."
+                        className="rounded-full h-12 pl-12 bg-white/95 dark:bg-slate-900/95 border-none shadow-2xl text-xs font-bold backdrop-blur-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <Select value={radius} onValueChange={(val) => setRadius(val)}>
-                    <SelectTrigger className="w-[100px] h-11 rounded-full bg-white/90 dark:bg-slate-900/90 border-none font-black text-[9px] uppercase shadow-xl backdrop-blur-md">
+                <Select value={radius} onValueChange={(val) => { setRadius(val); if(userLocation) fetchHospitals(userLocation[0], userLocation[1]); }}>
+                    <SelectTrigger className="w-[110px] h-12 rounded-full bg-white/95 dark:bg-slate-900/95 border-none font-black text-[10px] uppercase shadow-2xl backdrop-blur-xl">
                         <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-none shadow-2xl backdrop-blur-xl">
-                        <SelectItem value="2000">2 KM</SelectItem>
-                        <SelectItem value="5000">5 KM</SelectItem>
-                        <SelectItem value="10000">10 KM</SelectItem>
-                        <SelectItem value="20000">20 KM</SelectItem>
+                    <SelectContent className="rounded-[1.8rem] border-none shadow-2xl backdrop-blur-3xl">
+                        <SelectItem value="2000" className="font-bold text-[10px] uppercase">2 KM</SelectItem>
+                        <SelectItem value="5000" className="font-bold text-[10px] uppercase">5 KM</SelectItem>
+                        <SelectItem value="10000" className="font-bold text-[10px] uppercase">10 KM</SelectItem>
+                        <SelectItem value="20000" className="font-bold text-[10px] uppercase">20 KM</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
-            
-            <Button 
-                onClick={handleGetLocation} 
-                className="absolute top-4 right-4 z-[1000] rounded-full h-11 w-11 bg-white/90 dark:bg-slate-800/90 shadow-xl border-none backdrop-blur-md text-primary"
-                size="icon"
-            >
-                <LocateFixed className="h-5 w-5" />
-            </Button>
         </div>
 
-        {/* Dynamic List Section */}
-        <div className="flex-1 bg-white dark:bg-slate-950 rounded-t-[2.5rem] -mt-6 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden">
-            <div className="px-6 pt-6 pb-2 shrink-0 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="h-4 w-1 bg-primary rounded-full" />
-                    <h3 className="text-xs font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Facility Stream</h3>
+        {/* Dynamic Facility Stream Section */}
+        <div className="flex-1 bg-white dark:bg-slate-950 rounded-t-[3rem] -mt-8 z-20 shadow-[0_-15px_50px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border-t border-slate-50 dark:border-slate-800">
+            <div className="px-8 pt-8 pb-3 shrink-0 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <div className="h-5 w-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(36,136,232,0.4)]" />
+                    <h3 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Clinical Stream</h3>
                 </div>
-                <Badge variant="outline" className="text-[8px] font-black border-primary/20 bg-primary/5 text-primary uppercase px-3">{filteredHospitals.length} Results</Badge>
+                <Badge variant="outline" className="text-[9px] font-black border-primary/20 bg-primary/5 text-primary uppercase px-4 py-1 rounded-full">{filteredHospitals.length} Active Nodes</Badge>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-20 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto px-6 pb-32 scrollbar-hide">
                 {isLoading ? (
-                    <div className="space-y-4 pt-4">
+                    <div className="space-y-5 pt-4">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="p-5 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 space-y-3">
-                                <Skeleton className="h-4 w-3/4 rounded-full" />
-                                <Skeleton className="h-3 w-full rounded-full" />
-                                <div className="flex gap-2 pt-2">
-                                    <Skeleton className="h-9 flex-1 rounded-xl" />
-                                    <Skeleton className="h-9 flex-1 rounded-xl" />
+                            <div key={i} className="p-6 rounded-[2.5rem] bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                                <div className="flex gap-4">
+                                    <Skeleton className="h-12 w-12 rounded-2xl shrink-0" />
+                                    <div className="space-y-2 flex-1">
+                                        <Skeleton className="h-4 w-3/4 rounded-full" />
+                                        <Skeleton className="h-3 w-full rounded-full" />
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <Skeleton className="h-10 flex-1 rounded-xl" />
+                                    <Skeleton className="h-10 flex-1 rounded-xl" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : filteredHospitals.length > 0 ? (
-                    <div className="space-y-4 pt-4">
-                        {filteredHospitals.map((hospital) => (
-                            <div key={hospital.id} className="p-5 rounded-[2rem] bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-[0.98]">
-                                <div className="flex items-start gap-4">
-                                    <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
-                                        <HospitalIcon className="h-5 w-5" />
+                    <div className="space-y-5 pt-4">
+                        {filteredHospitals.map((h) => (
+                            <div key={h.id} className="p-6 rounded-[2.5rem] bg-slate-50/60 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-[0.97] group">
+                                <div className="flex items-start gap-5">
+                                    <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                                        <HospitalIcon className="h-6 w-6" />
                                     </div>
-                                    <div className="flex-1 min-w-0 space-y-1">
-                                        <h4 className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{hospital.poi.name}</h4>
-                                        <div className="flex items-center gap-1.5 opacity-60">
-                                            <MapPin className="h-3 w-3" />
-                                            <p className="text-[10px] font-bold truncate">{hospital.address.freeformAddress}</p>
+                                    <div className="flex-1 min-w-0 space-y-1.5">
+                                        <h4 className="text-base font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{h?.poi?.name}</h4>
+                                        <div className="flex items-center gap-2 opacity-50">
+                                            <MapPin className="h-3.5 w-3.5" />
+                                            <p className="text-[11px] font-bold truncate leading-none">{h?.address?.freeformAddress || 'Address loading...'}</p>
                                         </div>
-                                        <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg mt-2">
-                                            <Navigation className="h-2.5 w-2.5 text-primary animate-pulse" />
-                                            <span className="text-[8px] font-black text-primary uppercase tracking-widest">
-                                                {hospital.dist < 1000 ? `${hospital.dist}M` : `${(hospital.dist/1000).toFixed(1)}KM`} Away
+                                        <div className="inline-flex items-center gap-2.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full mt-1.5">
+                                            <Navigation className="h-3 w-3 text-primary animate-pulse" />
+                                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                                {h.dist < 1000 ? `${h.dist}M` : `${(h.dist/1000).toFixed(1)}KM`} Visual Range
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 mt-5">
-                                    <Button onClick={() => openInMaps(hospital)} className="rounded-xl h-10 bg-primary text-white font-black text-[9px] uppercase tracking-widest shadow-md">
-                                        <Navigation className="h-3 w-3 mr-2" /> Route
+                                <div className="grid grid-cols-2 gap-4 mt-6">
+                                    <Button onClick={() => openInMaps(h)} className="rounded-2xl h-11 bg-primary text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary/90">
+                                        <Navigation className="h-4 w-4 mr-2" /> Route Hub
                                     </Button>
-                                    <Button asChild variant="outline" className="rounded-xl h-10 border-slate-200 dark:border-slate-700 font-black text-[9px] uppercase tracking-widest">
-                                        <a href={hospital.poi.phone ? `tel:${hospital.poi.phone}` : '#'}>
-                                            <PhoneCall className="h-3 w-3 mr-2 text-emerald-500" /> Call
+                                    <Button asChild variant="outline" className="rounded-2xl h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-black text-[10px] uppercase tracking-widest transition-all">
+                                        <a href={h?.poi?.phone ? `tel:${h.poi.phone}` : '#'}>
+                                            <PhoneCall className={cn("h-4 w-4 mr-2", h?.poi?.phone ? "text-emerald-500" : "text-slate-300")} /> 
+                                            {h?.poi?.phone ? "Contact" : "No Wire"}
                                         </a>
                                     </Button>
                                 </div>
@@ -347,29 +378,34 @@ export default function NearbyHospitalPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="py-20 text-center space-y-6">
-                        <div className="h-16 w-16 bg-slate-100 dark:bg-slate-900 rounded-3xl flex items-center justify-center mx-auto">
-                            <ShieldAlert className="h-8 w-8 text-slate-300" />
+                    <div className="py-24 text-center space-y-8 animate-in fade-in duration-1000">
+                        <div className="h-24 w-24 bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
+                            <ShieldAlert className="h-10 w-10 text-slate-300" />
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No clinical nodes detected</p>
-                        <Button onClick={handleGetLocation} variant="outline" className="rounded-full px-8 h-12 font-black uppercase text-[10px] tracking-widest">Reroute Scan</Button>
+                        <div className="space-y-2">
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">No clinical nodes detected</p>
+                            <p className="text-[9px] font-bold text-slate-400/60 uppercase">Range: {parseInt(radius)/1000} KM</p>
+                        </div>
+                        <Button onClick={handleGetLocation} variant="outline" className="rounded-full px-12 h-14 font-black uppercase text-[11px] tracking-widest bg-white dark:bg-slate-900 shadow-xl border-none active:scale-95 transition-all">Reroute Scan</Button>
                     </div>
                 )}
             </div>
         </div>
       </div>
 
-      {/* Global Error Banner */}
+      {/* High-Alert Error HUD */}
       {errorMessage && (
-        <div className="fixed inset-0 z-[2000] bg-black/40 backdrop-blur-sm p-6 flex items-center justify-center">
-             <Alert className="rounded-[2.5rem] border-none bg-white dark:bg-slate-900 p-8 shadow-2xl max-w-sm animate-in zoom-in-95 duration-500">
-                <AlertTriangle className="h-6 w-6 text-rose-500" />
-                <AlertTitle className="text-sm font-black uppercase text-rose-600 mt-2">Signal Failed</AlertTitle>
-                <AlertDescription className="text-[11px] font-bold text-slate-500 mt-2 leading-relaxed">
+        <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-md p-6 flex items-center justify-center animate-in fade-in duration-300">
+             <Alert className="rounded-[3rem] border-none bg-white dark:bg-slate-900 p-10 shadow-2xl max-w-sm animate-in zoom-in-95 duration-500 text-center flex flex-col items-center">
+                <div className="h-20 w-20 bg-rose-50 dark:bg-rose-900/20 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner">
+                    <AlertTriangle className="h-10 w-10 text-rose-500" />
+                </div>
+                <AlertTitle className="text-lg font-black uppercase text-rose-600 tracking-tight">Signal Interrupted</AlertTitle>
+                <AlertDescription className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
                     {errorMessage}
                 </AlertDescription>
-                <Button onClick={handleGetLocation} className="mt-6 w-full rounded-2xl bg-rose-500 text-white h-12 text-[10px] font-black uppercase tracking-widest">Initialize System Retry</Button>
-                <Button onClick={() => setErrorMessage(null)} variant="ghost" className="mt-2 w-full text-[9px] font-black uppercase text-slate-400">Cancel</Button>
+                <Button onClick={handleGetLocation} className="mt-10 w-full rounded-2xl bg-rose-500 hover:bg-rose-600 text-white h-14 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-rose-500/30 transition-all active:scale-95">Re-Initialize Link</Button>
+                <Button onClick={() => setErrorMessage(null)} variant="ghost" className="mt-3 w-full text-[10px] font-black uppercase text-slate-400 tracking-widest">Abort Radar</Button>
             </Alert>
         </div>
       )}
