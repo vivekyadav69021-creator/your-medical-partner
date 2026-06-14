@@ -11,28 +11,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
     Siren, 
     Navigation, 
     AlertTriangle, 
     Hospital as HospitalIcon, 
-    Search,
     ChevronLeft,
     RotateCcw,
     ShieldAlert,
     Loader2,
     MapPin,
     PhoneCall,
-    LocateFixed,
     Pill,
     Droplet,
     Stethoscope,
     Activity,
     CheckCircle2,
     Clock,
-    Accessibility
+    Accessibility,
+    Search
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
@@ -53,7 +50,7 @@ const MODE_CONFIG: Record<MedicalMode, { label: string; icon: any; tag: string; 
   doctors: { label: 'Specialists', icon: Stethoscope, tag: '[amenity=doctors]', color: 'text-purple-500' },
 };
 
-// Haversine Formula for precise distance
+// Haversine Formula for precise distance in KM
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -87,7 +84,7 @@ const MapComponent = dynamic(() => Promise.resolve(({ center, elements, userIcon
       <ChangeView center={center} />
       
       <Marker position={center} icon={userIcon}>
-        <Popup>Your Active Node</Popup>
+        <Popup>Your Location</Popup>
       </Marker>
       
       {elements?.map((el: any) => {
@@ -97,8 +94,8 @@ const MapComponent = dynamic(() => Promise.resolve(({ center, elements, userIcon
           <Marker key={el.id} position={pos} icon={poiIcon}>
             <Popup>
               <div className="p-2 space-y-2">
-                <p className="font-black text-[10px] uppercase text-slate-800 leading-tight">{el.tags?.name || "Medical Node"}</p>
-                <Button size="sm" className="w-full h-7 text-[8px] uppercase font-black" onClick={() => openInMaps(el)}>Navigate</Button>
+                <p className="font-black text-[10px] uppercase text-slate-800 leading-tight">{el.tags?.name || "Medical Hub"}</p>
+                <Button size="sm" className="w-full h-7 text-[8px] uppercase font-black" onClick={() => openInMaps(el)}>Get Route</Button>
               </div>
             </Popup>
           </Marker>
@@ -116,7 +113,7 @@ export default function NearbyHospitalPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeMode, setActiveMode] = useState<MedicalMode>('hospital');
   const [radius, setRadius] = useState<string>('5000');
-  const [status, setStatus] = useState('Initializing...');
+  const [status, setStatus] = useState('Initializing Engine...');
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -134,24 +131,25 @@ export default function NearbyHospitalPage() {
         iconSize: [20, 20], iconAnchor: [10, 10],
       }),
       poi: new L.Icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/512/565/565267.png',
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/565/565267.png', // Medical pin
         iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32],
       })
     };
   }, [L]);
 
-  const fetchMedicalNodes = useCallback(async (lat: number, lon: number, mode: MedicalMode, rad: string) => {
+  const fetchOSMNodes = useCallback(async (lat: number, lon: number, mode: MedicalMode, rad: string) => {
     setIsLoading(true);
     setError(null);
-    setStatus(`Scanning for ${MODE_CONFIG[mode].label}...`);
+    setStatus(`Scanning ${MODE_CONFIG[mode].label}...`);
 
     try {
       const tag = MODE_CONFIG[mode].tag;
+      // Multi-source OSM mirror to ensure reliability
       const query = `[out:json][timeout:30];(node(around:${rad},${lat},${lon})${tag};way(around:${rad},${lat},${lon})${tag};);out center;`;
-      const url = `https://overpass-api.interpreter.website/api/interpreter?data=${encodeURIComponent(query)}`;
+      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
       
       const response = await fetch(url);
-      if (!response.ok) throw new Error("OSM Engine busy. Please retry.");
+      if (!response.ok) throw new Error("OSM Servers are busy. Re-linking...");
 
       const data = await response.json();
       const results = (data?.elements || []).map((el: any) => ({
@@ -160,21 +158,22 @@ export default function NearbyHospitalPage() {
       })).sort((a: any, b: any) => a.calculatedDist - b.calculatedDist);
 
       setElements(results);
-      setStatus(results.length === 0 ? "No nodes found in range." : `${results.length} nodes linked.`);
+      setStatus(results.length === 0 ? "No locations in range." : `${results.length} nodes linked.`);
     } catch (err: any) {
+      console.error("OSM Error:", err);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const syncLocation = useCallback(() => {
+  const syncGPS = useCallback(() => {
     setIsLoading(true);
     setStatus('Linking GPS...');
     
     if (!navigator.geolocation) {
         setUserLocation(VAPI_COORDINATES);
-        fetchMedicalNodes(VAPI_COORDINATES[0], VAPI_COORDINATES[1], activeMode, radius);
+        fetchOSMNodes(VAPI_COORDINATES[0], VAPI_COORDINATES[1], activeMode, radius);
         return;
     }
 
@@ -182,18 +181,18 @@ export default function NearbyHospitalPage() {
       (pos) => {
         const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setUserLocation(coords);
-        fetchMedicalNodes(coords[0], coords[1], activeMode, radius);
+        fetchOSMNodes(coords[0], coords[1], activeMode, radius);
       },
       () => {
         setUserLocation(VAPI_COORDINATES);
-        fetchMedicalNodes(VAPI_COORDINATES[0], VAPI_COORDINATES[1], activeMode, radius);
-        toast({ title: "Using Vapi Fallback", description: "GPS denied or timed out." });
+        fetchOSMNodes(VAPI_COORDINATES[0], VAPI_COORDINATES[1], activeMode, radius);
+        toast({ title: "Using Fallback Location", description: "GPS denied or unavailable." });
       },
       { timeout: 8000 }
     );
-  }, [activeMode, radius, fetchMedicalNodes, toast]);
+  }, [activeMode, radius, fetchOSMNodes, toast]);
 
-  useEffect(() => { syncLocation(); }, [activeMode, radius]);
+  useEffect(() => { syncGPS(); }, [activeMode, radius]);
 
   const openInMaps = (el: any) => {
     const lat = el.lat || el.center?.lat;
@@ -211,13 +210,13 @@ export default function NearbyHospitalPage() {
             <p className="text-[8px] font-black text-primary uppercase tracking-[0.25em]">{status}</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={syncLocation} disabled={isLoading} className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
+        <Button variant="ghost" size="icon" onClick={syncGPS} disabled={isLoading} className="rounded-full h-11 w-11 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
             <RotateCcw className={cn("h-4.5 w-4.5 text-primary", isLoading && "animate-spin")} />
         </Button>
       </header>
 
       <div className="flex-1 flex flex-col min-h-0 relative">
-        {/* Dynamic Mode Selector Scroll */}
+        {/* Immersive Mode Selector */}
         <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md py-3 px-4 border-b border-slate-100 dark:border-slate-800 z-[1001] flex gap-2.5 overflow-x-auto scrollbar-hide">
           {(Object.keys(MODE_CONFIG) as MedicalMode[]).map((m) => {
             const cfg = MODE_CONFIG[m];
@@ -233,7 +232,8 @@ export default function NearbyHospitalPage() {
           })}
         </div>
 
-        <div className="relative w-full h-[40vh] z-10 border-b border-slate-100 dark:border-slate-800">
+        {/* Interactive Map Visual */}
+        <div className="relative w-full h-[35vh] z-10 border-b border-slate-100 dark:border-slate-800">
             {userLocation && icons.user ? (
                 <MapComponent center={userLocation} elements={elements} userIcon={icons.user} poiIcon={icons.poi} openInMaps={openInMaps} />
             ) : (
@@ -257,11 +257,12 @@ export default function NearbyHospitalPage() {
             </div>
         </div>
 
+        {/* Dynamic List Hub */}
         <div className="flex-1 bg-white dark:bg-slate-950 rounded-t-[3rem] -mt-8 z-20 shadow-[0_-15px_50px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border-t border-slate-50 dark:border-slate-800">
             <div className="px-8 pt-8 pb-3 shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                     <div className="h-5 w-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(36,136,232,0.4)]" />
-                    <h3 className="text-xs font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">{MODE_CONFIG[activeMode].label} Near You</h3>
+                    <h3 className="text-xs font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">{MODE_CONFIG[activeMode].label} Found</h3>
                 </div>
                 <Badge variant="outline" className="text-[9px] font-black border-primary/20 bg-primary/5 text-primary uppercase px-4 py-1 rounded-full">{elements.length}</Badge>
             </div>
@@ -270,7 +271,15 @@ export default function NearbyHospitalPage() {
                 {isLoading ? (
                     <div className="space-y-5 pt-4">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="p-6 rounded-[2.5rem] bg-slate-50 dark:bg-slate-900/50 space-y-4"><div className="flex gap-4"><Skeleton className="h-12 w-12 rounded-2xl shrink-0" /><div className="space-y-2 flex-1"><Skeleton className="h-4 w-3/4 rounded-full" /><Skeleton className="h-3 w-full rounded-full" /></div></div></div>
+                            <div key={i} className="p-6 rounded-[2.5rem] bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                                <div className="flex gap-4">
+                                    <Skeleton className="h-12 w-12 rounded-2xl shrink-0" />
+                                    <div className="space-y-2 flex-1">
+                                        <Skeleton className="h-4 w-3/4 rounded-full" />
+                                        <Skeleton className="h-3 w-full rounded-full" />
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 ) : elements.length > 0 ? (
@@ -279,14 +288,14 @@ export default function NearbyHospitalPage() {
                             <div key={el.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-[0.97] group relative overflow-hidden">
                                 <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full opacity-40" />
                                 <div className="flex items-start gap-5">
-                                    <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                                    <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0 shadow-inner">
                                         {React.createElement(MODE_CONFIG[activeMode].icon, { className: "h-6 w-6" })}
                                     </div>
                                     <div className="flex-1 min-w-0 space-y-2">
-                                        <h4 className="text-base font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{el.tags?.name || "Premium Medical Hub"}</h4>
+                                        <h4 className="text-base font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{el.tags?.name || "Medical Node"}</h4>
                                         
                                         <div className="flex flex-wrap gap-2">
-                                            <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-900/20 text-[8px] font-black border-none"><Navigation className="w-2.5 h-2.5 mr-1" /> {el.calculatedDist.toFixed(1)} KM</Badge>
+                                            <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-900/20 text-[8px] font-black border-none"><Navigation className="w-2.5 h-2.5 mr-1" /> {el.calculatedDist.toFixed(1)} KM away</Badge>
                                             {el.tags?.emergency === 'yes' && <Badge className="bg-red-50 text-red-600 dark:bg-red-900/20 text-[8px] font-black border-none"><Siren className="w-2.5 h-2.5 mr-1" /> Emergency 24/7</Badge>}
                                             {el.tags?.wheelchair === 'yes' && <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 text-[8px] font-black border-none"><Accessibility className="w-2.5 h-2.5 mr-1" /> Accessible</Badge>}
                                             {el.tags?.opening_hours && <Badge variant="outline" className="text-[8px] font-black border-slate-100 text-slate-400 uppercase">{el.tags.opening_hours}</Badge>}
@@ -294,18 +303,18 @@ export default function NearbyHospitalPage() {
                                         
                                         <div className="flex items-center gap-2 opacity-50">
                                             <MapPin className="h-3.5 w-3.5" />
-                                            <p className="text-[10px] font-bold truncate leading-none">{el.tags?.["addr:full"] || el.tags?.["addr:street"] || "Locality data synced."}</p>
+                                            <p className="text-[10px] font-bold truncate leading-none">{el.tags?.["addr:full"] || el.tags?.["addr:street"] || "Address on map."}</p>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 mt-6">
-                                    <Button onClick={() => openInMaps(el)} className="rounded-2xl h-11 bg-primary text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary/90">
+                                    <Button onClick={() => openInMaps(el)} className="rounded-2xl h-11 bg-primary text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all">
                                         <Navigation className="h-4 w-4 mr-2" /> Start Route
                                     </Button>
-                                    <Button asChild variant="outline" className="rounded-2xl h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-black text-[10px] uppercase tracking-widest transition-all">
+                                    <Button asChild variant="outline" className="rounded-2xl h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-black text-[10px] uppercase tracking-widest active:scale-95">
                                         <a href={el.tags?.phone ? `tel:${el.tags.phone}` : '#'}>
                                             <PhoneCall className={cn("h-4 w-4 mr-2", el.tags?.phone ? "text-emerald-500" : "text-slate-300")} /> 
-                                            {el.tags?.phone ? "Call Hub" : "No Phone"}
+                                            {el.tags?.phone ? "Contact" : "No Phone"}
                                         </a>
                                     </Button>
                                 </div>
@@ -315,8 +324,8 @@ export default function NearbyHospitalPage() {
                 ) : (
                     <div className="py-24 text-center space-y-8 animate-in fade-in duration-1000">
                         <div className="h-24 w-24 bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner"><ShieldAlert className="h-10 w-10 text-slate-300" /></div>
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">Area scan returned no nodes</p>
-                        <Button onClick={syncLocation} variant="outline" className="rounded-full px-12 h-14 font-black uppercase text-[11px] tracking-widest bg-white dark:bg-slate-900 shadow-xl border-none active:scale-95 transition-all">Re-Scan Network</Button>
+                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">No medical nodes linked in this area</p>
+                        <Button onClick={syncGPS} variant="outline" className="rounded-full px-12 h-14 font-black uppercase text-[11px] tracking-widest bg-white dark:bg-slate-900 shadow-xl border-none active:scale-95 transition-all">Retry Scan</Button>
                     </div>
                 )}
             </div>
@@ -325,13 +334,13 @@ export default function NearbyHospitalPage() {
 
       {error && (
         <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-md p-6 flex items-center justify-center animate-in fade-in duration-300">
-             <Alert className="rounded-[3rem] border-none bg-white dark:bg-slate-900 p-10 shadow-2xl max-w-sm text-center flex flex-col items-center">
+             <div className="rounded-[3rem] bg-white dark:bg-slate-900 p-10 shadow-2xl max-w-sm text-center flex flex-col items-center">
                 <div className="h-20 w-20 bg-rose-50 dark:bg-rose-900/20 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner"><AlertTriangle className="h-10 w-10 text-rose-500" /></div>
-                <AlertTitle className="text-lg font-black uppercase text-rose-600 tracking-tight">Engine Timeout</AlertTitle>
-                <AlertDescription className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">{error}</AlertDescription>
-                <Button onClick={syncLocation} className="mt-10 w-full rounded-2xl bg-rose-500 text-white h-14 text-[11px] font-black uppercase tracking-widest shadow-xl transition-all">Retry Search</Button>
+                <h4 className="text-lg font-black uppercase text-rose-600 tracking-tight">Signal Lost</h4>
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">{error}</p>
+                <Button onClick={syncGPS} className="mt-10 w-full rounded-2xl bg-rose-500 text-white h-14 text-[11px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Retry Link</Button>
                 <Button onClick={() => setError(null)} variant="ghost" className="mt-3 w-full text-[10px] font-black uppercase text-slate-400 tracking-widest">Close</Button>
-            </Alert>
+            </div>
         </div>
       )}
     </div>
