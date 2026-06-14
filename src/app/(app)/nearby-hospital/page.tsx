@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// API Configuration
+// API Configuration - Updated with highly inclusive medical categories
 const TOMTOM_API_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || 'czghQOGKafhd2gnuLjpMzF2bIly8lhp3';
 
 type Hospital = {
@@ -43,6 +43,7 @@ type Hospital = {
   poi: {
     name: string;
     phone?: string;
+    categories?: string[];
   };
   address: {
     freeformAddress: string;
@@ -55,12 +56,10 @@ type Hospital = {
 
 /**
  * CLIENT-ONLY MAP COMPONENT
- * This ensures Leaflet is only loaded and executed in the browser.
  */
 const MapComponent = dynamic(() => Promise.resolve(({ center, hospitals, userIcon, hospitalIcon, openInMaps }: any) => {
   const { MapContainer, TileLayer, Marker, Popup, useMap } = require('react-leaflet');
   
-  // Custom component to handle camera movement
   function ChangeView({ center }: { center: [number, number] }) {
     const map = useMap();
     useEffect(() => {
@@ -95,7 +94,8 @@ const MapComponent = dynamic(() => Promise.resolve(({ center, hospitals, userIco
         >
           <Popup>
             <div className="p-2 space-y-2">
-              <p className="font-black text-xs uppercase text-slate-800">{h.poi.name}</p>
+              <p className="font-black text-[10px] uppercase text-slate-800 leading-tight">{h.poi.name}</p>
+              <p className="text-[8px] text-slate-500 font-bold uppercase">{h.dist < 1000 ? `${h.dist}m` : `${(h.dist/1000).toFixed(1)}km`} Away</p>
               <Button 
                 size="sm" 
                 className="w-full h-8 text-[9px] uppercase font-black bg-primary" 
@@ -129,7 +129,6 @@ export default function NearbyHospitalPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
-  // Handle Leaflet L instance safely
   const [L, setL] = useState<any>(null);
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -160,22 +159,35 @@ export default function NearbyHospitalPage() {
   const fetchHospitals = useCallback(async (lat: number, lon: number) => {
     setIsLoading(true);
     setErrorMessage(null);
-    setStatus('Scanning medical network...');
+    setStatus('Scanning all medical facilities...');
 
     try {
-      const url = `https://api.tomtom.com/search/2/poiSearch/hospital.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=7311&limit=25`;
+      // categorySet 7311 = Hospital/Polyclinic, 9361 = Medical Clinic, 7324 = Healthcare/Emergency Service
+      const categorySet = '7311,9361,7324';
+      const url = `https://api.tomtom.com/search/2/categorySearch/medical.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=${categorySet}&limit=50&view=Unified`;
       
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`Network Signal Weak (${response.status})`);
+      if (!response.ok) throw new Error(`API Error (${response.status})`);
 
       const data = await response.json();
       const results = data?.results || [];
       
-      setHospitals(results);
-      setStatus(results.length === 0 ? `No nodes in ${parseInt(radius)/1000}km.` : `Linked to ${results.length} facilities.`);
+      // Sort by distance
+      const sortedResults = results.sort((a: any, b: any) => a.dist - b.dist);
+      
+      setHospitals(sortedResults);
+      setStatus(sortedResults.length === 0 ? `No facilities in ${parseInt(radius)/1000}km.` : `Found ${sortedResults.length} medical hubs.`);
+      
+      if (sortedResults.length === 0) {
+          toast({
+              title: "No Results Found",
+              description: "Try increasing the search radius to 10km or 20km.",
+              variant: "default"
+          });
+      }
     } catch (error: any) {
-      setErrorMessage(error?.message || "Failed to reach medical servers.");
-      toast({ variant: "destructive", title: "Search Failed", description: error?.message });
+      console.error("Fetch Error:", error);
+      setErrorMessage("Could not connect to medical servers. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -183,12 +195,12 @@ export default function NearbyHospitalPage() {
 
   const handleGetLocation = useCallback(() => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setErrorMessage("GPS Module not detected.");
+      setErrorMessage("GPS Module not detected on this device.");
       return;
     }
 
     setIsLoading(true);
-    setStatus('Handshaking with GPS...');
+    setStatus('Linking with GPS...');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -198,13 +210,14 @@ export default function NearbyHospitalPage() {
       },
       (error) => {
         setIsLoading(false);
-        let msg = "GPS Signal Denied. Enable location.";
-        if (error.code === 3) msg = "GPS Handshake Timeout.";
+        let msg = "GPS Signal Denied. Please enable location permissions.";
+        if (error.code === 3) msg = "GPS Signal Timeout. Try again.";
         setErrorMessage(msg);
+        toast({ variant: "destructive", title: "Location Error", description: msg });
       },
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 10000, enableHighAccuracy: true }
     );
-  }, [fetchHospitals]);
+  }, [fetchHospitals, toast]);
 
   useEffect(() => {
     handleGetLocation();
@@ -265,8 +278,8 @@ export default function NearbyHospitalPage() {
       {/* Main Radar Screen */}
       <div className="flex-1 flex flex-col min-h-0 relative">
         
-        {/* Full Radar Map Screen */}
-        <div className="relative w-full h-[45vh] md:h-[55vh] bg-slate-100 z-10">
+        {/* Radar Map Section */}
+        <div className="relative w-full h-[45vh] bg-slate-100 z-10 border-b border-slate-100 dark:border-slate-800">
             {userLocation ? (
                 <MapComponent 
                     center={userLocation} 
@@ -283,7 +296,7 @@ export default function NearbyHospitalPage() {
                             <LocateFixed className="h-8 w-8 text-primary" />
                         </div>
                     </div>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] animate-pulse">Syncing GPS Coordinates...</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] animate-pulse">Scanning GPS Environment...</p>
                 </div>
             )}
             
@@ -292,8 +305,8 @@ export default function NearbyHospitalPage() {
                  <div className="relative flex-1">
                     <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
-                        placeholder="Filter facilities..."
-                        className="rounded-full h-12 pl-12 bg-white/95 dark:bg-slate-900/95 border-none shadow-2xl text-xs font-bold backdrop-blur-xl"
+                        placeholder="Search nearby medical nodes..."
+                        className="rounded-full h-12 pl-12 bg-white/95 dark:bg-slate-900/95 border-none shadow-2xl text-[11px] font-bold backdrop-blur-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -312,14 +325,14 @@ export default function NearbyHospitalPage() {
             </div>
         </div>
 
-        {/* Dynamic Facility Stream Section */}
+        {/* Clinical Stream Section */}
         <div className="flex-1 bg-white dark:bg-slate-950 rounded-t-[3rem] -mt-8 z-20 shadow-[0_-15px_50px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border-t border-slate-50 dark:border-slate-800">
             <div className="px-8 pt-8 pb-3 shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                     <div className="h-5 w-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(36,136,232,0.4)]" />
-                    <h3 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Clinical Stream</h3>
+                    <h3 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Medical Network</h3>
                 </div>
-                <Badge variant="outline" className="text-[9px] font-black border-primary/20 bg-primary/5 text-primary uppercase px-4 py-1 rounded-full">{filteredHospitals.length} Active Nodes</Badge>
+                <Badge variant="outline" className="text-[9px] font-black border-primary/20 bg-primary/5 text-primary uppercase px-4 py-1 rounded-full">{filteredHospitals.length} Found</Badge>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 pb-32 scrollbar-hide">
@@ -334,43 +347,40 @@ export default function NearbyHospitalPage() {
                                         <Skeleton className="h-3 w-full rounded-full" />
                                     </div>
                                 </div>
-                                <div className="flex gap-3">
-                                    <Skeleton className="h-10 flex-1 rounded-xl" />
-                                    <Skeleton className="h-10 flex-1 rounded-xl" />
-                                </div>
                             </div>
                         ))}
                     </div>
                 ) : filteredHospitals.length > 0 ? (
                     <div className="space-y-5 pt-4">
                         {filteredHospitals.map((h) => (
-                            <div key={h.id} className="p-6 rounded-[2.5rem] bg-slate-50/60 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-[0.97] group">
+                            <div key={h.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-[0.97] group relative overflow-hidden">
+                                <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full opacity-40" />
                                 <div className="flex items-start gap-5">
                                     <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0 shadow-inner group-hover:scale-110 transition-transform">
                                         <HospitalIcon className="h-6 w-6" />
                                     </div>
-                                    <div className="flex-1 min-w-0 space-y-1.5">
+                                    <div className="flex-1 min-w-0 space-y-1">
                                         <h4 className="text-base font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{h?.poi?.name}</h4>
                                         <div className="flex items-center gap-2 opacity-50">
                                             <MapPin className="h-3.5 w-3.5" />
-                                            <p className="text-[11px] font-bold truncate leading-none">{h?.address?.freeformAddress || 'Address loading...'}</p>
+                                            <p className="text-[10px] font-bold truncate leading-none">{h?.address?.freeformAddress || 'Address loading...'}</p>
                                         </div>
-                                        <div className="inline-flex items-center gap-2.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full mt-1.5">
-                                            <Navigation className="h-3 w-3 text-primary animate-pulse" />
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                                {h.dist < 1000 ? `${h.dist}M` : `${(h.dist/1000).toFixed(1)}KM`} Visual Range
+                                        <div className="inline-flex items-center gap-2.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full mt-2">
+                                            <Navigation className="h-3 w-3 text-emerald-500 animate-pulse" />
+                                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                                                {h.dist < 1000 ? `${h.dist}M` : `${(h.dist/1000).toFixed(1)}KM`} Distance
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 mt-6">
                                     <Button onClick={() => openInMaps(h)} className="rounded-2xl h-11 bg-primary text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary/90">
-                                        <Navigation className="h-4 w-4 mr-2" /> Route Hub
+                                        <Navigation className="h-4 w-4 mr-2" /> Start Route
                                     </Button>
                                     <Button asChild variant="outline" className="rounded-2xl h-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-black text-[10px] uppercase tracking-widest transition-all">
                                         <a href={h?.poi?.phone ? `tel:${h.poi.phone}` : '#'}>
                                             <PhoneCall className={cn("h-4 w-4 mr-2", h?.poi?.phone ? "text-emerald-500" : "text-slate-300")} /> 
-                                            {h?.poi?.phone ? "Contact" : "No Wire"}
+                                            {h?.poi?.phone ? "Call Hub" : "No Phone"}
                                         </a>
                                     </Button>
                                 </div>
@@ -383,10 +393,10 @@ export default function NearbyHospitalPage() {
                             <ShieldAlert className="h-10 w-10 text-slate-300" />
                         </div>
                         <div className="space-y-2">
-                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">No clinical nodes detected</p>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">No medical nodes detected</p>
                             <p className="text-[9px] font-bold text-slate-400/60 uppercase">Range: {parseInt(radius)/1000} KM</p>
                         </div>
-                        <Button onClick={handleGetLocation} variant="outline" className="rounded-full px-12 h-14 font-black uppercase text-[11px] tracking-widest bg-white dark:bg-slate-900 shadow-xl border-none active:scale-95 transition-all">Reroute Scan</Button>
+                        <Button onClick={handleGetLocation} variant="outline" className="rounded-full px-12 h-14 font-black uppercase text-[11px] tracking-widest bg-white dark:bg-slate-900 shadow-xl border-none active:scale-95 transition-all">Retry Link</Button>
                     </div>
                 )}
             </div>
@@ -404,7 +414,7 @@ export default function NearbyHospitalPage() {
                 <AlertDescription className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
                     {errorMessage}
                 </AlertDescription>
-                <Button onClick={handleGetLocation} className="mt-10 w-full rounded-2xl bg-rose-500 hover:bg-rose-600 text-white h-14 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-rose-500/30 transition-all active:scale-95">Re-Initialize Link</Button>
+                <Button onClick={handleGetLocation} className="mt-10 w-full rounded-2xl bg-rose-500 hover:bg-rose-600 text-white h-14 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-rose-500/30 transition-all active:scale-95">Re-Initialize GPS</Button>
                 <Button onClick={() => setErrorMessage(null)} variant="ghost" className="mt-3 w-full text-[10px] font-black uppercase text-slate-400 tracking-widest">Abort Radar</Button>
             </Alert>
         </div>
