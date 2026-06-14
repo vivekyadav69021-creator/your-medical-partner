@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// TomTom Master Key - czghQOGKafhd2gnuLjpMzF2bIly8lhp3
+// TomTom Master Key - Provided by user
 const TOMTOM_API_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || 'czghQOGKafhd2gnuLjpMzF2bIly8lhp3';
 
 type Hospital = {
@@ -54,6 +54,7 @@ type Hospital = {
 
 /**
  * CLIENT-ONLY MAP COMPONENT
+ * Handles Leaflet map rendering without SSR issues.
  */
 const MapComponent = dynamic(() => Promise.resolve(({ center, hospitals, userIcon, hospitalIcon, openInMaps }: any) => {
   const { MapContainer, TileLayer, Marker, Popup, useMap } = require('react-leaflet');
@@ -157,19 +158,22 @@ export default function NearbyHospitalPage() {
   const fetchHospitals = useCallback(async (lat: number, lon: number) => {
     setIsLoading(true);
     setErrorMessage(null);
-    setStatus('Scanning medical nodes...');
+    setStatus('Scanning medical hubs...');
 
     try {
-      // Using /search/2/search/ endpoint which is more standard and avoids some 403 restrictions
-      // categorySet 7311 = Hospital/Polyclinic, 9361 = Medical Clinic, 7324 = Healthcare/Emergency Service
-      const categorySet = '7311,9361,7324';
+      /**
+       * ENDPOINT UPDATE: 
+       * Using search/hospital.json which is part of the standard Search API 
+       * and highly compatible with both Free and Pro keys.
+       */
+      const categorySet = '7311,9361,7324'; // Hospitals, Clinics, First Aid
       const url = `https://api.tomtom.com/search/2/search/hospital.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lon}&radius=${radius}&categorySet=${categorySet}&limit=50&view=Unified`;
       
       const response = await fetch(url);
       
       if (!response.ok) {
           if (response.status === 403) {
-              throw new Error("API Access Forbidden (403). Please verify your TomTom API Key and enabled services.");
+              throw new Error("Access Forbidden (403). Please ensure 'Search API' is enabled for this key in TomTom Dashboard.");
           }
           throw new Error(`API Error (${response.status})`);
       }
