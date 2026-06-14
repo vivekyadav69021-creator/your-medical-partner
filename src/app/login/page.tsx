@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,63 +11,50 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   signInAnonymously,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  ConfirmationResult
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, HeartPulse, Chrome, Apple, Facebook, ChevronRight, ShieldCheck, Smartphone, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import Image from 'next/image';
 
 /**
- * Advanced Medical Animation - Staggered Ripples & Sleek Heart
+ * Premium Medical Pulse Animation
  */
-function AdvancedMedicalAnimation() {
+function MedicalHeroAnimation() {
   return (
-    <div className="relative w-full max-w-[280px] h-[280px] flex items-center justify-center pointer-events-none select-none overflow-hidden">
-      {/* Contained Waves/Ripples - Circular effect radiating from center */}
+    <div className="relative w-full max-w-[260px] h-[260px] flex items-center justify-center pointer-events-none select-none">
+      {/* Dynamic Radar Ripples */}
       <div className="absolute inset-0 flex items-center justify-center">
-        {/* Ripple 1 */}
-        <div className="absolute w-28 h-28 bg-primary/25 rounded-full animate-ping [animation-duration:3s]" />
-        {/* Ripple 2 - Staggered */}
-        <div className="absolute w-28 h-28 bg-primary/15 rounded-full animate-ping [animation-duration:3s] [animation-delay:1s]" />
-        {/* Ripple 3 - Staggered */}
-        <div className="absolute w-28 h-28 bg-primary/5 rounded-full animate-ping [animation-duration:3s] [animation-delay:2s]" />
+        <div className="absolute w-32 h-32 bg-primary/20 rounded-full animate-ping [animation-duration:3s]" />
+        <div className="absolute w-48 h-48 bg-primary/10 rounded-full animate-ping [animation-duration:4s]" />
       </div>
 
-      <div className="relative z-10 p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl rounded-[2.2rem] shadow-[0_30px_60px_-15px_rgba(36,136,232,0.4)] border border-white dark:border-slate-800 flex items-center justify-center overflow-hidden h-28 w-28">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
-        <div className="relative z-20">
-          <HeartPulse className="h-12 w-12 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.6)] animate-pulse" />
+      <div className="relative z-10 p-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[2.8rem] shadow-[0_30px_60px_-15px_rgba(36,136,232,0.3)] border border-white dark:border-slate-800 flex items-center justify-center h-32 w-32">
+        <HeartPulse className="h-16 w-16 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.5)] animate-pulse" />
+        
+        {/* Floating Health Bits */}
+        <div className="absolute -top-2 -right-2 bg-emerald-500 p-2 rounded-xl shadow-lg border-4 border-white dark:border-slate-900 rotate-12">
+            <div className="h-2 w-2 bg-white rounded-full animate-pulse" />
         </div>
       </div>
       
-      {/* Background Soft Glow Aura */}
-      <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full scale-100 -z-10 animate-pulse" />
+      {/* Background Soft Glow */}
+      <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-125 -z-10" />
     </div>
   );
 }
 
-type AuthView = 'welcome' | 'login' | 'signup' | 'phone' | 'otp';
+type AuthView = 'welcome' | 'login' | 'signup';
 
 export default function LoginPage() {
   const [view, setView] = useState<AuthView>('welcome');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [countryCode, setCountryCode] = useState('+91');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   
@@ -87,82 +74,30 @@ export default function LoginPage() {
     }
   }, [user, isMounted, router]);
 
-  // Phone Auth Logic
-  const setupRecaptcha = () => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {
-          console.log('Recaptcha resolved');
-        }
-      });
-    }
-  };
-
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleSignIn = async () => {
     if (loading) return;
-    
-    if (mobileNumber.length < 7) {
-      toast({ variant: 'destructive', title: 'Invalid Number', description: 'Please enter a valid mobile number.' });
-      return;
-    }
-
-    const fullPhoneNumber = `${countryCode}${mobileNumber}`;
-
     setLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-      setupRecaptcha();
-      const verifier = (window as any).recaptchaVerifier;
-      const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
-      setConfirmationResult(result);
-      setView('otp');
-      toast({ title: 'OTP Sent', description: `A code has been sent to ${fullPhoneNumber}` });
-    } catch (error: any) {
-      console.error("Phone Auth Error:", error);
-      let errorMsg = 'Failed to send OTP. Please try again.';
+      const result = await signInWithPopup(auth, provider);
       
-      // Explicitly handle billing-not-enabled
-      if (error.code === 'auth/billing-not-enabled') {
-        errorMsg = 'Phone Login requires a Firebase Blaze plan. Please use Email login instead.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMsg = 'Too many attempts. Please try again later.';
-      } else if (error.code === 'auth/invalid-phone-number') {
-        errorMsg = 'The phone number provided is invalid.';
-      }
-      
-      toast({ 
-        variant: 'destructive', 
-        title: 'Connection Issue', 
-        description: errorMsg 
-      });
-
-      // Clear recaptcha on failure
-      if ((window as any).recaptchaVerifier) {
-          (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = null;
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading || !confirmationResult) return;
-
-    setLoading(true);
-    try {
-      const result = await confirmationResult.confirm(otp);
-      toast({ title: 'Success', description: 'Logged in successfully.' });
+      // If it's a new user, initialize their profile
       if (result.user.metadata.creationTime === result.user.metadata.lastSignInTime) {
-          localStorage.setItem('userMedicalProfile_local', JSON.stringify({
-              name: 'Guest User',
-              image: `https://picsum.photos/seed/${result.user.uid}/400/400`
-          }));
+          const userProfileRef = doc(firestore, 'users', result.user.uid, 'userProfiles', result.user.uid);
+          await setDoc(userProfileRef, {
+            id: result.user.uid,
+            name: result.user.displayName,
+            email: result.user.email,
+            profilePicture: result.user.photoURL,
+            onboardingCompleted: true,
+            createdAt: serverTimestamp(),
+          });
       }
+      
+      toast({ title: 'Welcome!', description: 'Logged in with Google.' });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The code you entered is incorrect.' });
+      console.error("Google Auth Error:", error);
+      toast({ variant: 'destructive', title: 'Sign-in Failed', description: 'Could not connect to Google.' });
     } finally {
       setLoading(false);
     }
@@ -198,19 +133,17 @@ export default function LoginPage() {
           createdAt: serverTimestamp(),
         });
         
-        toast({ title: 'Welcome!', description: "Your account has been created successfully." });
+        toast({ title: 'Account Created', description: "Welcome to Your Medical Partner." });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        localStorage.removeItem('userMedicalProfile_local');
-        toast({ title: 'Welcome Back!', description: 'Logged in successfully.' });
+        toast({ title: 'Welcome Back!', description: 'Accessing your health dashboard...' });
       }
     } catch (error: any) {
-      console.error("Auth Error:", error);
       let message = error.message;
-      if (error.code === 'auth/email-already-in-use') message = 'Email already registered.';
-      else if (error.code === 'auth/invalid-credential') message = 'Invalid email or password.';
+      if (error.code === 'auth/email-already-in-use') message = 'This email is already registered.';
+      else if (error.code === 'auth/invalid-credential') message = 'Incorrect email or password.';
       
-      toast({ variant: 'destructive', title: 'Authentication Failed', description: message });
+      toast({ variant: 'destructive', title: 'Auth Failed', description: message });
     } finally {
       setLoading(false);
     }
@@ -223,7 +156,7 @@ export default function LoginPage() {
       await signInAnonymously(auth);
       toast({ title: 'Logged in as Guest' });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Guest Sign-in Failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Failed', description: error.message });
     } finally {
       setLoading(false);
     }
@@ -232,217 +165,168 @@ export default function LoginPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="h-[100dvh] w-full bg-gradient-to-br from-[#f0f7ff] via-[#ffffff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] flex flex-col items-center justify-start overflow-hidden relative font-body safe-top">
-      <div id="recaptcha-container"></div>
+    <div className="h-[100dvh] w-full bg-gradient-to-b from-[#f0f7ff] via-[#ffffff] to-[#f8f9ff] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] flex flex-col items-center justify-start overflow-hidden relative font-body safe-top">
       
-      <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-5%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[140px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-15%] w-[500px] h-[500px] bg-blue-400/5 rounded-full blur-[120px]" />
-      </div>
+      {/* Decorative Blur Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-72 h-72 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-blue-400/10 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-12 overflow-y-auto scrollbar-hide">
         
-        <div className="w-full flex flex-col items-center pt-6 animate-in fade-in zoom-in-95 duration-1000">
-          <AdvancedMedicalAnimation />
-          <div className="text-center mt-4 space-y-4">
-             <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-blue-50/80 dark:bg-blue-900/30 rounded-full border border-blue-100/50 dark:border-blue-800 shadow-sm mx-auto">
-                <ShieldCheck className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Professional Gateway</span>
+        {/* Header Section */}
+        <div className="w-full flex flex-col items-center pt-8 animate-in fade-in zoom-in-95 duration-1000">
+          <MedicalHeroAnimation />
+          
+          <div className="text-center mt-6 space-y-4">
+             <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-full border border-blue-100/50 dark:border-slate-800 shadow-sm mx-auto">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                <span className="text-[10px] font-black text-[#1A365D] dark:text-primary uppercase tracking-[0.3em]">Official Health Portal</span>
              </div>
-             <div className="space-y-0.5">
-                <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none select-none">
+             <div className="space-y-1">
+                <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none">
                   Your <span className="text-primary">Medical</span> Partner
                 </h1>
-                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.45em] ml-1">Elite Digital Health Companion</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Elite Digital Health Ecosystem</p>
              </div>
           </div>
         </div>
 
-        <div className="w-full max-w-md mt-6">
+        {/* Action Section */}
+        <div className="w-full max-w-md mt-10">
           {view === 'welcome' ? (
             <div className="w-full space-y-8 animate-in slide-in-from-bottom-10 fade-in duration-700">
-              <div className="space-y-3 px-2">
+              <div className="space-y-4 px-2">
+                <Button 
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                    className="w-full h-16 rounded-[2.2rem] bg-white text-slate-700 hover:bg-slate-50 border border-slate-100 shadow-xl flex items-center justify-center gap-4 transition-all active:scale-95 group"
+                >
+                    {loading ? <Loader2 className="animate-spin" /> : (
+                        <>
+                            <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.14-4.53z" fill="#EA4335"/></svg>
+                            </div>
+                            <span className="font-black uppercase text-[11px] tracking-widest">Sign in with Google</span>
+                        </>
+                    )}
+                </Button>
+
                 <Button 
                   onClick={() => setView('signup')}
-                  className="w-full h-16 rounded-[2.5rem] text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] active:scale-95 transition-all duration-500 border-none flex items-center justify-between px-10"
+                  className="w-full h-16 rounded-[2.2rem] text-sm font-black uppercase tracking-[0.25em] bg-primary hover:bg-primary/90 shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] active:scale-95 transition-all duration-500 border-none flex items-center justify-between px-10"
                 >
-                  <span>Start Journey</span>
-                  <ChevronRight className="h-7 w-7 opacity-60" />
+                  <span>Start Health Journey</span>
+                  <ChevronRight className="h-6 w-6 opacity-60" />
                 </Button>
                 
-                <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    onClick={() => setView('phone')}
-                    variant="outline"
-                    className="h-14 rounded-2xl font-bold bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/60 dark:border-slate-800 shadow-sm text-[#1A365D] dark:text-slate-200 hover:bg-white/70 active:scale-95"
-                  >
-                    <Smartphone className="w-4 h-4 mr-2" /> Mobile
-                  </Button>
+                <div className="pt-2">
                   <Button 
                     onClick={() => setView('login')}
-                    variant="outline"
-                    className="h-14 rounded-2xl font-bold bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/60 dark:border-slate-800 shadow-sm text-[#1A365D] dark:text-slate-200 hover:bg-white/70 active:scale-95"
+                    variant="ghost"
+                    className="w-full h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors"
                   >
-                    Sign In
+                    Already have an account? Sign In
                   </Button>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-6 pt-2">
+              <div className="flex flex-col items-center gap-6 pt-4 text-center">
                 <div className="flex items-center w-full gap-4 px-12 opacity-30">
                   <div className="h-px bg-slate-400 flex-1" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.3em] whitespace-nowrap">Express Access</span>
+                  <span className="text-[8px] font-black uppercase tracking-[0.3em] whitespace-nowrap">Clinical Access</span>
                   <div className="h-px bg-slate-400 flex-1" />
                 </div>
-                <div className="flex gap-10">
-                  <SocialButton icon={<Chrome className="h-7 w-7 text-red-500" />} />
-                  <SocialButton icon={<Apple className="h-7 w-7 text-slate-900 dark:text-white" />} />
-                  <SocialButton icon={<Facebook className="h-7 w-7 text-blue-600" />} />
-                </div>
+                
                 <button 
                   onClick={handleGuestSignIn}
-                  className="text-[10px] font-black text-slate-400 hover:text-primary uppercase tracking-[0.3em] transition-colors mt-2 px-6 py-2 rounded-full hover:bg-primary/5"
+                  className="text-[10px] font-black text-slate-400 hover:text-primary uppercase tracking-[0.3em] transition-colors bg-white/40 dark:bg-slate-800/40 px-8 py-3 rounded-full border border-white/50 dark:border-slate-800 backdrop-blur-md shadow-sm"
                 >
-                  Explore as Guest
+                  Explore as Visitor
                 </button>
               </div>
             </div>
           ) : (
-            <Card className="w-full rounded-[3rem] border-none shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl p-1 animate-in slide-in-from-right-10 fade-in duration-500">
-              <CardContent className="p-8 space-y-6">
-                <div className="flex items-center gap-4">
+            <Card className="w-full rounded-[2.8rem] border-none shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl p-1 animate-in slide-in-from-right-8 fade-in duration-500">
+              <CardContent className="p-8 space-y-8">
+                <div className="flex items-center justify-between">
                   <Button variant="ghost" size="icon" className="rounded-full bg-slate-100 dark:bg-slate-800 h-11 w-11 hover:bg-primary/10 transition-colors" onClick={() => setView('welcome')} disabled={loading}>
                     <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:text-white" />
                   </Button>
-                  <div className="flex flex-col -space-y-1">
+                  <div className="text-right">
                     <h3 className="text-xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">
-                        {view === 'login' ? 'Welcome Back' : view === 'phone' ? 'Mobile Login' : view === 'otp' ? 'Verify Code' : 'Create Account'}
+                        {view === 'login' ? 'Sign In' : 'Join Partner'}
                     </h3>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Safe & Encrypted Session</p>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Medical Cloud Sync</p>
                   </div>
                 </div>
 
-                {view === 'phone' && (
-                  <form onSubmit={handleSendOtp} className="space-y-6">
-                    <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Country & Mobile Number</Label>
-                        <div className="flex gap-2">
-                            <Select value={countryCode} onValueChange={setCountryCode}>
-                                <SelectTrigger className="w-[100px] h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none shadow-inner font-black text-sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="+91">+91 (IN)</SelectItem>
-                                    <SelectItem value="+1">+1 (US)</SelectItem>
-                                    <SelectItem value="+44">+44 (UK)</SelectItem>
-                                    <SelectItem value="+971">+971 (UAE)</SelectItem>
-                                    <SelectItem value="+61">+61 (AU)</SelectItem>
-                                    <SelectItem value="+65">+65 (SG)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div className="relative flex-1">
-                                <Smartphone className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
-                                <Input 
-                                    type="tel" placeholder="98765 43210" 
-                                    className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-lg pl-14 pr-8 shadow-inner font-bold"
-                                    value={mobileNumber} 
-                                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} 
-                                    required disabled={loading}
-                                />
-                            </div>
-                        </div>
-                        <p className="text-[9px] text-slate-400 px-2 italic font-medium">OTP will be sent to your mobile</p>
+                <form onSubmit={handleAuthAction} className="space-y-5">
+                  {view === 'signup' && (
+                    <div className="space-y-1.5 px-1">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Full Name</Label>
+                      <Input 
+                        placeholder="e.g. Rohan Kumar" 
+                        className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-base px-6 shadow-inner font-bold"
+                        value={name} onChange={(e) => setName(e.target.value)} required disabled={loading}
+                      />
                     </div>
-                    <Button type="submit" disabled={loading} className="w-full h-16 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
-                        {loading ? <Loader2 className="animate-spin" /> : 'Get OTP Code'}
-                    </Button>
-                    <p className="text-[10px] text-center text-slate-400 mt-2">Note: Phone auth may require a Blaze plan.</p>
-                  </form>
-                )}
-
-                {view === 'otp' && (
-                  <form onSubmit={handleVerifyOtp} className="space-y-6">
-                    <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-6">Verification Code</Label>
-                        <div className="relative">
-                            <CheckCircle2 className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
-                            <Input 
-                                type="text" placeholder="Enter 6-digit OTP" 
-                                className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-center text-2xl tracking-[0.5em] font-black shadow-inner"
-                                maxLength={6}
-                                value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} required disabled={loading}
-                            />
-                        </div>
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full h-16 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
-                        {loading ? <Loader2 className="animate-spin" /> : 'Verify & Sign In'}
-                    </Button>
-                    <button type="button" onClick={() => setView('phone')} className="w-full text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Change Number</button>
-                  </form>
-                )}
-
-                {(view === 'login' || view === 'signup') && (
-                  <form onSubmit={handleAuthAction} className="space-y-5">
-                    {view === 'signup' && (
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-6">Full Name</Label>
-                        <Input 
-                          placeholder="Rohan Kumar" 
-                          className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-lg px-8 shadow-inner"
-                          value={name} onChange={(e) => setName(e.target.value)} required disabled={loading}
-                        />
-                      </div>
+                  )}
+                  <div className="space-y-1.5 px-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Email Address</Label>
+                    <Input 
+                      type="email" placeholder="name@example.com" 
+                      className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-base px-6 shadow-inner font-bold"
+                      value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-1.5 px-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Password</Label>
+                    <Input 
+                      type="password" placeholder="••••••••" 
+                      className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-base px-6 shadow-inner font-bold"
+                      value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading}
+                    />
+                  </div>
+                  
+                  <Button type="submit" disabled={loading} className="w-full h-16 rounded-[2rem] text-xs font-black uppercase tracking-[0.25em] mt-6 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
+                    {loading ? <Loader2 className="animate-spin" /> : (
+                        <span className="flex items-center gap-3">
+                            {view === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                            {view === 'login' ? 'Access Dashboard' : 'Confirm Registration'}
+                        </span>
                     )}
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-6">Email Address</Label>
-                      <Input 
-                        type="email" placeholder="name@example.com" 
-                        className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-lg px-8 shadow-inner"
-                        value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-6">Password</Label>
-                      <Input 
-                        type="password" placeholder="••••••••" 
-                        className="h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-lg px-8 shadow-inner"
-                        value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading}
-                      />
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full h-16 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
-                      {loading ? <Loader2 className="animate-spin" /> : (view === 'login' ? 'Sign In' : 'Join Now')}
-                    </Button>
-                  </form>
-                )}
+                  </Button>
+                </form>
+
+                <div className="text-center pt-2">
+                    <p className="text-[10px] font-bold text-slate-400">
+                        {view === 'login' ? "Don't have an account?" : "Already a partner?"}{' '}
+                        <button 
+                            type="button" 
+                            onClick={() => setView(view === 'login' ? 'signup' : 'login')}
+                            className="text-primary font-black uppercase tracking-widest hover:underline"
+                        >
+                            {view === 'login' ? 'Sign Up' : 'Log In'}
+                        </button>
+                    </p>
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
 
-        <div className="mt-10 flex flex-col items-center gap-4 text-slate-400/50">
-           <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em]">
-              <ShieldCheck className="w-4.5 h-4.5 text-primary" />
-              HIPAA Compliant Security
+        {/* Footer Trust Section */}
+        <div className="mt-12 flex flex-col items-center gap-4 text-slate-400/60">
+           <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.3em]">
+              <ShieldCheck className="w-4 h-4 text-primary/60" />
+              100% HIPAA Secure Data
            </div>
-           <p className="text-[9px] font-bold text-center leading-relaxed max-w-[240px]">
-             Professional medical data handling standards applied to all user sessions.
+           <p className="text-[8px] font-bold text-center leading-relaxed max-w-[260px] uppercase tracking-tighter">
+             Professional health intelligence with encrypted private storage.
            </p>
         </div>
 
       </div>
     </div>
-  );
-}
-
-function SocialButton({ icon, disabled }: { icon: React.ReactNode, disabled?: boolean }) {
-  return (
-    <button 
-      disabled={disabled}
-      className="h-16 w-16 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 border border-white dark:border-slate-800 disabled:opacity-50 group"
-    >
-      <div className="group-hover:drop-shadow-[0_0:10px_rgba(36,136,232,0.3)] transition-all">
-        {icon}
-      </div>
-    </button>
   );
 }
