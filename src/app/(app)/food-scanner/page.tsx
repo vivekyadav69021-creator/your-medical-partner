@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useState, useEffect, startTransition } from 'react';
@@ -94,7 +93,7 @@ function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isB
 function MacroMini({ label, val, color }: any) {
     return (
         <div className="text-center">
-            <p className="text-sm font-black text-[#1A365D] dark:text-white">{val}</p>
+            <p className="text-sm font-black text-[#1A365D] dark:text-white">{String(val)}</p>
             <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mt-1 flex items-center justify-center gap-1">
                 <span className={cn("h-1.5 w-1.5 rounded-full", color)} /> {label}
             </p>
@@ -110,7 +109,7 @@ function MicroItem({ label, val, icon: Icon }: any) {
             </div>
             <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{label}</p>
-                <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{val}</p>
+                <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{String(val)}</p>
             </div>
         </div>
     );
@@ -244,11 +243,6 @@ export default function FoodScannerPage() {
                             <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight truncate">{t.greeting} 👋</h1>
                         </div>
                     </div>
-                    <Link href="/profile" className="shrink-0 ml-4">
-                        <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg overflow-hidden shrink-0">
-                            <img src={userImage} alt={userName} className="h-full w-full object-cover" />
-                        </div>
-                    </Link>
                 </div>
 
                 <div className="rounded-[2.5rem] border-none shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 overflow-hidden mx-1 p-8">
@@ -281,13 +275,6 @@ export default function FoodScannerPage() {
                     <ScannerGridCard title={t.barcodeTitle} slogan={t.barcodeSlogan} icon={Barcode} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" btnColor="bg-pink-500" onClick={() => handleModeSwitch('barcode')} btnText={t.startBtn} />
                     <ScannerGridCard title={t.ocrTitle} slogan={t.ocrSlogan} icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => handleModeSwitch('ocr')} btnText={t.startBtn} />
                 </div>
-
-                <div className="flex justify-center pt-4">
-                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setLang('en')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setLang('hi')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400")}>हिन्दी</Button>
-                    </div>
-                </div>
             </div>
         );
     }
@@ -311,12 +298,6 @@ export default function FoodScannerPage() {
                 )}
             </div>
 
-            <div className="flex gap-2.5 overflow-x-auto pb-2 px-1 scrollbar-hide">
-                <button onClick={() => handleModeSwitch('meal')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'meal' ? "bg-primary text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Meal Scan</button>
-                <button onClick={() => handleModeSwitch('barcode')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'barcode' ? "bg-pink-500 text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Barcode</button>
-                <button onClick={() => handleModeSwitch('ocr')} className={cn("px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap", view === 'ocr' ? "bg-emerald-500 text-white shadow-lg" : "bg-white/40 text-slate-500 border border-white/20")}>Label OCR</button>
-            </div>
-
             <div className="space-y-6">
                 {!preview ? (
                     <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
@@ -334,11 +315,6 @@ export default function FoodScannerPage() {
                                 <span className="text-[10px] font-black uppercase text-slate-500">Gallery</span>
                             </div>
                         </div>
-                        <div className="text-center px-4">
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">
-                                {view === 'barcode' ? "Align Barcode in Center" : view === 'ocr' ? "Focus on Ingredient List" : "Tap to Capture or Pick Photo"}
-                            </p>
-                        </div>
                         <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
                     </div>
                 ) : (
@@ -348,7 +324,6 @@ export default function FoodScannerPage() {
                     )}>
                         <Image src={preview} alt="Input" width={600} height={800} className="w-full h-auto object-contain max-h-[400px]" />
                         
-                        {/* High-tech Scanning UI */}
                         {isAnalyzing && (
                             <ScanAnimationOverlay 
                                 color={view === 'meal' ? "text-blue-500" : view === 'barcode' ? "text-pink-500" : "text-emerald-500"} 
@@ -378,36 +353,6 @@ export default function FoodScannerPage() {
                         </div>
                     )}
 
-                    <button type="button" onClick={() => setShowSettings(!showSettings)} className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><UserCheck className="h-5 w-5" /></div>
-                            <div className="text-left">
-                                <h3 className="text-[11px] font-black text-[#1A365D] dark:text-white uppercase tracking-wider">Health Profile</h3>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase">Personalize Analysis</p>
-                            </div>
-                        </div>
-                        <ChevronDown className={cn("h-4 w-4 text-slate-300 transition-transform", showSettings && "rotate-180")} />
-                    </button>
-
-                    {showSettings && (
-                        <div className="p-6 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 shadow-inner space-y-4 animate-in fade-in">
-                            <div className="space-y-1.5">
-                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Conditions/Allergies</Label>
-                                <Textarea value={healthMirror} onChange={e => setHealthMirror(e.target.value)} placeholder="E.g., Diabetes, Nut Allergy" className="rounded-xl bg-white/80 dark:bg-slate-800/80 border-none font-bold text-sm min-h-[80px]" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <Select value={mainGoal} onValueChange={setMainGoal}>
-                                    <SelectTrigger className="rounded-xl h-11 bg-white border-none font-bold text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent><SelectItem value="Weight Loss">Weight Loss</SelectItem><SelectItem value="Muscle Gain">Muscle Gain</SelectItem><SelectItem value="Health Maintenance">Maintenance</SelectItem></SelectContent>
-                                </Select>
-                                <Select value={workout} onValueChange={setWorkout}>
-                                    <SelectTrigger className="rounded-xl h-11 bg-white border-none font-bold text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent><SelectItem value="Heavy Lifting">Heavy Lifting</SelectItem><SelectItem value="Sedentary">Sedentary</SelectItem><SelectItem value="Cardio">Cardio</SelectItem></SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    )}
-
                     <Button type="submit" disabled={isAnalyzing || (view === 'meal' && !textLabel && !preview) || (view !== 'meal' && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
                         {isAnalyzing ? (
                             <div className="flex items-center gap-3">
@@ -428,13 +373,13 @@ export default function FoodScannerPage() {
                             <Activity className="h-8 w-8 text-primary" />
                         </div>
                         <div className="space-y-1.5">
-                            <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{currentResult.name}</h2>
+                            <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{String(currentResult.name)}</h2>
                             <div className={cn(
                                 "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
                                 (lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
                             )}>
                                 {(lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                                {lang === 'en' ? currentResult.compatibilityTagEn : currentResult.compatibilityTagHi}
+                                {lang === 'en' ? String(currentResult.compatibilityTagEn) : String(currentResult.compatibilityTagHi)}
                             </div>
                         </div>
                     </section>
@@ -444,8 +389,8 @@ export default function FoodScannerPage() {
                             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Zap className="h-6 w-6" /></div>
                             <div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estimated Energy</p>
-                                <p className="text-2xl font-black text-[#1A365D] dark:text-white">{currentResult.calories}</p>
-                                <p className="text-[9px] font-bold text-slate-400">{currentResult.portion}</p>
+                                <p className="text-2xl font-black text-[#1A365D] dark:text-white">{String(currentResult.calories)}</p>
+                                <p className="text-[9px] font-bold text-slate-400">{String(currentResult.portion)}</p>
                             </div>
                         </div>
 
@@ -472,14 +417,14 @@ export default function FoodScannerPage() {
                         <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
                             <Ban className="h-10 w-10" />
                             <h3 className="text-xl font-black uppercase tracking-widest">Safety Advisory</h3>
-                            <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi}</p>
+                            <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? String(currentResult.medicalAlertEn) : String(currentResult.medicalAlertHi)}</p>
                         </div>
                     )}
 
                     <div className="space-y-4 px-2">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Scientific Explanation' : 'सरल व्याख्या'}</h4>
                         <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
-                            "{lang === 'en' ? currentResult.logicEn : currentResult.logicHi}"
+                            "{lang === 'en' ? String(currentResult.logicEn) : String(currentResult.logicHi)}"
                         </div>
                     </div>
 
@@ -489,16 +434,10 @@ export default function FoodScannerPage() {
                             {(lang === 'en' ? (currentResult.substitutionsEn || []) : (currentResult.substitutionsHi || [])).map((sub: string, i: number) => (
                                 <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
                                     <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary"><Sparkles className="h-4 w-4" /></div>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{sub}</p>
+                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{String(sub)}</p>
                                 </div>
                             ))}
                         </div>
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                        <Button variant="ghost" onClick={resetAll} className="w-full rounded-full h-14 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-primary bg-white/40 backdrop-blur-md border border-white/20">
-                            <RotateCcw className="mr-2 h-4 w-4" /> Start New Analysis
-                        </Button>
                     </div>
 
                     <Alert className="rounded-[3rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-8 border-dashed border-2 border-blue-100">

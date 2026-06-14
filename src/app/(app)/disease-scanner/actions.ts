@@ -6,6 +6,17 @@ import { analyzeSkinImage } from '@/ai/flows/skin-analyzer-flow';
 import { analyzeInjury } from '@/ai/flows/injury-analyzer-flow';
 import { z } from 'zod';
 
+/**
+ * Utility to ensure the return object is fully serializable for Next.js Server Actions.
+ * Converts undefined to null and ensures deep copies.
+ */
+function sanitizeResult(obj: any) {
+    if (!obj) return null;
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+        return value === undefined ? null : value;
+    }));
+}
+
 const xrayScannerSchema = z.object({
   photoDataUri: z.string().min(1, 'Please upload an image to be scanned.'),
   contentType: z.string().min(1, 'Content type is required.'),
@@ -46,7 +57,7 @@ export async function analyzeXrayAction(
     });
     
     return {
-      result: JSON.parse(JSON.stringify(result)),
+      result: sanitizeResult(result),
       error: result.status === 'error' ? (result.error || 'Analysis failed') : null,
       timestamp: Date.now(),
     };
@@ -99,7 +110,7 @@ export async function analyzeSkinImageAction(
   try {
     const result = await analyzeSkinImage(validatedFields.data);
     return {
-      result: JSON.parse(JSON.stringify(result)),
+      result: sanitizeResult(result),
       error: null,
       timestamp: Date.now(),
     };
@@ -146,14 +157,11 @@ export async function analyzeLabReportImageAction(
     }
 
     try {
+        console.log(`[Lab Action] Processing ${images.length} pages...`);
         const result = await analyzeLabReportImage(validatedFields.data);
-        // Deeply sanitize and serialize
-        const sanitizedResult = JSON.parse(JSON.stringify(result, (key, value) => {
-            return value === undefined ? null : value;
-        }));
         
         return { 
-            result: sanitizedResult, 
+            result: sanitizeResult(result), 
             error: null,
             timestamp: Date.now()
         };
@@ -194,7 +202,7 @@ export async function analyzeInjuryAction(
   try {
     const result = await analyzeInjury(validatedFields.data);
     return {
-      result: JSON.parse(JSON.stringify(result)),
+      result: sanitizeResult(result),
       error: null,
       timestamp: Date.now(),
     };

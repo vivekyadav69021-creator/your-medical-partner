@@ -70,7 +70,11 @@ const updateScanStats = () => {
     }
 };
 
-const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
+/**
+ * Robust Image Compression to prevent OOM and Payload Limit issues.
+ * Lower quality for multiple pages.
+ */
+const compressImage = (dataUri: string, maxWidth = 800, quality = 0.5): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
         img.onload = () => {
@@ -91,7 +95,7 @@ const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
                 return;
             }
             ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.5);
+            const compressed = canvas.toDataURL('image/jpeg', quality);
             resolve(compressed);
         };
         img.onerror = () => reject(new Error("Image failed to load"));
@@ -417,7 +421,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                         <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100 animate-pulse">
                             <MessageCircle className="h-5 w-5 text-blue-500" />
                             <AlertDescription className="font-bold text-blue-700 dark:text-blue-300">
-                                {state.result.interactionPrompt}
+                                {String(state.result.interactionPrompt)}
                             </AlertDescription>
                         </Alert>
                     )}
@@ -430,10 +434,10 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             </h4>
                         </div>
                         <p className="text-xl font-black text-[#1A365D] dark:text-slate-100 leading-tight">
-                            {state.result.overallAssessment}
+                            {String(state.result.overallAssessment)}
                         </p>
                         <div className="prose prose-sm dark:prose-invert max-w-full text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                            {state.result.detailedAnalysis}
+                            {String(state.result.detailedAnalysis)}
                         </div>
                     </div>
 
@@ -445,8 +449,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             <div className="grid gap-3">
                                 {(state.result.potentialConditions || []).map((cond: any, i: number) => (
                                     <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm">
-                                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{cond.name}</p>
-                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">{cond.simpleDescription}</p>
+                                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{String(cond.name)}</p>
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">{String(cond.simpleDescription)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -464,12 +468,12 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                                 <Pill className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{care.title}</p>
-                                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{care.description}</p>
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{String(care.title)}</p>
+                                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{String(care.description)}</p>
                                                 {care.productSuggestion && (
                                                     <div className="mt-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800">
                                                         <p className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Recommended OTC Product</p>
-                                                        <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{care.productSuggestion}</p>
+                                                        <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{String(care.productSuggestion)}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -479,48 +483,13 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             </div>
                         </div>
 
-                        {state.result.nutritionalSupport && state.result.nutritionalSupport.length > 0 && (
-                            <div className="space-y-4 px-2">
-                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
-                                    {lang === 'en' ? 'Nutritional Support' : 'पोषण संबंधी सुझाव'}
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {(state.result.nutritionalSupport || []).map((item: any, i: number) => (
-                                        <div key={i} className="p-4 bg-emerald-50/40 dark:bg-emerald-950/10 rounded-[1.5rem] border border-emerald-100/50 flex gap-3">
-                                            <Utensils className="h-4 w-4 text-emerald-500 shrink-0" />
-                                            <div>
-                                                <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{item.item}</p>
-                                                <p className="text-[11px] font-bold text-emerald-600/80 dark:text-emerald-400/80">{item.benefit}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
-                            <div className="space-y-4 px-2">
-                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
-                                    {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
-                                </h4>
-                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
-                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
-                                        <div key={i} className="flex items-start gap-3">
-                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
                                 {lang === 'en' ? 'Simplified Biological Logic' : 'सरल जैविक तर्क'}
                             </h4>
                             <div className="p-6 rounded-[2rem] bg-pink-50/30 dark:bg-pink-900/10 border border-pink-100/50">
                                 <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                                    "{state.result.biologicalLogic}"
+                                    "{String(state.result.biologicalLogic)}"
                                 </p>
                             </div>
                         </div>
@@ -548,8 +517,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
-                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
-                            {state.result.disclaimer}
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
+                            {String(state.result.disclaimer)}
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -643,7 +612,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                     {state.result.interactionPrompt && (
                         <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
                             <MessageCircle className="h-5 w-5 text-blue-500" />
-                            <AlertDescription className="font-bold text-blue-700">{state.result.interactionPrompt}</AlertDescription>
+                            <AlertDescription className="font-bold text-blue-700">{String(state.result.interactionPrompt)}</AlertDescription>
                         </Alert>
                     )}
 
@@ -651,7 +620,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-6 animate-pulse">
                             <Siren className="h-8 w-8 mb-3" />
                             <AlertTitle className="text-xl font-black uppercase">CRITICAL ALERT</AlertTitle>
-                            <AlertDescription className="text-sm font-bold">{state.result.actionableAlert}</AlertDescription>
+                            <AlertDescription className="text-sm font-bold">{String(state.result.actionableAlert)}</AlertDescription>
                         </Alert>
                     )}
 
@@ -659,19 +628,19 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         <div className="space-y-3 px-2">
                              <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Injury Type</h4>
                              <div className="flex items-center gap-4">
-                                <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100">{String(state.result.classification)}</h3>
                                 <Badge className={cn("uppercase font-black text-[8px] border-none px-3", 
                                     state.result.severity === 'high' ? "bg-red-100 text-red-600" : 
                                     state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
                                 )}>
-                                    {state.result.severity}
+                                    {String(state.result.severity)}
                                 </Badge>
                              </div>
                         </div>
 
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Biological Logic</h4>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">"{state.result.biologicalLogic}"</p>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">"{String(state.result.biologicalLogic)}"</p>
                         </div>
 
                         <div className="space-y-4 px-2">
@@ -680,32 +649,16 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                                 {(state.result.firstAidSteps || []).map((step: string, i: number) => (
                                     <div key={i} className="flex gap-4 p-4 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20">
                                         <span className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black shrink-0">{i+1}</span>
-                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{step}</p>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{String(step)}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
-                            <div className="space-y-4 px-2">
-                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
-                                    {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
-                                </h4>
-                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
-                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
-                                        <div key={i} className="flex items-start gap-3">
-                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                             <ShieldAlert className="h-5 w-5 text-blue-500" />
-                            <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
-                                {state.result.disclaimer}
+                            <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
+                                {String(state.result.disclaimer)}
                             </AlertDescription>
                         </Alert>
                     </div>
@@ -808,11 +761,6 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                     </Button>
                                 </div>
                             </div>
-                            {!isAnalyzing && (
-                                <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    Tap pencil icon to highlight fractures or crop
-                                </p>
-                            )}
                         </div>
                     )}
                     <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
@@ -835,7 +783,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                     <div className="space-y-6">
                         <div className="space-y-2 px-2">
                              <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Anatomical Findings</h4>
-                             <p className="text-xl font-black text-[#1A365D] dark:text-slate-100">{state.result.bodyPart}</p>
+                             <p className="text-xl font-black text-[#1A365D] dark:text-slate-100">{String(state.result.bodyPart)}</p>
                         </div>
 
                         <div className="space-y-4 px-2">
@@ -844,22 +792,15 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                 <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Detailed Observation</h4>
                             </div>
                             <div className="p-6 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 border border-white dark:border-slate-800 shadow-sm">
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{String(state.result.observation)}"</p>
                             </div>
                         </div>
 
                         <div className="space-y-4 px-2">
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Implications</h4>
                             <div className="p-6 rounded-[2.5rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50">
-                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300 leading-relaxed">{state.result.clinicalImplications}</p>
+                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300 leading-relaxed">{String(state.result.clinicalImplications)}</p>
                             </div>
-                        </div>
-
-                        <div className="space-y-4 px-2">
-                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Biological Reasoning</h4>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed px-2">
-                                {state.result.biologicalReasoning}
-                            </p>
                         </div>
 
                         <div className="space-y-4 px-2">
@@ -870,7 +811,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                                         <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
                                             <Check className="h-4 w-4" />
                                         </div>
-                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{action}</p>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{String(action)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -880,7 +821,7 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
-                            {state.result.disclaimer}
+                            {String(state.result.disclaimer)}
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -899,11 +840,37 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
     }, [state]);
 
+    /**
+     * Optimized selection: Compress immediately to avoid memory bloat
+     */
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            toast({ title: lang === 'en' ? "Optimizing pages..." : "पन्नों को अनुकूलित किया जा रहा है..." });
+            
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    try {
+                        const original = reader.result as string;
+                        // For multiple pages, use more aggressive compression to stay under payload limit
+                        const compressed = await compressImage(original, 800, 0.3);
+                        setPreviews(prev => [...prev, compressed].slice(0, 5)); 
+                    } catch (err) {
+                        console.error("Selection error:", err);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     const handleFormAction = async (formData: FormData) => {
         if (previews.length === 0) return;
         try {
-            const compressedImages = await Promise.all(previews.map(p => compressImage(p)));
-            formData.set('images', JSON.stringify(compressedImages));
+            // Already compressed during selection
+            formData.set('images', JSON.stringify(previews));
             formData.set('language', lang);
             startTransition(() => { formAction(formData); });
         } catch (e) {
@@ -911,26 +878,14 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length > 0) {
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    setPreviews(prev => [...prev, reader.result as string].slice(0, 5)); // Limit to 5 pages
-                };
-                reader.readAsDataURL(file);
-            });
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-    };
-
     const removePreview = (index: number) => {
         setPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
-    const groupedFindings = (state?.result?.findings || []).reduce((acc: any, item: any) => {
-        const category = item.category || (lang === 'en' ? 'General' : 'सामान्य');
+    // Safe grouping logic with type guards
+    const findingsArray = Array.isArray(state?.result?.findings) ? state.result.findings : [];
+    const groupedFindings = findingsArray.reduce((acc: any, item: any) => {
+        const category = String(item.category || (lang === 'en' ? 'General' : 'सामान्य'));
         if (!acc[category]) acc[category] = [];
         acc[category].push(item);
         return acc;
@@ -1008,19 +963,15 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                             <div className="space-y-1">
                                 <p className="text-[9px] font-black uppercase text-slate-400">Patient Name</p>
-                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><User className="w-3.5 h-3.5 text-primary" /> {state.result.patientDetails?.name || '-'}</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><User className="w-3.5 h-3.5 text-primary" /> {String(state.result.patientDetails?.name || '-')}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[9px] font-black uppercase text-slate-400">Age / Gender</p>
-                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{state.result.patientDetails?.age || '-'} / {state.result.patientDetails?.gender || '-'}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black uppercase text-slate-400">Report Date</p>
-                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-primary" /> {state.result.patientDetails?.date || '-'}</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{String(state.result.patientDetails?.age || '-')} / {String(state.result.patientDetails?.gender || '-')}</p>
                             </div>
                              <div className="col-span-full pt-4 border-t border-slate-100 dark:border-slate-800">
                                 <p className="text-[9px] font-black uppercase text-slate-400">Referring Physician / Clinic</p>
-                                <p className="text-sm font-black text-primary flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5" /> {state.result.patientDetails?.doctorName || 'Not Specified'}</p>
+                                <p className="text-sm font-black text-primary flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5" /> {String(state.result.patientDetails?.doctorName || 'Not Specified')}</p>
                             </div>
                         </div>
                     </Card>
@@ -1031,7 +982,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Executive Summary</h4>
                         </div>
                         <p className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">
-                            {state.result.summary}
+                            {String(state.result.summary)}
                         </p>
                     </div>
 
@@ -1046,20 +997,20 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                     {(items || []).map((item: any, i: number) => (
                                         <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm group transition-all hover:bg-white hover:shadow-md">
                                             <div className="flex items-center justify-between mb-2">
-                                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{item.test}</p>
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{String(item.test)}</p>
                                                 <Badge className={cn("uppercase text-[8px] font-black border-none px-3", 
                                                     item.status === 'high' ? "bg-red-50 text-red-500" : 
                                                     item.status === 'low' ? "bg-orange-50 text-orange-500" : 
                                                     item.status === 'borderline' ? "bg-yellow-50 text-yellow-600" : "bg-emerald-50 text-emerald-600"
                                                 )}>
-                                                    {item.status}
+                                                    {String(item.status)}
                                                 </Badge>
                                             </div>
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-xl font-black text-primary">{item.value}</span>
-                                                <span className="text-[10px] font-bold text-slate-400 italic">Ref: {item.range}</span>
+                                                <span className="text-xl font-black text-primary">{String(item.value)}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 italic">Ref: {String(item.range || '-')}</span>
                                             </div>
-                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{item.significance}</p>
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{String(item.significance)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -1072,7 +1023,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Clinical Reasoning</h4>
                             <div className="p-6 rounded-[2rem] bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50">
                                 <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                                    "{state.result.biologicalLogic}"
+                                    "{String(state.result.biologicalLogic)}"
                                 </p>
                             </div>
                         </div>
@@ -1087,12 +1038,12 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                                 <CheckCircle2 className="h-5 w-5 text-primary" />
                                             </div>
                                             <div className="space-y-3">
-                                                <p className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{plan.title}</p>
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{String(plan.title)}</p>
                                                 <div className="space-y-2">
                                                     {(plan.steps || []).map((step: string, j: number) => (
                                                         <div key={j} className="flex gap-2 items-start">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{step}</p>
+                                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{String(step)}</p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1110,7 +1061,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                     {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
                                         <div key={i} className="flex items-start gap-3">
                                             <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{String(item)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -1121,7 +1072,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                     <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
                         <ShieldAlert className="h-5 w-5 text-blue-500" />
                         <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
-                            {state.result.disclaimer}
+                            {String(state.result.disclaimer)}
                         </AlertDescription>
                     </Alert>
                 </div>
