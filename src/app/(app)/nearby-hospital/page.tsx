@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
     Siren, 
@@ -34,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // API Configuration
-const TOMTOM_API_KEY = process.env.REACT_APP_TOMTOM_API_KEY || 'czghQOGKafhd2gnuLjpMzF2bIly8lhp3';
+const TOMTOM_API_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || 'czghQOGKafhd2gnuLjpMzF2bIly8lhp3';
 
 type Hospital = {
   id: string;
@@ -102,7 +103,7 @@ export default function NearbyHospitalPage() {
   }, [radius, toast]);
 
   const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
       setErrorMessage("Geolocation is not supported by your browser.");
       return;
     }
@@ -280,7 +281,7 @@ export default function NearbyHospitalPage() {
                           </span>
                         </div>
                         {hospital?.poi?.phone && (
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full border border-emerald-100/50 dark:border-emerald-800">
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full border border-emerald-100/50 dark:border-blue-800">
                             <Activity className="w-3 h-3 text-emerald-500" />
                             <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Verified Facility</span>
                           </div>
