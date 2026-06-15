@@ -49,7 +49,7 @@ const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
 
 /**
- * High-tech scanning line animation overlay
+ * High-tech scanning line animation overlay with target box
  */
 function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isBarcode?: boolean }) {
     return (
@@ -66,19 +66,26 @@ function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isB
                 }}
             />
 
-            {/* Target Area Box for Barcode/Label */}
+            {/* Target Area Box for Barcode/Label - Like Google Lens */}
             {isBarcode && (
                 <div className="absolute inset-0 flex items-center justify-center p-12">
-                    <div className="w-full h-48 border-2 border-dashed border-white/40 rounded-2xl relative">
-                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white rounded-tl-lg" />
-                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white rounded-tr-lg" />
-                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white rounded-bl-lg" />
-                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white rounded-br-lg" />
+                    <div className="w-full h-48 border-2 border-white/20 rounded-2xl relative bg-white/5 backdrop-blur-[1px] animate-in fade-in zoom-in duration-500">
+                        {/* Detection Corners */}
+                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
+                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
+                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
+                        
+                        {/* Centered Detection Indicator */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-60">
+                             <div className="h-1 w-1 bg-white rounded-full animate-ping" />
+                             <span className="text-[8px] font-black text-white uppercase tracking-[0.2em]">Align Barcode</span>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Corner Markers */}
+            {/* General Corner Markers */}
             <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
             <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
             <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
@@ -129,7 +136,6 @@ export default function FoodScannerPage() {
   const [mainGoal, setMainGoal] = useState('Maintain Health');
   const [workout, setWorkout] = useState('Sedentary');
   const [protocol, setProtocol] = useState('Clean Eating');
-  const [showSettings, setShowSettings] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -138,10 +144,10 @@ export default function FoodScannerPage() {
   useEffect(() => {
     if (state?.result && !state?.error && state?.timestamp > 0) {
       setCurrentResult(state.result);
-      toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
+      toast({ title: lang === 'en' ? "Product Identified" : "प्रोडक्ट की पहचान हो गई" });
     }
     if (state?.error) {
-      toast({ variant: 'destructive', title: lang === 'en' ? "Scan Failed" : "स्कैन विफल", description: state.error });
+      toast({ variant: 'destructive', title: lang === 'en' ? "Identification Failed" : "पहचान विफल", description: state.error });
     }
   }, [state, lang, toast]);
 
@@ -149,7 +155,6 @@ export default function FoodScannerPage() {
     setPreview(null);
     setTextLabel('');
     setCurrentResult(null);
-    setShowSettings(false);
   };
 
   const handleModeSwitch = (newView: ViewMode) => {
@@ -161,7 +166,10 @@ export default function FoodScannerPage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result as string);
+      reader.onload = () => {
+          setPreview(reader.result as string);
+          // If in barcode or OCR mode, we want a direct feel, so maybe scroll to button
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -181,7 +189,7 @@ export default function FoodScannerPage() {
 
     const formData = new FormData();
     if (preview) formData.set('imageDataUri', preview);
-    formData.set('textQuery', textLabel || `Nutri ${view} scan`);
+    formData.set('textQuery', textLabel || `Product identification via ${view} scan`);
     formData.set('language', lang);
     formData.set('scanType', view === 'meal' ? 'standard' : view);
     formData.set('healthMirrorProfile', healthMirror);
@@ -203,9 +211,9 @@ export default function FoodScannerPage() {
         barcodeTitle: "Barcode Vision",
         ocrTitle: "Label Specialist",
         mealSlogan: "Identify & Quantify",
-        barcodeSlogan: "Packet Scanning",
-        ocrSlogan: "Ingredient OCR",
-        startBtn: "Analyze Now",
+        barcodeSlogan: "Packaging & Barcode",
+        ocrSlogan: "Ingredient Specialist",
+        startBtn: "Identify Product",
         noScans: "Ready for scan"
     },
     hi: {
@@ -218,9 +226,9 @@ export default function FoodScannerPage() {
         barcodeTitle: "बारकोड विजन",
         ocrTitle: "लेबल विशेषज्ञ",
         mealSlogan: "पहचान और मात्रा",
-        barcodeSlogan: "पैकेट स्कैनिंग",
-        ocrSlogan: "सामग्री OCR",
-        startBtn: "अभी विश्लेषण करें",
+        barcodeSlogan: "पैकेट और बारकोड",
+        ocrSlogan: "सामग्री विशेषज्ञ",
+        startBtn: "प्रोडक्ट पहचानें",
         noScans: "स्कैन के लिए तैयार"
     }
   }[lang];
@@ -239,7 +247,7 @@ export default function FoodScannerPage() {
                         <div className="space-y-0.5 min-w-0">
                             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-pink-50/80 dark:bg-pink-900/20 rounded-full border border-pink-100/50 mb-0.5">
                                 <Utensils className="w-2.5 h-2.5 text-pink-500" />
-                                <span className="text-[8px] font-black text-pink-600 uppercase tracking-[0.2em]">Nutri-Scan Pro</span>
+                                <span className="text-[8px] font-black text-pink-600 uppercase tracking-[0.2em]">Nutri-Lens AI</span>
                             </div>
                             <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight truncate">{t.greeting} 👋</h1>
                         </div>
@@ -265,7 +273,7 @@ export default function FoodScannerPage() {
                         <div className="space-y-1">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.status}</p>
                             <div className="flex justify-center">
-                                <Badge className="bg-emerald-50 text-emerald-600 text-[9px] font-black border-none px-2.5 py-0.5 rounded-full">ACTIVE</Badge>
+                                <Badge className="bg-emerald-50 text-emerald-600 text-[9px] font-black border-none px-2.5 py-0.5 rounded-full uppercase">Optimal</Badge>
                             </div>
                         </div>
                     </div>
@@ -308,24 +316,28 @@ export default function FoodScannerPage() {
                                 className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
                                 onClick={() => cameraInputRef.current?.click()}
                             >
-                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                    <Camera className="w-8 h-8" />
+                                <div className="h-20 w-20 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <Camera className="w-10 h-10" />
                                 </div>
-                                <span className="text-[10px] font-black uppercase text-slate-500">Camera</span>
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Camera</span>
                             </button>
                             <button 
                                 type="button"
                                 className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
-                                    <ImageIcon className="w-8 h-8" />
+                                <div className="h-20 w-20 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
+                                    <ImageIcon className="w-10 h-10" />
                                 </div>
-                                <span className="text-[10px] font-black uppercase text-slate-500">Gallery</span>
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Gallery</span>
                             </button>
                         </div>
                         <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
                         <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                        
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center max-w-[200px]">
+                            {view === 'barcode' ? "Point at barcode or product front" : "Capture a clear photo of the item"}
+                        </p>
                     </div>
                 ) : (
                     <div className={cn(
@@ -337,7 +349,7 @@ export default function FoodScannerPage() {
                         {isAnalyzing && (
                             <ScanAnimationOverlay 
                                 color={view === 'meal' ? "text-blue-500" : view === 'barcode' ? "text-pink-500" : "text-emerald-500"} 
-                                isBarcode={view !== 'meal'}
+                                isBarcode={view === 'barcode'}
                             />
                         )}
 
@@ -367,9 +379,9 @@ export default function FoodScannerPage() {
                         {isAnalyzing ? (
                             <div className="flex items-center gap-3">
                                 <Loader2 className="h-5 w-5 animate-spin" />
-                                <span className="animate-pulse">Analyzing Visuals...</span>
+                                <span className="animate-pulse">Identifying Product...</span>
                             </div>
-                        ) : "Start Clinical Scan"}
+                        ) : t.startBtn}
                     </Button>
                 </form>
             </div>

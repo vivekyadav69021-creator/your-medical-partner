@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -24,8 +23,8 @@ const FoodAnalysisInputSchema = z.object({
 export type FoodAnalysisInput = z.infer<typeof FoodAnalysisInputSchema>;
 
 const FoodAnalysisOutputSchema = z.object({
-  name: z.string().describe('Precise name of the food item confirmed.'),
-  portion: z.string().describe('Estimated portion size (e.g., "1 bowl", "100g").'),
+  name: z.string().describe('Precise name of the food item or product confirmed.'),
+  portion: z.string().describe('Estimated portion size (e.g., "1 packet", "100g").'),
   calories: z.string().describe('Estimated calorie range (e.g., "250 - 300 kcal").'),
   carbs: z.string().describe('Estimated carbohydrates range in grams.'),
   protein: z.string().describe('Estimated protein range in grams.'),
@@ -58,39 +57,39 @@ const prompt = ai.definePrompt({
   name: 'foodAnalyzerPrompt',
   input: { schema: FoodAnalysisInputSchema },
   output: { schema: FoodAnalysisOutputSchema },
-  prompt: `You are the Elite Clinical Dietitian & Precise Food Analytics Engine for "Your Medical Partner".
+  prompt: `You are the "Google Lens" of Nutrition for "Your Medical Partner".
+
+**PRODUCT IDENTIFICATION PROTOCOL (CRITICAL):**
+- Current Mode: {{{scanType}}}
+- If scanType is 'barcode' or 'ocr':
+  1. Carefully examine the visual data for a Barcode, Brand Logo, or Product Title.
+  2. Use your internal global database to identify the EXACT product (e.g., "Maggi 2-Minute Noodles", "Amul Butter", "Coca-Cola Classic").
+  3. DO NOT say "I cannot scan food". You are trained to identify products from packaging visuals.
+  4. If the exact product is found, use its REAL nutritional values.
 
 **GROUND TRUTH PROTOCOL:**
-- The user provided label: "{{{textQuery}}}". 
-- Treat this label as a major source of truth.
-- If an image is provided, examine it visually. Identify objects like extra oil, butter, garnishing, or side items (like chutney or salad) that the user might have missed in the text.
-- If ONLY a label is provided, provide analysis based on typical preparation styles for that dish.
+- If an image is provided, identify hidden extras like oil, butter, or toppings.
+- If ONLY a label/text is provided, use typical restaurant preparation values.
 
-**NO MEDICAL JARGON POLICY (STRICT):**
-- You MUST NOT use words like "hyperglycemia", "glucogenic", "cardiovascular", "electrolytes", "metabolism", etc.
-- Instead, use words like "Blood sugar", "Heart health", "Body's battery", "Repair blocks".
-- Use analogies like: "This is premium fuel for your body's engine" or "This acts like a sponge for fats".
-
-**SCAN MODE:** {{{scanType}}}
+**NO MEDICAL JARGON POLICY:**
+- Avoid words like "metabolism", "glucogenic", etc.
+- Use analogies like: "Body's battery", "Muscle repair blocks", "Pure fuel".
 
 **3-PILLAR DATA CONTEXT:**
-1. **Medical Mirroring:** User conditions: "{{{healthMirrorProfile}}}". Cross-reference sodium, potassium, and fats against these conditions.
-2. **Fitness Fulfillment:** Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}", Protocol: "{{dietaryProtocol}}".
+1. **Medical Mirroring:** Cross-reference sodium, potassium, and fats against these conditions: "{{{healthMirrorProfile}}}".
+2. **Fitness Fulfillment:** Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
 
-**STRICT NUTRITIONAL MATHEMATICS:**
-- You MUST return a RANGE for all values (e.g., "12g - 15g").
+**STRICT OUTPUT RULES:**
+- All numeric values MUST be a RANGE (e.g., "10g - 12g").
+- Render all Hindi fields in "Home-style" clear Hindi.
 
-**LANGUAGE & CLARITY:**
-- Render all Hindi fields in warm, clear, and very simple "Home-style" Hindi.
-- If a user has a medical condition, explain the conflict like a family friend, not a textbook.
-
-Current Input:
+Current Visual/Text Input:
 {{#if imageDataUri}} 
-Image provided: {{media url=imageDataUri}} 
+Image: {{media url=imageDataUri}} 
 {{/if}}
-Food Label/Search Query provided by user: "{{{textQuery}}}"
+User Query: "{{{textQuery}}}"
 
-Respond ONLY in the specified JSON format.`,
+Identify this item and respond ONLY in the specified JSON format.`,
 });
 
 const foodAnalyzerFlow = ai.defineFlow(
@@ -101,7 +100,7 @@ const foodAnalyzerFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    if (!output) throw new Error("Could not compute nutritional data.");
+    if (!output) throw new Error("Could not identify the food item. Please ensure the brand or barcode is visible.");
     return output;
   }
 );
