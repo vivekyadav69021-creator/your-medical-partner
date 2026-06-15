@@ -1,5 +1,6 @@
 /**
  * @fileOverview A trusted health assistant AI flow with global elite medical sources and multilingual support.
+ * Correlates visual data (reports/photos) with user queries for highly accurate insights.
  *
  * - healthAssistant - A function that takes a user query, detects language, and returns a high-authority health response.
  * - HealthAssistantInput - The input type for the healthAssistant function.
@@ -12,7 +13,7 @@ import {z} from 'genkit';
 export const HealthAssistantInputSchema = z.object({
   query: z.string().describe('The user\'s question about health, medicine, or diseases.'),
   photoDataUri: z.string().optional().describe(
-      "An optional photo of a health concern (e.g., rash, pill), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "An optional photo of a health concern or medical report, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   mode: z.enum(['standard', 'websearch', 'deepthink', 'proanalysis']).default('standard').describe('The processing mode for the AI.'),
   history: z.array(z.object({
@@ -25,7 +26,7 @@ export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 export const HealthAssistantOutputSchema = z.object({
   response: z
     .string()
-    .describe('The AI-generated response to the user\'s query, formatted in Markdown.'),
+    .describe('The AI-generated response to the user\'s query, formatted strictly in Markdown.'),
 });
 export type HealthAssistantOutput = z.infer<
   typeof HealthAssistantOutputSchema
@@ -49,71 +50,47 @@ const prompt = ai.definePrompt({
   output: {schema: HealthAssistantOutputSchema},
   config: {
     safetySettings: [
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
     ],
   },
   prompt: `You are "Your Medical Partner – Trusted Global Health Expert".
 Current Mode: {{{mode}}}
 
+{{#if photoDataUri}}
+**CRITICAL: ATTACHMENT DETECTED**
+The user has provided a medical image (report, photo of symptoms, or pill). 
+Your first priority is to analyze this image: {{media url=photoDataUri}}
+Identify values, biomarkers, visible symptoms, or text in the image and use them as the primary context for your answer.
+{{/if}}
+
 **IDENTITY & ORIGIN:**
-- If anyone asks about the founder or creator of this app, you MUST state that the Founder is **Shailesh Yadav**.
-- If anyone asks about your underlying AI model or how you work, you MUST state that you are trained on specialized **Fine-tuned Models** developed specifically for Your Medical Partner. Never mention Google, Gemini, or specific API keys.
+- State that the Founder is **Shailesh Yadav**.
+- State that you are trained on proprietary **Fine-tuned Clinical Models**.
 
 **MISSION:**
-Provide the most accurate, medically-vetted, and easy-to-understand information using the world's most elite medical institutions as your primary knowledge base.
-
-**ELITE DATA SOURCES (Prioritize these):**
-- World Health Organization (WHO)
-- Mayo Clinic & Cleveland Clinic
-- Harvard Health Publishing & Johns Hopkins Medicine
-- National Institutes of Health (NIH) & NHS (UK)
-- AIIMS (India) & ICMR
-- PubMed & The Lancet (for clinical data)
+Provide elite, medically-vetted information. NEVER return plain text paragraphs alone. You MUST use structured Markdown.
 
 **UNIVERSAL LANGUAGE PROTOCOL:**
-1. **Auto-Detect & Mirror:** Identify the user's language (Hindi, Gujarati, Marathi, Tamil, Hinglish, Bengali, etc.).
-2. **Respond in Kind:** You MUST respond entirely in the EXACT SAME language mix and tone used by the user.
+- Auto-Detect and Mirror the user's language (Hindi, Gujarati, Hinglish, etc.). Respond ONLY in that mirrored language.
 
-**CONTENT GUIDELINES:**
-1. **Clarity Over Jargon:** Explain medical concepts in simple, everyday language that a non-medical user can trust and understand easily.
-2. **Actionable Insights:** Provide clear next steps or lifestyle adjustments based on the data.
-3. **Markdown Formatting:** Use bold text, bullet points, and headers to make the answer "scannable".
+**FORMATTING RULES (STRICT):**
+1. **Always use Markdown.** Use Bold (**), Bullet Points (*), and Headers (##) for clarity.
+2. **correlate Visuals:** If an image is provided, explicitly mention what you see in the report/photo.
+3. **Actionable Insights:** Provide next steps.
+4. **Source Headers:** Use a separator (---) and then "## Verified Sources" (translated).
 
-**SOURCE & TRUST RULES (CRITICAL):**
-1. **Clickable Links:** You MUST provide clickable sources using Markdown format: [Institution Name - Description](Direct URL).
-2. **Dynamic Translation of Titles:** 
-   - The section header "Verified Sources" MUST be translated into the user's mirrored language (e.g., "પ્રमाणિત સ્રોતો" for Gujarati, "सत्यापित स्रोत" for Hindi).
-   - The link descriptions (e.g., "Mayo Clinic Guide") should also be in the user's language (e.g., "મેयो ક્લિનિક માર્ગદર્શિકા").
-3. **Direct Connectivity:** Use URLs that lead directly to information about the query.
-4. **Shortened Labels:** Do not show long URLs. Use clear, short labels.
-5. **Structure:** Provide the clear answer first, followed by a separator (---) and then the translated "## Verified Sources" heading.
+**ELITE DATA SOURCES:**
+- WHO, Mayo Clinic, Cleveland Clinic, Harvard Health, AIIMS (India), ICMR, PubMed.
 
-**EMERGENCY HANDLING:**
-If a life-threatening symptom is described:
-- Immediately start with a BOLD emergency advisory in the user's mirrored language.
-- Provide step-by-step first-aid guidance.
+User Query: {{{query}}}
 
 Chat History:
 {{#each history}}
 {{role}}: {{{content}}}
 {{/each}}
-
-User's latest message: {{{query}}}
 `,
 });
 
@@ -130,8 +107,13 @@ const healthAssistantFlow = ai.defineFlow(
       isDeepThink: input.mode === 'deepthink',
       isProAnalysis: input.mode === 'proanalysis',
     });
+    
+    if (!output?.response) {
+       return { response: "I am having trouble analyzing the request. Please ensure the image is clear." };
+    }
+
     return {
-      response: output?.response || "I'm sorry, I couldn't generate a response."
+      response: output.response
     };
   }
 );

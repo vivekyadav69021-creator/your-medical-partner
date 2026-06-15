@@ -33,7 +33,9 @@ import {
     Stethoscope,
     FileSearch,
     ChevronRight,
-    Trophy
+    Trophy,
+    MessageSquare,
+    HeartPulse
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -96,14 +98,7 @@ const suggestionPool = [
 ];
 
 const medicalSources = [
-  "WHO",
-  "Mayo Clinic",
-  "Harvard Health",
-  "Johns Hopkins",
-  "AIIMS India",
-  "NHS UK",
-  "The Lancet",
-  "Cleveland Clinic"
+  "WHO", "Mayo Clinic", "Harvard Health", "Johns Hopkins", "AIIMS India", "NHS UK", "The Lancet", "Cleveland Clinic"
 ];
 
 const initialState = { response: null, error: null, timestamp: 0 };
@@ -118,20 +113,13 @@ export default function HealthAssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
-  // Logic for search vs simple thinking
   const [isQuestionType, setIsQuestionType] = useState(false);
   const [detectedLang, setDetectedLang] = useState<'en' | 'hi'>('en');
 
   const searchParams = useSearchParams();
-
-  // TTS State
   const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
-
-  // Immersive Reading Mode State
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
-
-  // Loading UI Enhancement States
   const [loadingTimer, setLoadingTimer] = useState(0);
   const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
 
@@ -148,7 +136,6 @@ export default function HealthAssistantPage() {
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  // Track processed timestamps to avoid loops
   const lastProcessedGeneralTime = useRef<number>(0);
   const lastProcessedDoctorTime = useRef<number>(0);
 
@@ -177,15 +164,10 @@ ${parsedContext.careRecommendations.map((c: any) => `- ${c.title}: ${c.descripti
 I'd like to understand more about the long-term management and if there's anything else I should know.`;
 
             sessionStorage.removeItem('last_skin_scan_result');
-
             const fd = new FormData();
             fd.set('query', prompt);
             onFormAction(fd);
-            
-            toast({
-                title: "Scan Context Imported",
-                description: "The Assistant is now analyzing your skin scan result."
-            });
+            toast({ title: "Scan Context Imported", description: "The Assistant is now analyzing your skin scan result." });
         }
     }
   }, [searchParams]);
@@ -215,24 +197,6 @@ I'd like to understand more about the long-term management and if there's anythi
     }
   }, [doctorState, isDoctorPending, activeDoctorId]);
 
-  // Loading UI Logic
-  useEffect(() => {
-    let timerInterval: NodeJS.Timeout;
-    let sourceInterval: NodeJS.Timeout;
-
-    if (isPending) {
-      setLoadingTimer(0);
-      setCurrentSourceIndex(0);
-      timerInterval = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
-      sourceInterval = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length), 2500);
-    }
-
-    return () => {
-      clearInterval(timerInterval);
-      clearInterval(sourceInterval);
-    };
-  }, [isPending]);
-
   // Initial Data Load
   useEffect(() => {
     const savedGen = localStorage.getItem('healthAssistantSessions_general');
@@ -249,13 +213,25 @@ I'd like to understand more about the long-term management and if there's anythi
     if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
+  // Loading UI Logic
+  useEffect(() => {
+    let timerInterval: NodeJS.Timeout;
+    let sourceInterval: NodeJS.Timeout;
+    if (isPending) {
+      setLoadingTimer(0);
+      setCurrentSourceIndex(0);
+      timerInterval = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
+      sourceInterval = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length), 2500);
+    }
+    return () => { clearInterval(timerInterval); clearInterval(sourceInterval); };
+  }, [isPending]);
+
   // Immersive Reading Mode: Detect Scroll
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
     const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
-
     const handleScroll = () => {
         const currentTop = viewport.scrollTop;
         const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 20;
@@ -263,7 +239,6 @@ I'd like to understand more about the long-term management and if there's anythi
         else setIsInputVisible(true);
         lastScrollTop.current = currentTop;
     };
-
     viewport.addEventListener('scroll', handleScroll);
     return () => viewport.removeEventListener('scroll', handleScroll);
   }, [hasMessages]);
@@ -295,24 +270,20 @@ I'd like to understand more about the long-term management and if there's anythi
     const query = (formData.get('query') as string) || '';
     if (!query && !attachedImage) return;
 
-    // Language Detection: Check for Hindi characters
     const isHindi = /[\u0900-\u097F]/.test(query);
     setDetectedLang(isHindi ? 'hi' : 'en');
-
-    // Detect if the message is a question or informational inquiry
     const isQuestion = query.length > 15 || /\?|what|how|why|explain|tell|detail|medicine|disease|treatment|symptom|किस|क्या|कैसे|क्यों|इलाज|बीमारी|दवाई/i.test(query);
     setIsQuestionType(isQuestion);
 
     const userMsg: Message = {
         role: 'user',
-        content: query || 'Analyze attached image',
+        content: query || (attachedImage ? 'Analyze attached image' : ''),
         image: attachedImage || undefined,
         mode: activeMode === 'general' ? pulseMode : undefined,
         timestamp: Date.now()
     };
 
     let sid = currentSessionId;
-
     if (!sid || (activeMode === 'doctor' && activeSession?.specialty !== specialty)) {
         sid = `session-${Date.now()}`;
         const newSession: Session = {
@@ -322,7 +293,6 @@ I'd like to understand more about the long-term management and if there's anythi
             createdAt: Date.now(),
             ...(activeMode === 'doctor' && { specialty }),
         };
-
         if (activeMode === 'general') {
             setGeneralSessions(prev => [newSession, ...prev]);
             setActiveGeneralId(sid);
@@ -333,8 +303,7 @@ I'd like to understand more about the long-term management and if there's anythi
     } else {
         const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
         setter(prev => prev.map(s => s.id === sid ? {
-            ...s, 
-            messages: [...s.messages, userMsg],
+            ...s, messages: [...s.messages, userMsg],
             title: s.messages.length === 0 ? (query.length > 30 ? query.substring(0, 30) + '...' : query) : s.title
         } : s));
     }
@@ -353,19 +322,37 @@ I'd like to understand more about the long-term management and if there's anythi
         }
     });
 
-    if (queryInputRef.current) {
-        queryInputRef.current.value = '';
-        queryInputRef.current.style.height = 'auto';
-    }
+    if (queryInputRef.current) { queryInputRef.current.value = ''; queryInputRef.current.style.height = 'auto'; }
     setAttachedImage(null);
     setIsTyping(false);
     setIsInputVisible(true);
     setIsFocused(false);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string;
+          const formData = new FormData();
+          formData.append('audioDataUri', base64Audio);
+          startTransition(() => { speechFormAction(formData); });
+        };
+        reader.readAsDataURL(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (e) { toast({ variant: 'destructive', title: 'Mic Access Denied' }); }
+  };
+
   const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const [speechState, speechFormAction] = useActionState(speechToTextAction, initialSpeechState);
 
   useEffect(() => {
@@ -375,36 +362,6 @@ I'd like to understand more about the long-term management and if there's anythi
         setIsFocused(true);
     }
   }, [speechState]);
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      mediaRecorderRef.current.ondataavailable = (event) => audioChunksRef.current.push(event.data);
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64Audio = reader.result as string;
-          const formData = new FormData();
-          formData.append('audioDataUri', base64Audio);
-          startTransition(() => { speechFormAction(formData); });
-        };
-        stream.getTracks().forEach(track => track.stop());
-      };
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (e) { toast({ variant: 'destructive', title: 'Mic Access Denied' }); }
-  };
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-        if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
-    }
-  }, [activeSession?.messages, isPending]);
 
   const handleToggleSpeech = (text: string, msgId: number) => {
     if (!window.speechSynthesis) return;
@@ -455,21 +412,16 @@ I'd like to understand more about the long-term management and if there's anythi
                          </Tabs>
                     </div>
                     <ScrollArea className="flex-1 p-8 pt-0">
-                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20 hover:bg-primary/5 transition-all" onClick={() => handleNewChat()}>
-                            <Plus className="mr-2 h-4 w-4" /> Start Fresh
+                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20 hover:bg-primary/5 transition-all" 
+                                onClick={() => { handleNewChat(historyTab === 'general' ? 'general' : 'doctor'); }}>
+                            <Plus className="mr-2 h-4 w-4" /> Start New {historyTab === 'general' ? 'Chat' : 'Consult'}
                         </Button>
                         <div className="space-y-3 pb-20">
                             {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
                                 <div key={session.id} 
                                      onClick={() => {
-                                         if (historyTab === 'general') {
-                                             setActiveMode('general');
-                                             setActiveGeneralId(session.id);
-                                         } else { 
-                                             setActiveMode('doctor');
-                                             setActiveDoctorId(session.id); 
-                                             setSpecialty(session.specialty || "General Physician"); 
-                                         }
+                                         if (historyTab === 'general') { setActiveMode('general'); setActiveGeneralId(session.id); } 
+                                         else { setActiveMode('doctor'); setActiveDoctorId(session.id); setSpecialty(session.specialty || "General Physician"); }
                                      }}
                                      className={cn("group p-5 rounded-[2rem] border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c]/40 border-transparent hover:bg-white/60")}>
                                     <div className="pr-8">
@@ -506,10 +458,10 @@ I'd like to understand more about the long-term management and if there's anythi
                             </div>
                             <div className="space-y-2">
                                 <h2 className="text-3xl font-black text-[#1A365D] dark:text-white tracking-tight">
-                                    {activeMode === 'doctor' ? `Chat with ${specialty}` : "How can I help?"}
+                                    {activeMode === 'doctor' ? `Chat with ${specialty}` : "Global Health AI"}
                                 </h2>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
-                                    {activeMode === 'doctor' ? 'Personal Clinical Inquiry' : 'Global Medical Intelligence'}
+                                    {activeMode === 'doctor' ? 'Clinical Inquiry Protocol' : 'Medically Vetted Intelligence'}
                                 </p>
                             </div>
                         </div>
@@ -529,29 +481,30 @@ I'd like to understand more about the long-term management and if there's anythi
                         ) : (
                             <div className="p-8 bg-blue-50/50 dark:bg-blue-900/10 rounded-[3rem] border border-blue-100 dark:border-blue-800 border-dashed text-center">
                                 <p className="text-sm font-bold text-blue-600 dark:text-blue-300 leading-relaxed">
-                                    "I am your AI {specialty}. Tell me your symptoms or health concerns, and I will guide you with a clinical approach."
+                                    "Tell me your symptoms, and I will conduct a thorough clinical inquiry to guide you."
                                 </p>
                             </div>
                         )}
 
                         <div className="space-y-6 w-full pt-4">
-                             <div className="flex items-center justify-center gap-4 px-8">
+                             <div className="flex items-center justify-center gap-4 px-8" onClick={() => setActiveMode(activeMode === 'general' ? 'doctor' : 'general')}>
                                 <div className="h-px bg-slate-200 dark:bg-[#3c4043] flex-1" />
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] whitespace-nowrap">Expert Specialists</p>
+                                <p className="text-[9px] font-black text-primary uppercase tracking-[0.25em] whitespace-nowrap flex items-center gap-2 cursor-pointer hover:underline">
+                                    {activeMode === 'general' ? <><Stethoscope className="w-3 h-3" /> Go to Specialist</> : <><ShieldPlus className="w-3 h-3" /> Go to Assistant</>}
+                                </p>
                                 <div className="h-px bg-slate-200 dark:bg-[#3c4043] flex-1" />
                             </div>
-                            <div className="flex gap-2.5 overflow-x-auto pb-4 px-2 scrollbar-hide">
-                                {doctorSpecialties.map(spec => (
-                                    <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveMode('doctor'); setActiveDoctorId(null); }}
-                                            className={cn("h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm transition-all whitespace-nowrap",
-                                                activeMode === 'doctor' && specialty === spec ? "bg-primary text-white border-primary" : "bg-white/60 dark:bg-[#1e1f20]/60 border-white/50 dark:border-[#3c4043] dark:text-[#e3e3e3] hover:bg-primary/5")}>
-                                        {spec}
-                                    </Button>
-                                ))}
-                                <Button variant="ghost" onClick={() => setActiveMode('general')} className="h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    <ArrowLeft className="w-3 h-3 mr-2" /> Back to Assistant
-                                </Button>
-                            </div>
+                            {activeMode === 'doctor' && (
+                                <div className="flex gap-2.5 overflow-x-auto pb-4 px-2 scrollbar-hide">
+                                    {doctorSpecialties.map(spec => (
+                                        <Button key={spec} variant="outline" onClick={() => { setSpecialty(spec); setActiveDoctorId(null); }}
+                                                className={cn("h-10 px-6 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm transition-all whitespace-nowrap",
+                                                    specialty === spec ? "bg-primary text-white border-primary" : "bg-white/60 dark:bg-[#1e1f20]/60 border-white/50 dark:border-[#3c4043] dark:text-[#e3e3e3] hover:bg-primary/5")}>
+                                            {spec}
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </ScrollArea>
@@ -561,10 +514,10 @@ I'd like to understand more about the long-term management and if there's anythi
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-6 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden">
                                         {m.image && (
                                             <div className="mb-4 rounded-[1.5rem] overflow-hidden border-2 border-white/20 shadow-lg">
-                                                <Image src={m.image} alt="Attached" width={300} height={300} className="w-full h-auto object-cover" />
+                                                <Image src={m.image} alt="Report" width={300} height={300} className="w-full h-auto object-cover" />
                                             </div>
                                         )}
                                         <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{m.content}</p>
@@ -577,34 +530,21 @@ I'd like to understand more about the long-term management and if there's anythi
                                             </div>
                                             <div className="flex flex-col -space-y-1">
                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                                    {activeMode === 'doctor' ? specialty : 'Medical Assistant'}
+                                                    {activeMode === 'doctor' ? specialty : 'Expert Insight'}
                                                 </span>
-                                                <div className="flex items-center gap-1.5 mt-0.5">
-                                                    {activeMode === 'doctor' && <span className="text-[8px] font-bold text-primary uppercase">Clinic Mode</span>}
-                                                    {m.mode && (
-                                                        <Badge variant="outline" className="text-[7px] px-1.5 py-0 h-3.5 border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-tighter">
-                                                            {modeConfig[m.mode].label}
-                                                        </Badge>
-                                                    )}
-                                                </div>
+                                                {m.mode && <Badge variant="outline" className="mt-1 text-[7px] px-1.5 h-3.5 border-primary/20 bg-primary/5 text-primary font-black uppercase">{modeConfig[m.mode].label}</Badge>}
                                             </div>
                                         </div>
-                                        
                                         <div className="flex-1 w-full min-w-0">
-                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
-                                            
                                             <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full transition-all border border-slate-100 dark:border-slate-800", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 dark:bg-slate-800/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
                                                     {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}>
-                                                    <Copy className="w-4 h-4 text-slate-400" />
-                                                </Button>
-                                                <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 dark:bg-slate-800/40 shadow-sm border border-slate-100 dark:border-slate-800"><ThumbsDown className="w-4 h-4 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}><Copy className="w-4 h-4 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 shadow-sm"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
                                             </div>
                                         </div>
                                     </div>
@@ -618,47 +558,26 @@ I'd like to understand more about the long-term management and if there's anythi
                                         {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center">
-                                            {isQuestionType 
-                                              ? (activeMode === 'doctor' 
-                                                  ? (detectedLang === 'hi' ? `डॉ. ${specialty} से परामर्श किया जा रहा है` : `Consulting Dr. ${specialty}`) 
-                                                  : (detectedLang === 'hi' ? 'चिकित्सा स्रोतों की जांच' : 'Analyzing medical sources'))
-                                              : (detectedLang === 'hi' ? 'सोच रहा हूँ' : 'Thinking')}
-                                            <span className="flex gap-0.5 ml-1.5">
-                                              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
-                                              <span className="animate-bounce" style={{ animationDelay: '200ms' }}>.</span>
-                                              <span className="animate-bounce" style={{ animationDelay: '400ms' }}>.</span>
-                                            </span>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                            {isQuestionType ? (activeMode === 'doctor' ? 'Specialist Review' : 'Tapping World Expert Data') : 'Reasoning'}
+                                            <span className="flex gap-0.5 ml-1 inline-flex"><span className="animate-bounce">.</span><span className="animate-bounce delay-100">.</span><span className="animate-bounce delay-200">.</span></span>
                                         </span>
-                                        <div className="flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800">
-                                            <Clock className="w-2.5 h-2.5 text-primary" />
-                                            <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                        <div className="bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800 text-[10px] font-black tabular-nums text-primary">
+                                            {loadingTimer}s
                                         </div>
                                     </div>
                                 </div>
-
                                 {isQuestionType && (
-                                    <div className="space-y-4 w-full max-w-lg animate-in fade-in duration-500">
+                                    <div className="space-y-4 w-full max-w-lg">
                                         <div className="flex items-center gap-2 px-1">
                                             <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
-                                                {activeMode === 'doctor' ? (detectedLang === 'hi' ? 'नियमों की जांच' : 'Accessing clinical protocols') : (detectedLang === 'hi' ? 'विशेषज्ञ डेटा तक पहुँच' : 'Tapping World Expert Data')}
-                                            </span>
+                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Accessing Medical Guidelines</span>
                                         </div>
-                                        
-                                        <div className="relative h-14 overflow-hidden bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 dark:border-[#3c4043] flex items-center px-5">
+                                        <div className="h-14 bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 flex items-center px-5">
                                             <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
                                                 <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">
-                                                    {detectedLang === 'hi' ? 'विश्लेषण किया जा रहा है' : 'Analyzing'} <span className="text-primary">{medicalSources[currentSourceIndex]}</span> {detectedLang === 'hi' ? 'दिशानिर्देश' : 'guidelines'}
-                                                </p>
+                                                <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">Analyzing <span className="text-primary">{medicalSources[currentSourceIndex]}</span></p>
                                             </div>
-                                        </div>
-                                        
-                                        <div className="space-y-2 pt-2">
-                                            <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-full animate-pulse" />
-                                            <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-3/4 animate-pulse" />
-                                            <div className="h-3 bg-slate-200/50 dark:bg-slate-800/50 rounded-full w-1/2 animate-pulse" />
                                         </div>
                                     </div>
                                 )}
@@ -678,33 +597,15 @@ I'd like to understand more about the long-term management and if there's anythi
                     <div className="mx-4 mb-1 flex animate-in zoom-in-95">
                         <div className="relative group/thumb">
                             <Image src={attachedImage} alt="Preview" width={100} height={100} className="rounded-[1.5rem] border-4 border-white dark:border-[#3c4043] shadow-2xl object-cover" />
-                            <Button variant="destructive" size="icon" className="absolute -top-3 -right-3 h-7 w-7 rounded-full shadow-lg" onClick={() => setAttachedImage(null)}>
-                                <X className="h-4 w-4" />
-                            </Button>
+                            <Button variant="destructive" size="icon" className="absolute -top-3 -right-3 h-7 w-7 rounded-full shadow-lg" onClick={() => setAttachedImage(null)}><X className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 )}
-                <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] transition-all p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
-                    
-                    {/* Active Mode Indicator Badge Above Input */}
-                    {activeMode === 'general' && (
-                        <div className="flex items-center gap-2 px-5 py-1 animate-in slide-in-from-bottom-1 fade-in duration-500">
-                             <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", pulseMode === 'standard' ? "bg-blue-500" : pulseMode === 'websearch' ? "bg-emerald-500" : pulseMode === 'deepthink' ? "bg-purple-500" : "bg-orange-500")} />
-                             <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                Active Protocol: <span className={cn(modeConfig[pulseMode].color)}>{modeConfig[pulseMode].label}</span>
-                             </span>
-                        </div>
-                    )}
-
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10 transition-all">
                     <div className="flex-1 max-h-48 overflow-y-auto">
-                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Tell ${specialty} about your symptoms...` : "Ask anything about health..."}
-                            className={cn(
-                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300",
-                                (isFocused || isTyping || attachedImage) ? "min-h-[120px]" : "min-h-[46px]"
-                            )}
-                            rows={1}
-                            onFocus={() => setIsFocused(true)}
-                            onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
+                        <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Explain symptoms to Dr. ${specialty.split(' ').pop()}...` : "Analyze report or ask anything..."}
+                            className={cn("w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300", (isFocused || isTyping || attachedImage) ? "min-h-[120px]" : "min-h-[46px]")}
+                            rows={1} onFocus={() => setIsFocused(true)} onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
                             onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>
@@ -717,50 +618,40 @@ I'd like to understand more about the long-term management and if there's anythi
                             {activeMode === 'general' && (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className={cn(
-                                            "h-11 px-5 rounded-full gap-2.5 text-[10px] font-black uppercase tracking-widest transition-all",
-                                            modeConfig[pulseMode].bg,
-                                            modeConfig[pulseMode].color
-                                        )}>
+                                        <Button type="button" variant="ghost" className={cn("h-11 px-5 rounded-full gap-2.5 text-[10px] font-black uppercase tracking-widest transition-all", modeConfig[pulseMode].bg, modeConfig[pulseMode].color)}>
                                             {React.createElement(modeConfig[pulseMode].icon, { className: "h-3.5 w-3.5" })}
                                             <span className="hidden sm:inline">{modeConfig[pulseMode].label}</span>
                                             <ChevronRight className="h-3 w-3 rotate-90 opacity-40" />
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-72 rounded-[2.5rem] p-4 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
-                                        <div className="mb-4 px-2">
-                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Select Intelligence Engine</h4>
-                                        </div>
                                         <RadioGroup value={pulseMode} onValueChange={(v) => { setPulseMode(v as PulseMode); toast({ title: `${modeConfig[v as PulseMode].label} Activated` }); }} className="gap-2">
-                                            <PulseModeItem value="standard" label="Balanced Expert" icon={<ShieldPlus className="w-4 h-4"/>} />
-                                            <PulseModeItem value="websearch" label="Deep Web Search" icon={<Search className="w-4 h-4"/>} />
-                                            <PulseModeItem value="deepthink" label="Logical Reasoning" icon={<BrainCircuit className="w-4 h-4"/>} />
-                                            <PulseModeItem value="proanalysis" label="Pharmacist Analysis" icon={<Pill className="w-4 h-4"/>} />
+                                            {Object.entries(modeConfig).map(([val, cfg]) => (
+                                                <div key={val} className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
+                                                    <RadioGroupItem value={val} id={val} className="sr-only" />
+                                                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900 shadow-sm">
+                                                        {React.createElement(cfg.icon, { className: cn("w-4 h-4", cfg.color) })}
+                                                    </div>
+                                                    <Label htmlFor={val} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">{cfg.label}</Label>
+                                                </div>
+                                            ))}
                                         </RadioGroup>
                                     </PopoverContent>
                                 </Popover>
                             )}
                             {activeMode === 'doctor' && (
-                                <div className="px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
-                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Consulting: {specialty}</span>
-                                </div>
+                                <Badge className="h-9 px-4 rounded-full bg-primary/5 text-primary border-primary/20 uppercase font-black text-[8px] tracking-widest">Clinic: {specialty}</Badge>
                             )}
                         </div>
                         <div className="flex items-center gap-3">
                              {!isTyping && !isRecording && !attachedImage && (
-                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800">
-                                    <Mic className="w-5 h-5 text-primary" />
-                                </Button>
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800"><Mic className="w-5 h-5 text-primary" /></Button>
                             )}
                             {(isTyping || isRecording || attachedImage) && (
                                 <div className="flex items-center gap-3">
-                                    {isRecording && (
-                                        <Button type="button" size="icon" onClick={() => { if(mediaRecorderRef.current) mediaRecorderRef.current.stop(); setIsRecording(false); }} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse border-4 border-red-100">
-                                            <MicOff className="w-5 h-5" />
-                                        </Button>
-                                    )}
+                                    {isRecording && <Button type="button" size="icon" onClick={() => { setIsRecording(false); }} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse"><MicOff className="w-5 h-5" /></Button>}
                                     <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
-                                        {isPending ? <Loader2 className="h-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
+                                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                     </Button>
                                 </div>
                             )}
@@ -771,18 +662,4 @@ I'd like to understand more about the long-term management and if there's anythi
         </div>
     </div>
   );
-}
-
-function PulseModeItem({ value, label, icon }: { value: PulseMode, label: string, icon: React.ReactNode }) {
-    return (
-        <div className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
-            <RadioGroupItem value={value} id={value} className="sr-only" />
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] shadow-sm group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900 transition-colors">
-                {React.cloneElement(icon as React.ReactElement, { className: cn("w-4 h-4", value === 'standard' ? "text-blue-500" : value === 'websearch' ? "text-emerald-500" : value === 'deepthink' ? "text-purple-500" : "text-orange-500") })}
-            </div>
-            <Label htmlFor={value} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">
-                {label}
-            </Label>
-        </div>
-    )
 }

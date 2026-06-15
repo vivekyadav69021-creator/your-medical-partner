@@ -1,4 +1,3 @@
-
 'use server';
 
 import { healthAssistant } from '@/ai/flows/health-assistant-flow';
@@ -6,6 +5,15 @@ import { speechToText } from '@/ai/flows/speech-to-text-flow';
 import { z } from 'zod';
 import { aiDoctorChat } from '@/ai/flows/ai-doctor-chat-flow';
 
+/**
+ * Utility to ensure the return object is fully serializable.
+ * Converts potentially complex AI outputs into clean strings.
+ */
+function sanitizeResponse(response: any): string | null {
+  if (typeof response === 'string') return response;
+  if (response && response.response && typeof response.response === 'string') return response.response;
+  return null;
+}
 
 const healthAssistantSchema = z.object({
   query: z.string().min(1, 'Please ask a detailed question.'),
@@ -34,9 +42,7 @@ export async function healthAssistantAction(
   if (!validatedFields.success) {
     return {
       response: null,
-      error:
-        validatedFields.error.flatten().fieldErrors.query?.[0] ??
-        'Invalid input.',
+      error: validatedFields.error.flatten().fieldErrors.query?.[0] ?? 'Invalid input.',
       timestamp: Date.now(),
     };
   }
@@ -44,7 +50,7 @@ export async function healthAssistantAction(
   try {
     const result = await healthAssistant(validatedFields.data);
     return {
-      response: result.response,
+      response: sanitizeResponse(result),
       error: null,
       timestamp: Date.now(),
     };
@@ -57,7 +63,6 @@ export async function healthAssistantAction(
     };
   }
 }
-
 
 export async function speechToTextAction(prevState: any, formData: FormData) {
   const audioDataUri = formData.get('audioDataUri');
@@ -77,7 +82,6 @@ export async function speechToTextAction(prevState: any, formData: FormData) {
     };
   }
 }
-
 
 const doctorChatSchema = z.object({
   query: z.string().min(1, 'Please ask a question.'),
@@ -104,9 +108,7 @@ export async function aiDoctorChatAction(
   if (!validatedFields.success) {
     return {
       response: null,
-      error:
-        validatedFields.error.flatten().fieldErrors.query?.[0] ??
-        'Invalid input.',
+      error: validatedFields.error.flatten().fieldErrors.query?.[0] ?? 'Invalid input.',
       timestamp: Date.now(),
     };
   }
@@ -114,7 +116,7 @@ export async function aiDoctorChatAction(
   try {
     const result = await aiDoctorChat(validatedFields.data);
     return {
-      response: result.response,
+      response: sanitizeResponse(result),
       error: null,
       timestamp: Date.now(),
     };
