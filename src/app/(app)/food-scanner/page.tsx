@@ -132,6 +132,7 @@ export default function FoodScannerPage() {
   const [showSettings, setShowSettings] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -300,22 +301,31 @@ export default function FoodScannerPage() {
 
             <div className="space-y-6">
                 {!preview ? (
-                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8">
                         <div className="flex gap-8 mb-6">
-                            <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform">
-                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-primary">
+                            <button 
+                                type="button"
+                                className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
+                                onClick={() => cameraInputRef.current?.click()}
+                            >
+                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                     <Camera className="w-8 h-8" />
                                 </div>
                                 <span className="text-[10px] font-black uppercase text-slate-500">Camera</span>
-                            </div>
-                            <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform">
-                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-pink-500">
+                            </button>
+                            <button 
+                                type="button"
+                                className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-xl flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
                                     <ImageIcon className="w-8 h-8" />
                                 </div>
                                 <span className="text-[10px] font-black uppercase text-slate-500">Gallery</span>
-                            </div>
+                            </button>
                         </div>
                         <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                        <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
                     </div>
                 ) : (
                     <div className={cn(
