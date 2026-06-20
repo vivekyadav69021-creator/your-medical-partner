@@ -140,8 +140,6 @@ export default function HealthAssistantPage() {
   const lastProcessedGeneralTime = useRef<number>(0);
   const lastProcessedDoctorTime = useRef<number>(0);
 
-  // Stop mechanism: In a real server action we can't truly abort easily without an AbortController,
-  // but we can force-stop the UI waiting state by refreshing the session or state.
   const [isManuallyStopped, setIsManuallyStopped] = useState(false);
 
   const isPending = (activeMode === 'general' ? isGeneralPending : isDoctorPending) && !isManuallyStopped;
@@ -589,17 +587,18 @@ export default function HealthAssistantPage() {
                     </div>
                 )}
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10 transition-all">
-                    <div className="flex-1 max-h-48 overflow-y-auto">
+                    <div className="flex-1">
                         <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Explain symptoms to Dr. ${specialty.split(' ').pop()}...` : "Analyze report or ask anything..."}
                             className={cn(
-                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300", 
-                                (isFocused || isTyping || attachedImage) ? "min-h-[120px]" : "min-h-[46px]"
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300 overflow-y-auto", 
+                                (isFocused || isTyping || attachedImage) ? "min-h-[60px] max-h-[200px]" : "min-h-[46px] max-h-[46px]"
                             )}
                             rows={1} onFocus={() => setIsFocused(true)} onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
                             onInput={(e) => { 
                                 const target = e.target as HTMLTextAreaElement; 
                                 target.style.height = 'auto'; 
-                                target.style.height = `${target.scrollHeight}px`; 
+                                const newHeight = Math.min(target.scrollHeight, 200);
+                                target.style.height = `${newHeight}px`; 
                                 setIsTyping(target.value.length > 0); 
                             }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />

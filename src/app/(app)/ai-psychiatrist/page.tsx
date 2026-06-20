@@ -477,7 +477,7 @@ export default function AIPsychiatristPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <Button variant="outline" size="sm" onClick={handleStopAnalysis} className="rounded-full h-8 px-3 gap-2 border-rose-200 text-rose-500 hover:bg-rose-50 font-black text-[9px] uppercase tracking-widest">
+                                    <Button variant="outline" size="sm" onClick={handleStopAnalysis} className="rounded-full h-8 px-3 gap-2 border-red-200 text-red-500 hover:bg-red-50 font-black text-[9px] uppercase tracking-widest">
                                         <StopCircle className="w-3 h-3" /> Stop
                                     </Button>
                                 </div>
@@ -531,14 +531,14 @@ export default function AIPsychiatristPage() {
                         )}
                     </div>
 
-                    <div className="flex-1 max-h-48 overflow-y-auto">
+                    <div className="flex-1">
                         <Textarea
                             ref={queryInputRef}
                             name="query"
                             placeholder="Tell me whatever's on your heart..."
                             className={cn(
-                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300",
-                                (isFocused || isTyping) ? "min-h-[120px]" : "min-h-[46px]"
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300 overflow-y-auto",
+                                (isFocused || isTyping) ? "min-h-[60px] max-h-[200px]" : "min-h-[46px] max-h-[46px]"
                             )}
                             rows={1}
                             onFocus={() => setIsFocused(true)}
@@ -546,7 +546,8 @@ export default function AIPsychiatristPage() {
                             onInput={(e) => {
                                 const target = e.target as HTMLTextAreaElement;
                                 target.style.height = 'auto';
-                                target.style.height = `${target.scrollHeight}px`;
+                                const newHeight = Math.min(target.scrollHeight, 200);
+                                target.style.height = `${newHeight}px`;
                                 setIsTyping(target.value.length > 0);
                             }}
                             onKeyDown={(e) => { 
