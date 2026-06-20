@@ -22,9 +22,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isPsychiatrist = pathname === '/ai-psychiatrist';
   const isDiseaseScanner = pathname === '/disease-scanner';
   const isFoodScanner = pathname === '/food-scanner';
+  const isVideoLibrary = pathname === '/video-tutorials';
   
-  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner;
-  const hideSidebar = isDiseaseScanner || isFoodScanner; // Hide sidebar completely for scanner as per request
+  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary;
+  const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary; // Hide sidebar completely for highly immersive pages
 
   return (
     <SidebarProvider defaultOpen={!hideSidebar}>
@@ -52,7 +53,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </Sidebar>
       )}
       
-      <SidebarInset className={cn("flex flex-col relative h-[100dvh] overflow-hidden w-full", hideSidebar && "ml-0")} style={{ background: 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
+      <SidebarInset className={cn("flex flex-col relative h-[100dvh] overflow-hidden w-full", hideSidebar && "ml-0")} style={{ background: hideGlobalHeader ? 'none' : 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
         {/* Only show global header if not on specialized immersive AI pages */}
         {!hideGlobalHeader && (
           <header className="flex h-16 items-center justify-between px-4 sticky top-0 z-40 bg-white/10 backdrop-blur-lg border-b border-white/20 shrink-0 safe-top">
