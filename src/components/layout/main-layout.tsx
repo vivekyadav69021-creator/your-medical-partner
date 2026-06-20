@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sidebar,
@@ -53,7 +54,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </Sidebar>
       )}
       
-      <SidebarInset className={cn("flex flex-col relative h-[100dvh] overflow-hidden w-full", hideSidebar && "ml-0")} style={{ background: hideGlobalHeader ? 'none' : 'var(--dashboard-bg)', backgroundAttachment: 'fixed' }}>
+      <SidebarInset 
+        className={cn("flex flex-col relative h-[100dvh] overflow-hidden w-full", hideSidebar && "ml-0")} 
+        style={{ 
+          backgroundImage: hideGlobalHeader ? 'none' : 'var(--dashboard-bg)', 
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover'
+        }}
+      >
         {/* Only show global header if not on specialized immersive AI pages */}
         {!hideGlobalHeader && (
           <header className="flex h-16 items-center justify-between px-4 sticky top-0 z-40 bg-white/10 backdrop-blur-lg border-b border-white/20 shrink-0 safe-top">

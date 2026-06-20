@@ -253,6 +253,9 @@ export default function VideoTutorialsPage() {
 
       <Dialog open={!!selectedVideo} onOpenChange={(open) => !open && setSelectedVideo(null)}>
         <DialogContent className="max-w-screen-2xl w-full h-full p-0 border-none rounded-none bg-white dark:bg-[#020617] overflow-hidden flex flex-col shadow-2xl z-[100]">
+            <DialogHeader className="sr-only">
+                <DialogTitle>{selectedVideo?.title.en || 'Video Player'}</DialogTitle>
+            </DialogHeader>
             {selectedVideo && (
                 <div className="flex flex-col h-full">
                     <div className="w-full aspect-video bg-black relative group/player shrink-0">
