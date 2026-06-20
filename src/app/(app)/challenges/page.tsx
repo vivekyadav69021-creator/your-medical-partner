@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useActionState, useRef, useEffect, useState, useMemo } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useEffect, useMemo, startTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -13,588 +12,571 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Check, Trophy, Star, Bot, Zap, Activity, Smile, Terminal, Save, Download, CheckCircle, Flame, Loader2 } from 'lucide-react';
+import { 
+    Trophy, 
+    Star, 
+    Bot, 
+    Activity, 
+    Smile, 
+    Save, 
+    Download, 
+    CheckCircle, 
+    Flame, 
+    ChevronLeft,
+    Plus,
+    Utensils,
+    Dumbbell,
+    Brain,
+    HeartPulse,
+    ClipboardCheck,
+    Languages,
+    ArrowRight,
+    MapPin,
+    AlertCircle,
+    Check
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ChartContainer } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
+// --- CONSTANTS & LABELS ---
 
-const initialChallenges = [
-  {
-    id: 'challenge-1',
-    title: '7-Day Walking Challenge',
-    description: 'Walk at least 8,000 steps every day for a week.',
-    reward: '250 Points & a Virtual Badge',
-    progress: 4,
-    total: 7,
-    status: 'active' as 'new' | 'active' | 'completed',
-    daily: Array(7).fill(false).map((_, i) => i < 4)
-  },
-  {
-    id: 'challenge-2',
-    title: 'Mindful Month',
-    description: 'Meditate for 10 minutes daily for 30 days.',
-    reward: '500 Points & Mindfulness Master Badge',
-    progress: 0,
-    total: 30,
-    status: 'new' as 'new' | 'active' | 'completed',
-    daily: Array(30).fill(false)
-  },
-    {
-    id: 'challenge-3',
-    title: 'Hydration Hero',
-    description: 'Drink 8 glasses of water daily for 2 weeks.',
-    reward: '200 Points',
-    progress: 14,
-    total: 14,
-    status: 'completed' as 'new' | 'active' | 'completed',
-    daily: Array(14).fill(true)
-  },
-];
-
-const activityData = [
-  { day: 'Mon', minutes: 30 },
-  { day: 'Tue', minutes: 45 },
-  { day: 'Wed', minutes: 60 },
-  { day: 'Thu', minutes: 20 },
-  { day: 'Fri', minutes: 50 },
-  { day: 'Sat', minutes: 90 },
-  { day: 'Sun', minutes: 75 },
-];
-
-const moodData = [
-  { day: 'Mon', mood: 4 },
-  { day: 'Tue', mood: 3 },
-  { day: 'Wed', mood: 5 },
-  { day: 'Thu', mood: 4 },
-  { day: 'Fri', mood: 5 },
-  { day: 'Sat', mood: 4 },
-  { day: 'Sun', mood: 3 },
-];
-
-const labels = {
+const LABELS = {
     en: {
-      name: 'Name', age:'Age', gender:'Gender', weight:'Weight (kg)', height:'Height',
-      activity:'Activity level', goal:'Primary goal', medical:'Medical conditions / allergies',
-      time:'Daily exercise time (minutes)', notes:'Extra notes', generate:'Generate Planner',
-      save:'Save to Profile', download:'Download PDF', plannerTitle:'Your 7-day Health Plan',
-      statusSaving:'Saving...', statusSaved:'Saved ✓', statusNoAuth:'Please sign in to save.'
+      name: 'Full Name', age:'Age', gender:'Gender', weight:'Weight (kg)', height:'Height',
+      activity:'Activity Level', goal:'Main Goal', medical:'Medical Conditions / Allergies',
+      time:'Daily Exercise Time (min)', notes:'Dietary Preference', generate:'Generate My Plan',
+      save:'Save to Profile', download:'Export PDF Report', plannerTitle:'Your 7-Day Precision Health Plan',
+      statusSaving:'Syncing...', statusSaved:'Synced to Cloud ✓', statusNoAuth:'Sign in to enable cloud sync.'
     },
     hi: {
-      name:'नाम', age:'आयु', gender:'लिंग', weight:'वजन (kg)', height:'ऊँचाई',
-      activity:'गतिविधि स्तर', goal:'प्राथमिक लक्ष्य', medical:'चिकित्सीय स्थिति / एलर्जी',
-      time:'दैनिक व्यायाम समय (मिनट)', notes:'अतिरिक्त नोट्स', generate:'प्लान बनाएँ',
-      save:'प्रोफ़ाइल में सेव करें', download:'PDF डाउनलोड', plannerTitle:'आपकी 7-दिवसीय हेल्थ योजना',
-      statusSaving:'सहेजा जा रहा है...', statusSaved:'सहेजा गया ✓', statusNoAuth:'सहेम के लिए साइन-इन करें।'
+      name:'पूरा नाम', age:'आयु', gender:'लिंग', weight:'वजन (kg)', height:'ऊँचाई',
+      activity:'गतिविधि स्तर', goal:'मुख्य लक्ष्य', medical:'चिकित्सीय स्थिति / एलर्जी',
+      time:'दैनिक व्यायाम समय (मिनट)', notes:'आहार प्राथमिकता', generate:'मेरा प्लान बनाएँ',
+      save:'प्रोफ़ाइल में सेव करें', download:'PDF रिपोर्ट डाउनलोड', plannerTitle:'आपकी 7-दिवसीय सटीक स्वास्थ्य योजना',
+      statusSaving:'सिंक हो रहा है...', statusSaved:'क्लाउड में सेव हुआ ✓', statusNoAuth:'क्लाउड सिंक के लिए साइन-इन करें।'
     }
-  };
+};
 
+const INITIAL_CHALLENGES = [
+  {
+    id: 'ch-1',
+    title: 'Fat Loss Sprint',
+    description: 'Lose 2kg in 10 days with clean eating and daily brisk walking.',
+    reward: '500 Points & Metabolism Badge',
+    progress: 4,
+    total: 10,
+    status: 'active',
+    daily: Array(10).fill(false).map((_, i) => i < 4),
+    category: 'Fitness'
+  },
+  {
+    id: 'ch-2',
+    title: 'Sugar-Free Week',
+    description: 'Avoid all added sugars for 7 days straight to reset your insulin.',
+    reward: '300 Points & Healthy Heart Badge',
+    progress: 0,
+    total: 7,
+    status: 'new',
+    daily: Array(7).fill(false),
+    category: 'Diet'
+  },
+    {
+    id: 'ch-3',
+    title: 'Mindfulness Master',
+    description: 'Complete 15 minutes of guided meditation daily for 14 days.',
+    reward: '400 Points & Zen Master Badge',
+    progress: 14,
+    total: 14,
+    status: 'completed',
+    daily: Array(14).fill(true),
+    category: 'Mental'
+  },
+];
 
-function HealthPlanner() {
-    const { toast } = useToast();
+// --- MAIN COMPONENT ---
+
+export default function ChallengesPage() {
+    const [challenges, setChallenges] = useState(INITIAL_CHALLENGES);
     const [lang, setLang] = useState<'en' | 'hi'>('en');
+    const { toast } = useToast();
+    const t = LABELS[lang];
+
+    // Planner State
     const [formData, setFormData] = useState({
         name: '',
         age: '',
         gender: 'male',
         weight: '',
         height: '',
+        heightUnit: 'cm',
         heightFt: '',
         heightIn: '',
-        heightUnit: 'cm',
         activity: 'light',
         goal: 'maintain',
         medical: '',
         timeMins: '30',
-        notes: ''
+        notes: 'Veg'
     });
     const [planner, setPlanner] = useState<any>(null);
-    const [status, setStatus] = useState('');
-    const t = labels[lang];
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
+        setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
     };
 
     const handleSelectChange = (id: string, value: string) => {
         setFormData(prev => ({ ...prev, [id]: value }));
-    }
+    };
 
+    // --- LOGIC: CHALLENGE TRACKING ---
+    const handleJoinChallenge = (id: string) => {
+        setChallenges(prev => prev.map(c => c.id === id ? { ...c, status: 'active' } : c));
+        toast({ title: "Challenge Started!", description: "Track your progress daily." });
+    };
+
+    const handleDailyProgress = (id: string, index: number) => {
+        setChallenges(prev => prev.map(c => {
+            if (c.id === id) {
+                const newDaily = [...c.daily];
+                newDaily[index] = !newDaily[index];
+                const newProgress = newDaily.filter(Boolean).length;
+                const completed = newProgress === c.total;
+                if (completed && !c.daily[index]) {
+                    toast({ title: "Victory!", description: `You completed the ${c.title}!` });
+                }
+                return { ...c, daily: newDaily, progress: newProgress, status: completed ? 'completed' : 'active' };
+            }
+            return c;
+        }));
+    };
+
+    // --- LOGIC: AI HEALTH PLANNER ---
     const generatePlanner = () => {
-        if (!formData.name) {
-            toast({ variant: 'destructive', title: 'Name required', description: 'Please enter a name to generate a planner.' });
+        if (!formData.name || !formData.weight) {
+            toast({ variant: 'destructive', title: 'Data Missing', description: 'Please fill in your name and weight.' });
             return;
         }
 
-        const calcBMI = (weight: number, heightVal: string, heightUnit: string, heightFtVal: string, heightInVal: string) => {
-            if(!weight) return null;
-            let heightCm = 0;
-            if (heightUnit === 'ft') {
-                const ft = Number(heightFtVal) || 0;
-                const inches = Number(heightInVal) || 0;
-                if (ft === 0) return null;
-                heightCm = (ft * 30.48) + (inches * 2.54);
-            } else {
-                heightCm = Number(heightVal) || 0;
-            }
-            
-            if (heightCm === 0) return null;
-
-            const h = heightCm/100;
-            const bmi = weight / (h*h);
-            return Math.round(bmi*10)/10;
-        };
-
-        const estimateCalories = (form: typeof formData) => {
-            const w = Number(form.weight), age = Number(form.age);
-            let heightCm = 0;
-             if (form.heightUnit === 'ft') {
-                const ft = Number(form.heightFt) || 0;
-                const inches = Number(form.heightIn) || 0;
-                heightCm = (ft * 30.48) + (inches * 2.54);
-            } else {
-                heightCm = Number(form.height) || 0;
-            }
-            
-            if(!w || !heightCm || !age) return null;
-            let bmr;
-            if(form.gender === 'female') bmr = 10*w + 6.25*heightCm - 5*age - 161;
-            else bmr = 10*w + 6.25*heightCm - 5*age + 5;
-            const mult = { sedentary:1.2, light:1.375, moderate:1.55, active:1.725 }[form.activity as 'sedentary' | 'light' | 'moderate' | 'active']||1.375;
-            let calories = Math.round(bmr * mult);
-            if(form.goal === 'lose') calories = Math.max(1200, calories - 400);
-            if(form.goal === 'gain') calories = calories + 300;
-            return calories;
-        };
-
-        const generateDailyDiet = (calories: number | null) => {
-          if(!calories) return [];
-          return [
-            { meal:'Breakfast', kcal: Math.round(calories * 0.25), sample: 'Oats/Poha/Idli + fruit + milk/curd' },
-            { meal:'Mid Snack', kcal: Math.round(calories * 0.05), sample: 'Fruit / nuts' },
-            { meal:'Lunch', kcal: Math.round(calories * 0.35), sample: 'Chapati/Rice + Dal/Paneer/Chicken + Salad' },
-            { meal:'Evening Snack', kcal: Math.round(calories * 0.05), sample: 'Buttermilk / Sprouts' },
-            { meal:'Dinner', kcal: Math.round(calories * 0.30), sample: 'Light veg/non-veg + soup' }
-          ];
-        };
-
-        const generateExercisePlan = (form: typeof formData) => {
-          const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-          return days.map((day, i) => {
-            let type = 'Brisk Walk or Yoga';
-            const time = Number(form.timeMins);
-            if (time >= 40 && form.activity === 'active') type = (i % 2 === 0) ? 'Strength training' : 'HIIT / Cardio';
-            else if (form.activity === 'moderate') type = (i % 3 === 0) ? 'Strength / Core' : 'Brisk Walk';
-            if (time < 10) type = 'Light Stretching';
-            if (i === 6) type = 'Rest or light walk';
-            return { day, activity: type, minutes: time };
-          });
-        };
+        setIsGenerating(true);
         
-        const newPlanner = {
-            createdAt: new Date().toISOString(),
-            personal: formData,
-            bmi: calcBMI(Number(formData.weight), formData.height, formData.heightUnit, formData.heightFt, formData.heightIn),
-            calories: estimateCalories(formData),
-            dailyDiet: generateDailyDiet(estimateCalories(formData)),
-            exercise: generateExercisePlan(formData),
-            mental: ['Daily 5–10 min breathing exercise.', 'Aim for 7–8 hours of sleep.'],
-            hydration: 'Drink 30-40 ml per kg body weight daily.',
-        };
+        // Simulate AI Thinking
+        setTimeout(() => {
+            const w = Number(formData.weight);
+            const a = Number(formData.age);
+            let hCm = formData.heightUnit === 'cm' ? Number(formData.height) : (Number(formData.heightFt) * 30.48 + Number(formData.heightIn) * 2.54);
+            
+            const bmi = Math.round((w / ((hCm/100) * (hCm/100))) * 10) / 10;
+            
+            let bmr = formData.gender === 'male' ? (10*w + 6.25*hCm - 5*a + 5) : (10*w + 6.25*hCm - 5*a - 161);
+            const activityMult = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 }[formData.activity as any] || 1.375;
+            let calories = Math.round(bmr * activityMult);
+            
+            if (formData.goal === 'lose') calories -= 400;
+            if (formData.goal === 'gain') calories += 300;
 
-        setPlanner(newPlanner);
+            const newPlanner = {
+                id: Date.now(),
+                createdAt: new Date().toISOString(),
+                bmi,
+                calories,
+                diet: [
+                    { meal: 'Wake up (7 AM)', desc: lang === 'en' ? 'Warm water + 5 soaked almonds' : 'गुनगुना पानी + 5 भीगे हुए बादाम' },
+                    { meal: 'Breakfast (9 AM)', desc: lang === 'en' ? 'Oats with milk OR 2 Besan Chilla + Curd' : 'दूध के साथ ओट्स या 2 बेसन चिल्ला + दही' },
+                    { meal: 'Lunch (1:30 PM)', desc: lang === 'en' ? '2 Whole wheat rotis + Dal + Green Veg + Salad' : '2 गेहूं की रोटी + दाल + हरी सब्जी + सलाद' },
+                    { meal: 'Evening (5 PM)', desc: lang === 'en' ? 'Roasted makhana OR 1 Fruit' : 'भुने हुए मखाने या 1 फल' },
+                    { meal: 'Dinner (8 PM)', desc: lang === 'en' ? 'Paneer/Chicken Stir fry OR Moong Dal Khichdi' : 'पनीर/चिकन स्टिर फ्राई या मूंग दाल खिचड़ी' },
+                ],
+                exercise: [
+                    { day: 'Mon/Wed/Fri', type: lang === 'en' ? 'Strength Training (Bodyweight)' : 'स्ट्रेंथ ट्रेनिंग (बॉडीवेट)' },
+                    { day: 'Tue/Thu/Sat', type: lang === 'en' ? 'Brisk Walking or Cardio' : 'तेज चलना या कार्डियो' },
+                    { day: 'Sunday', type: lang === 'en' ? 'Active Rest (Yoga / Stretching)' : 'एक्टिव रेस्ट (योग / स्ट्रेचिंग)' },
+                ],
+                warnings: formData.medical ? (lang === 'en' ? `Note: Plan adjusted for ${formData.medical}` : `नोट: ${formData.medical} के लिए प्लान एडजस्ट किया गया है`) : null
+            };
+
+            setPlanner(newPlanner);
+            setIsGenerating(false);
+            toast({ title: "Plan Ready!", description: "Your custom health blueprint is generated." });
+        }, 1500);
     };
 
-    const savePlanner = async () => {
-        toast({ variant: 'destructive', title: 'Login Required', description: t.statusNoAuth });
-    };
-    
-    const downloadPdf = async () => {
-        if (!planner) {
-          toast({ variant: "destructive", title: "No Planner", description: "Please generate a planner first." });
-          return;
-        }
-
-        setStatus('Preparing PDF...');
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const downloadPDF = () => {
+        if (!planner) return;
+        const doc = new jsPDF();
         const W = doc.internal.pageSize.getWidth();
-        let y = 40;
-
-        doc.setFontSize(18); doc.text('Your Medical Partner — Health Planner', W/2, y, {align:'center'}); y += 24;
-        doc.setFontSize(12);
-        doc.text(`Name: ${planner.personal.name || '-'}`, 40, y); doc.text(`Created: ${new Date(planner.createdAt).toLocaleDateString()}`, W-200, y); y += 18;
-        doc.text(`Age: ${planner.personal.age || '-'}  Gender: ${planner.personal.gender || '-'}`, 40, y); y += 18;
-        doc.text(`BMI: ${planner.bmi || '-'}  Est. Calories: ${planner.calories || '-'} kcal`, 40, y); y += 22;
-
-        doc.setFontSize(14); doc.text('Daily Diet', 40, y); y += 16;
-        doc.setFontSize(11);
-        planner.dailyDiet.forEach((d: any) => {
-          doc.text(`- ${d.meal}: ${d.kcal} kcal (${d.sample})`, 48, y); y += 14;
-        });
-
-        y += 8;
-        doc.setFontSize(14); doc.text('Weekly Exercise Plan', 40, y); y += 16;
-        doc.setFontSize(11);
-        planner.exercise.forEach((e: any) => {
-          doc.text(`- ${e.day}: ${e.activity} (${e.minutes} mins)`, 48, y); y += 14;
-        });
         
-        y+= 8;
-        doc.setFontSize(14); doc.text('Mental Wellbeing', 40, y); y += 16;
-        doc.setFontSize(11);
-        planner.mental.forEach((m: string) => {
-            doc.text(`- ${m}`, 48, y); y+=14;
+        doc.setFontSize(22);
+        doc.setTextColor(36, 136, 232);
+        doc.text("YOUR MEDICAL PARTNER", W/2, 20, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(80, 80, 80);
+        doc.text("Custom Precision Health Report", W/2, 30, { align: 'center' });
+        
+        doc.setDrawColor(230, 230, 230);
+        doc.line(20, 35, W-20, 35);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Patient Name: ${formData.name}`, 20, 45);
+        doc.text(`Age/Gender: ${formData.age} / ${formData.gender}`, 20, 52);
+        doc.text(`BMI: ${planner.bmi} | Daily Calories: ${planner.calories} kcal`, 20, 59);
+        
+        doc.setFontSize(16);
+        doc.text("Daily Nutrition Blueprint", 20, 75);
+        const dietData = planner.diet.map((d: any) => [d.meal, d.desc]);
+        (doc as any).autoTable({
+            startY: 80,
+            head: [['Time', 'Meal Description']],
+            body: dietData,
+            theme: 'grid',
+            headStyles: { fillColor: [36, 136, 232] }
         });
 
-        const pdfBlob = doc.output('blob');
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        const nameSafe = (planner.personal.name || 'planner').replace(/\s+/g,'_');
-        a.download = `${nameSafe}_health_planner.pdf`;
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-        setStatus('');
-        toast({title: "PDF Downloaded"});
-  };
+        const nextY = (doc as any).lastAutoTable.finalY + 15;
+        doc.text("Weekly Activity Routine", 20, nextY);
+        const exData = planner.exercise.map((e: any) => [e.day, e.type]);
+        (doc as any).autoTable({
+            startY: nextY + 5,
+            head: [['Days', 'Activity Type']],
+            body: exData,
+            theme: 'grid',
+            headStyles: { fillColor: [20, 207, 189] }
+        });
+
+        doc.save(`${formData.name}_Health_Plan.pdf`);
+        toast({ title: "PDF Ready", description: "Your report has been downloaded." });
+    };
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>{lang === 'en' ? 'AI Health Planner' : 'एआई हेल्थ प्लानर'}</CardTitle>
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor="hpLang">Language</Label>
-                        <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
-                            <SelectTrigger id="hpLang" className="w-[120px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="en">English</SelectItem>
-                                <SelectItem value="hi">हिन्दी</SelectItem>
-                            </SelectContent>
-                        </Select>
+        <div className="flex flex-col h-[100dvh] w-full bg-[#f8fbff] dark:bg-[#020617] overflow-hidden fixed inset-0 font-body">
+            
+            {/* Header */}
+            <header className="h-16 px-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-50">
+                <div className="flex items-center gap-3">
+                    <Link href="/dashboard">
+                        <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-slate-50 dark:bg-slate-800 border">
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                    <div className="space-y-0">
+                        <h1 className="text-lg font-black text-[#1A365D] dark:text-white uppercase leading-none tracking-tighter">Health Center</h1>
+                        <p className="text-[8px] font-black text-primary uppercase tracking-widest mt-0.5">V2.0 Elite Edition</p>
                     </div>
                 </div>
-                <CardDescription>{lang === 'en' ? 'Fill in your details to get a personalized weekly health plan.' : 'व्यक्तिगत साप्ताहिक स्वास्थ्य योजना प्राप्त करने के लिए अपना विवरण भरें।'}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">{t.name}</Label>
-                        <Input id="name" value={formData.name} onChange={handleInputChange} />
+                <Button variant="ghost" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} className="rounded-full h-9 px-4 gap-2 bg-primary/5 text-primary border-primary/10">
+                    <Languages className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{lang === 'en' ? 'हिन्दी' : 'English'}</span>
+                </Button>
+            </header>
+
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-hidden relative">
+                <Tabs defaultValue="planner" className="h-full flex flex-col">
+                    <div className="px-6 pt-6 pb-2 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+                        <TabsList className="grid grid-cols-3 h-12 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border border-white/50 dark:border-slate-700/50">
+                            <TabsTrigger value="planner" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">AI Planner</TabsTrigger>
+                            <TabsTrigger value="challenges" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Challenges</TabsTrigger>
+                            <TabsTrigger value="stats" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Analysis</TabsTrigger>
+                        </TabsList>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="age">{t.age}</Label>
-                        <Input id="age" type="number" value={formData.age} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="gender">{t.gender}</Label>
-                        <Select value={formData.gender} onValueChange={(v) => handleSelectChange('gender', v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="male">Male</SelectItem>
-                                <SelectItem value="female">Female</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="weight">{t.weight}</Label>
-                        <Input id="weight" type="number" value={formData.weight} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="height">{t.height}</Label>
-                        <div className="flex gap-2">
-                           {formData.heightUnit === 'cm' ? (
-                               <Input id="height" type="number" placeholder="cm" value={formData.height} onChange={handleInputChange} />
-                           ) : (
-                               <div className="flex gap-2 w-full">
-                                    <Input id="heightFt" type="number" placeholder="ft" value={formData.heightFt} onChange={handleInputChange} className="w-1/2" />
-                                    <Input id="heightIn" type="number" placeholder="in" value={formData.heightIn} onChange={handleInputChange} className="w-1/2" />
-                               </div>
-                           )}
-                           <Select value={formData.heightUnit} onValueChange={(v) => handleSelectChange('heightUnit', v)}>
-                                <SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="cm">cm</SelectItem>
-                                    <SelectItem value="ft">ft</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="activity">{t.activity}</Label>
-                        <Select value={formData.activity} onValueChange={(v) => handleSelectChange('activity', v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="sedentary">Sedentary</SelectItem>
-                                <SelectItem value="light">Light (1-3 days/wk)</SelectItem>
-                                <SelectItem value="moderate">Moderate (3-5 days/wk)</SelectItem>
-                                <SelectItem value="active">Active (6+ days/wk)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="goal">{t.goal}</Label>
-                        <Select value={formData.goal} onValueChange={(v) => handleSelectChange('goal', v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="maintain">Maintain weight</SelectItem>
-                                <SelectItem value="lose">Lose weight</SelectItem>
-                                <SelectItem value="gain">Gain muscle</SelectItem>
-                                <SelectItem value="improve_fitness">Improve fitness</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="medical">{t.medical}</Label>
-                        <Input id="medical" placeholder="e.g. Diabetes, Hypertension" value={formData.medical} onChange={handleInputChange} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="timeMins">{t.time}</Label>
-                        <Input id="timeMins" type="number" value={formData.timeMins} onChange={handleInputChange} />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="notes">{t.notes}</Label>
-                    <Textarea id="notes" placeholder="e.g. Vegetarian, intermittent fasting" value={formData.notes} onChange={handleInputChange} />
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-wrap items-center gap-4">
-                <Button onClick={generatePlanner}><Bot className="mr-2 h-4 w-4" />{t.generate}</Button>
-                <Button variant="outline" onClick={savePlanner} disabled={!planner || status === t.statusSaving}><Save className="mr-2 h-4 w-4" />{status === t.statusSaving ? t.statusSaving : t.save}</Button>
-                <Button variant="outline" onClick={downloadPdf} disabled={!planner}><Download className="mr-2 h-4 w-4" />{t.download}</Button>
-                <p className="text-sm text-muted-foreground">{status}</p>
-            </CardFooter>
-             {planner && (
-                <CardContent>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{t.plannerTitle}</CardTitle>
-                            <CardDescription>Created: {new Date(planner.createdAt).toLocaleDateString()}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="prose prose-sm dark:prose-invert max-w-full">
-                            <p><strong>Name:</strong> {planner.personal.name || '-'} | <strong>BMI:</strong> {planner.bmi || '-'} | <strong>Est. Calories:</strong> {planner.calories || '-'} kcal</p>
-                            <hr/>
-                            <h4>Daily Diet</h4>
-                            <ul>{planner.dailyDiet.map((d: any, i:number) => <li key={i}><b>{d.meal}</b> — {d.kcal} kcal — <i>{d.sample}</i></li>)}</ul>
-                            <h4>Weekly Exercise Plan</h4>
-                            <table>
-                                <thead><tr><th>Day</th><th>Activity</th><th>Minutes</th></tr></thead>
-                                <tbody>{planner.exercise.map((e: any, i:number) => <tr key={i}><td>{e.day}</td><td>{e.activity}</td><td>{e.minutes}</td></tr>)}</tbody>
-                            </table>
-                             <h4>Mental Wellbeing</h4>
-                            <ul>{planner.mental.map((m: any, i:number) => <li key={i}>{m}</li>)}</ul>
-                            <p><strong>Hydration:</strong> {planner.hydration}</p>
-                            {planner.personal.medical && <p><strong>Medical Notes:</strong> {planner.personal.medical}</p>}
-                        </CardContent>
-                    </Card>
-                </CardContent>
-            )}
-        </Card>
+
+                    <ScrollArea className="flex-1 px-6 pb-40 pt-4">
+                        
+                        {/* 1. AI PLANNER TAB */}
+                        <TabsContent value="planner" className="space-y-8 mt-0">
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Health Architect</h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Generate a science-backed routine in seconds</p>
+                            </div>
+
+                            <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-6 space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.name}</Label>
+                                        <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="John Doe" className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.age}</Label>
+                                        <Input id="age" type="number" value={formData.age} onChange={handleInputChange} placeholder="25" className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.weight}</Label>
+                                        <Input id="weight" type="number" value={formData.weight} onChange={handleInputChange} placeholder="70" className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.height}</Label>
+                                        <div className="flex gap-2">
+                                            {formData.heightUnit === 'cm' ? (
+                                                <Input id="height" type="number" value={formData.height} onChange={handleInputChange} className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold" />
+                                            ) : (
+                                                <div className="flex gap-1 w-full">
+                                                    <Input id="heightFt" type="number" placeholder="Ft" value={formData.heightFt} onChange={handleInputChange} className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold w-1/2" />
+                                                    <Input id="heightIn" type="number" placeholder="In" value={formData.heightIn} onChange={handleInputChange} className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold w-1/2" />
+                                                </div>
+                                            )}
+                                            <Select value={formData.heightUnit} onValueChange={(v) => handleSelectChange('heightUnit', v)}>
+                                                <SelectTrigger className="h-12 rounded-xl w-24 bg-slate-50 border-none"><SelectValue /></SelectTrigger>
+                                                <SelectContent className="rounded-xl border-none shadow-2xl">
+                                                    <SelectItem value="cm">CM</SelectItem>
+                                                    <SelectItem value="ft">FT</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.goal}</Label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {['maintain', 'lose', 'gain'].map(g => (
+                                                <button key={g} onClick={() => handleSelectChange('goal', g)} className={cn("h-11 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", formData.goal === g ? "bg-primary text-white shadow-lg" : "bg-slate-50 text-slate-400 hover:bg-slate-100")}>
+                                                    {g} {g === 'lose' ? 'Fat' : g === 'gain' ? 'Muscle' : 'Health'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.medical}</Label>
+                                        <Input id="medical" value={formData.medical} onChange={handleInputChange} placeholder="Diabetes, Asthma..." className="h-12 rounded-xl bg-slate-50 border-none shadow-inner font-bold" />
+                                    </div>
+                                </div>
+
+                                <Button onClick={generatePlanner} disabled={isGenerating} className="w-full h-16 rounded-3xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] active:scale-95 transition-all">
+                                    {isGenerating ? <><Loader2 className="mr-2 animate-spin" /> Analyzing Data...</> : <><Bot className="mr-2 h-5 w-5" /> {t.generate}</>}
+                                </Button>
+                            </Card>
+
+                            {planner && (
+                                <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700">
+                                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                                    
+                                    <section className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{t.plannerTitle}</h3>
+                                            <Button variant="outline" size="sm" onClick={downloadPDF} className="rounded-full h-9 px-4 gap-2 border-primary/20 text-primary">
+                                                <Download className="w-3.5 h-3.5" /> <span className="text-[9px] font-black uppercase tracking-widest">Report</span>
+                                            </Button>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-5 rounded-[2rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 flex items-center gap-4">
+                                                <div className="h-10 w-10 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm"><Activity className="w-5 h-5" /></div>
+                                                <div>
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase">BMI Score</p>
+                                                    <p className="text-lg font-black text-[#1A365D] dark:text-slate-100">{planner.bmi}</p>
+                                                </div>
+                                            </div>
+                                            <div className="p-5 rounded-[2rem] bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 flex items-center gap-4">
+                                                <div className="h-10 w-10 bg-white rounded-2xl flex items-center justify-center text-emerald-500 shadow-sm"><Flame className="w-5 h-5" /></div>
+                                                <div>
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase">Daily Kcal</p>
+                                                    <p className="text-lg font-black text-[#1A365D] dark:text-slate-100">{planner.calories}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
+                                            <div className="flex items-center gap-3">
+                                                <Utensils className="w-5 h-5 text-primary" />
+                                                <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Meal Routine</h4>
+                                            </div>
+                                            <div className="space-y-6">
+                                                {planner.diet.map((d: any, i: number) => (
+                                                    <div key={i} className="flex gap-4 group">
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="h-2 w-2 rounded-full bg-primary mt-1.5" />
+                                                            <div className="w-px h-full bg-slate-100 dark:bg-slate-800 mt-1" />
+                                                        </div>
+                                                        <div className="pb-4">
+                                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest">{d.meal}</p>
+                                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">{d.desc}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </Card>
+
+                                        <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
+                                            <div className="flex items-center gap-3">
+                                                <Dumbbell className="w-5 h-5 text-emerald-500" />
+                                                <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Exercise Schedule</h4>
+                                            </div>
+                                            <div className="grid gap-3">
+                                                {planner.exercise.map((e: any, i: number) => (
+                                                    <div key={i} className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 flex items-center justify-between">
+                                                        <span className="text-[10px] font-black uppercase text-slate-400">{e.day}</span>
+                                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">{e.type}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </Card>
+                                    </section>
+                                </div>
+                            )}
+                        </TabsContent>
+
+                        {/* 2. CHALLENGES TAB */}
+                        <TabsContent value="challenges" className="space-y-8 mt-0 pb-20">
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Active Arena</h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Beat the odds, transform your body</p>
+                            </div>
+
+                            <div className="grid gap-6">
+                                {challenges.map((c) => (
+                                    <Card key={c.id} className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 p-6 overflow-hidden relative group">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="space-y-1">
+                                                <Badge className="bg-primary/10 text-primary text-[8px] font-black border-none uppercase px-3">{c.category}</Badge>
+                                                <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{c.title}</h3>
+                                            </div>
+                                            <div className="h-10 w-10 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-500"><Trophy className="w-5 h-5" /></div>
+                                        </div>
+                                        
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">{c.description}</p>
+                                        
+                                        <div className="space-y-2 mb-8">
+                                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                                <span className="text-slate-400">Mission Progress</span>
+                                                <span className="text-primary">{Math.round((c.progress / c.total) * 100)}%</span>
+                                            </div>
+                                            <Progress value={(c.progress / c.total) * 100} className="h-2 bg-slate-100" />
+                                        </div>
+
+                                        {c.status === 'active' && (
+                                            <div className="space-y-4 animate-in fade-in duration-500">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <ClipboardCheck className="w-4 h-4 text-emerald-500" />
+                                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Log Daily Performance</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {c.daily.map((done, idx) => (
+                                                        <button 
+                                                            key={idx} 
+                                                            onClick={() => handleDailyProgress(c.id, idx)}
+                                                            className={cn(
+                                                                "h-9 w-9 rounded-xl border-2 transition-all flex items-center justify-center",
+                                                                done ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white dark:bg-slate-800 border-slate-100 text-slate-300 hover:border-emerald-200"
+                                                            )}
+                                                        >
+                                                            {done ? <Check className="w-4 h-4" /> : <span className="text-[10px] font-black">{idx+1}</span>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Star className="w-4 h-4 text-primary fill-primary/20" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-primary">{c.reward}</span>
+                                            </div>
+                                            {c.status === 'new' && (
+                                                <Button onClick={() => handleJoinChallenge(c.id)} className="rounded-full px-6 h-10 bg-primary font-black uppercase text-[9px] tracking-widest shadow-lg shadow-primary/20">Accept Challenge</Button>
+                                            )}
+                                            {c.status === 'completed' && (
+                                                <Badge className="bg-emerald-50 text-emerald-600 border-none px-4 py-1.5 rounded-full text-[9px] font-black uppercase">Mission Completed ✓</Badge>
+                                            )}
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        </TabsContent>
+
+                        {/* 3. STATS TAB */}
+                        <TabsContent value="stats" className="space-y-8 mt-0 pb-20">
+                             <div className="space-y-2">
+                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Health Insights</h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Real-time biometrics and data analysis</p>
+                            </div>
+
+                            <div className="grid gap-6">
+                                <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Activity className="w-5 h-5 text-primary" />
+                                            <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Weekly Pulse</h4>
+                                        </div>
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase">+12% vs last week</span>
+                                    </div>
+                                    <div className="h-60 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={[
+                                                { day: 'Mon', min: 45 }, { day: 'Tue', min: 30 }, { day: 'Wed', min: 60 },
+                                                { day: 'Thu', min: 20 }, { day: 'Fri', min: 45 }, { day: 'Sat', min: 90 }, { day: 'Sun', min: 50 }
+                                            ]}>
+                                                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.1} />
+                                                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900}} />
+                                                <Bar dataKey="min" fill="#2488E8" radius={[6, 6, 0, 0]} />
+                                                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+
+                                <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <Smile className="w-5 h-5 text-orange-500" />
+                                        <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Mind Sentiment</h4>
+                                    </div>
+                                    <div className="h-60 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={[
+                                                { d: '1', m: 3 }, { d: '2', m: 4 }, { d: '3', m: 5 }, { d: '4', m: 2 }, { d: '5', m: 4 }, { d: '6', m: 5 }, { d: '7', m: 5 }
+                                            ]}>
+                                                <Line type="monotone" dataKey="m" stroke="#F97316" strokeWidth={4} dot={{r: 6, fill: '#F97316'}} activeDot={{r: 10}} />
+                                                <XAxis dataKey="d" hide />
+                                                <YAxis hide domain={[1, 5]} />
+                                                <Tooltip cursor={{stroke: 'transparent'}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            </div>
+                        </TabsContent>
+
+                    </ScrollArea>
+                </Tabs>
+            </main>
+
+            {/* Bottom Safe Area */}
+            <div className="h-10 bg-[#f8fbff] dark:bg-[#020617] shrink-0" />
+            
+            <style jsx global>{`
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                .touch-none { touch-action: none; }
+            `}</style>
+        </div>
     );
 }
 
-type PlannerTask = { id: string; title: string; completed: boolean; category: string };
+// --- SUB COMPONENTS ---
 
-
-export default function ChallengesPage() {
-    const [challenges, setChallenges] = useState(initialChallenges);
-    const { toast } = useToast();
-    const plannerTasks: PlannerTask[] = []; // No tasks without auth
-
-    const handleJoinChallenge = (challengeId: string) => {
-        setChallenges(prev =>
-            prev.map(c =>
-                c.id === challengeId ? { ...c, status: 'active' } : c
-            )
-        );
-        toast({ title: "Challenge Joined!", description: "You can now track your progress." });
-    };
-
-    const handleDailyProgress = (challengeId: string, dayIndex: number) => {
-        setChallenges(prev =>
-            prev.map(c => {
-                if (c.id === challengeId) {
-                    const newDaily = [...c.daily];
-                    newDaily[dayIndex] = !newDaily[dayIndex];
-                    const newProgress = newDaily.filter(Boolean).length;
-                    const newStatus = newProgress === c.total ? 'completed' : c.status;
-                    if (newStatus === 'completed') {
-                        toast({
-                            title: "Challenge Complete!",
-                            description: `Congratulations! You've completed the ${c.title}.`
-                        });
-                    }
-                    return { ...c, daily: newDaily, progress: newProgress, status: newStatus };
-                }
-                return c;
-            })
-        );
-    };
-
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">
-            Health Challenges
-          </h1>
-          <p className="text-muted-foreground">
-            Join challenges, create your own with AI, and track your progress.
-          </p>
+function ScrollArea({ children, className }: any) {
+    return (
+        <div className={cn("overflow-y-auto scrollbar-hide touch-pan-y", className)}>
+            {children}
         </div>
-      </div>
+    );
+}
 
-      <Tabs defaultValue="community">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="community">Community Challenges</TabsTrigger>
-          <TabsTrigger value="ai-planner"><Bot className="mr-2 h-4 w-4"/>AI Health Planner</TabsTrigger>
-          <TabsTrigger value="analysis">Health Analysis</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="community" className="mt-6">
-          <div className="space-y-6">
-            {challenges.map(challenge => (
-              <Card key={challenge.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Trophy className="w-6 h-6 text-yellow-500" />
-                      {challenge.title}
-                    </CardTitle>
-                    {challenge.status === 'active' && <Badge>Active</Badge>}
-                    {challenge.status === 'new' && <Badge variant="secondary">New</Badge>}
-                    {challenge.status === 'completed' && <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="mr-1 h-4 w-4"/>Completed</Badge>}
-                  </div>
-                  <CardDescription>{challenge.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm font-medium">Progress</p>
-                        <p className="text-sm text-muted-foreground">{challenge.progress} / {challenge.total} days</p>
-                      </div>
-                      <Progress value={(challenge.progress / challenge.total) * 100} className="h-2" />
-                    </div>
-                  
-                  {challenge.status === 'active' && (
-                    <div className="space-y-2">
-                      <Label>Log Your Daily Progress:</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {challenge.daily.map((isDone, index) => (
-                           <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
-                                <Checkbox
-                                    id={`${challenge.id}-day-${index}`}
-                                    checked={isDone}
-                                    onCheckedChange={() => handleDailyProgress(challenge.id, index)}
-                                />
-                                <Label htmlFor={`${challenge.id}-day-${index}`} className="text-xs">Day {index + 1}</Label>
-                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 text-primary">
-                    <Star className="w-5 h-5"/>
-                    <p className="font-semibold">{challenge.reward}</p>
-                  </div>
-
-                </CardContent>
-                <CardFooter>
-                    {challenge.status === 'new' && <Button onClick={() => handleJoinChallenge(challenge.id)}><Flame className="mr-2 h-4 w-4"/>Join Challenge</Button>}
-                    {challenge.status === 'active' && <Button variant="outline" disabled>Challenge in Progress</Button>}
-                    {challenge.status === 'completed' && <Button variant="ghost" disabled>Challenge Completed</Button>}
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="ai-planner" className="mt-6">
-           <HealthPlanner />
-        </TabsContent>
-
-        <TabsContent value="analysis" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  Weekly Activity
-                </CardTitle>
-                <CardDescription>
-                  Your total active minutes over the last 7 days.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={{}} className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={activityData}>
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="day"
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={12}
-                      />
-                      <YAxis
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={12}
-                        label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
-                      />
-                      <Bar
-                        dataKey="minutes"
-                        fill="hsl(var(--primary))"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Smile className="w-5 h-5" />
-                  Mood Tracker
-                </CardTitle>
-                <CardDescription>
-                  Your mood ratings (1-5) over the last 7 days.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={{}} className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={moodData}>
-                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis domain={[1, 5]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="mood" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+function Loader2({ className }: any) {
+    return <Activity className={cn("animate-spin", className)} />;
 }
