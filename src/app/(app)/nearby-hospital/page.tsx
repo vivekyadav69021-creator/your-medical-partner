@@ -34,6 +34,7 @@ import Link from 'next/link';
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // --- CONSTANTS ---
 const VAPI_COORDINATES: [number, number] = [20.3712, 72.9102];
@@ -53,11 +54,15 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const c = 2 * Math.atan2(sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+// Fixed local sqrt helper
+const sqrt = (n: number) => Math.sqrt(n);
 
 // --- DYNAMIC MAP COMPONENT ---
 const MapComponent = dynamic(() => Promise.resolve(({ center, elements, userIcon, poiIcon, openInMaps }: any) => {
@@ -161,10 +166,25 @@ export default function NearbyHospitalPage() {
       if (!response.ok) throw new Error("Connection failed.");
 
       const data = await response.json();
-      const results = (data?.elements || []).map((el: any) => ({
-        ...el,
-        calculatedDist: calculateDistance(lat, lon, el.lat || el.center?.lat, el.lon || el.center?.lon)
-      })).sort((a: any, b: any) => a.calculatedDist - b.calculatedDist);
+      const results = (data?.elements || []).map((el: any) => {
+        const elLat = el.lat || el.center?.lat;
+        const elLon = el.lon || el.center?.lon;
+        const dist = lat && lon && elLat && elLon ? (function(lat1, lon1, lat2, lon2) {
+          const R = 6371; 
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        })(lat, lon, elLat, elLon) : 0;
+
+        return {
+            ...el,
+            calculatedDist: dist
+        };
+      }).sort((a: any, b: any) => a.calculatedDist - b.calculatedDist);
 
       setElements(results);
       setStatus(results.length === 0 ? "No locations found." : `${results.length} results ready.`);
@@ -246,7 +266,7 @@ export default function NearbyHospitalPage() {
         </Button>
       </header>
 
-      {/* Horizontal Mode Bar - Fixed Sidebar Overlap with proper Z-Index and container */}
+      {/* Horizontal Mode Bar */}
       <div className="relative z-20 w-full overflow-hidden shrink-0 border-b border-slate-50 dark:border-slate-800 bg-white/40 dark:bg-slate-950/40 backdrop-blur-md">
           <div className="flex gap-2.5 overflow-x-auto p-4 scrollbar-hide">
             {(Object.keys(MODE_CONFIG) as MedicalMode[]).map((m) => {
@@ -339,7 +359,7 @@ export default function NearbyHospitalPage() {
                                                 {el.tags?.name || "Medical Provider"}
                                             </h4>
                                             <span className="text-[10px] font-black text-primary shrink-0 whitespace-nowrap">
-                                                {el.calculatedDist.toFixed(1)} KM
+                                                {el.calculatedDist?.toFixed(1)} KM
                                             </span>
                                         </div>
                                         
@@ -415,14 +435,4 @@ export default function NearbyHospitalPage() {
       `}</style>
     </div>
   );
-}
-
-function MetricItem({ icon: Icon, label, value }: any) {
-    return (
-        <div className="flex flex-col items-center gap-1 px-4">
-            <Icon className="h-4 w-4 text-slate-300" />
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">{label}</p>
-            <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{value}</p>
-        </div>
-    );
 }
