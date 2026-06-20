@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -55,11 +56,18 @@ function getYouTubeThumbnail(url: string, quality: 'max' | 'sd' = 'max') {
     return '';
 }
 
+/**
+ * Optimized Embed URL:
+ * - modestbranding=1: Hide YouTube logo in control bar
+ * - rel=0: No related videos from outside channels
+ * - iv_load_policy=3: Hide video annotations
+ * - controls=1: Standard controls for accessibility
+ */
 function getYouTubeEmbedUrl(url: string | null): string {
     if (!url) return '';
     const match = url.match(/(?:v=|youtu\.be\/|embed\/|v\/|shorts\/)([A-Za-z0-9_-]{11})/);
     if (match && match[1]) {
-       return `https://www.youtube.com/embed/${match[1]}?rel=0&autoplay=1&modestbranding=1&controls=1`;
+       return `https://www.youtube.com/embed/${match[1]}?rel=0&autoplay=1&modestbranding=1&controls=1&iv_load_policy=3&showinfo=0`;
     }
     return url || '';
 }
@@ -108,12 +116,11 @@ export default function VideoTutorialsPage() {
         return title.includes(searchTerm.toLowerCase());
     });
 
-  const shortsVideos = allVideos.slice(0, 8); // Showing more shorts
+  const shortsVideos = allVideos.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#020617] pb-40 font-body overflow-x-hidden safe-top">
       
-      {/* Premium Header - Removed AI and Profile icons */}
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#020617]/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard">
@@ -131,10 +138,8 @@ export default function VideoTutorialsPage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
       <div className="w-full">
         
-        {/* Full-width Search Section */}
         <div className="px-4 pt-6 pb-2">
             <div className="relative group">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
@@ -147,7 +152,6 @@ export default function VideoTutorialsPage() {
             </div>
         </div>
 
-        {/* Dynamic Category Scroll */}
         <ScrollArea className="w-full whitespace-nowrap p-4">
             <div className="flex gap-2.5">
               {['all', ...videoTutorialsData.map(c => c.id)].map(catId => (
@@ -168,7 +172,6 @@ export default function VideoTutorialsPage() {
             <ScrollBar orientation="horizontal" className="hidden" />
         </ScrollArea>
 
-        {/* --- SHORTS SECTION --- */}
         <section className="py-6 border-y border-slate-50 dark:border-slate-800/50 my-2">
             <div className="px-4 mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -208,15 +211,13 @@ export default function VideoTutorialsPage() {
             </ScrollArea>
         </section>
 
-        {/* --- MAIN IMMERSIVE FEED (Edge-to-Edge) --- */}
         <section className="space-y-4">
-            {filteredVideos.map((video, idx) => (
+            {filteredVideos.map((video) => (
                 <div 
                     key={video.id} 
                     className="flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-700 w-full cursor-pointer group"
                     onClick={() => handleVideoClick(video)}
                 >
-                    {/* Full Width Edge-to-Edge Thumbnail */}
                     <div className="aspect-video relative w-full overflow-hidden bg-slate-100 dark:bg-slate-900 group-active:opacity-90">
                         <Image
                             src={getYouTubeThumbnail(video.youtube_url)}
@@ -226,11 +227,10 @@ export default function VideoTutorialsPage() {
                             unoptimized
                         />
                         <div className="absolute bottom-4 right-4 px-2 py-1 bg-black/80 backdrop-blur-md rounded text-[9px] font-black text-white uppercase tracking-widest">
-                            10:00
+                            {video.duration || '3:00'}
                         </div>
                     </div>
 
-                    {/* Meta Data Row */}
                     <div className="p-5 flex gap-4">
                         <div className="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 border border-blue-100/50 shadow-sm">
                             <CheckCircle2 className="w-6 h-6 text-primary" />
@@ -249,23 +249,12 @@ export default function VideoTutorialsPage() {
                 </div>
             ))}
         </section>
-
-        {filteredVideos.length === 0 && (
-            <div className="py-40 flex flex-col items-center justify-center text-center px-6">
-                <Search className="w-16 h-16 text-slate-200 mb-4" />
-                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">No matching results</h3>
-                <p className="text-[10px] text-slate-300 mt-1 uppercase">Try checking your spelling or selecting another category</p>
-                <Button variant="link" onClick={() => {setSearchTerm(''); setSelectedCategory('all');}} className="mt-4 text-primary font-black uppercase tracking-widest text-xs">Clear All</Button>
-            </div>
-        )}
       </div>
 
-      {/* --- PREMIUM WATCH SCREEN DIALOG --- */}
       <Dialog open={!!selectedVideo} onOpenChange={(open) => !open && setSelectedVideo(null)}>
         <DialogContent className="max-w-screen-2xl w-full h-full p-0 border-none rounded-none bg-white dark:bg-[#020617] overflow-hidden flex flex-col shadow-2xl z-[100]">
             {selectedVideo && (
                 <div className="flex flex-col h-full">
-                    {/* Fixed Video Player Area */}
                     <div className="w-full aspect-video bg-black relative group/player shrink-0">
                         <iframe 
                             src={getYouTubeEmbedUrl(selectedVideo.youtube_url)}
@@ -275,7 +264,6 @@ export default function VideoTutorialsPage() {
                             allowFullScreen
                             className="w-full h-full"
                         ></iframe>
-                        {/* Close button inside player area for quick exit */}
                         <div className="absolute top-4 right-4">
                             <Button variant="ghost" size="icon" onClick={() => setSelectedVideo(null)} className="rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60">
                                 <X className="h-5 w-5" />
@@ -283,10 +271,8 @@ export default function VideoTutorialsPage() {
                         </div>
                     </div>
 
-                    {/* Scrollable Watch Info & Endless Suggestions */}
                     <ScrollArea className="flex-1">
                         <div className="pb-40">
-                            {/* Title & Stats Section */}
                             <div className="p-5 space-y-4">
                                 <h2 className="text-xl font-black text-[#1A365D] dark:text-white leading-tight uppercase tracking-tight">
                                     {selectedVideo.title.en}
@@ -294,11 +280,10 @@ export default function VideoTutorialsPage() {
                                 <div className="flex items-center gap-3 text-slate-400 text-[10px] font-bold uppercase tracking-tighter">
                                     <span>2.5M Views</span>
                                     <span>•</span>
-                                    <span>Dec 2024</span>
+                                    <span>{selectedVideo.duration || '3:00'} Duration</span>
                                     <span className="ml-auto text-primary font-black text-[11px] tracking-widest">#HealthVision</span>
                                 </div>
 
-                                {/* Action Buttons Grid (YouTube Style) */}
                                 <div className="flex gap-2 overflow-x-auto scrollbar-hide py-2">
                                     <Button 
                                         variant="outline" 
@@ -321,7 +306,6 @@ export default function VideoTutorialsPage() {
 
                             <div className="h-2 bg-slate-50 dark:bg-slate-900/50" />
 
-                            {/* Creator / Description Section */}
                             <div className="p-5 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -345,14 +329,12 @@ export default function VideoTutorialsPage() {
 
                             <div className="h-2 bg-slate-50 dark:bg-slate-900/50" />
 
-                            {/* --- REAL WORKING COMMENTS SECTION --- */}
                             <div className="p-5 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-[11px] font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-[0.2em]">Community Feedback</h4>
                                     <span className="text-[10px] font-bold text-slate-400">{(comments[selectedVideo.id]?.length || 0) + 2} Comments</span>
                                 </div>
 
-                                {/* Input Box */}
                                 <div className="flex items-start gap-4">
                                     <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black shrink-0">Y</div>
                                     <div className="flex-1 space-y-3">
@@ -374,7 +356,6 @@ export default function VideoTutorialsPage() {
                                     </div>
                                 </div>
 
-                                {/* Comments List */}
                                 <div className="space-y-6 pt-4">
                                     {(comments[selectedVideo.id] || []).map((c, i) => (
                                         <div key={`user-c-${i}`} className="flex gap-4 animate-in slide-in-from-top-2">
@@ -388,24 +369,11 @@ export default function VideoTutorialsPage() {
                                             </div>
                                         </div>
                                     ))}
-                                    
-                                    <div className="flex gap-4">
-                                        <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-black shrink-0">D</div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-black text-[#1A365D] dark:text-slate-100 uppercase">Dr. Shivam Yadav</span>
-                                                <Badge className="bg-primary/10 text-primary text-[6px] h-3.5 uppercase font-black px-1.5">Official</Badge>
-                                                <span className="text-[8px] font-bold text-slate-300 uppercase">2 Hours Ago</span>
-                                            </div>
-                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 leading-relaxed">This is a great instructional video. Please remember to consult in person for specific concerns.</p>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
                             <div className="h-2 bg-slate-50 dark:bg-slate-900/50" />
 
-                            {/* --- UNLIMITED RECOMMENDATIONS (All Library Videos) --- */}
                             <div className="p-5 space-y-6">
                                 <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em]">Endless Health Vision</h4>
                                 <div className="space-y-5">
@@ -415,14 +383,13 @@ export default function VideoTutorialsPage() {
                                             className="flex gap-4 group cursor-pointer active:opacity-70"
                                             onClick={() => {
                                                 setSelectedVideo(rec);
-                                                // Scroll to top of the watch content
                                                 const scrollViewport = document.querySelector('[data-radix-scroll-area-viewport]');
                                                 if (scrollViewport) scrollViewport.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
                                         >
                                             <div className="w-40 aspect-video relative rounded-2xl overflow-hidden shrink-0 shadow-md">
                                                 <Image src={getYouTubeThumbnail(rec.youtube_url, 'sd')} alt="Rec" fill className="object-cover" unoptimized />
-                                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 rounded text-[7px] font-black text-white">10:00</div>
+                                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 rounded text-[7px] font-black text-white">{rec.duration || '3:00'}</div>
                                             </div>
                                             <div className="space-y-1 min-w-0 py-1">
                                                 <h5 className="text-[12px] font-black text-[#1A365D] dark:text-white leading-tight line-clamp-2 uppercase tracking-tight">{rec.title.en}</h5>
