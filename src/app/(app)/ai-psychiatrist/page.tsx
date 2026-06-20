@@ -28,7 +28,8 @@ import {
     Wind,
     CloudRain,
     Smile,
-    MessageSquareQuote
+    MessageSquareQuote,
+    StopCircle
 } from 'lucide-react';
 import { aiPsychiatristAction, speechToTextAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -82,8 +83,11 @@ export default function AIPsychiatristPage() {
   const lastScrollTop = useRef(0);
   const [loadingTimer, setLoadingTimer] = useState(0);
   const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
+  const [isManuallyStopped, setIsManuallyStopped] = useState(false);
 
-  const [state, formAction, isPending] = useActionState(aiPsychiatristAction, initialState);
+  const [state, formAction, isPendingActual] = useActionState(aiPsychiatristAction, initialState);
+  const isPending = isPendingActual && !isManuallyStopped;
+
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
@@ -106,25 +110,27 @@ export default function AIPsychiatristPage() {
 
   // Handle Response Logic
   useEffect(() => {
-    if (!isPending && state.result) {
-        const { response_parts, suggested_chips, mood } = state.result;
-        setSuggestedChips(suggested_chips || []);
-        
-        setSessions(prev => prev.map(s => {
-            if (s.id === activeSessionId) {
-                const newMessages = [...s.messages];
-                response_parts.forEach((part: string) => {
-                    newMessages.push({ role: 'assistant', content: part, timestamp: Date.now() });
-                });
-                return { ...s, messages: newMessages, mood: mood };
-            }
-            return s;
-        }));
+    if (!isPendingActual && state.result) {
+        if (!isManuallyStopped) {
+            const { response_parts, suggested_chips, mood } = state.result;
+            setSuggestedChips(suggested_chips || []);
+            
+            setSessions(prev => prev.map(s => {
+                if (s.id === activeSessionId) {
+                    const newMessages = [...s.messages];
+                    response_parts.forEach((part: string) => {
+                        newMessages.push({ role: 'assistant', content: part, timestamp: Date.now() });
+                    });
+                    return { ...s, messages: newMessages, mood: mood };
+                }
+                return s;
+            }));
+        }
     }
-    if (state.error) {
+    if (state.error && !isManuallyStopped) {
         toast({ variant: 'destructive', title: 'Connection Issue', description: state.error });
     }
-  }, [state, isPending, activeSessionId, toast]);
+  }, [state, isPendingActual, activeSessionId, toast, isManuallyStopped]);
 
   // Thinking Animation Logic
   useEffect(() => {
@@ -177,6 +183,7 @@ export default function AIPsychiatristPage() {
 
     if (!query) return;
 
+    setIsManuallyStopped(false);
     let sid = activeSessionId;
     const userMsg: Message = { role: 'user', content: query, timestamp: Date.now() };
 
@@ -215,6 +222,11 @@ export default function AIPsychiatristPage() {
     setIsTyping(false);
     setIsInputVisible(true);
     setIsFocused(false);
+  };
+
+  const handleStopAnalysis = () => {
+    setIsManuallyStopped(true);
+    toast({ title: "Analysis Stopped", description: "Mind Companion has paused its thinking." });
   };
 
   // Auto Scroll
@@ -452,17 +464,22 @@ export default function AIPsychiatristPage() {
 
                         {isPending && (
                              <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300 mt-12">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-12 flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 rounded-2xl shadow-inner border border-rose-100 dark:border-rose-900/50">
-                                        <Heart className="w-6 h-6 text-rose-500 fill-rose-500 animate-pulse" />
-                                    </div>
-                                    <div className="flex flex-col -space-y-0.5">
-                                        <span className="text-[11px] font-black text-rose-500 uppercase tracking-[0.2em]">Mind Companion</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">I am listening to you...</span>
-                                            <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                <div className="flex items-center justify-between w-full pr-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-12 flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 rounded-2xl shadow-inner border border-rose-100 dark:border-rose-900/50">
+                                            <Heart className="w-6 h-6 text-rose-500 fill-rose-500 animate-pulse" />
+                                        </div>
+                                        <div className="flex flex-col -space-y-0.5">
+                                            <span className="text-[11px] font-black text-rose-500 uppercase tracking-[0.2em]">Mind Companion</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">I am listening to you...</span>
+                                                <span className="text-[10px] font-black tabular-nums text-primary">{loadingTimer}s</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <Button variant="outline" size="sm" onClick={handleStopAnalysis} className="rounded-full h-8 px-3 gap-2 border-rose-200 text-rose-500 hover:bg-rose-50 font-black text-[9px] uppercase tracking-widest">
+                                        <StopCircle className="w-3 h-3" /> Stop
+                                    </Button>
                                 </div>
                                 <div className="flex gap-1.5 ml-4">
                                     <div className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-bounce [animation-delay:-0.3s]" />

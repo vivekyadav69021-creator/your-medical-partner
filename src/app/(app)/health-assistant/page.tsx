@@ -35,7 +35,8 @@ import {
     ChevronRight,
     Trophy,
     MessageSquare,
-    HeartPulse
+    HeartPulse,
+    StopCircle
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -139,7 +140,11 @@ export default function HealthAssistantPage() {
   const lastProcessedGeneralTime = useRef<number>(0);
   const lastProcessedDoctorTime = useRef<number>(0);
 
-  const isPending = activeMode === 'general' ? isGeneralPending : isDoctorPending;
+  // Stop mechanism: In a real server action we can't truly abort easily without an AbortController,
+  // but we can force-stop the UI waiting state by refreshing the session or state.
+  const [isManuallyStopped, setIsManuallyStopped] = useState(false);
+
+  const isPending = (activeMode === 'general' ? isGeneralPending : isDoctorPending) && !isManuallyStopped;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
   const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions;
   const activeSession = currentSessions.find(s => s.id === currentSessionId);
@@ -149,53 +154,30 @@ export default function HealthAssistantPage() {
     return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
   }, []);
 
-  // Context Handover Logic
-  useEffect(() => {
-    const source = searchParams.get('source');
-    if (source === 'skin-scanner') {
-        const contextData = sessionStorage.getItem('last_skin_scan_result');
-        if (contextData) {
-            const parsedContext = JSON.parse(contextData);
-            const prompt = `I just used the Skin Scanner and it found: "${parsedContext.overallAssessment}". 
-            
-Can you provide more details about this condition and the care recommendations mentioned: 
-${parsedContext.careRecommendations.map((c: any) => `- ${c.title}: ${c.description}`).join('\n')}
-
-I'd like to understand more about the long-term management and if there's anything else I should know.`;
-
-            sessionStorage.removeItem('last_skin_scan_result');
-            const fd = new FormData();
-            fd.set('query', prompt);
-            onFormAction(fd);
-            toast({ title: "Scan Context Imported", description: "The Assistant is now analyzing your skin scan result." });
-        }
-    }
-  }, [searchParams]);
-
   // Sync AI responses
   useEffect(() => {
     if (!isGeneralPending && generalState.timestamp > lastProcessedGeneralTime.current) {
         lastProcessedGeneralTime.current = generalState.timestamp;
-        if (generalState.response || generalState.error) {
+        if (!isManuallyStopped && (generalState.response || generalState.error)) {
             const content = generalState.response || `Error: ${generalState.error}`;
             setGeneralSessions(prev => prev.map(s => s.id === activeGeneralId ? {
                 ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now(), mode: pulseMode }]
             } : s));
         }
     }
-  }, [generalState, isGeneralPending, activeGeneralId, pulseMode]);
+  }, [generalState, isGeneralPending, activeGeneralId, pulseMode, isManuallyStopped]);
 
   useEffect(() => {
     if (!isDoctorPending && doctorState.timestamp > lastProcessedDoctorTime.current) {
         lastProcessedDoctorTime.current = doctorState.timestamp;
-        if (doctorState.response || doctorState.error) {
+        if (!isManuallyStopped && (doctorState.response || doctorState.error)) {
             const content = doctorState.response || `Error: ${doctorState.error}`;
             setDoctorSessions(prev => prev.map(s => s.id === activeDoctorId ? {
                 ...s, messages: [...s.messages, { role: 'assistant', content, timestamp: Date.now() }]
             } : s));
         }
     }
-  }, [doctorState, isDoctorPending, activeDoctorId]);
+  }, [doctorState, isDoctorPending, activeDoctorId, isManuallyStopped]);
 
   // Initial Data Load
   useEffect(() => {
@@ -226,22 +208,13 @@ I'd like to understand more about the long-term management and if there's anythi
     return () => { clearInterval(timerInterval); clearInterval(sourceInterval); };
   }, [isPending]);
 
-  // Immersive Reading Mode: Detect Scroll
+  // Auto Scroll
   useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
-    const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
-    if (!viewport) return;
-    const handleScroll = () => {
-        const currentTop = viewport.scrollTop;
-        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 20;
-        if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) setIsInputVisible(false);
-        else setIsInputVisible(true);
-        lastScrollTop.current = currentTop;
-    };
-    viewport.addEventListener('scroll', handleScroll);
-    return () => viewport.removeEventListener('scroll', handleScroll);
-  }, [hasMessages]);
+    if (scrollAreaRef.current) {
+        const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+    }
+  }, [activeSession?.messages, isPending]);
 
   const handleNewChat = useCallback((modeOverride?: 'general' | 'doctor') => {
     const targetMode = modeOverride || activeMode;
@@ -270,9 +243,10 @@ I'd like to understand more about the long-term management and if there's anythi
     const query = (formData.get('query') as string) || '';
     if (!query && !attachedImage) return;
 
+    setIsManuallyStopped(false);
     const isHindi = /[\u0900-\u097F]/.test(query);
     setDetectedLang(isHindi ? 'hi' : 'en');
-    const isQuestion = query.length > 15 || /\?|what|how|why|explain|tell|detail|medicine|disease|treatment|symptom|किस|क्या|कैसे|क्यों|इलाज|बीमारी|दवाई/i.test(query);
+    const isQuestion = query.length > 15 || /\?|what|how|why|explain|tell|detail|medicine|disease|treatment|symptom/i.test(query);
     setIsQuestionType(isQuestion);
 
     const userMsg: Message = {
@@ -322,11 +296,19 @@ I'd like to understand more about the long-term management and if there's anythi
         }
     });
 
-    if (queryInputRef.current) { queryInputRef.current.value = ''; queryInputRef.current.style.height = 'auto'; }
+    if (queryInputRef.current) { 
+        queryInputRef.current.value = ''; 
+        queryInputRef.current.style.height = 'auto'; 
+    }
     setAttachedImage(null);
     setIsTyping(false);
     setIsInputVisible(true);
     setIsFocused(false);
+  };
+
+  const handleStopAnalysis = () => {
+    setIsManuallyStopped(true);
+    toast({ title: "Analysis Stopped", description: "The AI generation was cancelled." });
   };
 
   const startRecording = async () => {
@@ -553,19 +535,24 @@ I'd like to understand more about the long-term management and if there's anythi
                         ))}
                         {isPending && (
                              <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
-                                        {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                            {isQuestionType ? (activeMode === 'doctor' ? 'Specialist Review' : 'Tapping World Expert Data') : 'Reasoning'}
-                                            <span className="flex gap-0.5 ml-1 inline-flex"><span className="animate-bounce">.</span><span className="animate-bounce delay-100">.</span><span className="animate-bounce delay-200">.</span></span>
-                                        </span>
-                                        <div className="bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800 text-[10px] font-black tabular-nums text-primary">
-                                            {loadingTimer}s
+                                <div className="flex items-center justify-between w-full pr-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
+                                            {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                                {isQuestionType ? (activeMode === 'doctor' ? 'Specialist Review' : 'Tapping World Expert Data') : 'Reasoning'}
+                                                <span className="flex gap-0.5 ml-1 inline-flex"><span className="animate-bounce">.</span><span className="animate-bounce delay-100">.</span><span className="animate-bounce delay-200">.</span></span>
+                                            </span>
+                                            <div className="bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800 text-[10px] font-black tabular-nums text-primary">
+                                                {loadingTimer}s
+                                            </div>
                                         </div>
                                     </div>
+                                    <Button variant="outline" size="sm" onClick={handleStopAnalysis} className="rounded-full h-8 px-3 gap-2 border-red-200 text-red-500 hover:bg-red-50 font-black text-[9px] uppercase tracking-widest">
+                                        <StopCircle className="w-3 h-3" /> Stop
+                                    </Button>
                                 </div>
                                 {isQuestionType && (
                                     <div className="space-y-4 w-full max-w-lg">
@@ -604,9 +591,17 @@ I'd like to understand more about the long-term management and if there's anythi
                 <div className="relative flex flex-col rounded-[2.5rem] bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10 transition-all">
                     <div className="flex-1 max-h-48 overflow-y-auto">
                         <Textarea ref={queryInputRef} name="query" placeholder={activeMode === 'doctor' ? `Explain symptoms to Dr. ${specialty.split(' ').pop()}...` : "Analyze report or ask anything..."}
-                            className={cn("w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300", (isFocused || isTyping || attachedImage) ? "min-h-[120px]" : "min-h-[46px]")}
+                            className={cn(
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300", 
+                                (isFocused || isTyping || attachedImage) ? "min-h-[120px]" : "min-h-[46px]"
+                            )}
                             rows={1} onFocus={() => setIsFocused(true)} onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
-                            onInput={(e) => { const target = e.target as HTMLTextAreaElement; target.style.height = 'auto'; target.style.height = `${target.scrollHeight}px`; setIsTyping(target.value.length > 0); }}
+                            onInput={(e) => { 
+                                const target = e.target as HTMLTextAreaElement; 
+                                target.style.height = 'auto'; 
+                                target.style.height = `${target.scrollHeight}px`; 
+                                setIsTyping(target.value.length > 0); 
+                            }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80 dark:border-[#3c4043]">
@@ -658,6 +653,7 @@ I'd like to understand more about the long-term management and if there's anythi
                         </div>
                     </div>
                 </div>
+                <p className="text-[9px] text-center text-slate-400 font-black uppercase tracking-widest mt-2">AI Insights are informational. Not a replacement for a physical exam.</p>
             </form>
         </div>
     </div>
