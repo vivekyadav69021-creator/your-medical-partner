@@ -55,7 +55,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       )}
       
       <SidebarInset 
-        className={cn("flex flex-col relative h-[100dvh] overflow-hidden w-full", hideSidebar && "ml-0")} 
+        className={cn(
+          "flex flex-col relative h-[100dvh] overflow-hidden w-full transition-all duration-300", 
+          hideSidebar && "ml-0",
+          hideGlobalHeader ? "bg-white dark:bg-[#020617] shadow-none border-none" : ""
+        )} 
         style={{ 
           backgroundImage: hideGlobalHeader ? 'none' : 'var(--dashboard-bg)', 
           backgroundAttachment: 'fixed',

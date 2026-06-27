@@ -119,9 +119,9 @@ export default function VideoTutorialsPage() {
   const shortsVideos = allVideos.slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#020617] pb-40 font-body overflow-x-hidden safe-top">
+    <div className="min-h-screen bg-white dark:bg-[#020617] pb-40 font-body overflow-x-hidden w-full max-w-full">
       
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#020617]/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#020617]/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 py-4 flex items-center justify-between safe-top">
         <div className="flex items-center gap-3">
           <Link href="/dashboard">
             <div className="h-10 w-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-sm">
