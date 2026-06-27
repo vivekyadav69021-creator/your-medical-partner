@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sidebar,
@@ -26,7 +25,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isVideoLibrary = pathname === '/video-tutorials';
   
   const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary;
-  const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary; // Hide sidebar completely for highly immersive pages
+  const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary; 
 
   return (
     <SidebarProvider defaultOpen={!hideSidebar}>
@@ -58,7 +57,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         className={cn(
           "flex flex-col relative h-[100dvh] overflow-hidden w-full transition-all duration-300", 
           hideSidebar && "ml-0",
-          hideGlobalHeader ? "bg-white dark:bg-[#020617] shadow-none border-none" : ""
+          hideGlobalHeader ? "bg-white dark:bg-[#020617] !bg-none" : ""
         )} 
         style={{ 
           backgroundImage: hideGlobalHeader ? 'none' : 'var(--dashboard-bg)', 
