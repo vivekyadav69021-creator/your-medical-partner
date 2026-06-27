@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -143,7 +142,7 @@ export default function HealthAssistantPage() {
   const activeSession = currentSessions.find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages?.length || 0) > 0;
 
-  // Immersive Scroll Logic
+  // Immersive Scroll Logic - Performance optimized for 4GB RAM
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
@@ -152,17 +151,20 @@ export default function HealthAssistantPage() {
 
     const handleScroll = () => {
         const currentTop = viewport.scrollTop;
-        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 30;
+        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 40;
         
-        if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) {
-            setIsInputVisible(false); // Scrolling down, hide input
+        // Use a throttle or larger threshold to prevent heavy UI updates on every pixel
+        if (Math.abs(currentTop - lastScrollTop.current) < 5) return;
+
+        if (currentTop > lastScrollTop.current && currentTop > 120 && !isAtBottom) {
+            setIsInputVisible(false);
         } else {
-            setIsInputVisible(true); // Scrolling up or at bottom, show input
+            setIsInputVisible(true);
         }
         lastScrollTop.current = currentTop;
     };
 
-    viewport.addEventListener('scroll', handleScroll);
+    viewport.addEventListener('scroll', handleScroll, { passive: true });
     return () => viewport.removeEventListener('scroll', handleScroll);
   }, [hasMessages]);
 
@@ -307,6 +309,9 @@ export default function HealthAssistantPage() {
     setIsFocused(false);
   };
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechState, speechFormAction] = useActionState(speechToTextAction, initialSpeechState);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -329,9 +334,6 @@ export default function HealthAssistantPage() {
       setIsRecording(true);
     } catch (e) { toast({ variant: 'destructive', title: 'Mic Error' }); }
   };
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [speechState, speechFormAction] = useActionState(speechToTextAction, initialSpeechState);
 
   useEffect(() => {
     if (speechState.transcript && queryInputRef.current) {
@@ -372,11 +374,11 @@ export default function HealthAssistantPage() {
 
             {/* Mode Switcher */}
             <div className="bg-gray-100/60 dark:bg-[#131314]/60 p-1 rounded-full flex items-center gap-1 backdrop-blur-md hidden sm:flex">
-                <button onClick={() => { setActiveMode('general'); handleNewChat('general'); }}
+                <button onClick={() => { setActiveMode('general'); setActiveGeneralId(null); }}
                   className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'general' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}>
                   Assistant
                 </button>
-                <button onClick={() => { setActiveMode('doctor'); handleNewChat('doctor'); }}
+                <button onClick={() => { setActiveMode('doctor'); setActiveDoctorId(null); }}
                   className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'doctor' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}>
                   Specialists
                 </button>
@@ -550,7 +552,7 @@ export default function HealthAssistantPage() {
                                         </div>
                                         <span className="text-[10px] font-black text-primary uppercase tracking-widest">Thinking... <span className="tabular-nums ml-2">{loadingTimer}s</span></span>
                                     </div>
-                                    <Button variant="outline" size="sm" onClick={handleStopAnalysis} className="rounded-full h-8 px-3 gap-2 border-red-200 text-red-500 hover:bg-red-50 font-black text-[9px] uppercase tracking-widest">
+                                    <Button variant="outline" size="sm" onClick={() => setIsManuallyStopped(true)} className="rounded-full h-8 px-3 gap-2 border-red-200 text-red-500 hover:bg-red-50 font-black text-[9px] uppercase tracking-widest">
                                         <StopCircle className="w-3 h-3" /> Stop
                                     </Button>
                                 </div>
