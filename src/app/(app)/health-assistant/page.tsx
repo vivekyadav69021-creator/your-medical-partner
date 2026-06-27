@@ -115,7 +115,6 @@ export default function HealthAssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
-  // UI States
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
   const [loadingTimer, setLoadingTimer] = useState(0);
@@ -142,7 +141,7 @@ export default function HealthAssistantPage() {
   const activeSession = currentSessions.find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages?.length || 0) > 0;
 
-  // Immersive Scroll Logic - Performance optimized for 4GB RAM
+  // Immersive Scroll Logic - Performance optimized
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
@@ -153,8 +152,7 @@ export default function HealthAssistantPage() {
         const currentTop = viewport.scrollTop;
         const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 40;
         
-        // Use a throttle or larger threshold to prevent heavy UI updates on every pixel
-        if (Math.abs(currentTop - lastScrollTop.current) < 5) return;
+        if (Math.abs(currentTop - lastScrollTop.current) < 10) return;
 
         if (currentTop > lastScrollTop.current && currentTop > 120 && !isAtBottom) {
             setIsInputVisible(false);
@@ -168,7 +166,6 @@ export default function HealthAssistantPage() {
     return () => viewport.removeEventListener('scroll', handleScroll);
   }, [hasMessages]);
 
-  // Handle Response Logic
   useEffect(() => {
     if (!isGeneralPending && generalState.timestamp > 0) {
         if (!isManuallyStopped && (generalState.response || generalState.error)) {
@@ -191,23 +188,18 @@ export default function HealthAssistantPage() {
     }
   }, [doctorState, isDoctorPending, activeDoctorId, isManuallyStopped]);
 
-  // Initial Data Load
   useEffect(() => {
     const savedGen = localStorage.getItem('healthAssistantSessions_general');
     const savedDoc = localStorage.getItem('healthAssistantSessions_doctor');
     if (savedGen) setGeneralSessions(JSON.parse(savedGen));
     if (savedDoc) setDoctorSessions(JSON.parse(savedDoc));
-    setActiveGeneralId(null);
-    setActiveDoctorId(null);
   }, []);
 
-  // Sync Storage
   useEffect(() => {
     if (generalSessions.length > 0) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
     if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
-  // Loading Logic
   useEffect(() => {
     let timer: NodeJS.Timeout;
     let source: NodeJS.Timeout;
@@ -219,7 +211,6 @@ export default function HealthAssistantPage() {
     return () => { clearInterval(timer); clearInterval(source); };
   }, [isPending]);
 
-  // Auto Scroll
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -251,10 +242,7 @@ export default function HealthAssistantPage() {
   }, [activeMode, specialty]);
 
   const onFormAction = (formData: FormData | string) => {
-    let query = '';
-    if (typeof formData === 'string') query = formData;
-    else query = formData.get('query') as string || '';
-
+    let query = typeof formData === 'string' ? formData : formData.get('query') as string || '';
     if (!query && !attachedImage) return;
 
     setIsManuallyStopped(false);
@@ -267,7 +255,7 @@ export default function HealthAssistantPage() {
     };
 
     let sid = currentSessionId;
-    if (!sid || (activeMode === 'doctor' && activeSession?.specialty !== specialty)) {
+    if (!sid) {
         sid = `session-${Date.now()}`;
         const newSession: Session = {
             id: sid,
@@ -339,7 +327,6 @@ export default function HealthAssistantPage() {
     if (speechState.transcript && queryInputRef.current) {
         queryInputRef.current.value = speechState.transcript;
         setIsTyping(true);
-        setIsFocused(true);
     }
   }, [speechState]);
 
@@ -353,16 +340,17 @@ export default function HealthAssistantPage() {
     window.speechSynthesis.speak(u);
   };
 
+  const shouldShowInput = (activeMode === 'general') || (activeMode === 'doctor' && activeDoctorId !== null);
+
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
         <header className="h-16 border-b border-gray-100 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl z-50">
             <div className="flex items-center gap-2">
-                <SidebarTrigger className="h-10 w-10 rounded-2xl hover:bg-white/50 dark:hover:bg-[#3c4043] shadow-sm border border-white/20">
+                <SidebarTrigger className="h-10 w-10 rounded-2xl hover:bg-white/50 shadow-sm border border-white/20">
                     <Menu className="w-5 h-5 text-gray-600 dark:text-[#c4c7c5]" />
                 </SidebarTrigger>
-                <div className="h-6 w-px bg-gray-200 dark:bg-[#3c4043] mx-1" />
-                <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-primary/10 rounded-xl shadow-inner">
+                <div className="flex items-center gap-2.5 ml-2">
+                    <div className="p-2 bg-primary/10 rounded-xl">
                         <ShieldPlus className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex flex-col -space-y-0.5">
@@ -372,8 +360,7 @@ export default function HealthAssistantPage() {
                 </div>
             </div>
 
-            {/* Mode Switcher */}
-            <div className="bg-gray-100/60 dark:bg-[#131314]/60 p-1 rounded-full flex items-center gap-1 backdrop-blur-md hidden sm:flex">
+            <div className="bg-gray-100/60 dark:bg-[#131314]/60 p-1 rounded-full flex items-center gap-1 backdrop-blur-md">
                 <button onClick={() => { setActiveMode('general'); setActiveGeneralId(null); }}
                   className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'general' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}>
                   Assistant
@@ -386,26 +373,25 @@ export default function HealthAssistantPage() {
 
             <Sheet>
                 <SheetTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-[#3c4043]/40 border border-white/20 shadow-sm">
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-[#3c4043]/40 border border-white/20">
                         <History className="w-4 h-4 text-gray-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 hidden sm:inline">Records</span>
                     </button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] max-sm:w-full p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
+                <SheetContent side="right" className="w-[85vw] max-w-sm p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
                     <SheetHeader className="p-8 pb-4">
                         <SheetTitle className="text-primary uppercase font-black text-xs tracking-[0.2em]">Medical Records</SheetTitle>
                     </SheetHeader>
                     <div className="px-8 pb-4">
                          <Tabs value={historyTab} onValueChange={(v) => setHistoryTab(v as any)} className="w-full">
-                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-gray-100/50 dark:bg-[#131314]/50 rounded-xl backdrop-blur-md">
+                            <TabsList className="grid grid-cols-2 h-10 p-1 bg-gray-100/50 dark:bg-[#131314]/50 rounded-xl">
                                 <TabsTrigger value="general" className="rounded-lg font-bold text-[10px] uppercase">Assistant</TabsTrigger>
                                 <TabsTrigger value="doctor" className="rounded-lg font-bold text-[10px] uppercase">Specialists</TabsTrigger>
                             </TabsList>
                          </Tabs>
                     </div>
                     <ScrollArea className="flex-1 p-8 pt-0">
-                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20 hover:bg-primary/5 transition-all" onClick={() => handleNewChat(historyTab === 'general' ? 'general' : 'doctor')}>
-                            <Plus className="mr-2 h-4 w-4" /> Start New
+                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20" onClick={() => handleNewChat(historyTab === 'general' ? 'general' : 'doctor')}>
+                            <Plus className="mr-2 h-4 w-4" /> Start Fresh
                         </Button>
                         <div className="space-y-3 pb-20">
                             {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
@@ -414,17 +400,9 @@ export default function HealthAssistantPage() {
                                          if (historyTab === 'general') { setActiveMode('general'); setActiveGeneralId(session.id); } 
                                          else { setActiveMode('doctor'); setActiveDoctorId(session.id); setSpecialty(session.specialty || "General Physician"); }
                                      }}
-                                     className={cn("group p-5 rounded-[2rem] border shadow-sm cursor-pointer transition-all active:scale-[0.98] relative", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 dark:bg-[#282a2c]/40 border-transparent hover:bg-white/60")}>
-                                    <div className="pr-8">
-                                        <p className="text-xs font-bold truncate dark:text-[#e3e3e3]">{session.title}</p>
-                                        <p className="text-[8px] font-black text-gray-400 uppercase mt-1.5 flex items-center gap-1.5">
-                                            <Clock className="w-2.5 h-2.5" />
-                                            {formatDistanceToNow(session.createdAt, { addSuffix: true })}
-                                        </p>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); (historyTab === 'general' ? setGeneralSessions : setDoctorSessions)(prev => prev.filter(s => s.id !== session.id)); }}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                     className={cn("group p-5 rounded-[2rem] border shadow-sm cursor-pointer transition-all", (historyTab === 'general' ? activeGeneralId : activeDoctorId) === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 border-transparent")}>
+                                    <p className="text-xs font-bold truncate dark:text-[#e3e3e3]">{session.title}</p>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase mt-1.5">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
                                 </div>
                             ))}
                         </div>
@@ -438,7 +416,7 @@ export default function HealthAssistantPage() {
                 <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
                     <div className="flex flex-col justify-center items-center px-6 pt-10 pb-40 space-y-10 text-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
                         <div className="space-y-4 flex flex-col items-center">
-                            <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[2.8rem] shadow-2xl border border-white/50 relative group transition-transform duration-700 hover:rotate-2">
+                            <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[2.8rem] shadow-2xl border border-white/50">
                                 {activeMode === 'general' ? (
                                     <ShieldPlus className="w-10 h-10 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)]" />
                                 ) : (
@@ -459,11 +437,11 @@ export default function HealthAssistantPage() {
                              <div className="flex flex-col gap-3 w-full">
                                 {suggestionPool.map((suggestion, idx) => (
                                     <button key={idx} onClick={() => onFormAction(suggestion.query)}
-                                        className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-3xl text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full">
-                                        <div className="p-2 bg-primary/10 dark:bg-[#131314] rounded-xl shrink-0">
+                                        className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-3xl text-left border border-white/40 hover:border-primary/30 transition-all active:scale-[0.98] group shadow-sm w-full">
+                                        <div className="p-2 bg-primary/10 rounded-xl shrink-0">
                                             <suggestion.icon className="w-4 h-4 text-primary" />
                                         </div>
-                                        <span className="text-[11px] font-bold text-slate-700 dark:text-[#c4c7c5] flex-1 line-clamp-1">{suggestion.label}</span>
+                                        <span className="text-[11px] font-bold text-slate-700 dark:text-[#c4c7c5] flex-1 truncate">{suggestion.label}</span>
                                     </button>
                                 ))}
                             </div>
@@ -493,23 +471,14 @@ export default function HealthAssistantPage() {
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-8 py-6" ref={scrollAreaRef}>
-                    {activeMode === 'doctor' && (
-                        <div className="sticky top-0 z-30 mb-8 animate-in slide-in-from-top-4 duration-500">
-                           <div className="mx-auto w-fit px-6 py-2 bg-primary/10 dark:bg-primary/20 backdrop-blur-xl border border-primary/20 rounded-full flex items-center gap-3 shadow-sm">
-                                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Consulting {specialty}</p>
-                           </div>
-                        </div>
-                    )}
-
                     <div className="max-w-4xl mx-auto space-y-14 pb-80">
                         {activeSession?.messages.map((m, i) => (
                             <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-6 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl shadow-primary/10 overflow-hidden">
+                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.2rem] rounded-tr-sm bg-primary text-white px-7 py-4 shadow-xl">
                                         {m.image && (
-                                            <div className="mb-4 rounded-[1.5rem] overflow-hidden border-2 border-white/20 shadow-lg">
-                                                <Image src={m.image} alt="Report" width={300} height={300} className="w-full h-auto object-cover" />
+                                            <div className="mb-4 rounded-[1.5rem] overflow-hidden border-2 border-white/20">
+                                                <Image src={m.image} alt="Attachment" width={300} height={300} className="w-full h-auto" />
                                             </div>
                                         )}
                                         <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{m.content}</p>
@@ -517,7 +486,7 @@ export default function HealthAssistantPage() {
                                 ) : (
                                     <div className="flex flex-col items-start w-full group">
                                         <div className="flex items-center gap-3 mb-6">
-                                            <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
+                                            <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100">
                                                 {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                             </div>
                                             <div className="flex flex-col -space-y-1">
@@ -532,11 +501,11 @@ export default function HealthAssistantPage() {
                                             <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-medium px-1">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
-                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-1">
-                                                <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
-                                                    {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity px-1">
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 shadow-sm" onClick={() => handleToggleSpeech(m.content, i)}>
+                                                    <Volume2 className="w-4 h-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}><Copy className="w-3.5 h-3.5 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}><Copy className="w-3.5 h-3.5" /></Button>
                                             </div>
                                         </div>
                                     </div>
@@ -544,7 +513,7 @@ export default function HealthAssistantPage() {
                             </div>
                         ))}
                         {isPending && (
-                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                             <div className="flex flex-col items-start gap-6 w-full animate-in fade-in">
                                 <div className="flex items-center justify-between w-full pr-4">
                                     <div className="flex items-center gap-3">
                                         <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
@@ -569,10 +538,9 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        {/* Floating Input with Hide on Scroll */}
         <div className={cn(
             "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-10",
-            !isInputVisible && hasMessages ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
+            (!isInputVisible && hasMessages) || !shouldShowInput ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
         )}>
             <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-4">
                 {attachedImage && (
@@ -583,37 +551,36 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 )}
-                <div className="relative flex flex-col rounded-[2.5rem] bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-2xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.3)] p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10 transition-all">
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-2xl shadow-2xl p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10">
                     <div className="flex-1">
                         <Textarea 
                             ref={queryInputRef} 
                             name="query" 
                             placeholder={activeMode === 'doctor' ? `Consult Dr. ${specialty.split(' ').pop()}...` : "Analyze report or ask anything..."}
                             className={cn(
-                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300 overflow-y-auto", 
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] resize-none transition-all duration-300 overflow-y-auto", 
                                 (isFocused || isTyping || attachedImage) ? "min-h-[60px] max-h-[200px]" : "min-h-[46px] max-h-[46px]"
                             )}
-                            rows={1} onFocus={() => setIsFocused(true)} onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
+                            rows={1} onFocus={() => setIsFocused(true)}
                             onInput={(e) => { 
                                 const target = e.target as HTMLTextAreaElement; 
                                 target.style.height = 'auto'; 
-                                const newHeight = Math.min(target.scrollHeight, 200);
-                                target.style.height = `${newHeight}px`; 
+                                target.style.height = `${Math.min(target.scrollHeight, 200)}px`; 
                                 setIsTyping(target.value.length > 0); 
-                                target.scrollTop = target.scrollHeight; // Focus on cursor
+                                target.scrollTop = target.scrollHeight;
                             }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80 dark:border-[#3c4043]">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80">
                         <div className="flex items-center gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-11 w-11 rounded-full hover:bg-primary/5">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-11 w-11 rounded-full">
                                 <Plus className="h-6 w-6 text-slate-500" />
                             </Button>
                             <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setAttachedImage(ev.target?.result as string); r.readAsDataURL(file); } }} />
                             {activeMode === 'general' ? (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className={cn("h-11 px-5 rounded-full gap-2.5 text-[10px] font-black uppercase tracking-widest transition-all", modeConfig[pulseMode].bg, modeConfig[pulseMode].color)}>
+                                        <Button type="button" variant="ghost" className={cn("h-11 px-5 rounded-full gap-2.5 text-[10px] font-black uppercase tracking-widest", modeConfig[pulseMode].bg, modeConfig[pulseMode].color)}>
                                             {React.createElement(modeConfig[pulseMode].icon, { className: "h-3.5 w-3.5" })}
                                             <span className="hidden sm:inline">{modeConfig[pulseMode].label}</span>
                                         </Button>
@@ -621,9 +588,9 @@ export default function HealthAssistantPage() {
                                     <PopoverContent className="w-72 rounded-[2.5rem] p-4 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
                                         <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
                                             {Object.entries(modeConfig).map(([val, cfg]) => (
-                                                <div key={val} className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
+                                                <div key={val} className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
                                                     <RadioGroupItem value={val} id={val} className="sr-only" />
-                                                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] group-has-[:checked]:bg-white shadow-sm">
+                                                    <div className="p-2.5 rounded-xl bg-slate-50 group-has-[:checked]:bg-white shadow-sm">
                                                         {React.createElement(cfg.icon, { className: cn("w-4 h-4", cfg.color) })}
                                                     </div>
                                                     <Label htmlFor={val} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">{cfg.label}</Label>
@@ -638,15 +605,12 @@ export default function HealthAssistantPage() {
                         </div>
                         <div className="flex items-center gap-3">
                              {!isTyping && !isRecording && !attachedImage && (
-                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800"><Mic className="w-5 h-5 text-primary" /></Button>
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50"><Mic className="w-5 h-5 text-primary" /></Button>
                             )}
                             {(isTyping || isRecording || attachedImage) && (
-                                <div className="flex items-center gap-3">
-                                    {isRecording && <Button type="button" size="icon" onClick={() => setIsRecording(false)} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse"><MicOff className="w-5 h-5" /></Button>}
-                                    <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
-                                        {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
-                                    </Button>
-                                </div>
+                                <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white shadow-lg">
+                                    {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
+                                </Button>
                             )}
                         </div>
                     </div>

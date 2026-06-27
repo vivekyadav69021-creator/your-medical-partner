@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useActionState, useRef, useEffect, useState, useCallback, useMemo, startTransition } from 'react';
@@ -107,7 +106,7 @@ export default function AIPsychiatristPage() {
     if (sessions.length > 0) localStorage.setItem('mindCompanionSessions_v3', JSON.stringify(sessions));
   }, [sessions]);
 
-  // Immersive Reading Logic (Hide on Scroll)
+  // Immersive Reading Logic
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
@@ -119,14 +118,14 @@ export default function AIPsychiatristPage() {
         const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 30;
         
         if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) {
-            setIsInputVisible(false); // Scrolling down
+            setIsInputVisible(false);
         } else {
-            setIsInputVisible(true); // Scrolling up or at bottom
+            setIsInputVisible(true);
         }
         lastScrollTop.current = currentTop;
     };
 
-    viewport.addEventListener('scroll', handleScroll);
+    viewport.addEventListener('scroll', handleScroll, { passive: true });
     return () => viewport.removeEventListener('scroll', handleScroll);
   }, [hasMessages]);
 
@@ -189,6 +188,7 @@ export default function AIPsychiatristPage() {
     setSuggestedChips([]);
     setIsTyping(false);
     setIsInputVisible(true);
+    setIsFocused(false);
   };
 
   useEffect(() => {
@@ -229,7 +229,6 @@ export default function AIPsychiatristPage() {
                 <SheetTrigger asChild>
                     <Button variant="outline" className="rounded-full h-10 px-4 gap-2 bg-white/50 dark:bg-slate-800/50 border-white/40 shadow-sm">
                         <History className="w-4 h-4 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Journal</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[85vw] max-w-sm p-0 border-none rounded-l-[2.5rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
@@ -268,7 +267,7 @@ export default function AIPsychiatristPage() {
                             </div>
                             <div className="mt-10 space-y-4">
                                 <h2 className="text-4xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Your Safe Space</h2>
-                                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm mx-auto">I'm your AI Psychiatrist. Whatever you share stays here, private and protected.</p>
+                                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Whatever you share stays here, private and protected.</p>
                             </div>
                         </div>
 
@@ -391,7 +390,7 @@ export default function AIPsychiatristPage() {
 
                         <div className="flex items-center gap-3">
                              {!isTyping && !isRecording && (
-                                <Button type="button" variant="ghost" size="icon" onClick={() => toast({title: "Microphone Feature Coming Soon"})} className="h-12 w-12 rounded-full bg-slate-50">
+                                <Button type="button" variant="ghost" size="icon" onClick={() => toast({title: "Feature Coming Soon"})} className="h-12 w-12 rounded-full bg-slate-50">
                                     <Mic className="w-5 h-5 text-primary" />
                                 </Button>
                             )}
