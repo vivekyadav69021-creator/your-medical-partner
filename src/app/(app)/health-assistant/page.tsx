@@ -24,22 +24,18 @@ import {
     BrainCircuit,
     Copy,
     Image as ImageIcon,
-    Lightbulb,
     ThumbsUp,
-    ThumbsDown,
     ArrowLeft,
     Globe,
     Clock,
     Square,
     Stethoscope,
-    FileSearch,
     ChevronRight,
-    Trophy,
-    MessageSquare,
     HeartPulse,
     StopCircle,
     UserCircle2,
-    CheckCircle2
+    CheckCircle2,
+    ShieldCheck
 } from 'lucide-react';
 import { healthAssistantAction, speechToTextAction, aiDoctorChatAction } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -61,7 +57,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
-import { useSearchParams } from 'next/navigation';
 
 // Types
 type Message = {
@@ -121,15 +116,13 @@ export default function HealthAssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
-  const [isQuestionType, setIsQuestionType] = useState(false);
-  const [detectedLang, setDetectedLang] = useState<'en' | 'hi'>('en');
-
-  const searchParams = useSearchParams();
-  const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
+  // UI States
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
   const [loadingTimer, setLoadingTimer] = useState(0);
   const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
+  const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
+  const [isManuallyStopped, setIsManuallyStopped] = useState(false);
 
   const [generalSessions, setGeneralSessions] = useState<Session[]>([]);
   const [doctorSessions, setDoctorSessions] = useState<Session[]>([]);
@@ -144,25 +137,38 @@ export default function HealthAssistantPage() {
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  const lastProcessedGeneralTime = useRef<number>(0);
-  const lastProcessedDoctorTime = useRef<number>(0);
-
-  const [isManuallyStopped, setIsManuallyStopped] = useState(false);
-
   const isPending = (activeMode === 'general' ? isGeneralPending : isDoctorPending) && !isManuallyStopped;
   const currentSessionId = activeMode === 'general' ? activeGeneralId : activeDoctorId;
   const currentSessions = activeMode === 'general' ? generalSessions : doctorSessions;
   const activeSession = currentSessions.find(s => s.id === currentSessionId);
   const hasMessages = (activeSession?.messages?.length || 0) > 0;
 
-  const currentSuggestions = useMemo(() => {
-    return [...suggestionPool].sort(() => 0.5 - Math.random()).slice(0, 4);
-  }, []);
-
-  // Sync AI responses
+  // Immersive Scroll Logic
   useEffect(() => {
-    if (!isGeneralPending && generalState.timestamp > lastProcessedGeneralTime.current) {
-        lastProcessedGeneralTime.current = generalState.timestamp;
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea || !hasMessages) { setIsInputVisible(true); return; }
+    const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+
+    const handleScroll = () => {
+        const currentTop = viewport.scrollTop;
+        const isAtBottom = Math.abs(viewport.scrollHeight - viewport.clientHeight - currentTop) < 30;
+        
+        if (currentTop > lastScrollTop.current && currentTop > 100 && !isAtBottom) {
+            setIsInputVisible(false); // Scrolling down, hide input
+        } else {
+            setIsInputVisible(true); // Scrolling up or at bottom, show input
+        }
+        lastScrollTop.current = currentTop;
+    };
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [hasMessages]);
+
+  // Handle Response Logic
+  useEffect(() => {
+    if (!isGeneralPending && generalState.timestamp > 0) {
         if (!isManuallyStopped && (generalState.response || generalState.error)) {
             const content = generalState.response || `Error: ${generalState.error}`;
             setGeneralSessions(prev => prev.map(s => s.id === activeGeneralId ? {
@@ -173,8 +179,7 @@ export default function HealthAssistantPage() {
   }, [generalState, isGeneralPending, activeGeneralId, pulseMode, isManuallyStopped]);
 
   useEffect(() => {
-    if (!isDoctorPending && doctorState.timestamp > lastProcessedDoctorTime.current) {
-        lastProcessedDoctorTime.current = doctorState.timestamp;
+    if (!isDoctorPending && doctorState.timestamp > 0) {
         if (!isManuallyStopped && (doctorState.response || doctorState.error)) {
             const content = doctorState.response || `Error: ${doctorState.error}`;
             setDoctorSessions(prev => prev.map(s => s.id === activeDoctorId ? {
@@ -194,23 +199,22 @@ export default function HealthAssistantPage() {
     setActiveDoctorId(null);
   }, []);
 
-  // Sync Persistent Storage
+  // Sync Storage
   useEffect(() => {
     if (generalSessions.length > 0) localStorage.setItem('healthAssistantSessions_general', JSON.stringify(generalSessions));
     if (doctorSessions.length > 0) localStorage.setItem('healthAssistantSessions_doctor', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
-  // Loading UI Logic
+  // Loading Logic
   useEffect(() => {
-    let timerInterval: NodeJS.Timeout;
-    let sourceInterval: NodeJS.Timeout;
+    let timer: NodeJS.Timeout;
+    let source: NodeJS.Timeout;
     if (isPending) {
       setLoadingTimer(0);
-      setCurrentSourceIndex(0);
-      timerInterval = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
-      sourceInterval = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length), 2500);
+      timer = setInterval(() => setLoadingTimer(prev => prev + 1), 1000);
+      source = setInterval(() => setCurrentSourceIndex(prev => (prev + 1) % medicalSources.length), 2500);
     }
-    return () => { clearInterval(timerInterval); clearInterval(sourceInterval); };
+    return () => { clearInterval(timer); clearInterval(source); };
   }, [isPending]);
 
   // Auto Scroll
@@ -244,16 +248,14 @@ export default function HealthAssistantPage() {
     setIsFocused(false);
   }, [activeMode, specialty]);
 
-  const onFormAction = (formData: FormData) => {
-    const query = (formData.get('query') as string) || '';
+  const onFormAction = (formData: FormData | string) => {
+    let query = '';
+    if (typeof formData === 'string') query = formData;
+    else query = formData.get('query') as string || '';
+
     if (!query && !attachedImage) return;
 
     setIsManuallyStopped(false);
-    const isHindi = /[\u0900-\u097F]/.test(query);
-    setDetectedLang(isHindi ? 'hi' : 'en');
-    const isQuestion = query.length > 15 || /\?|what|how|why|explain|tell|detail|medicine|disease|treatment|symptom/i.test(query);
-    setIsQuestionType(isQuestion);
-
     const userMsg: Message = {
         role: 'user',
         content: query || (attachedImage ? 'Analyze attached image' : ''),
@@ -272,13 +274,8 @@ export default function HealthAssistantPage() {
             createdAt: Date.now(),
             ...(activeMode === 'doctor' && { specialty }),
         };
-        if (activeMode === 'general') {
-            setGeneralSessions(prev => [newSession, ...prev]);
-            setActiveGeneralId(sid);
-        } else {
-            setDoctorSessions(prev => [newSession, ...prev]);
-            setActiveDoctorId(sid);
-        }
+        if (activeMode === 'general') { setGeneralSessions(prev => [newSession, ...prev]); setActiveGeneralId(sid); }
+        else { setDoctorSessions(prev => [newSession, ...prev]); setActiveDoctorId(sid); }
     } else {
         const setter = activeMode === 'general' ? setGeneralSessions : setDoctorSessions;
         setter(prev => prev.map(s => s.id === sid ? {
@@ -287,33 +284,27 @@ export default function HealthAssistantPage() {
         } : s));
     }
 
-    const historyForAi = activeSession ? [...activeSession.messages, userMsg] : [userMsg];
-    formData.set('history', JSON.stringify(historyForAi));
-    if (attachedImage) formData.set('photoDataUri', attachedImage);
+    const payload = new FormData();
+    payload.set('query', query);
+    const history = activeSession ? [...activeSession.messages, userMsg] : [userMsg];
+    payload.set('history', JSON.stringify(history));
+    if (attachedImage) payload.set('photoDataUri', attachedImage);
 
     startTransition(() => {
         if (activeMode === 'doctor') {
-            formData.set('specialty', specialty);
-            doctorFormAction(formData);
+            payload.set('specialty', specialty);
+            doctorFormAction(payload);
         } else {
-            formData.set('mode', pulseMode);
-            generalFormAction(formData);
+            payload.set('mode', pulseMode);
+            generalFormAction(payload);
         }
     });
 
-    if (queryInputRef.current) { 
-        queryInputRef.current.value = ''; 
-        queryInputRef.current.style.height = 'auto'; 
-    }
+    if (queryInputRef.current) { queryInputRef.current.value = ''; queryInputRef.current.style.height = 'auto'; }
     setAttachedImage(null);
     setIsTyping(false);
     setIsInputVisible(true);
     setIsFocused(false);
-  };
-
-  const handleStopAnalysis = () => {
-    setIsManuallyStopped(true);
-    toast({ title: "Analysis Stopped", description: "The AI generation was cancelled." });
   };
 
   const startRecording = async () => {
@@ -336,7 +327,7 @@ export default function HealthAssistantPage() {
       };
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (e) { toast({ variant: 'destructive', title: 'Mic Access Denied' }); }
+    } catch (e) { toast({ variant: 'destructive', title: 'Mic Error' }); }
   };
 
   const [isRecording, setIsRecording] = useState(false);
@@ -354,15 +345,14 @@ export default function HealthAssistantPage() {
     if (!window.speechSynthesis) return;
     if (speakingMsgId === msgId) { window.speechSynthesis.cancel(); setSpeakingMsgId(null); return; }
     window.speechSynthesis.cancel();
-    const clean = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/[*#_`]/g, '').trim();
+    const clean = text.replace(/[*#_`]/g, '').trim();
     const u = new SpeechSynthesisUtterance(clean);
-    u.rate = 0.95; u.onstart = () => setSpeakingMsgId(msgId); u.onend = () => setSpeakingMsgId(null);
+    u.onstart = () => setSpeakingMsgId(msgId); u.onend = () => setSpeakingMsgId(null);
     window.speechSynthesis.speak(u);
   };
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body">
-        {/* Optimized Fixed Header */}
         <header className="h-16 border-b border-gray-100 dark:border-[#3c4043] flex items-center justify-between px-4 shrink-0 bg-white/40 dark:bg-[#1e1f20]/40 backdrop-blur-xl z-50">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-10 w-10 rounded-2xl hover:bg-white/50 dark:hover:bg-[#3c4043] shadow-sm border border-white/20">
@@ -380,31 +370,27 @@ export default function HealthAssistantPage() {
                 </div>
             </div>
 
-            {/* Mode Switcher Segmented Control (Top Position to avoid input clash) */}
+            {/* Mode Switcher */}
             <div className="bg-gray-100/60 dark:bg-[#131314]/60 p-1 rounded-full flex items-center gap-1 backdrop-blur-md hidden sm:flex">
-                <button 
-                  onClick={() => { setActiveMode('general'); handleNewChat('general'); }}
-                  className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'general' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400 hover:text-slate-600")}
-                >
+                <button onClick={() => { setActiveMode('general'); handleNewChat('general'); }}
+                  className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'general' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}>
                   Assistant
                 </button>
-                <button 
-                  onClick={() => { setActiveMode('doctor'); handleNewChat('doctor'); }}
-                  className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'doctor' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400 hover:text-slate-600")}
-                >
+                <button onClick={() => { setActiveMode('doctor'); handleNewChat('doctor'); }}
+                  className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", activeMode === 'doctor' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}>
                   Specialists
                 </button>
             </div>
 
             <Sheet>
                 <SheetTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-[#3c4043]/40 border border-white/20 shadow-sm hover:bg-white/60 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-[#3c4043]/40 border border-white/20 shadow-sm">
                         <History className="w-4 h-4 text-gray-500" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 hidden sm:inline">Records</span>
                     </button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[85vw] max-sm:w-full p-0 border-none rounded-l-[2rem] shadow-2xl flex flex-col bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl">
-                    <SheetHeader className="p-8 pb-2">
+                    <SheetHeader className="p-8 pb-4">
                         <SheetTitle className="text-primary uppercase font-black text-xs tracking-[0.2em]">Medical Records</SheetTitle>
                     </SheetHeader>
                     <div className="px-8 pb-4">
@@ -416,9 +402,8 @@ export default function HealthAssistantPage() {
                          </Tabs>
                     </div>
                     <ScrollArea className="flex-1 p-8 pt-0">
-                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20 hover:bg-primary/5 transition-all" 
-                                onClick={() => { handleNewChat(historyTab === 'general' ? 'general' : 'doctor'); }}>
-                            <Plus className="mr-2 h-4 w-4" /> Start New {historyTab === 'general' ? 'Chat' : 'Consult'}
+                        <Button variant="outline" className="w-full h-12 rounded-2xl mb-8 font-black uppercase text-[10px] tracking-widest border-primary/20 hover:bg-primary/5 transition-all" onClick={() => handleNewChat(historyTab === 'general' ? 'general' : 'doctor')}>
+                            <Plus className="mr-2 h-4 w-4" /> Start New
                         </Button>
                         <div className="space-y-3 pb-20">
                             {(historyTab === 'general' ? generalSessions : doctorSessions).map(session => (
@@ -434,7 +419,6 @@ export default function HealthAssistantPage() {
                                             <Clock className="w-2.5 h-2.5" />
                                             {formatDistanceToNow(session.createdAt, { addSuffix: true })}
                                         </p>
-                                        {session.specialty && <Badge className="mt-2 text-[7px] bg-primary/10 text-primary border-none uppercase font-black">{session.specialty}</Badge>}
                                     </div>
                                     <Button variant="ghost" size="icon" className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-300 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); (historyTab === 'general' ? setGeneralSessions : setDoctorSessions)(prev => prev.filter(s => s.id !== session.id)); }}>
                                         <Trash2 className="h-4 w-4" />
@@ -448,29 +432,11 @@ export default function HealthAssistantPage() {
         </header>
 
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
-            {/* Mobile Mode Switcher (Visible only on small screens) */}
-            <div className="sm:hidden w-full px-6 pt-4 shrink-0">
-               <div className="bg-gray-100/60 dark:bg-[#131314]/60 p-1 rounded-full flex items-center gap-1 backdrop-blur-md">
-                    <button 
-                      onClick={() => { setActiveMode('general'); handleNewChat('general'); }}
-                      className={cn("flex-1 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all", activeMode === 'general' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}
-                    >
-                      AI Assistant
-                    </button>
-                    <button 
-                      onClick={() => { setActiveMode('doctor'); handleNewChat('doctor'); }}
-                      className={cn("flex-1 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all", activeMode === 'doctor' ? "bg-white dark:bg-slate-800 text-primary shadow-sm" : "text-slate-400")}
-                    >
-                      Specialists
-                    </button>
-                </div>
-            </div>
-
             {!hasMessages && !isPending ? (
-                <ScrollArea className="flex-1 w-full">
-                    <div className="flex flex-col justify-center items-center px-6 pt-8 pb-40 space-y-10 text-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
+                <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
+                    <div className="flex flex-col justify-center items-center px-6 pt-10 pb-40 space-y-10 text-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
                         <div className="space-y-4 flex flex-col items-center">
-                            <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[2.8rem] shadow-2xl border border-white/50 relative group">
+                            <div className="p-6 bg-white dark:bg-[#1e1f20] rounded-[2.8rem] shadow-2xl border border-white/50 relative group transition-transform duration-700 hover:rotate-2">
                                 {activeMode === 'general' ? (
                                     <ShieldPlus className="w-10 h-10 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.4)]" />
                                 ) : (
@@ -478,10 +444,10 @@ export default function HealthAssistantPage() {
                                 )}
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight">
+                                <h2 className="text-3xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">
                                     {activeMode === 'doctor' ? `Select Specialist` : "Global Health AI"}
                                 </h2>
-                                <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.3em]">
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
                                     {activeMode === 'doctor' ? 'AI-Powered Clinical Consultation' : 'Medically Vetted Intelligence'}
                                 </p>
                             </div>
@@ -489,8 +455,8 @@ export default function HealthAssistantPage() {
 
                         {activeMode === 'general' ? (
                              <div className="flex flex-col gap-3 w-full">
-                                {currentSuggestions.map((suggestion, idx) => (
-                                    <button key={idx} onClick={() => { const fd = new FormData(); fd.set('query', suggestion.query); onFormAction(fd); }}
+                                {suggestionPool.map((suggestion, idx) => (
+                                    <button key={idx} onClick={() => onFormAction(suggestion.query)}
                                         className="flex items-center gap-4 p-5 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-md rounded-3xl text-left border border-white/40 dark:border-[#3c4043] hover:border-primary/30 hover:bg-white/80 transition-all active:scale-[0.98] group shadow-sm w-full">
                                         <div className="p-2 bg-primary/10 dark:bg-[#131314] rounded-xl shrink-0">
                                             <suggestion.icon className="w-4 h-4 text-primary" />
@@ -500,42 +466,31 @@ export default function HealthAssistantPage() {
                                 ))}
                             </div>
                         ) : (
-                            /* UPGRADED: Specialist Selector Grid (Highly visible for Android) */
-                            <div className="grid grid-cols-2 gap-3 w-full">
+                            <div className="grid grid-cols-2 gap-4 w-full">
                                 {doctorSpecialties.map((spec) => (
                                     <button 
                                       key={spec.name} 
                                       onClick={() => { setSpecialty(spec.name); handleNewChat('doctor'); }}
                                       className={cn(
-                                          "flex flex-col items-center justify-center p-5 rounded-[2.2rem] text-center border transition-all active:scale-95 group",
+                                          "flex flex-col items-center justify-center p-6 rounded-[2.5rem] text-center border transition-all active:scale-95 group",
                                           specialty === spec.name 
                                           ? "bg-primary border-primary text-white shadow-xl shadow-primary/20" 
                                           : "bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-slate-800"
                                       )}
                                     >
-                                        <div className={cn(
-                                          "h-10 w-10 rounded-2xl flex items-center justify-center mb-3 transition-transform group-hover:rotate-12",
-                                          specialty === spec.name ? "bg-white/20" : "bg-primary/10"
-                                        )}>
-                                            <spec.icon className={cn("h-5 w-5", specialty === spec.name ? "text-white" : "text-primary")} />
+                                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center mb-3", specialty === spec.name ? "bg-white/20" : "bg-primary/10")}>
+                                            <spec.icon className={cn("h-6 w-6", specialty === spec.name ? "text-white" : "text-primary")} />
                                         </div>
-                                        <p className="text-[10px] font-black uppercase tracking-tight leading-none mb-1">{spec.name}</p>
-                                        <p className={cn("text-[7px] font-bold uppercase tracking-widest opacity-60", specialty === spec.name ? "text-white" : "text-slate-400")}>
-                                          {spec.desc}
-                                        </p>
+                                        <p className="text-[11px] font-black uppercase tracking-tight leading-none mb-1">{spec.name}</p>
+                                        <p className={cn("text-[8px] font-bold uppercase tracking-widest opacity-60", specialty === spec.name ? "text-white" : "text-slate-400")}>{spec.desc}</p>
                                     </button>
                                 ))}
                             </div>
                         )}
-                        
-                        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400/60 pt-4">
-                           Powered by Fine-tuned Clinical Models
-                        </p>
                     </div>
                 </ScrollArea>
             ) : (
                 <ScrollArea className="flex-1 px-4 md:px-8 py-6" ref={scrollAreaRef}>
-                    {/* Floating Specialty Indicator for Active Doctor Chats */}
                     {activeMode === 'doctor' && (
                         <div className="sticky top-0 z-30 mb-8 animate-in slide-in-from-top-4 duration-500">
                            <div className="mx-auto w-fit px-6 py-2 bg-primary/10 dark:bg-primary/20 backdrop-blur-xl border border-primary/20 rounded-full flex items-center gap-3 shadow-sm">
@@ -564,28 +519,22 @@ export default function HealthAssistantPage() {
                                                 {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                             </div>
                                             <div className="flex flex-col -space-y-1">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                                    {activeMode === 'doctor' ? specialty : 'Expert Insight'}
-                                                </span>
-                                                {m.role === 'assistant' && (
-                                                  <div className="flex items-center gap-1.5 mt-1">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeMode === 'doctor' ? specialty : 'Expert Insight'}</span>
+                                                <div className="flex items-center gap-1.5 mt-1">
                                                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                                                     <span className="text-[7px] font-black uppercase text-emerald-600 tracking-widest">Verified Info</span>
-                                                  </div>
-                                                )}
-                                                {m.mode && <Badge variant="outline" className="mt-1 text-[7px] px-1.5 h-3.5 border-primary/20 bg-primary/5 text-primary font-black uppercase">{modeConfig[m.mode].label}</Badge>}
+                                                     <span className="text-[7px] font-black uppercase text-emerald-600 tracking-widest">Verified</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex-1 w-full min-w-0">
-                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-loose font-medium px-1">
+                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-medium px-1">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
-                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
+                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-1">
+                                                <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", speakingMsgId === i ? "bg-primary text-white" : "bg-white/40 shadow-sm")} onClick={() => handleToggleSpeech(m.content, i)}>
                                                     {speakingMsgId === i ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied to clipboard"}); }}><Copy className="w-4 h-4 text-slate-400" /></Button>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/40 shadow-sm"><ThumbsUp className="w-4 h-4 text-slate-400" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-white/40 shadow-sm" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}><Copy className="w-3.5 h-3.5 text-slate-400" /></Button>
                                             </div>
                                         </div>
                                     </div>
@@ -599,34 +548,18 @@ export default function HealthAssistantPage() {
                                         <div className="size-9 flex items-center justify-center bg-primary/10 rounded-full animate-pulse">
                                             {activeMode === 'doctor' ? <Stethoscope className="w-4.5 h-4.5 text-primary" /> : <ShieldPlus className="w-4.5 h-4.5 text-primary" />}
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                                {isQuestionType ? (activeMode === 'doctor' ? 'Clinical Review' : 'Expert Data Retrieval') : 'Thinking'}
-                                                <span className="flex gap-0.5 ml-1 inline-flex"><span className="animate-bounce">.</span><span className="animate-bounce delay-100">.</span><span className="animate-bounce delay-200">.</span></span>
-                                            </span>
-                                            <div className="bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800 text-[10px] font-black tabular-nums text-primary">
-                                                {loadingTimer}s
-                                            </div>
-                                        </div>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Thinking... <span className="tabular-nums ml-2">{loadingTimer}s</span></span>
                                     </div>
                                     <Button variant="outline" size="sm" onClick={handleStopAnalysis} className="rounded-full h-8 px-3 gap-2 border-red-200 text-red-500 hover:bg-red-50 font-black text-[9px] uppercase tracking-widest">
                                         <StopCircle className="w-3 h-3" /> Stop
                                     </Button>
                                 </div>
-                                {isQuestionType && (
-                                    <div className="space-y-4 w-full max-w-lg">
-                                        <div className="flex items-center gap-2 px-1">
-                                            <Globe className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Accessing Medical Guidelines</span>
-                                        </div>
-                                        <div className="h-14 bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 flex items-center px-5">
-                                            <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 fade-in duration-500 w-full">
-                                                <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                <p className="text-[11px] md:text-sm font-bold text-slate-600 dark:text-[#c4c7c5] truncate">Consulting <span className="text-primary">{medicalSources[currentSourceIndex]}</span></p>
-                                            </div>
-                                        </div>
+                                <div className="h-14 bg-white/40 dark:bg-[#131314]/40 rounded-2xl border border-dashed border-slate-200 flex items-center px-5 max-w-xs">
+                                    <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-3 duration-500 w-full">
+                                        <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
+                                        <p className="text-[11px] font-bold text-slate-600 dark:text-[#c4c7c5] truncate">Consulting <span className="text-primary">{medicalSources[currentSourceIndex]}</span></p>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -634,9 +567,9 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        {/* Improved Floating Input Footer (Higher Z-index and Safe-Bottom) */}
+        {/* Floating Input with Hide on Scroll */}
         <div className={cn(
-            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
+            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-in-out px-4 pb-10",
             !isInputVisible && hasMessages ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
         )}>
             <form ref={formRef} action={onFormAction} className="max-w-3xl mx-auto flex flex-col gap-4">
@@ -648,14 +581,14 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 )}
-                <div className="relative flex flex-col rounded-[2.8rem] bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-2xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.3)] p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10 transition-all">
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-2xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.3)] p-3 border border-white dark:border-[#3c4043] focus-within:ring-4 focus-within:ring-primary/10 transition-all">
                     <div className="flex-1">
                         <Textarea 
                             ref={queryInputRef} 
                             name="query" 
                             placeholder={activeMode === 'doctor' ? `Consult Dr. ${specialty.split(' ').pop()}...` : "Analyze report or ask anything..."}
                             className={cn(
-                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300 overflow-y-auto caret-primary", 
+                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-[#e3e3e3] placeholder:text-slate-400 resize-none transition-all duration-300 overflow-y-auto", 
                                 (isFocused || isTyping || attachedImage) ? "min-h-[60px] max-h-[200px]" : "min-h-[46px] max-h-[46px]"
                             )}
                             rows={1} onFocus={() => setIsFocused(true)} onBlur={(e) => { if (!e.target.value) setIsFocused(false); }}
@@ -665,8 +598,7 @@ export default function HealthAssistantPage() {
                                 const newHeight = Math.min(target.scrollHeight, 200);
                                 target.style.height = `${newHeight}px`; 
                                 setIsTyping(target.value.length > 0); 
-                                // Ensure cursor stays in view on Android
-                                target.scrollTop = target.scrollHeight;
+                                target.scrollTop = target.scrollHeight; // Focus on cursor
                             }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(new FormData(formRef.current!)); } }} />
                     </div>
@@ -682,15 +614,14 @@ export default function HealthAssistantPage() {
                                         <Button type="button" variant="ghost" className={cn("h-11 px-5 rounded-full gap-2.5 text-[10px] font-black uppercase tracking-widest transition-all", modeConfig[pulseMode].bg, modeConfig[pulseMode].color)}>
                                             {React.createElement(modeConfig[pulseMode].icon, { className: "h-3.5 w-3.5" })}
                                             <span className="hidden sm:inline">{modeConfig[pulseMode].label}</span>
-                                            <ChevronRight className="h-3 w-3 rotate-90 opacity-40" />
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-72 rounded-[2.5rem] p-4 mb-6 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-xl border-none shadow-2xl" side="top" align="start">
-                                        <RadioGroup value={pulseMode} onValueChange={(v) => { setPulseMode(v as PulseMode); toast({ title: `${modeConfig[v as PulseMode].label} Activated` }); }} className="gap-2">
+                                        <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
                                             {Object.entries(modeConfig).map(([val, cfg]) => (
                                                 <div key={val} className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
                                                     <RadioGroupItem value={val} id={val} className="sr-only" />
-                                                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-900 shadow-sm">
+                                                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131314] group-has-[:checked]:bg-white shadow-sm">
                                                         {React.createElement(cfg.icon, { className: cn("w-4 h-4", cfg.color) })}
                                                     </div>
                                                     <Label htmlFor={val} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">{cfg.label}</Label>
@@ -709,7 +640,7 @@ export default function HealthAssistantPage() {
                             )}
                             {(isTyping || isRecording || attachedImage) && (
                                 <div className="flex items-center gap-3">
-                                    {isRecording && <Button type="button" size="icon" onClick={() => { setIsRecording(false); }} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse"><MicOff className="w-5 h-5" /></Button>}
+                                    {isRecording && <Button type="button" size="icon" onClick={() => setIsRecording(false)} className="h-12 w-12 rounded-full bg-red-500 text-white animate-pulse"><MicOff className="w-5 h-5" /></Button>}
                                     <Button type="submit" disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white transition-all hover:scale-105 shadow-lg shadow-primary/20">
                                         {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                     </Button>
@@ -718,7 +649,6 @@ export default function HealthAssistantPage() {
                         </div>
                     </div>
                 </div>
-                <p className="text-[8px] text-center text-slate-400 font-black uppercase tracking-widest mt-1">AI Insights are educational. Consult a physical doctor for official diagnosis.</p>
             </form>
         </div>
     </div>
