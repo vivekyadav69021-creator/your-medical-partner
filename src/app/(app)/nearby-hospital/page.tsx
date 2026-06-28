@@ -29,11 +29,13 @@ import {
     Compass,
     Settings2,
     Map as MapIcon,
-    Search
+    Search,
+    Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // --- CONSTANTS ---
 const VAPI_COORDINATES: [number, number] = [20.3712, 72.9102];
@@ -204,7 +206,10 @@ export default function NearbyHospitalPage() {
       
       {/* 1. BRANDED COMPACT HEADER */}
       <header className="shrink-0 pt-6 pb-4 px-6 flex items-center justify-between z-50">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <SidebarTrigger className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-sm active:scale-95 transition-all">
+              <Menu className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
+          </SidebarTrigger>
           <Link href="/dashboard">
             <div className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-sm active:scale-95 transition-all">
                 <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />

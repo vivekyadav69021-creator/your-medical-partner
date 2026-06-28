@@ -23,8 +23,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isDiseaseScanner = pathname === '/disease-scanner';
   const isFoodScanner = pathname === '/food-scanner';
   const isVideoLibrary = pathname === '/video-tutorials';
+  const isNearbyHospital = pathname === '/nearby-hospital';
   
-  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary;
+  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary || isNearbyHospital;
   const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary; 
 
   return (
