@@ -156,7 +156,6 @@ export default function HealthAssistantPage() {
     return () => viewport.removeEventListener('scroll', handleScroll);
   }, [hasMessages]);
 
-  // Sync state to message list when action completes
   useEffect(() => {
     if (!isGeneralPending && generalState.timestamp > 0) {
         if (!isManuallyStopped && (generalState.response || generalState.error)) {
@@ -179,7 +178,6 @@ export default function HealthAssistantPage() {
     }
   }, [doctorState, isDoctorPending, activeDoctorId, isManuallyStopped]);
 
-  // Persist sessions
   useEffect(() => {
     const savedGen = localStorage.getItem('health_assistant_gen_v2');
     const savedDoc = localStorage.getItem('health_assistant_doc_v2');
@@ -192,7 +190,6 @@ export default function HealthAssistantPage() {
     if (doctorSessions.length > 0) localStorage.setItem('health_assistant_doc_v2', JSON.stringify(doctorSessions));
   }, [generalSessions, doctorSessions]);
 
-  // Loading timers
   useEffect(() => {
     let timer: NodeJS.Timeout;
     let source: NodeJS.Timeout;
@@ -204,7 +201,6 @@ export default function HealthAssistantPage() {
     return () => { clearInterval(timer); clearInterval(source); };
   }, [isPending]);
 
-  // Scroll to bottom on new message
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -235,8 +231,8 @@ export default function HealthAssistantPage() {
     setIsFocused(false);
   }, [activeMode, specialty]);
 
-  const onFormAction = (formData: FormData | string) => {
-    let query = typeof formData === 'string' ? formData : (formData instanceof FormData ? formData.get('query') as string || '' : '');
+  const onFormAction = (queryText: string) => {
+    let query = queryText.trim();
     if (!query && !attachedImage) return;
 
     setIsManuallyStopped(false);
@@ -248,7 +244,6 @@ export default function HealthAssistantPage() {
         timestamp: Date.now()
     };
 
-    // UPDATE UI IMMEDIATELY
     let sid = currentSessionId;
     if (!sid) {
         sid = `session-${Date.now()}`;
@@ -275,7 +270,6 @@ export default function HealthAssistantPage() {
         } : s));
     }
 
-    // Trigger Server Action
     const payload = new FormData();
     payload.set('query', query);
     const updatedHistory = activeSession ? [...activeSession.messages, userMsg] : [userMsg];
@@ -292,7 +286,6 @@ export default function HealthAssistantPage() {
         }
     });
 
-    // Reset inputs
     if (queryInputRef.current) { queryInputRef.current.value = ''; queryInputRef.current.style.height = 'auto'; }
     setAttachedImage(null);
     setIsTyping(false);
@@ -345,7 +338,6 @@ export default function HealthAssistantPage() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body safe-top">
         
-        {/* HEADER: Premium Branded Layout */}
         <header className="h-16 px-4 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-50">
             <div className="flex items-center gap-3">
                 <SidebarTrigger className="h-11 w-11 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center transition-all">
@@ -408,7 +400,6 @@ export default function HealthAssistantPage() {
             </Sheet>
         </header>
 
-        {/* MAIN: Chat / Welcome Segment */}
         <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
             {!hasMessages && !isPending ? (
                 <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
@@ -513,7 +504,15 @@ export default function HealthAssistantPage() {
                                                         h2: ({node, ...props}) => <h2 {...props} className="text-xl font-black uppercase text-[#1A365D] dark:text-white tracking-tight mt-10 mb-5 border-l-[6px] border-primary pl-5" />,
                                                         p: ({node, ...props}) => <p {...props} className="mb-5" />,
                                                         ul: ({node, ...props}) => <ul {...props} className="space-y-2 mb-6 list-none pl-2" />,
-                                                        li: ({node, ...props}) => <li {...props} className="flex gap-3 items-start before:content-[''] before:h-2 before:w-2 before:bg-primary/40 before:rounded-full before:mt-2.5" />
+                                                        li: ({node, ...props}) => <li {...props} className="flex gap-3 items-start before:content-[''] before:h-2 before:w-2 before:bg-primary/40 before:rounded-full before:mt-2.5" />,
+                                                        table: ({node, ...props}) => (
+                                                            <div className="w-full overflow-x-auto my-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                                                <table {...props} className="w-full border-collapse text-left" />
+                                                            </div>
+                                                        ),
+                                                        thead: ({node, ...props}) => <thead {...props} className="bg-slate-50 dark:bg-slate-900" />,
+                                                        th: ({node, ...props}) => <th {...props} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 dark:border-slate-800" />,
+                                                        td: ({node, ...props}) => <td {...props} className="px-4 py-3 text-xs font-bold border-b border-slate-100 dark:border-slate-800/50" />,
                                                     }}
                                                 >
                                                     {m.content}
@@ -564,7 +563,6 @@ export default function HealthAssistantPage() {
             )}
         </main>
 
-        {/* INPUT: Fixed Floating Bar with Advanced Logic */}
         <div className={cn(
             "fixed bottom-0 left-0 right-0 z-40 transition-all duration-700 ease-in-out px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
             (!isInputVisible && hasMessages) || (activeMode === 'doctor' && !activeDoctorId) ? "translate-y-[130%] opacity-0" : "translate-y-0 opacity-100"
