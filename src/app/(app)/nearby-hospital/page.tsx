@@ -26,9 +26,10 @@ import {
     Stethoscope,
     Activity,
     LocateFixed,
-    ChevronRight,
     Compass,
-    Map as MapIcon
+    Settings2,
+    Map as MapIcon,
+    Search
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
@@ -65,7 +66,7 @@ const MapComponent = dynamic(() => Promise.resolve(({ center, elements, userIcon
     <MapContainer center={center} zoom={15} className="w-full h-full" zoomControl={false}>
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        attribution='&copy; OSM'
+        attribution='&copy; OpenStreetMap'
       />
       <ChangeView center={center} />
       
@@ -77,12 +78,14 @@ const MapComponent = dynamic(() => Promise.resolve(({ center, elements, userIcon
         return (
           <Marker key={el.id} position={pos} icon={poiIcon}>
             <Popup className="medical-popup">
-              <div className="p-1 space-y-2 min-w-[140px]">
-                <p className="font-black text-[11px] uppercase text-slate-800 leading-tight">{el.tags?.name || "Medical Node"}</p>
-                <div className="flex flex-col gap-1.5">
-                   <p className="text-[9px] font-bold text-primary uppercase tracking-widest">{el.calculatedDist?.toFixed(1)} KM Away</p>
-                   <Button size="sm" className="w-full h-8 text-[9px] uppercase font-black rounded-lg" onClick={() => openInMaps(el)}>Route</Button>
+              <div className="p-2 space-y-3 min-w-[160px]">
+                <div className="space-y-1">
+                    <p className="font-black text-[11px] uppercase text-primary leading-tight tracking-tight">{el.tags?.name || "Medical Site"}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase">{el.calculatedDist?.toFixed(2)} KM FROM YOU</p>
                 </div>
+                <Button size="sm" className="w-full h-9 text-[10px] uppercase font-black rounded-xl shadow-lg shadow-primary/20" onClick={() => openInMaps(el)}>
+                    <Navigation className="w-3.5 h-3.5 mr-2" /> Start Route
+                </Button>
               </div>
             </Popup>
           </Marker>
@@ -113,13 +116,13 @@ export default function NearbyHospitalPage() {
   const icons = useMemo(() => {
     if (!L) return { user: null, poi: null };
     const user = L.divIcon({
-      className: 'user-radar-marker',
-      html: `<div class="relative flex items-center justify-center h-8 w-8"><div class="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div><div class="h-4 w-4 bg-primary rounded-full border-2 border-white shadow-2xl z-10"></div></div>`,
-      iconSize: [32, 32], iconAnchor: [16, 16],
+      className: 'user-marker',
+      html: `<div class="relative h-10 w-10 flex items-center justify-center"><div class="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div><div class="h-5 w-5 bg-primary rounded-full border-4 border-white shadow-2xl z-10"></div></div>`,
+      iconSize: [40, 40], iconAnchor: [20, 20],
     });
     const poi = L.divIcon({
-      className: 'medical-pin-marker',
-      html: `<div class="flex items-center justify-center"><svg width="28" height="34" viewBox="0 0 34 42" fill="none"><path d="M17 0C7.61116 0 0 7.61116 0 17C0 29.75 17 42 17 42C17 42 34 29.75 34 17C34 7.61116 26.3888 0 17 0Z" fill="#EF4444"/><circle cx="17" cy="17" r="7" fill="white"/><path d="M17 13V21M14 17H20" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg></div>`,
+      className: 'poi-marker',
+      html: `<div class="flex items-center justify-center transition-transform hover:scale-110 active:scale-95"><svg width="34" height="42" viewBox="0 0 34 42" fill="none"><path d="M17 0C7.611 0 0 7.611 0 17C0 29.75 17 42 17 42C17 42 34 29.75 34 17C34 7.611 26.388 0 17 0Z" fill="#2488E8"/><circle cx="17" cy="17" r="7" fill="white"/><path d="M17 13V21M14 17H20" stroke="#2488E8" stroke-width="2" stroke-linecap="round"/></svg></div>`,
       iconSize: [34, 42], iconAnchor: [17, 42], popupAnchor: [0, -42],
     });
     return { user, poi };
@@ -156,10 +159,9 @@ export default function NearbyHospitalPage() {
       }).sort((a: any, b: any) => a.calculatedDist - b.calculatedDist);
 
       setElements(results);
-      setStatus(results.length === 0 ? "No locations found." : `${results.length} sites ready.`);
+      setStatus(results.length === 0 ? "No sites found" : `${results.length} results ready`);
     } catch (err: any) {
-      console.error(err);
-      setStatus("Error loading data.");
+      setStatus("Sync Error");
     } finally {
       setIsLoading(false);
     }
@@ -185,17 +187,11 @@ export default function NearbyHospitalPage() {
         setUserLocation(VAPI_COORDINATES);
         fetchOSMNodes(VAPI_COORDINATES[0], VAPI_COORDINATES[1], activeMode, radius);
       },
-      { timeout: 5000, enableHighAccuracy: true }
+      { timeout: 8000, enableHighAccuracy: true }
     );
   }, [activeMode, radius, fetchOSMNodes]);
 
   useEffect(() => { syncGPS(); }, []);
-
-  useEffect(() => {
-      if (userLocation) {
-          fetchOSMNodes(userLocation[0], userLocation[1], activeMode, radius);
-      }
-  }, [activeMode, radius]);
 
   const openInMaps = (el: any) => {
     const lat = el.lat || el.center?.lat;
@@ -204,148 +200,160 @@ export default function NearbyHospitalPage() {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col h-[100dvh] bg-slate-50 dark:bg-[#020617] overflow-hidden font-body safe-top">
+    <div className="fixed inset-0 flex flex-col h-[100dvh] bg-gradient-to-b from-white to-[#f0f4ff] dark:from-[#020617] dark:to-[#020617] overflow-hidden font-body safe-top">
       
-      {/* 1. COMPACT HEADER */}
-      <header className="shrink-0 py-3 px-4 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between z-50 shadow-sm">
-        <div className="flex items-center gap-3">
+      {/* 1. BRANDED COMPACT HEADER */}
+      <header className="shrink-0 pt-6 pb-4 px-6 flex items-center justify-between z-50">
+        <div className="flex items-center gap-4">
           <Link href="/dashboard">
-            <div className="h-10 w-10 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center">
-                <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            <div className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-sm active:scale-95 transition-all">
+                <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
             </div>
           </Link>
-          <div>
-            <h1 className="text-sm font-black text-[#1A365D] dark:text-white uppercase leading-none tracking-tighter">Medical Radar</h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-                <div className={cn("h-1 w-1 rounded-full", isLoading ? "bg-blue-400 animate-pulse" : "bg-emerald-500")} />
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{status}</p>
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-black text-[#1A365D] dark:text-white uppercase leading-none tracking-tighter">Medical Radar</h1>
+            <div className="flex items-center gap-2">
+                <div className={cn("h-1.5 w-1.5 rounded-full", isLoading ? "bg-blue-400 animate-pulse" : "bg-emerald-500")} />
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{status}</p>
             </div>
           </div>
         </div>
-        <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={syncGPS} 
-            disabled={isLoading} 
-            className={cn("rounded-full h-9 w-9 bg-primary/5", isLoading && "animate-spin")}
-        >
-            <RotateCcw className="h-4 w-4 text-primary" />
-        </Button>
       </header>
 
-      {/* 2. MODE SELECTOR (HORIZONTAL TOUCH) */}
-      <div className="shrink-0 bg-white dark:bg-slate-950 border-b border-slate-50 dark:border-slate-800 z-40">
-          <div className="flex items-center gap-2 overflow-x-auto px-4 py-2 scrollbar-hide no-scrollbar">
+      {/* 2. MODE SELECTOR ROW (NO OVERLAP) */}
+      <div className="shrink-0 pb-4">
+          <div className="flex items-center gap-2.5 overflow-x-auto px-6 scrollbar-hide no-scrollbar pb-2">
             {(Object.keys(MODE_CONFIG) as MedicalMode[]).map((m) => {
               const cfg = MODE_CONFIG[m];
               const isActive = activeMode === m;
               return (
                 <button 
                   key={m} 
-                  onClick={() => setActiveMode(m)} 
+                  onClick={() => { setActiveMode(m); fetchOSMNodes(userLocation![0], userLocation![1], m, radius); }} 
                   className={cn(
-                    "flex items-center gap-2 px-5 py-2 rounded-xl transition-all whitespace-nowrap text-[10px] font-black uppercase tracking-widest shrink-0 border",
+                    "flex items-center gap-2.5 px-6 py-2.5 rounded-2xl transition-all whitespace-nowrap text-[10px] font-black uppercase tracking-widest shrink-0 border border-transparent shadow-sm",
                     isActive 
-                      ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" 
-                      : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-800"
+                      ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]" 
+                      : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 border-slate-50 dark:border-slate-800"
                   )}
                 >
-                  <cfg.icon className={cn("w-3 h-3", isActive ? "text-white" : cfg.color)} /> {cfg.label}
+                  <cfg.icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : cfg.color)} /> {cfg.label}
                 </button>
               );
             })}
           </div>
       </div>
 
-      {/* 3. MAP SEGMENT (TOP WINDOW) */}
-      <div className="shrink-0 w-full h-[35vh] relative z-10 bg-slate-100 dark:bg-slate-900">
-            {userLocation && icons.user ? (
-                <MapComponent center={userLocation} elements={elements} userIcon={icons.user} poiIcon={icons.poi} openInMaps={openInMaps} />
-            ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                    <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">GPS Locking...</p>
-                </div>
-            )}
-            
-            {/* Range Chip over Map */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000]">
-                <Select value={radius} onValueChange={setRadius}>
-                    <SelectTrigger className="h-8 w-32 rounded-full bg-white/95 dark:bg-slate-900/95 border-none font-black text-[9px] uppercase shadow-2xl backdrop-blur-xl ring-1 ring-black/5">
-                        <LocateFixed className="w-3 h-3 mr-2 text-primary" />
-                        <SelectValue placeholder="Range" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-2xl">
-                        <SelectItem value="2000" className="font-bold text-[9px] uppercase py-2">2 KM Range</SelectItem>
-                        <SelectItem value="5000" className="font-bold text-[9px] uppercase py-2">5 KM Range</SelectItem>
-                        <SelectItem value="10000" className="font-bold text-[9px] uppercase py-2">10 KM Range</SelectItem>
-                    </SelectContent>
-                </Select>
+      {/* 3. FLOATING CURVED MAP CONTAINER */}
+      <div className="shrink-0 px-6 w-full h-[30vh] relative z-10">
+            <div className="w-full h-full rounded-[2.8rem] overflow-hidden shadow-[0_30px_70px_-15px_rgba(0,0,0,0.15)] border-4 border-white dark:border-slate-800 relative bg-slate-100 dark:bg-slate-900 transition-all duration-700">
+                {userLocation && icons.user ? (
+                    <MapComponent center={userLocation} elements={elements} userIcon={icons.user} poiIcon={icons.poi} openInMaps={openInMaps} />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+                            <Loader2 className="h-10 w-10 text-primary animate-spin relative z-10" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.3em]">GPS Sync Active...</p>
+                    </div>
+                )}
             </div>
       </div>
 
-      {/* 4. LIST SEGMENT (NATIVE BOTTOM SHEET FEEL) */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-t-[2.5rem] shadow-[0_-12px_40px_rgba(0,0,0,0.12)] -mt-6 relative z-20 flex flex-col border-t border-slate-50 dark:border-slate-800">
-            
-            {/* Native Sheet Handle */}
-            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto my-3 shrink-0" />
-
-            <div className="px-5 pb-3 shrink-0 flex items-center justify-between">
-                <h3 className="text-[11px] font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-[0.2em] flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-primary" />
-                    Nearby Provider
-                </h3>
-                <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black rounded-lg">{elements.length} FOUND</Badge>
+      {/* 4. FILTER & CONTROL BAR (SPACING BETWEEN MAP & LIST) */}
+      <div className="shrink-0 px-8 py-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <LocateFixed className="w-5 h-5" />
+                </div>
+                <Select value={radius} onValueChange={(val) => { setRadius(val); if(userLocation) fetchOSMNodes(userLocation[0], userLocation[1], activeMode, val); }}>
+                    <SelectTrigger className="h-10 w-32 rounded-xl bg-white dark:bg-slate-900 border-none font-black text-[10px] uppercase shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+                        <SelectValue placeholder="Range" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-none shadow-2xl">
+                        <SelectItem value="2000" className="font-bold text-[9px] uppercase py-3">2 KM Search</SelectItem>
+                        <SelectItem value="5000" className="font-bold text-[9px] uppercase py-3">5 KM Search</SelectItem>
+                        <SelectItem value="10000" className="font-bold text-[9px] uppercase py-3">10 KM Search</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 pb-32 space-y-3 no-scrollbar">
+            <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={syncGPS} 
+                disabled={isLoading} 
+                className={cn("h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-sm active:scale-95 transition-all", isLoading && "animate-spin")}
+            >
+                <RotateCcw className="h-5 w-5 text-primary" />
+            </Button>
+      </div>
+
+      {/* 5. NATIVE BOTTOM SHEET LIST (CONNECTED TO BOTTOM) */}
+      <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.08)] relative z-20 flex flex-col border-t border-slate-50 dark:border-slate-800 animate-in slide-in-from-bottom-10 duration-1000">
+            
+            {/* Sheet Handle */}
+            <div className="w-14 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto my-4 shrink-0" />
+
+            <div className="px-8 pb-4 shrink-0 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Compass className="w-5 h-5 text-primary" />
+                    <h3 className="text-[12px] font-black uppercase text-[#1A365D] dark:text-white tracking-[0.15em]">Near Your Area</h3>
+                </div>
+                <Badge className="bg-primary text-white border-none text-[8px] font-black rounded-lg px-3 py-1 shadow-lg shadow-primary/20">{elements.length} FOUND</Badge>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 pb-40 space-y-4 no-scrollbar scroll-smooth">
                 {isLoading ? (
-                    <div className="space-y-3 pt-2">
-                        {[...Array(4)].map((_, i) => (
-                            <div key={i} className="flex gap-4 p-4 rounded-2xl animate-pulse bg-slate-50 dark:bg-slate-900">
-                                <div className="h-11 w-11 bg-slate-100 dark:bg-slate-800 rounded-xl shrink-0" />
-                                <div className="flex-1 space-y-2 py-1">
-                                    <div className="h-3 w-2/3 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                                    <div className="h-2 w-full bg-slate-50 dark:bg-slate-900/50 rounded-full" />
+                    <div className="space-y-4 pt-2">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="flex gap-5 p-6 rounded-[2rem] animate-pulse bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                <div className="h-14 w-14 bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] shrink-0" />
+                                <div className="flex-1 space-y-3 py-1">
+                                    <div className="h-4 w-2/3 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                                    <div className="h-3 w-full bg-slate-50 dark:bg-slate-900/50 rounded-full" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : elements.length > 0 ? (
-                    <div className="space-y-3 pt-1">
+                    <div className="space-y-4 pt-1">
                         {elements.map((el) => {
                             const cfg = MODE_CONFIG[activeMode];
                             return (
-                                <div key={el.id} className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100/50 dark:border-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all group">
-                                    <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm", cfg.bg, cfg.color)}>
-                                        <cfg.icon className="h-6 w-6" />
+                                <div key={el.id} className="flex items-start gap-5 p-6 bg-slate-50/60 dark:bg-slate-900/40 rounded-[2.2rem] border border-slate-100/50 dark:border-slate-800/50 hover:bg-white dark:hover:bg-slate-900 transition-all group active:scale-[0.98] shadow-sm">
+                                    <div className={cn("h-14 w-14 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-inner group-hover:rotate-6 transition-transform", cfg.bg, cfg.color)}>
+                                        <cfg.icon className="h-7 w-7" />
                                     </div>
                                     
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2 mb-1">
-                                            <h4 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight truncate leading-tight">
+                                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                                            <h4 className="text-[14px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight truncate leading-tight">
                                                 {el.tags?.name || "Medical Provider"}
                                             </h4>
-                                            <span className="text-[9px] font-black text-primary shrink-0">
-                                                {el.calculatedDist?.toFixed(1)} KM
-                                            </span>
+                                            <div className="flex flex-col items-end shrink-0">
+                                                <span className="text-[10px] font-black text-primary tracking-tighter">
+                                                    {el.calculatedDist?.toFixed(2)} KM
+                                                </span>
+                                            </div>
                                         </div>
                                         
-                                        <div className="flex items-center gap-1.5 opacity-60 mb-3">
-                                            <MapPin className="h-2.5 w-2.5 text-slate-400" />
+                                        <div className="flex items-center gap-1.5 opacity-60 mb-5">
+                                            <MapPin className="h-3 w-3 text-slate-400" />
                                             <p className="text-[9px] font-bold truncate leading-none uppercase tracking-tighter">
-                                                {el.tags?.["addr:street"] || el.tags?.["addr:city"] || "Vapi, Gujarat"}
+                                                {el.tags?.["addr:street"] || el.tags?.["addr:city"] || "Vapi Industrial Area, Gujarat"}
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <Button onClick={() => openInMaps(el)} size="sm" className="h-8 rounded-lg bg-primary text-white px-4 text-[9px] font-black uppercase tracking-widest border-none shadow-md active:scale-95 transition-all">
-                                                <Navigation className="h-3 w-3 mr-1.5" /> Directions
+                                        <div className="flex items-center gap-3">
+                                            <Button onClick={() => openInMaps(el)} size="sm" className="h-10 rounded-xl bg-primary text-white px-6 text-[10px] font-black uppercase tracking-widest border-none shadow-[0_10px_20px_-5px_rgba(36,136,232,0.4)] active:scale-95 transition-all">
+                                                <Navigation className="h-3.5 w-3.5 mr-2" /> Route Now
                                             </Button>
                                             {el.tags?.phone && (
-                                                <Button asChild size="sm" variant="outline" className="h-8 rounded-lg text-emerald-600 bg-emerald-50/30 border-emerald-100 px-4 text-[9px] font-black uppercase tracking-widest">
+                                                <Button asChild size="sm" variant="outline" className="h-10 w-10 p-0 rounded-xl text-emerald-600 bg-emerald-50/50 border-emerald-100 shadow-sm active:scale-95 transition-all">
                                                     <a href={`tel:${el.tags.phone}`}>
-                                                        <PhoneCall className="h-3 w-3 mr-1.5" /> Call
+                                                        <PhoneCall className="h-4 w-4" />
                                                     </a>
                                                 </Button>
                                             )}
@@ -356,15 +364,15 @@ export default function NearbyHospitalPage() {
                         })}
                     </div>
                 ) : (
-                    <div className="py-20 text-center space-y-5">
-                        <div className="h-20 w-20 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] flex items-center justify-center mx-auto border-2 border-dashed border-slate-100 dark:border-slate-800">
-                            <ShieldAlert className="h-8 w-8 text-slate-200" />
+                    <div className="py-24 text-center space-y-6">
+                        <div className="h-24 w-24 bg-slate-50 dark:bg-slate-900 rounded-[2.8rem] flex items-center justify-center mx-auto border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-inner">
+                            <ShieldAlert className="h-10 w-10 text-slate-200" />
                         </div>
                         <div className="space-y-1">
-                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">No results found</p>
-                             <p className="text-[9px] font-bold text-slate-300 uppercase">Try a larger search radius</p>
+                             <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">No Facilities Found</p>
+                             <p className="text-[9px] font-bold text-slate-300 uppercase px-12">Increase your search radius to scan more areas.</p>
                         </div>
-                        <Button onClick={syncGPS} variant="outline" className="rounded-full px-8 h-11 font-black uppercase text-[10px] tracking-widest">Refresh Radar</Button>
+                        <Button onClick={syncGPS} variant="outline" className="rounded-full px-10 h-12 font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary">Restart Radar</Button>
                     </div>
                 )}
             </div>
@@ -374,9 +382,13 @@ export default function NearbyHospitalPage() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .medical-popup .leaflet-popup-content-wrapper {
-            border-radius: 20px;
-            padding: 4px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            border-radius: 24px;
+            padding: 8px;
+            box-shadow: 0 30px 60px -10px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+        .medical-popup .leaflet-popup-tip {
+            display: none;
         }
       `}</style>
     </div>
