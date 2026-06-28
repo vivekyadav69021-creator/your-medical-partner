@@ -56,6 +56,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // --- CONSTANTS & LABELS ---
 
@@ -100,6 +101,18 @@ const INITIAL_CHALLENGES = [
     daily: Array(7).fill(false),
     category: 'Diet',
     isCustom: false
+  },
+  {
+      id: 'ch-3',
+      title: 'Mental Clarity',
+      description: '15 mins of guided meditation for 14 days.',
+      reward: 'Zen Master Badge',
+      progress: 0,
+      total: 14,
+      status: 'new',
+      daily: Array(14).fill(false),
+      category: 'Mental',
+      isCustom: false
   }
 ];
 
@@ -135,14 +148,14 @@ export default function ChallengesPage() {
     const [newChallengeDays, setNewChallengeDays] = useState('7');
 
     useEffect(() => {
-        const saved = localStorage.getItem('user_health_challenges_v4');
+        const saved = localStorage.getItem('user_health_challenges_v5');
         if (saved) setChallenges(JSON.parse(saved));
         else setChallenges(INITIAL_CHALLENGES);
     }, []);
 
     useEffect(() => {
         if (challenges.length > 0) {
-            localStorage.setItem('user_health_challenges_v4', JSON.stringify(challenges));
+            localStorage.setItem('user_health_challenges_v5', JSON.stringify(challenges));
         }
     }, [challenges]);
 
@@ -183,7 +196,7 @@ export default function ChallengesPage() {
         const newC = {
             id,
             title: newChallengeTitle,
-            description: `User defined custom goal for ${days} days.`,
+            description: `Personalized goal for ${days} days.`,
             reward: 'Personal Mastery',
             progress: 0,
             total: days,
@@ -194,24 +207,24 @@ export default function ChallengesPage() {
         };
         setChallenges(prev => [newC, ...prev]);
         setNewChallengeTitle('');
-        toast({ title: "Task Added", description: "Your custom goal is now active." });
+        toast({ title: "Goal Activated", description: "Your custom mission has started." });
     };
 
     const deleteChallenge = (id: string) => {
         setChallenges(prev => prev.filter(c => c.id !== id));
-        toast({ title: "Removed", description: "Goal removed from your arena." });
+        toast({ title: "Goal Removed" });
     };
 
     // --- LOGIC: AI HEALTH PLANNER ---
     const generatePlanner = () => {
         if (!formData.name || !formData.weight) {
-            toast({ variant: 'destructive', title: 'Data Missing', description: 'Please fill in your name and weight.' });
+            toast({ variant: 'destructive', title: 'Bio-Data Required', description: 'Please fill in your name and weight.' });
             return;
         }
 
         setIsGenerating(true);
         
-        // Simulate AI Logic for different personas
+        // Simulate Deep Analysis
         setTimeout(() => {
             const w = Number(formData.weight);
             const a = Number(formData.age);
@@ -223,59 +236,54 @@ export default function ChallengesPage() {
             const activityMult = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 }[formData.activity as any] || 1.375;
             let calories = Math.round(bmr * activityMult);
             
-            // Adjust based on Goal Persona
             if (formData.goal === 'lose') calories -= 500;
             if (formData.goal === 'gain') calories += 400;
 
             const dietPlans = {
                 maintain: [
-                    { meal: 'Wake up (7 AM)', desc: lang === 'en' ? 'Honey Lemon Water + 5 Almonds' : 'शहद नींबू पानी + 5 बादाम' },
-                    { meal: 'Breakfast (9 AM)', desc: lang === 'en' ? 'Poha with veggies OR Vegetable Omelette' : 'सब्जियों वाला पोहा या वेजिटेबल ऑमलेट' },
-                    { meal: 'Lunch (1:30 PM)', desc: lang === 'en' ? '2 Rotis + Seasonal Veg + Curd + Salad' : '2 रोटी + मौसमी सब्जी + दही + सलाद' },
-                    { meal: 'Dinner (8 PM)', desc: lang === 'en' ? 'Paneer Stir-fry OR Moong Dal Khichdi' : 'पनीर स्टिर-फ्राई या मूंग दाल खिचड़ी' },
+                    { meal: 'Wake up', desc: 'Warm Water + Handful of soaked almonds' },
+                    { meal: 'Breakfast', desc: 'Mixed Veg Poha or Masala Oats' },
+                    { meal: 'Lunch', desc: 'Dal, Rice, 1 Roti, Curd & seasonal Salad' },
+                    { meal: 'Dinner', desc: 'Grilled Paneer or Moong Dal Khichdi' },
                 ],
                 lose: [
-                    { meal: 'Wake up (7 AM)', desc: lang === 'en' ? 'Green Tea + 2 Walnuts' : 'ग्रीन टी + 2 अखरोट' },
-                    { meal: 'Breakfast (9 AM)', desc: lang === 'en' ? 'Oats with low-fat milk OR Besan Chilla' : 'ओट्स + लो-फैट मिल्क या बेसन चिल्ला' },
-                    { meal: 'Lunch (1:30 PM)', desc: lang === 'en' ? '1 Roti + Large bowl of Dal + Steamed Veg' : '1 रोटी + बड़ी कटोरी दाल + उबली सब्जियां' },
-                    { meal: 'Dinner (7:30 PM)', desc: lang === 'en' ? 'Clear Soup + Grilled Chicken/Paneer' : 'क्लियर सूप + ग्रिल्ड चिकन/पनीर' },
+                    { meal: 'Wake up', desc: 'Green Tea or Lemon Honey Water' },
+                    { meal: 'Breakfast', desc: 'Besan Chilla or Boiled Egg Whites' },
+                    { meal: 'Lunch', desc: 'Large bowl of Dal with seasonal vegetables (No Rice)' },
+                    { meal: 'Dinner', desc: 'Vegetable Soup or Clear Chicken Broth' },
                 ],
                 gain: [
-                    { meal: 'Wake up (7 AM)', desc: lang === 'en' ? 'Banana Shake + Handful of Peanuts' : 'बनाना शेक + मुट्ठी भर मूंगफली' },
-                    { meal: 'Breakfast (9 AM)', desc: lang === 'en' ? 'Stuffed Paratha + Curd + 2 Eggs' : 'भरवां पराठा + दही + 2 अंडे' },
-                    { meal: 'Lunch (1:30 PM)', desc: lang === 'en' ? '2-3 Rotis + Rice + Paneer/Egg Curry + Salad' : '2-3 रोटी + चावल + पनीर/अंडा करी + सलाद' },
-                    { meal: 'Dinner (8:30 PM)', desc: lang === 'en' ? 'Rice + Dal + Chicken/Soya Chunks + Veg' : 'चावल + दाल + चिकन/सोया चंक्स + सब्जी' },
+                    { meal: 'Wake up', desc: 'Banana Milkshake or Peanut Butter Toast' },
+                    { meal: 'Breakfast', desc: 'Stuffed Paratha with Curd and 2 Whole Eggs' },
+                    { meal: 'Lunch', desc: 'Paneer/Chicken Curry, Rice, 2 Rotis & Salad' },
+                    { meal: 'Dinner', desc: 'High Protein Dal, Rice & Grilled Chicken/Soya' },
                 ]
             };
 
             const exPlans = {
-                maintain: [
-                    { day: 'Daily', type: lang === 'en' ? '30 mins Brisk Walking / Yoga' : '30 मिनट तेज चलना / योग' },
-                ],
+                maintain: [ { day: 'Daily', type: '30 mins Brisk Walking + 10 mins Surya Namaskar' } ],
                 lose: [
-                    { day: 'Mon-Fri', type: lang === 'en' ? '45 mins High Intensity Cardio' : '45 मिनट हाई इंटेंसिटी कार्डियो' },
-                    { day: 'Sat', type: lang === 'en' ? 'Full Body Stretching' : 'फुल बॉडी स्ट्रेचिंग' },
+                    { day: 'Morning', type: '45 mins HIIT / Jogging' },
+                    { day: 'Evening', type: '15 mins Deep Stretching' },
                 ],
                 gain: [
-                    { day: 'Mon/Wed/Fri', type: lang === 'en' ? 'Strength Training (Push/Pull)' : 'स्ट्रेंथ ट्रेनिंग (पुश/पुल)' },
-                    { day: 'Tue/Thu', type: lang === 'en' ? 'Lower Body / Core Focus' : 'लोअर बॉडी / कोर फोकस' },
+                    { day: 'Mon-Wed-Fri', type: 'Weight Training (Compound Movements)' },
+                    { day: 'Tue-Thu', type: 'Core Strength + 20 mins Cardio' },
                 ]
             };
 
             const newPlanner = {
                 id: Date.now(),
-                createdAt: new Date().toISOString(),
                 bmi,
                 calories,
                 diet: dietPlans[formData.goal as keyof typeof dietPlans] || dietPlans.maintain,
                 exercise: exPlans[formData.goal as keyof typeof exPlans] || exPlans.maintain,
-                warnings: formData.medical ? (lang === 'en' ? `Caution: Adjusted for ${formData.medical}` : `सावधानी: ${formData.medical} के लिए समायोजित`) : null
             };
 
             setPlanner(newPlanner);
             setIsGenerating(false);
-            toast({ title: "Architecture Built", description: "Your personalized health blueprint is ready." });
-        }, 2000);
+            toast({ title: "Architecture Complete", description: "Your blueprint is ready to download." });
+        }, 2500);
     };
 
     const downloadPDF = () => {
@@ -297,7 +305,7 @@ export default function ChallengesPage() {
         doc.setFontSize(11);
         doc.setTextColor(0, 0, 0);
         doc.text(`Patient: ${formData.name}`, 20, 45);
-        doc.text(`Status: ${formData.goal.toUpperCase()} | BMI: ${planner.bmi}`, 20, 52);
+        doc.text(`BMI: ${planner.bmi} | Goal: ${formData.goal.toUpperCase()}`, 20, 52);
         doc.text(`Target Energy: ${planner.calories} kcal/day`, 20, 59);
         
         doc.setFontSize(14);
@@ -305,10 +313,10 @@ export default function ChallengesPage() {
         const dietData = planner.diet.map((d: any) => [d.meal, d.desc]);
         (doc as any).autoTable({
             startY: 80,
-            head: [['Time', 'Nutrition Target']],
+            head: [['Time', 'Nutrition Strategy']],
             body: dietData,
             theme: 'grid',
-            headStyles: { fillColor: [36, 136, 232], fontSize: 10, fontStyle: 'bold' },
+            headStyles: { fillColor: [36, 136, 232], fontSize: 10 },
             bodyStyles: { fontSize: 9 }
         });
 
@@ -317,248 +325,225 @@ export default function ChallengesPage() {
         const exData = planner.exercise.map((e: any) => [e.day, e.type]);
         (doc as any).autoTable({
             startY: nextY + 5,
-            head: [['Schedule', 'Activity Type']],
+            head: [['Frequency', 'Training Type']],
             body: exData,
             theme: 'grid',
-            headStyles: { fillColor: [20, 207, 189], fontSize: 10, fontStyle: 'bold' },
+            headStyles: { fillColor: [244, 63, 94], fontSize: 10 },
             bodyStyles: { fontSize: 9 }
         });
 
-        doc.save(`${formData.name}_Health_Blueprint.pdf`);
-        toast({ title: "Report Ready", description: "PDF has been generated successfully." });
+        doc.save(`Health_Architecture_${formData.name}.pdf`);
+        toast({ title: "Report Downloaded" });
     };
 
     return (
-        <div className="flex flex-col h-[100dvh] w-full bg-[#f8fbff] dark:bg-[#020617] overflow-hidden fixed inset-0 font-body">
+        <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body safe-top">
             
-            {/* Native Header */}
-            <header className="h-16 px-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-50">
+            {/* Branded Native Header */}
+            <header className="h-16 px-4 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-50">
                 <div className="flex items-center gap-3">
                     <Link href="/dashboard">
-                        <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                            <ChevronLeft className="h-5 w-5" />
-                        </Button>
-                    </Link>
-                    <div className="space-y-0">
-                        <h1 className="text-lg font-black text-[#1A365D] dark:text-white uppercase leading-none tracking-tighter">Health Center</h1>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Bio-Sync Active</p>
+                        <div className="h-10 w-10 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-sm active:scale-95 transition-all">
+                            <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
                         </div>
+                    </Link>
+                    <div className="flex flex-col -space-y-0.5">
+                        <h1 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-none">Health</h1>
+                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.25em]">Challenges</p>
                     </div>
                 </div>
-                <Button variant="ghost" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} className="rounded-full h-9 px-4 gap-2 bg-primary/5 text-primary border border-primary/10">
+                <Button variant="ghost" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} className="rounded-2xl h-10 px-4 gap-2 bg-primary/5 text-primary border border-primary/10">
                     <Languages className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{lang === 'en' ? 'हिन्दी' : 'English'}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest">{lang === 'en' ? 'हिन्दी' : 'English'}</span>
                 </Button>
             </header>
 
-            {/* Main Content Area */}
-            <main className="flex-1 overflow-hidden relative">
-                <Tabs defaultValue="planner" className="h-full flex flex-col">
-                    <div className="px-6 pt-6 pb-2 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+            {/* Main Segmented Area */}
+            <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
+                <Tabs defaultValue="planner" className="flex-1 flex flex-col">
+                    <div className="px-4 py-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
                         <TabsList className="grid grid-cols-3 h-12 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border border-white/50 dark:border-slate-700/50">
-                            <TabsTrigger value="planner" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">AI Planner</TabsTrigger>
-                            <TabsTrigger value="challenges" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Active Arena</TabsTrigger>
-                            <TabsTrigger value="stats" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Analysis</TabsTrigger>
+                            <TabsTrigger value="planner" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">AI Planner</TabsTrigger>
+                            <TabsTrigger value="arena" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Arena</TabsTrigger>
+                            <TabsTrigger value="stats" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Stats</TabsTrigger>
                         </TabsList>
                     </div>
 
-                    <ScrollArea className="flex-1 px-6 pb-40 pt-4 scrollbar-hide">
+                    <ScrollArea className="flex-1 px-4 pb-40 scrollbar-hide">
                         
-                        {/* 1. AI PLANNER TAB */}
-                        <TabsContent value="planner" className="space-y-8 mt-0">
-                            <div className="space-y-2">
-                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Health Architect</h2>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Enter your bio-data to construct your weekly health architecture.</p>
+                        {/* 1. AI PLANNER - MODERN ARCHITECT */}
+                        <TabsContent value="planner" className="space-y-6 mt-0">
+                            <div className="space-y-1 mt-2">
+                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tighter uppercase leading-none">Health Architect</h2>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-80">Precision engineering for your biology</p>
                             </div>
 
-                            <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-6 space-y-6">
+                            <Card className="rounded-[2.8rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-8 space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.name}</Label>
-                                        <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="Name" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold" />
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">{t.name}</Label>
+                                        <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="Name" className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold text-base px-6" />
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.age}</Label>
-                                        <Input id="age" type="number" value={formData.age} onChange={handleInputChange} placeholder="25" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold" />
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">{t.age}</Label>
+                                        <Input id="age" type="number" value={formData.age} onChange={handleInputChange} placeholder="25" className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold text-base px-6" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.weight}</Label>
-                                        <Input id="weight" type="number" value={formData.weight} onChange={handleInputChange} placeholder="70" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold" />
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">{t.weight}</Label>
+                                        <Input id="weight" type="number" value={formData.weight} onChange={handleInputChange} placeholder="70" className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold text-base px-6" />
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.height}</Label>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">{t.height}</Label>
                                         <div className="flex gap-2">
-                                            {formData.heightUnit === 'cm' ? (
-                                                <Input id="height" type="number" value={formData.height} onChange={handleInputChange} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold flex-1" />
-                                            ) : (
-                                                <div className="flex gap-1 flex-1">
-                                                    <Input id="heightFt" type="number" placeholder="Ft" value={formData.heightFt} onChange={handleInputChange} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold w-1/2" />
-                                                    <Input id="heightIn" type="number" placeholder="In" value={formData.heightIn} onChange={handleInputChange} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold w-1/2" />
-                                                </div>
-                                            )}
-                                            <Select value={formData.heightUnit} onValueChange={(v) => handleSelectChange('heightUnit', v)}>
-                                                <SelectTrigger className="h-12 rounded-xl w-20 bg-slate-50 dark:bg-slate-800 border-none"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="rounded-xl border-none shadow-2xl">
-                                                    <SelectItem value="cm">CM</SelectItem>
-                                                    <SelectItem value="ft">FT</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <Input id="height" type="number" value={formData.height} onChange={handleInputChange} placeholder="175" className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold text-base px-6 flex-1" />
+                                            <div className="h-14 w-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center font-black text-[10px] text-primary">CM</div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.goal}</Label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {[
-                                                { id: 'maintain', label: 'Health', icon: Activity },
-                                                { id: 'lose', label: 'Diet', icon: Utensils },
-                                                { id: 'gain', label: 'Gym', icon: Dumbbell }
-                                            ].map(g => (
-                                                <button key={g.id} onClick={() => handleSelectChange('goal', g.id)} className={cn("h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border", formData.goal === g.id ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-slate-50 dark:bg-slate-800 text-slate-400 border-transparent")}>
-                                                    <g.icon className="h-4 w-4" />
-                                                    <span className="text-[8px] font-black uppercase tracking-widest">{g.label}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.medical}</Label>
-                                        <Input id="medical" value={formData.medical} onChange={handleInputChange} placeholder="E.g. Asthma, Diabetes..." className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold" />
+                                <div className="space-y-4 pt-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Strategic Goal</Label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {[
+                                            { id: 'maintain', label: 'Healthy', icon: Activity, color: "text-blue-500", bg: "bg-blue-50" },
+                                            { id: 'lose', label: 'Fat Loss', icon: Utensils, color: "text-rose-500", bg: "bg-rose-50" },
+                                            { id: 'gain', label: 'Muscle', icon: Dumbbell, color: "text-emerald-500", bg: "bg-emerald-50" }
+                                        ].map(g => (
+                                            <button key={g.id} onClick={() => handleSelectChange('goal', g.id)}
+                                                className={cn(
+                                                    "h-20 rounded-3xl flex flex-col items-center justify-center gap-2 transition-all border-2",
+                                                    formData.goal === g.id 
+                                                        ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
+                                                        : "bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400"
+                                                )}>
+                                                <g.icon className={cn("h-5 w-5", formData.goal === g.id ? "text-white" : g.color)} />
+                                                <span className="text-[9px] font-black uppercase tracking-widest">{g.label}</span>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
-                                <Button onClick={generatePlanner} disabled={isGenerating} className="w-full h-16 rounded-3xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] active:scale-95 transition-all">
-                                    {isGenerating ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Optimizing Bio-Data...</> : <><Bot className="mr-2 h-5 w-5" /> {t.generate}</>}
+                                <Button onClick={generatePlanner} disabled={isGenerating} className="w-full h-16 rounded-[2rem] bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(36,136,232,0.4)] active:scale-95 transition-all">
+                                    {isGenerating ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Calculating Bio-Architecture...</> : <><Bot className="mr-2 h-5 w-5" /> {t.generate}</>}
                                 </Button>
                             </Card>
 
                             {planner && (
-                                <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700">
+                                <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-1000">
                                     <div className="h-px bg-slate-200 dark:bg-slate-800" />
                                     
-                                    <section className="space-y-5">
-                                        <div className="flex items-center justify-between px-2">
-                                            <div className="flex items-center gap-3">
-                                                <ShieldCheck className="h-5 w-5 text-primary" />
-                                                <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{t.plannerTitle}</h3>
-                                            </div>
-                                            <Button variant="outline" size="sm" onClick={downloadPDF} className="rounded-full h-9 px-4 gap-2 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all">
-                                                <Download className="w-3.5 h-3.5" /> <span className="text-[9px] font-black uppercase tracking-widest">PDF Report</span>
-                                            </Button>
+                                    <div className="flex items-center justify-between px-2">
+                                        <div className="flex items-center gap-3">
+                                            <ShieldCheck className="h-6 w-6 text-primary" />
+                                            <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Your Architecture</h3>
                                         </div>
+                                        <Button variant="outline" size="sm" onClick={downloadPDF} className="rounded-full h-10 px-6 gap-2 border-primary/20 text-primary hover:bg-primary hover:text-white shadow-sm transition-all">
+                                            <Download className="w-4 h-4" /> <span className="text-[10px] font-black uppercase tracking-widest">PDF Report</span>
+                                        </Button>
+                                    </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-5 rounded-[2rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 flex items-center gap-4">
-                                                <div className="h-10 w-10 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-primary shadow-sm"><Activity className="w-5 h-5" /></div>
-                                                <div>
-                                                    <p className="text-[8px] font-black text-slate-400 uppercase">BMI Status</p>
-                                                    <p className="text-lg font-black text-[#1A365D] dark:text-slate-100">{planner.bmi}</p>
-                                                </div>
-                                            </div>
-                                            <div className="p-5 rounded-[2rem] bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 flex items-center gap-4">
-                                                <div className="h-10 w-10 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-emerald-500 shadow-sm"><Flame className="w-5 h-5" /></div>
-                                                <div>
-                                                    <p className="text-[8px] font-black text-slate-400 uppercase">Daily Kcal</p>
-                                                    <p className="text-lg font-black text-[#1A365D] dark:text-slate-100">{planner.calories}</p>
-                                                </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center gap-4 shadow-xl">
+                                            <div className="h-12 w-12 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-primary shrink-0"><Activity className="w-6 h-6" /></div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase">Current BMI</p>
+                                                <p className="text-xl font-black text-[#1A365D] dark:text-slate-100">{planner.bmi}</p>
                                             </div>
                                         </div>
+                                        <div className="p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center gap-4 shadow-xl">
+                                            <div className="h-12 w-12 bg-rose-50 dark:bg-rose-900/30 rounded-2xl flex items-center justify-center text-rose-500 shrink-0"><Flame className="w-6 h-6" /></div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase">Daily Fuel</p>
+                                                <p className="text-xl font-black text-[#1A365D] dark:text-slate-100">{planner.calories} kcal</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                        <Card className="rounded-[2.8rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <Utensils className="w-5 h-5 text-primary" />
-                                                    <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Meal Architecture</h4>
+                                    <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-8 space-y-8 overflow-hidden relative">
+                                        <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-bl-full -z-0" />
+                                        <div className="flex items-center gap-3 relative z-10">
+                                            <Utensils className="w-6 h-6 text-primary" />
+                                            <h4 className="font-black text-xs uppercase tracking-[0.25em] text-[#1A365D] dark:text-slate-200">Meal Engineering</h4>
+                                        </div>
+                                        <div className="space-y-8 relative z-10">
+                                            {planner.diet.map((d: any, i: number) => (
+                                                <div key={i} className="flex gap-6 group">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="h-3 w-3 rounded-full bg-primary ring-8 ring-primary/5 mt-1.5" />
+                                                        <div className="w-px h-full bg-slate-100 dark:bg-slate-800 mt-2" />
+                                                    </div>
+                                                    <div className="pb-2">
+                                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">{d.meal}</p>
+                                                        <p className="text-base font-bold text-slate-700 dark:text-slate-300 mt-1">{d.desc}</p>
+                                                    </div>
                                                 </div>
-                                                <Link href="/food-scanner">
-                                                    <Button variant="ghost" className="h-8 px-4 rounded-full text-[9px] font-black uppercase text-primary gap-2 bg-primary/5">
-                                                        <Zap className="h-3 w-3" /> Scan Meal
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                            <div className="space-y-6">
-                                                {planner.diet.map((d: any, i: number) => (
-                                                    <div key={i} className="flex gap-4 group">
-                                                        <div className="flex flex-col items-center">
-                                                            <div className="h-2 w-2 rounded-full bg-primary mt-1.5" />
-                                                            <div className="w-px h-full bg-slate-100 dark:bg-slate-800 mt-1" />
-                                                        </div>
-                                                        <div className="pb-4">
-                                                            <p className="text-[9px] font-black text-primary uppercase tracking-widest">{d.meal}</p>
-                                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">{d.desc}</p>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Card>
+                                            ))}
+                                        </div>
+                                    </Card>
 
-                                        <Card className="rounded-[2.8rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
-                                            <div className="flex items-center gap-3">
-                                                <Dumbbell className="w-5 h-5 text-primary" />
-                                                <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Training Routine</h4>
-                                            </div>
-                                            <div className="grid gap-3">
-                                                {planner.exercise.map((e: any, i: number) => (
-                                                    <div key={i} className="p-5 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 flex items-center justify-between group hover:bg-white transition-all">
-                                                        <span className="text-[9px] font-black uppercase text-slate-400 group-hover:text-primary">{e.day}</span>
-                                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">{e.type}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Card>
-                                    </section>
+                                    <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-8 space-y-8 overflow-hidden relative">
+                                        <div className="absolute top-0 right-0 h-32 w-32 bg-rose-500/5 rounded-bl-full -z-0" />
+                                        <div className="flex items-center gap-3 relative z-10">
+                                            <Dumbbell className="w-6 h-6 text-rose-500" />
+                                            <h4 className="font-black text-xs uppercase tracking-[0.25em] text-[#1A365D] dark:text-slate-200">Training Routine</h4>
+                                        </div>
+                                        <div className="grid gap-4 relative z-10">
+                                            {planner.exercise.map((e: any, i: number) => (
+                                                <div key={i} className="p-6 rounded-[2rem] bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between group hover:bg-white transition-all duration-300">
+                                                    <span className="text-[10px] font-black uppercase text-slate-400 group-hover:text-rose-500 transition-colors">{e.day}</span>
+                                                    <span className="text-sm font-black text-slate-800 dark:text-slate-100 text-right max-w-[200px]">{e.type}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
                                 </div>
                             )}
                         </TabsContent>
 
-                        {/* 2. CHALLENGES TAB */}
-                        <TabsContent value="challenges" className="space-y-8 mt-0 pb-20">
-                            <div className="flex items-center justify-between">
+                        {/* 2. CHALLENGES ARENA - GAMIFIED LOGS */}
+                        <TabsContent value="arena" className="space-y-6 mt-0">
+                            <div className="flex items-center justify-between mt-2">
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Active Arena</h2>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Beat the odds, transform your status</p>
+                                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tighter uppercase leading-none">Active Arena</h2>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-80">Transform your status daily</p>
                                 </div>
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white shadow-xl border-primary/20 text-primary">
-                                            <PlusCircle className="h-6 w-6" />
+                                        <Button size="icon" className="h-14 w-14 rounded-2xl bg-white dark:bg-slate-900 text-primary shadow-xl border border-primary/10 active:scale-95 transition-all">
+                                            <Plus className="h-7 w-7" />
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="rounded-[2.5rem] p-8 border-none bg-white dark:bg-slate-900 shadow-2xl">
+                                    <DialogContent className="rounded-[3rem] p-8 border-none bg-white dark:bg-[#020617] shadow-2xl">
                                         <DialogHeader>
-                                            <DialogTitle className="text-xl font-black uppercase text-[#1A365D] dark:text-white">New Personal Mission</DialogTitle>
+                                            <DialogTitle className="text-2xl font-black uppercase text-[#1A365D] dark:text-white tracking-tighter">New Custom Mission</DialogTitle>
                                         </DialogHeader>
-                                        <div className="py-6 space-y-6">
+                                        <div className="py-8 space-y-6">
                                             <div className="space-y-2">
-                                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Goal Name</Label>
+                                                <Label className="text-[11px] font-black uppercase text-slate-400 ml-4">Goal Definition</Label>
                                                 <Input 
                                                     value={newChallengeTitle} 
                                                     onChange={(e) => setNewChallengeTitle(e.target.value)} 
-                                                    placeholder="E.g. Drink 3L Water" 
-                                                    className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold" 
+                                                    placeholder="e.g. Drink 3L Water" 
+                                                    className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold text-base px-6" 
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Duration (Days)</Label>
+                                                <Label className="text-[11px] font-black uppercase text-slate-400 ml-4">Duration Cycle (Days)</Label>
                                                 <Select value={newChallengeDays} onValueChange={setNewChallengeDays}>
-                                                    <SelectTrigger className="h-12 rounded-xl border-none bg-slate-50 dark:bg-slate-800 shadow-inner"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="rounded-xl border-none shadow-2xl">
-                                                        <SelectItem value="7">7 Days</SelectItem>
-                                                        <SelectItem value="14">14 Days</SelectItem>
-                                                        <SelectItem value="30">30 Days</SelectItem>
+                                                    <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-50 dark:bg-slate-800 shadow-inner font-bold text-base px-6"><SelectValue /></SelectTrigger>
+                                                    <SelectContent className="rounded-2xl border-none shadow-2xl p-1">
+                                                        <SelectItem value="7" className="rounded-xl font-bold py-3">7 DAYS BURST</SelectItem>
+                                                        <SelectItem value="14" className="rounded-xl font-bold py-3">14 DAYS SPRINT</SelectItem>
+                                                        <SelectItem value="30" className="rounded-xl font-bold py-3">30 DAYS MARATHON</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                         </div>
                                         <DialogFooter>
-                                            <Button onClick={addCustomChallenge} className="w-full h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Activate Goal</Button>
+                                            <Button onClick={addCustomChallenge} className="w-full h-16 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20">Activate Mission</Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -566,38 +551,41 @@ export default function ChallengesPage() {
 
                             <div className="grid gap-6">
                                 {challenges.map((c) => (
-                                    <Card key={c.id} className="rounded-[2.8rem] border-none shadow-xl bg-white dark:bg-slate-900 p-6 overflow-hidden relative group">
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div className="space-y-1.5">
-                                                <Badge className="bg-primary/10 text-primary text-[8px] font-black border-none uppercase px-3 rounded-md">{c.category}</Badge>
-                                                <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{c.title}</h3>
+                                    <Card key={c.id} className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-8 overflow-hidden relative group animate-in zoom-in-95 duration-500">
+                                        <div className="flex items-start justify-between mb-6">
+                                            <div className="space-y-2">
+                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/10">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                                                    <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">{c.category}</span>
+                                                </div>
+                                                <h3 className="text-xl font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-tight">{c.title}</h3>
                                             </div>
                                             {c.isCustom ? (
-                                                <Button variant="ghost" size="icon" onClick={() => deleteChallenge(c.id)} className="h-10 w-10 text-slate-200 hover:text-red-500 transition-colors">
+                                                <Button variant="ghost" size="icon" onClick={() => deleteChallenge(c.id)} className="h-10 w-10 text-slate-200 hover:text-red-500 transition-colors shrink-0">
                                                     <Trash2 className="h-5 w-5" />
                                                 </Button>
                                             ) : (
-                                                <div className="h-10 w-10 bg-yellow-50 dark:bg-yellow-950/20 rounded-2xl flex items-center justify-center text-yellow-500 shadow-inner">
-                                                    <Trophy className="w-5 h-5" />
+                                                <div className="h-14 w-14 bg-amber-50 dark:bg-amber-900/20 rounded-[1.5rem] flex items-center justify-center text-amber-500 shadow-inner shrink-0">
+                                                    <Trophy className="w-7 h-7" />
                                                 </div>
                                             )}
                                         </div>
                                         
-                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">{c.description}</p>
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-8 leading-relaxed pr-8">{c.description}</p>
                                         
-                                        <div className="space-y-2 mb-8">
+                                        <div className="space-y-3 mb-8">
                                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                                <span className="text-slate-400">Biological Progress</span>
+                                                <span className="text-slate-400">Mission Progress</span>
                                                 <span className="text-primary">{Math.round((c.progress / c.total) * 100)}%</span>
                                             </div>
-                                            <Progress value={(c.progress / c.total) * 100} className="h-2.5 bg-slate-100 dark:bg-slate-800" />
+                                            <Progress value={(c.progress / c.total) * 100} className="h-3 bg-slate-100 dark:bg-slate-800" />
                                         </div>
 
                                         {c.status === 'active' && (
-                                            <div className="space-y-4 animate-in fade-in duration-500">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <ClipboardCheck className="w-4 h-4 text-emerald-500" />
-                                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-[0.25em]">Log Performance</span>
+                                            <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-500">
+                                                <div className="flex items-center gap-2 mb-1 opacity-60">
+                                                    <ClipboardCheck className="w-4 h-4 text-primary" />
+                                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-[0.3em]">Sync Daily Performance</span>
                                                 </div>
                                                 <div className="flex flex-wrap gap-2.5">
                                                     {c.daily.map((done: boolean, idx: number) => (
@@ -605,29 +593,30 @@ export default function ChallengesPage() {
                                                             key={idx} 
                                                             onClick={() => handleDailyProgress(c.id, idx)}
                                                             className={cn(
-                                                                "h-10 w-10 rounded-2xl border-2 transition-all flex items-center justify-center",
+                                                                "h-11 w-11 rounded-2xl border-2 transition-all flex items-center justify-center relative group/box",
                                                                 done 
-                                                                    ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105" 
-                                                                    : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-300 hover:border-primary/40"
+                                                                    ? "bg-primary border-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                                                                    : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-300 hover:border-primary/40 active:scale-90"
                                                             )}
                                                         >
-                                                            {done ? <Check className="w-5 h-5" /> : <span className="text-[10px] font-black">{idx+1}</span>}
+                                                            {done ? <Check className="w-6 h-6" /> : <span className="text-[10px] font-black">{idx+1}</span>}
+                                                            {done && <div className="absolute inset-0 bg-white/20 rounded-2xl animate-ping" />}
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
                                         )}
 
-                                        <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                                        <div className="mt-10 pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Star className="w-4 h-4 text-primary fill-primary/20" />
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">{c.reward}</span>
                                             </div>
                                             {c.status === 'new' && (
-                                                <Button onClick={() => handleJoinChallenge(c.id)} className="rounded-full px-8 h-10 bg-primary font-black uppercase text-[9px] tracking-widest shadow-xl shadow-primary/20">Accept Challenge</Button>
+                                                <Button onClick={() => handleJoinChallenge(c.id)} className="rounded-full px-8 h-12 bg-primary font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-primary/25 active:scale-95 transition-all">Accept Mission</Button>
                                             )}
                                             {c.status === 'completed' && (
-                                                <Badge className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-none px-5 py-2 rounded-full text-[9px] font-black uppercase shadow-sm">Mission Completed ✓</Badge>
+                                                <Badge className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-none px-6 py-2.5 rounded-full text-[10px] font-black uppercase shadow-sm">VICTORY ACHIEVED ✓</Badge>
                                             )}
                                         </div>
                                     </Card>
@@ -635,51 +624,60 @@ export default function ChallengesPage() {
                             </div>
                         </TabsContent>
 
-                        {/* 3. STATS TAB */}
-                        <TabsContent value="stats" className="space-y-8 mt-0 pb-20">
-                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase">Health Insights</h2>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visual analytics of your bio-metrical performance</p>
+                        {/* 3. STATS - ANALYTICAL INSIGHTS */}
+                        <TabsContent value="stats" className="space-y-6 mt-0">
+                             <div className="space-y-1 mt-2">
+                                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tighter uppercase leading-none">Bio Analytics</h2>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-80">Visualizing your performance matrix</p>
                             </div>
 
                             <div className="grid gap-6">
-                                <Card className="rounded-[2.8rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
+                                <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-8 space-y-8">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <Activity className="w-5 h-5 text-primary" />
-                                            <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Weekly Pulse</h4>
+                                            <Activity className="w-6 h-6 text-primary" />
+                                            <h4 className="font-black text-xs uppercase tracking-[0.25em] text-[#1A365D] dark:text-slate-300">Weekly Pulse</h4>
                                         </div>
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase">+12% Optimal</span>
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
+                                            <Zap className="h-3 w-3 text-emerald-500" />
+                                            <span className="text-[9px] font-black text-emerald-600 uppercase">+12% OPTIMAL</span>
+                                        </div>
                                     </div>
-                                    <div className="h-64 w-full">
+                                    <div className="h-64 w-full mt-4">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={[
-                                                { day: 'Mon', min: 45 }, { day: 'Tue', min: 30 }, { day: 'Wed', min: 60 },
-                                                { day: 'Thu', min: 20 }, { day: 'Fri', min: 45 }, { day: 'Sat', min: 90 }, { day: 'Sun', min: 50 }
+                                                { day: 'Mon', val: 45 }, { day: 'Tue', val: 30 }, { day: 'Wed', val: 60 },
+                                                { day: 'Thu', val: 20 }, { day: 'Fri', val: 45 }, { day: 'Sat', val: 90 }, { day: 'Sun', val: 50 }
                                             ]}>
                                                 <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.05} />
-                                                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#64748b'}} />
-                                                <Bar dataKey="min" fill="#2488E8" radius={[8, 8, 0, 0]} barSize={24} />
-                                                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px' }} />
+                                                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} />
+                                                <Bar dataKey="val" fill="#2488E8" radius={[10, 10, 0, 0]} barSize={28} />
+                                                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px rgba(0,0,0,0.15)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px' }} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </Card>
 
-                                <Card className="rounded-[2.8rem] border-none shadow-xl bg-white dark:bg-slate-900 p-8 space-y-6">
+                                <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-8 space-y-8">
                                     <div className="flex items-center gap-3">
-                                        <Smile className="w-5 h-5 text-orange-500" />
-                                        <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Mental Sentiment</h4>
+                                        <Smile className="w-6 h-6 text-orange-500" />
+                                        <h4 className="font-black text-xs uppercase tracking-[0.25em] text-[#1A365D] dark:text-slate-300">Emotional Balance</h4>
                                     </div>
-                                    <div className="h-64 w-full">
+                                    <div className="h-64 w-full mt-4">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart data={[
                                                 { d: '1', m: 3 }, { d: '2', m: 4 }, { d: '3', m: 5 }, { d: '4', m: 2 }, { d: '5', m: 4 }, { d: '6', m: 5 }, { d: '7', m: 5 }
                                             ]}>
-                                                <Line type="monotone" dataKey="m" stroke="#F97316" strokeWidth={6} dot={{r: 6, fill: '#F97316', strokeWidth: 4, stroke: '#fff'}} activeDot={{r: 10, shadow: '0 0 20px rgba(249,115,22,0.4)'}} />
+                                                <defs>
+                                                    <linearGradient id="lineGrad" x1="0" x2="1" y1="0" y2="0">
+                                                        <stop offset="0%" stopColor="#F97316" />
+                                                        <stop offset="100%" stopColor="#EC4899" />
+                                                    </linearGradient>
+                                                </defs>
+                                                <Line type="monotone" dataKey="m" stroke="url(#lineGrad)" strokeWidth={8} dot={{r: 6, fill: '#fff', strokeWidth: 4, stroke: '#F97316'}} activeDot={{r: 10, shadow: '0 0 30px rgba(249,115,22,0.5)'}} />
                                                 <XAxis dataKey="d" hide />
                                                 <YAxis hide domain={[1, 5]} />
-                                                <Tooltip cursor={{stroke: 'transparent'}} contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', fontWeight: 900 }} />
+                                                <Tooltip cursor={{stroke: 'transparent'}} contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px rgba(0,0,0,0.15)', fontWeight: 900 }} />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -695,16 +693,6 @@ export default function ChallengesPage() {
                 .scrollbar-hide::-webkit-scrollbar { display: none; }
                 .touch-none { touch-action: none; }
             `}</style>
-        </div>
-    );
-}
-
-// --- SUB COMPONENTS ---
-
-function ScrollArea({ children, className }: any) {
-    return (
-        <div className={cn("overflow-y-auto scrollbar-hide touch-pan-y", className)}>
-            {children}
         </div>
     );
 }
