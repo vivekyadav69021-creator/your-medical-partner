@@ -123,7 +123,6 @@ export default function HealthAssistantPage() {
   const [doctorState, doctorFormAction, isDoctorPending] = useActionState(aiDoctorChatAction, initialState);
 
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
@@ -237,7 +236,7 @@ export default function HealthAssistantPage() {
   }, [activeMode, specialty]);
 
   const onFormAction = (formData: FormData | string) => {
-    let query = typeof formData === 'string' ? formData : formData.get('query') as string || '';
+    let query = typeof formData === 'string' ? formData : (formData instanceof FormData ? formData.get('query') as string || '' : '');
     if (!query && !attachedImage) return;
 
     setIsManuallyStopped(false);
@@ -344,10 +343,10 @@ export default function HealthAssistantPage() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#f8fbff] dark:bg-[#020617] overflow-hidden fixed inset-0 font-body">
+    <div className="flex flex-col h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] overflow-hidden fixed inset-0 font-body safe-top">
         
-        {/* HEADER: Native Premium Experience */}
-        <header className="h-16 px-4 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-50 safe-top">
+        {/* HEADER: Premium Branded Layout */}
+        <header className="h-16 px-4 bg-white/60 dark:bg-[#1e1f20]/60 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-50">
             <div className="flex items-center gap-3">
                 <SidebarTrigger className="h-11 w-11 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center transition-all">
                     <Menu className="w-5 h-5 text-[#1A365D] dark:text-slate-100" />
@@ -415,18 +414,17 @@ export default function HealthAssistantPage() {
                 <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
                     <div className="flex flex-col justify-center items-center px-6 pt-12 pb-48 space-y-12 text-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-1000">
                         
-                        {/* Landing Hero: Redesigned for "Best Assistant" look */}
                         <div className="space-y-6 flex flex-col items-center">
                             <div className="relative">
                                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-[60px] animate-pulse scale-150" />
-                                <div className="relative p-8 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl border border-white dark:border-slate-800">
+                                <div className="relative p-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl border border-white dark:border-slate-800">
                                     {activeMode === 'general' ? (
                                         <ShieldPlus className="w-16 h-16 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.5)]" />
                                     ) : (
                                         <Stethoscope className="w-16 h-16 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.5)]" />
                                     )}
-                                    <div className="absolute -top-1 -right-1 h-6 w-6 bg-emerald-500 rounded-full border-4 border-white dark:border-slate-900 shadow-lg flex items-center justify-center">
-                                        <div className="h-1.5 w-1.5 bg-white rounded-full animate-ping" />
+                                    <div className="absolute -top-1 -right-1 h-7 w-7 bg-pink-500 rounded-full border-4 border-white dark:border-slate-900 shadow-lg flex items-center justify-center">
+                                        <Sparkles className="h-3 w-3 text-white fill-white animate-pulse" />
                                     </div>
                                 </div>
                             </div>
@@ -473,9 +471,6 @@ export default function HealthAssistantPage() {
                                         </div>
                                         <p className="text-[11px] font-black uppercase tracking-tight leading-none mb-1.5">{spec.name}</p>
                                         <p className={cn("text-[8px] font-bold uppercase tracking-widest opacity-60 px-2 line-clamp-1", specialty === spec.name ? "text-white" : "text-slate-400")}>{spec.desc}</p>
-                                        
-                                        {/* Hover Overlay */}
-                                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                                     </button>
                                 ))}
                             </div>
