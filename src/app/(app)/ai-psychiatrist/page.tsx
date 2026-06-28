@@ -21,8 +21,6 @@ import {
     Clock,
     ShieldCheck,
     MessageCircle,
-    NotebookPen,
-    Square,
     Heart,
     Wind,
     CloudRain,
@@ -77,6 +75,11 @@ export default function AIPsychiatristPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
+  // Voice Recording Logic
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechState, speechFormAction] = useActionState(speechToTextAction, initialSpeechState);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
   // UI States
   const [isInputVisible, setIsInputVisible] = useState(true);
   const lastScrollTop = useRef(0);
@@ -105,6 +108,19 @@ export default function AIPsychiatristPage() {
   useEffect(() => {
     if (sessions.length > 0) localStorage.setItem('mindCompanionSessions_v3', JSON.stringify(sessions));
   }, [sessions]);
+
+  // Handle Speech Transcription
+  useEffect(() => {
+    if (speechState.transcript && queryInputRef.current) {
+        queryInputRef.current.value = speechState.transcript;
+        setIsTyping(true);
+        queryInputRef.current.style.height = 'auto';
+        queryInputRef.current.style.height = `${Math.min(queryInputRef.current.scrollHeight, 200)}px`;
+    }
+    if (speechState.error) {
+        toast({ variant: 'destructive', title: 'Mic Error', description: speechState.error });
+    }
+  }, [speechState, toast]);
 
   // Immersive Reading Logic
   useEffect(() => {
@@ -191,6 +207,40 @@ export default function AIPsychiatristPage() {
     setIsFocused(false);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      const audioChunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string;
+          const formData = new FormData();
+          formData.append('audioDataUri', base64Audio);
+          startTransition(() => { speechFormAction(formData); });
+        };
+        reader.readAsDataURL(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      mediaRecorder.start();
+      setIsRecording(true);
+      toast({ title: "Listening..." });
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Mic Error', description: 'Could not access microphone.' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   useEffect(() => {
     if (scrollAreaRef.current) {
         const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -244,7 +294,7 @@ export default function AIPsychiatristPage() {
                                 <div key={session.id} 
                                      onClick={() => { setActiveSessionId(session.id); setSuggestedChips([]); }}
                                      className={cn("group p-5 rounded-[2rem] border shadow-sm cursor-pointer transition-all", activeSessionId === session.id ? "bg-primary/5 border-primary/30" : "bg-white/40 border-transparent")}>
-                                    <p className="text-xs font-bold truncate">{session.title}</p>
+                                    <p className="text-xs font-bold truncate dark:text-slate-200">{session.title}</p>
                                     <p className="text-[8px] font-black text-gray-400 uppercase mt-1.5">{formatDistanceToNow(session.createdAt, { addSuffix: true })}</p>
                                 </div>
                             ))}
@@ -300,7 +350,7 @@ export default function AIPsychiatristPage() {
                                             </div>
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mind Companion</span>
                                         </div>
-                                        <div className="flex-1 w-full min-w-0">
+                                        <div className="flex-1 w-full min-0">
                                             <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-[#e3e3e3] leading-relaxed font-medium px-1">
                                                 <ReactMarkdown>{m.content}</ReactMarkdown>
                                             </article>
@@ -390,11 +440,16 @@ export default function AIPsychiatristPage() {
 
                         <div className="flex items-center gap-3">
                              {!isTyping && !isRecording && (
-                                <Button type="button" variant="ghost" size="icon" onClick={() => toast({title: "Feature Coming Soon"})} className="h-12 w-12 rounded-full bg-slate-50">
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50">
                                     <Mic className="w-5 h-5 text-primary" />
                                 </Button>
                             )}
-                            {(isTyping || isRecording) && (
+                            {isRecording && (
+                                <Button type="button" variant="ghost" size="icon" onClick={stopRecording} className="h-12 w-12 rounded-full bg-red-50 animate-pulse">
+                                    <MicOff className="w-5 h-5 text-red-500" />
+                                </Button>
+                            )}
+                            {(isTyping || isRecording) && !isRecording && (
                                 <Button onClick={() => onFormAction(new FormData(formRef.current!))} disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white shadow-lg">
                                     {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                 </Button>
