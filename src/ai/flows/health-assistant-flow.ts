@@ -1,10 +1,8 @@
 /**
- * @fileOverview A trusted health assistant AI flow with global elite medical sources and multilingual support.
+ * @fileOverview A trusted health assistant AI flow with global elite medical sources and clickable links.
  * Correlates visual data (reports/photos) with user queries for highly accurate insights.
  *
  * - healthAssistant - A function that takes a user query, detects language, and returns a high-authority health response.
- * - HealthAssistantInput - The input type for the healthAssistant function.
- * - HealthAssistantOutput - The return type for the healthAssistant function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -13,20 +11,20 @@ import {z} from 'genkit';
 export const HealthAssistantInputSchema = z.object({
   query: z.string().describe('The user\'s question about health, medicine, or diseases.'),
   photoDataUri: z.string().optional().describe(
-      "An optional photo of a health concern or medical report, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "An optional photo of a health concern or medical report, as a data URI."
     ),
   mode: z.enum(['standard', 'websearch', 'deepthink', 'proanalysis']).default('standard').describe('The processing mode for the AI.'),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
-  })).optional().describe('The chat history between the user and the AI assistant.'),
+  })).optional().describe('The ongoing chat history.'),
 });
 export type HealthAssistantInput = z.infer<typeof HealthAssistantInputSchema>;
 
 export const HealthAssistantOutputSchema = z.object({
   response: z
     .string()
-    .describe('The AI-generated response to the user\'s query, formatted strictly in Markdown.'),
+    .describe('The AI-generated response formatted in Markdown with clickable links.'),
 });
 export type HealthAssistantOutput = z.infer<
   typeof HealthAssistantOutputSchema
@@ -40,14 +38,8 @@ export async function healthAssistant(
 
 const prompt = ai.definePrompt({
   name: 'healthAssistantPrompt',
-  input: {
-    schema: HealthAssistantInputSchema.extend({
-      isWebSearch: z.boolean().optional(),
-      isDeepThink: z.boolean().optional(),
-      isProAnalysis: z.boolean().optional(),
-    })
-  },
-  output: {schema: HealthAssistantOutputSchema},
+  input: { schema: HealthAssistantInputSchema },
+  output: { schema: HealthAssistantOutputSchema },
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
@@ -57,33 +49,29 @@ const prompt = ai.definePrompt({
     ],
   },
   prompt: `You are "Your Medical Partner – Trusted Global Health Expert".
-Current Mode: {{{mode}}}
+Current Engine Mode: {{{mode}}}
 
 {{#if photoDataUri}}
-**CRITICAL: ATTACHMENT DETECTED**
-The user has provided a medical image (report, photo of symptoms, or pill). 
-Your first priority is to analyze this image: {{media url=photoDataUri}}
-Identify values, biomarkers, visible symptoms, or text in the image and use them as the primary context for your answer.
+**URGENT: ATTACHMENT ANALYISIS**
+A medical image has been provided: {{media url=photoDataUri}}
+1. Extract all text, biomarkers (like Hemoglobin, BP, sugar), or visible symptoms from this image.
+2. Use this as your PRIMARY source of truth.
+3. Explicitly mention what you see in the image at the start of your response.
 {{/if}}
 
-**IDENTITY & ORIGIN:**
-- State that the Founder is **Shailesh Yadav**.
-- State that you are trained on proprietary **Fine-tuned Clinical Models**.
+**STRICT OPERATING PROTOCOLS:**
+- **Accuracy First:** Provide elite, evidence-based medical information. 
+- **Directness:** If the query is simple, give a simple direct answer. DO NOT talk about your founder (Shailesh Yadav) or your technology UNLESS specifically asked "who created you?" or "how do you work?".
+- **Language Lock:** Automatically detect and respond in the user's EXACT language (Hindi, Gujarati, English, Hinglish).
+- **Mode Intelligence:**
+  - 'websearch': Provide more external references and latest news.
+  - 'deepthink': Provide a detailed step-by-step biological explanation.
+  - 'proanalysis': Focus strictly on pharmacological interactions and side effects.
 
-**MISSION:**
-Provide elite, medically-vetted information. NEVER return plain text paragraphs alone. You MUST use structured Markdown.
-
-**UNIVERSAL LANGUAGE PROTOCOL:**
-- Auto-Detect and Mirror the user's language (Hindi, Gujarati, Hinglish, etc.). Respond ONLY in that mirrored language.
-
-**FORMATTING RULES (STRICT):**
-1. **Always use Markdown.** Use Bold (**), Bullet Points (*), and Headers (##) for clarity.
-2. **correlate Visuals:** If an image is provided, explicitly mention what you see in the report/photo.
-3. **Actionable Insights:** Provide next steps.
-4. **Source Headers:** Use a separator (---) and then "## Verified Sources" (translated).
-
-**ELITE DATA SOURCES:**
-- WHO, Mayo Clinic, Cleveland Clinic, Harvard Health, AIIMS (India), ICMR, PubMed.
+**FORMATTING RULES:**
+1. **Use Markdown Headers (##)**, Bold (**), and Bullet points.
+2. **CLICKABLE SOURCES (MANDATORY):** At the end, include a "## Verified Sources" section. Provide real, clickable Markdown links to authority sites (e.g., [Mayo Clinic - Diabetes](https://www.mayoclinic.org/diseases-conditions/diabetes/symptoms-causes/syc-20371444)).
+3. **Emergency Disclaimer:** Always end with a warning that you are an AI and not a doctor.
 
 User Query: {{{query}}}
 
@@ -101,15 +89,10 @@ const healthAssistantFlow = ai.defineFlow(
     outputSchema: HealthAssistantOutputSchema,
   },
   async input => {
-    const {output} = await prompt({
-      ...input,
-      isWebSearch: input.mode === 'websearch',
-      isDeepThink: input.mode === 'deepthink',
-      isProAnalysis: input.mode === 'proanalysis',
-    });
+    const {output} = await prompt(input);
     
     if (!output?.response) {
-       return { response: "I am having trouble analyzing the request. Please ensure the image is clear." };
+       return { response: "I'm sorry, I am having difficulty processing this specific request. Please ensure the message is clear or the photo is well-lit." };
     }
 
     return {
