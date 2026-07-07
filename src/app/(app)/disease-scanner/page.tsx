@@ -43,7 +43,8 @@ import {
   Check,
   RotateCcw,
   Eraser,
-  Layers
+  Layers,
+  Camera
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -70,10 +71,6 @@ const updateScanStats = () => {
     }
 };
 
-/**
- * Robust Image Compression to prevent OOM and Payload Limit issues.
- * Lower quality for multiple pages.
- */
 const compressImage = (dataUri: string, maxWidth = 800, quality = 0.5): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
@@ -265,7 +262,7 @@ function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
                         <Crop className="h-4 w-4 mr-2" /> Crop
                     </Button>
                 </div>
-                <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600 rounded-full px-6 h-10 font-bold uppercase tracking-widest">
+                <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600 rounded-full px-6 h-10 font-bold uppercase tracking-widest text-white">
                     Done
                 </Button>
             </div>
@@ -313,7 +310,8 @@ function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
 function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [preview, setPreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -350,7 +348,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             const reader = new FileReader();
             reader.onload = () => {
                 setPreview(reader.result as string);
-                if (fileInputRef.current) fileInputRef.current.value = '';
+                if (cameraInputRef.current) cameraInputRef.current.value = '';
+                if (galleryInputRef.current) galleryInputRef.current.value = '';
             };
             reader.readAsDataURL(file);
         }
@@ -374,14 +373,21 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 
             <div className="space-y-6">
                 {!preview ? (
-                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                        <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-pink-400">
-                            <ImageIcon className="w-12 h-12" />
-                        </div>
-                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">
-                            {lang === 'en' ? 'Tap to Upload Photo' : 'फोटो अपलोड करने के लिए टैप करें'}
-                        </p>
-                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                    <div className="grid grid-cols-2 gap-4 h-64">
+                         <button onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-white/40 dark:bg-slate-900/40 rounded-[2.5rem] border-4 border-dashed border-pink-100/50 dark:border-pink-900/20 shadow-sm active:scale-95 transition-all group">
+                            <div className="h-14 w-14 bg-pink-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform">
+                                <Camera className="w-7 h-7" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-pink-600">Live Camera</span>
+                            <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                         </button>
+                         <button onClick={() => galleryInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-white/40 dark:bg-slate-900/40 rounded-[2.5rem] border-4 border-dashed border-blue-100/50 dark:border-blue-900/20 shadow-sm active:scale-95 transition-all group">
+                            <div className="h-14 w-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:-rotate-6 transition-transform">
+                                <ImageIcon className="w-7 h-7" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Photo Gallery</span>
+                            <input type="file" ref={galleryInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                         </button>
                     </div>
                 ) : (
                     <div className={cn(
@@ -509,7 +515,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                                         : "इस विशेष विश्लेषण के बारे में अधिक बातचीत के लिए हमारे एआई स्वास्थ्य सहायक से बात करें।"}
                                 </p>
                             </div>
-                            <Button onClick={handleAskAssistant} className="rounded-full h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95">
+                            <Button onClick={handleAskAssistant} className="rounded-full h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 bg-primary text-white border-none">
                                 Ask Assistant <ExternalLink className="ml-2 h-4 w-4" />
                             </Button>
                          </Card>
@@ -530,7 +536,8 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
 function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeInjuryAction, initialInjuryState);
     const [preview, setPreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -556,7 +563,8 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
             const reader = new FileReader();
             reader.onload = () => {
                 setPreview(reader.result as string);
-                if (fileInputRef.current) fileInputRef.current.value = '';
+                if (cameraInputRef.current) cameraInputRef.current.value = '';
+                if (galleryInputRef.current) galleryInputRef.current.value = '';
             };
             reader.readAsDataURL(file);
         }
@@ -582,11 +590,21 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                     </div>
                     
                     {!preview ? (
-                        <div className="border-4 border-dashed border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] p-8 text-center space-y-4 bg-orange-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="h-14 w-14 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-orange-400 mx-auto">
-                                <ImageIcon className="w-7 h-7" />
-                            </div>
-                            <p className="text-[10px] font-black text-orange-600/80 dark:text-orange-400 uppercase tracking-widest">Add Injury Photo (Optional)</p>
+                        <div className="grid grid-cols-2 gap-4 h-56">
+                            <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center justify-center gap-3 bg-orange-50/30 dark:bg-orange-950/10 rounded-[2.5rem] border-4 border-dashed border-orange-200/50 active:scale-95 transition-all group">
+                                <div className="h-14 w-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                    <Camera className="w-7 h-7" />
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-orange-600">Camera</span>
+                                <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                            </button>
+                            <button type="button" onClick={() => galleryInputRef.current?.click()} className="flex flex-col items-center justify-center gap-3 bg-blue-50/30 dark:bg-blue-950/10 rounded-[2.5rem] border-4 border-dashed border-blue-200/50 active:scale-95 transition-all group">
+                                <div className="h-14 w-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                    <ImageIcon className="w-7 h-7" />
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-blue-600">Gallery</span>
+                                <input type="file" ref={galleryInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                            </button>
                         </div>
                     ) : (
                         <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 max-h-[500px] flex items-center justify-center">
@@ -597,7 +615,6 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             </Button>
                         </div>
                     )}
-                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
 
                     <Button type="submit" disabled={isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-orange-500 to-red-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
                         {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : (lang === 'en' ? "Start Emergency Scan" : "इमरजेंसी स्कैन शुरू करें")}
@@ -673,7 +690,8 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const [originalImage, setOriginalImage] = useState<string | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -702,7 +720,8 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                 setOriginalImage(result);
                 setPreview(result);
                 setIsEditing(true); 
-                if (fileInputRef.current) fileInputRef.current.value = '';
+                if (cameraInputRef.current) cameraInputRef.current.value = '';
+                if (galleryInputRef.current) galleryInputRef.current.value = '';
             };
             reader.readAsDataURL(file);
         }
@@ -737,12 +756,21 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
             <div className="space-y-6">
                 <form action={handleFormAction} className="space-y-6">
                     {!preview ? (
-                        <div className="border-4 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-blue-500">
-                                <Bone className="w-12 h-12" />
-                            </div>
-                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Upload X-Ray Plate</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Editor will open automatically</p>
+                        <div className="grid grid-cols-2 gap-4 h-64">
+                            <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-blue-50/20 dark:bg-blue-900/10 rounded-[3rem] border-4 border-dashed border-blue-200/50 active:scale-95 transition-all group">
+                                <div className="h-16 w-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl">
+                                    <Camera className="w-8 h-8" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Camera</span>
+                                <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                            </button>
+                            <button type="button" onClick={() => galleryInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-white dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-slate-200/50 active:scale-95 transition-all group">
+                                <div className="h-16 w-16 bg-slate-700 rounded-3xl flex items-center justify-center text-white shadow-xl">
+                                    <ImageIcon className="w-8 h-8" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Gallery</span>
+                                <input type="file" ref={galleryInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                            </button>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -763,7 +791,6 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
                             </div>
                         </div>
                     )}
-                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
 
                     <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
@@ -833,16 +860,14 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
 function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
     const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
     const [previews, setPreviews] = useState<string[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
     useEffect(() => {
         if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
     }, [state]);
 
-    /**
-     * Optimized selection: Compress immediately to avoid memory bloat
-     */
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
@@ -853,7 +878,6 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 reader.onload = async () => {
                     try {
                         const original = reader.result as string;
-                        // For multiple pages, use more aggressive compression to stay under payload limit
                         const compressed = await compressImage(original, 800, 0.3);
                         setPreviews(prev => [...prev, compressed].slice(0, 5)); 
                     } catch (err) {
@@ -862,14 +886,14 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                 };
                 reader.readAsDataURL(file);
             }
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            if (cameraInputRef.current) cameraInputRef.current.value = '';
+            if (galleryInputRef.current) galleryInputRef.current.value = '';
         }
     };
 
     const handleFormAction = async (formData: FormData) => {
         if (previews.length === 0) return;
         try {
-            // Already compressed during selection
             formData.set('images', JSON.stringify(previews));
             formData.set('language', lang);
             startTransition(() => { formAction(formData); });
@@ -882,7 +906,6 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
         setPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
-    // Safe grouping logic with type guards
     const findingsArray = Array.isArray(state?.result?.findings) ? state.result.findings : [];
     const groupedFindings = findingsArray.reduce((acc: any, item: any) => {
         const category = String(item.category || (lang === 'en' ? 'General' : 'सामान्य'));
@@ -905,13 +928,21 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
 
             <div className="space-y-6">
                 {previews.length === 0 ? (
-                    <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                        <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
-                            <Layers className="w-12 h-12" />
-                        </div>
-                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Report Page(s)</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Multiple pages supported</p>
-                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" multiple />
+                    <div className="grid grid-cols-2 gap-4 h-64">
+                         <button onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-emerald-50/20 dark:bg-emerald-950/10 rounded-[3rem] border-4 border-dashed border-emerald-200/50 active:scale-95 transition-all group">
+                            <div className="h-16 w-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-xl">
+                                <Camera className="w-8 h-8" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Camera Scan</span>
+                            <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                         </button>
+                         <button onClick={() => galleryInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-white dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-slate-200/50 active:scale-95 transition-all group">
+                            <div className="h-16 w-16 bg-slate-700 rounded-3xl flex items-center justify-center text-white shadow-xl">
+                                <ImageIcon className="w-8 h-8" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Photo Library</span>
+                            <input type="file" ref={galleryInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                         </button>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -928,10 +959,16 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                 </div>
                             ))}
                             {previews.length < 5 && !isAnalyzing && (
-                                <button onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-2xl border-2 border-dashed border-emerald-100 dark:border-emerald-900/40 flex flex-col items-center justify-center gap-2 bg-emerald-50/20 text-emerald-500 hover:bg-emerald-50 transition-colors">
-                                    <Plus className="h-6 w-6" />
-                                    <span className="text-[8px] font-black uppercase">Add Page</span>
-                                </button>
+                                <div className="grid grid-cols-2 gap-2 aspect-[3/4]">
+                                    <button onClick={() => cameraInputRef.current?.click()} className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 flex items-center justify-center text-emerald-600">
+                                        <Camera className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={() => galleryInputRef.current?.click()} className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                    <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                                    <input type="file" ref={galleryInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                                </div>
                             )}
                         </div>
                         
@@ -940,7 +977,6 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                                 <div className="absolute inset-0 bg-emerald-500 animate-splash-gradient" />
                             </div>
                         )}
-                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" multiple />
                     </div>
                 )}
 

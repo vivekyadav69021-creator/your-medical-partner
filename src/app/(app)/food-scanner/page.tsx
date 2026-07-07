@@ -42,9 +42,6 @@ import { Label } from '@/components/ui/label';
 import { useUserProfile } from '@/context/user-profile-context';
 import { formatDistanceToNow } from 'date-fns';
 
-/**
- * Image compression utility optimized for Barcode/OCR
- */
 const compressFoodImage = (dataUri: string, maxWidth = 1024, quality = 0.8): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new (window as any).Image();
@@ -118,16 +115,14 @@ export default function FoodScannerPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [textLabel, setTextLabel] = useState('');
   
-  // Scan Stats State
   const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
 
-  // Filter/Profile State
   const [healthMirror, setHealthMirror] = useState('');
   const [mainGoal, setMainGoal] = useState('General Health');
   const [workout, setWorkout] = useState('Moderate');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -138,12 +133,9 @@ export default function FoodScannerPage() {
   useEffect(() => {
     if (state?.result && !state?.error && state?.timestamp > 0) {
       setCurrentResult(state.result);
-      
-      // Update Stats
       const newStats = { count: scanStats.count + 1, lastScan: Date.now() };
       setScanStats(newStats);
       localStorage.setItem('food_scanner_stats', JSON.stringify(newStats));
-      
       toast({ title: lang === 'en' ? "Product Identified" : "प्रोडक्ट की पहचान हो गई" });
     }
     if (state?.error) {
@@ -166,7 +158,11 @@ export default function FoodScannerPage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result as string);
+      reader.onload = () => {
+          setPreview(reader.result as string);
+          if (cameraInputRef.current) cameraInputRef.current.value = '';
+          if (galleryInputRef.current) galleryInputRef.current.value = '';
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -333,12 +329,21 @@ export default function FoodScannerPage() {
                 </div>
 
                 {!preview ? (
-                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-64 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8 cursor-pointer" onClick={() => cameraInputRef.current?.click()}>
-                        <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.8rem] shadow-xl flex items-center justify-center text-primary mb-4">
-                            <Camera className="w-8 h-8" />
-                        </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Capture Product Label or Barcode</p>
-                        <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                    <div className="grid grid-cols-2 gap-4 h-64">
+                         <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-white/40 dark:bg-slate-900/40 rounded-[3rem] border-4 border-dashed border-primary/40 active:scale-95 transition-all group">
+                            <div className="h-16 w-16 bg-primary rounded-3xl flex items-center justify-center text-white shadow-xl group-hover:rotate-6 transition-transform">
+                                <Camera className="w-8 h-8" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Live Camera</span>
+                            <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
+                         </button>
+                         <button type="button" onClick={() => galleryInputRef.current?.click()} className="flex flex-col items-center justify-center gap-4 bg-white/40 dark:bg-slate-900/40 rounded-[3rem] border-4 border-dashed border-slate-200 active:scale-95 transition-all group">
+                            <div className="h-16 w-16 bg-slate-700 rounded-3xl flex items-center justify-center text-white shadow-xl group-hover:-rotate-6 transition-transform">
+                                <ImageIcon className="w-8 h-8" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Photo Gallery</span>
+                            <input type="file" ref={galleryInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                         </button>
                     </div>
                 ) : (
                     <div className={cn(
