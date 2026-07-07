@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview Hyper-Personalized 3-Pillar Nutrition Engine with Micro-Nutrient Analytics.
+ * @fileOverview Precision Nutrition Engine with Multi-Stage Visual Verification.
  * 
- * - analyzeFood - Cross-references food against Medical Profiles and Fitness Goals.
- * - FoodAnalysisInput - Includes 3-pillar data and specialized scan modes.
+ * - analyzeFood - Identifies products via Barcode, OCR, and Visual Cues.
+ * - Anti-Hallucination Logic - Prioritizes text-on-packaging over brand-only matching.
  */
 
 import { ai } from '@/ai/genkit';
@@ -29,7 +29,6 @@ const FoodAnalysisOutputSchema = z.object({
   carbs: z.string().describe('Estimated carbohydrates range in grams.'),
   protein: z.string().describe('Estimated protein range in grams.'),
   fats: z.string().describe('Estimated fats range in grams.'),
-  // Micro-Nutrients
   microNutrients: z.object({
     calcium: z.string().describe('Calcium content range with units.'),
     potassium: z.string().describe('Potassium content range with units.'),
@@ -37,7 +36,6 @@ const FoodAnalysisOutputSchema = z.object({
     sodium: z.string().describe('Sodium content range with units.'),
     vitamins: z.array(z.string()).describe('Key vitamins found (e.g., ["Vitamin C", "Vitamin B12"]).'),
   }),
-  // Pillar-based logic
   compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan".'),
   compatibilityTagHi: z.string().describe('Short tag in Hindi.'),
   logicEn: z.string().describe('Extremely simple explanation using home-style analogies. No medical jargon.'),
@@ -61,35 +59,32 @@ const prompt = ai.definePrompt({
 
 **PRODUCT IDENTIFICATION PROTOCOL (CRITICAL):**
 - Current Mode: {{{scanType}}}
-- If scanType is 'barcode' or 'ocr':
-  1. Carefully examine the visual data for a Barcode, Brand Logo, or Product Title.
-  2. Use your internal global database to identify the EXACT product (e.g., "Maggi 2-Minute Noodles", "Amul Butter", "Coca-Cola Classic").
-  3. DO NOT say "I cannot scan food". You are trained to identify products from packaging visuals.
-  4. If the exact product is found, use its REAL nutritional values.
+- You MUST identify the product with 100% accuracy. 
+
+**STRICT IDENTIFICATION STEPS:**
+1. **OCR Text Extraction:** Read ALL visible text on the packaging. If it says "Biscuit", "Marie", "Atta Cookies", "Chocolate", or "Snack", then identify it as such.
+2. **Category Consistency:** DO NOT identify a solid snack/biscuit as "Honey", "Ghee", or "Juice" just because the Brand (e.g., Patanjali, Nestle, Amul) is the same. Hallucinating a different product category is a CRITICAL FAILURE.
+3. **Barcode Digits:** If a barcode is visible, extract the GTIN/EAN digits and use them to confirm the product identity.
+4. **Visual Context:** If the package shows a picture of biscuits, it IS biscuits.
 
 **GROUND TRUTH PROTOCOL:**
-- If an image is provided, identify hidden extras like oil, butter, or toppings.
-- If ONLY a label/text is provided, use typical restaurant preparation values.
-
-**NO MEDICAL JARGON POLICY:**
-- Avoid words like "metabolism", "glucogenic", etc.
-- Use analogies like: "Body's battery", "Muscle repair blocks", "Pure fuel".
+- Use the actual Nutritional Information table visible on the packet as the PRIMARY source for calories, carbs, proteins, and fats.
+- If the table is not visible, use verified global database values for the identified product.
 
 **3-PILLAR DATA CONTEXT:**
-1. **Medical Mirroring:** Cross-reference sodium, potassium, and fats against these conditions: "{{{healthMirrorProfile}}}".
+1. **Medical Mirroring:** Cross-reference sodium, sugar, and fats against these conditions: "{{{healthMirrorProfile}}}".
 2. **Fitness Fulfillment:** Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
 
-**STRICT OUTPUT RULES:**
-- All numeric values MUST be a RANGE (e.g., "10g - 12g").
-- Render all Hindi fields in "Home-style" clear Hindi.
+**NO MEDICAL JARGON POLICY:**
+- Avoid words like "metabolism", "glucogenic", etc. Use simple home-style Hindi/English.
 
 Current Visual/Text Input:
 {{#if imageDataUri}} 
-Image: {{media url=imageDataUri}} 
+Image Data: {{media url=imageDataUri}} 
 {{/if}}
 User Query: "{{{textQuery}}}"
 
-Identify this item and respond ONLY in the specified JSON format.`,
+Identify this item correctly and respond ONLY in the specified JSON format.`,
 });
 
 const foodAnalyzerFlow = ai.defineFlow(
@@ -100,7 +95,7 @@ const foodAnalyzerFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    if (!output) throw new Error("Could not identify the food item. Please ensure the brand or barcode is visible.");
+    if (!output) throw new Error("Could not identify the food item. Please ensure the product name or barcode is clearly visible.");
     return output;
   }
 );

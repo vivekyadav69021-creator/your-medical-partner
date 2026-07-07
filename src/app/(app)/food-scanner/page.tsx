@@ -44,20 +44,40 @@ import { Label } from '@/components/ui/label';
 import { useUserProfile } from '@/context/user-profile-context';
 import { formatDistanceToNow } from 'date-fns';
 
+/**
+ * Image compression utility optimized for Barcode/OCR
+ */
+const compressFoodImage = (dataUri: string, maxWidth = 1024, quality = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new (window as any).Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(dataUri); return; }
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error("Image processing failed"));
+        img.src = dataUri;
+    });
+};
+
 const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 
 type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
 
-/**
- * High-tech scanning line animation overlay with target box
- */
 function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isBarcode?: boolean }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
-            {/* Ambient Pulse */}
             <div className={cn("absolute inset-0 opacity-[0.1] animate-pulse", color.replace('text-', 'bg-'))} />
-            
-            {/* Moving Laser Line */}
             <div 
                 className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-80", color)} 
                 style={{ 
@@ -65,18 +85,13 @@ function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isB
                     boxShadow: '0 0 15px 2px currentColor' 
                 }}
             />
-
-            {/* Target Area Box for Barcode/Label - Like Google Lens */}
             {isBarcode && (
                 <div className="absolute inset-0 flex items-center justify-center p-12">
                     <div className="w-full h-48 border-2 border-white/20 rounded-2xl relative bg-white/5 backdrop-blur-[1px] animate-in fade-in zoom-in duration-500">
-                        {/* Detection Corners */}
                         <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
                         <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
                         <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
                         <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
-                        
-                        {/* Centered Detection Indicator */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-60">
                              <div className="h-1 w-1 bg-white rounded-full animate-ping" />
                              <span className="text-[8px] font-black text-white uppercase tracking-[0.2em]">Align Barcode</span>
@@ -84,14 +99,10 @@ function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isB
                     </div>
                 </div>
             )}
-
-            {/* General Corner Markers */}
             <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
             <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
             <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
             <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
-            
-            {/* Dark Vignette */}
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.2)_100%)]" />
         </div>
     );
@@ -168,13 +179,12 @@ export default function FoodScannerPage() {
       const reader = new FileReader();
       reader.onload = () => {
           setPreview(reader.result as string);
-          // If in barcode or OCR mode, we want a direct feel, so maybe scroll to button
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const onFormSubmit = (e: React.FormEvent) => {
+  const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (view === 'meal' && !textLabel.trim() && !preview) {
@@ -188,8 +198,12 @@ export default function FoodScannerPage() {
     }
 
     const formData = new FormData();
-    if (preview) formData.set('imageDataUri', preview);
-    formData.set('textQuery', textLabel || `Product identification via ${view} scan`);
+    if (preview) {
+        // High quality compression for barcodes
+        const optimizedImage = await compressFoodImage(preview, 1200, 0.85);
+        formData.set('imageDataUri', optimizedImage);
+    }
+    formData.set('textQuery', textLabel || `Exact product ID required for ${view} scan`);
     formData.set('language', lang);
     formData.set('scanType', view === 'meal' ? 'standard' : view);
     formData.set('healthMirrorProfile', healthMirror);
@@ -379,7 +393,7 @@ export default function FoodScannerPage() {
                         {isAnalyzing ? (
                             <div className="flex items-center gap-3">
                                 <Loader2 className="h-5 w-5 animate-spin" />
-                                <span className="animate-pulse">Identifying Product...</span>
+                                <span className="animate-pulse">Analyzing Product Details...</span>
                             </div>
                         ) : t.startBtn}
                     </Button>
