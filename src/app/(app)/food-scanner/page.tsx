@@ -14,9 +14,7 @@ import {
   Utensils,
   AlertCircle,
   Zap,
-  UserCheck,
-  ChevronDown,
-  Image as ImageIcon,
+  ImageIcon,
   Search,
   Ban,
   Barcode,
@@ -29,9 +27,10 @@ import {
   ChevronLeft,
   HeartPulse,
   Pill,
-  Scan,
   LayoutGrid,
-  Maximize
+  Filter,
+  History,
+  Dumbbell
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -39,7 +38,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useUserProfile } from '@/context/user-profile-context';
 import { formatDistanceToNow } from 'date-fns';
@@ -92,18 +90,9 @@ function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isB
                         <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
                         <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
                         <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-60">
-                             <div className="h-1 w-1 bg-white rounded-full animate-ping" />
-                             <span className="text-[8px] font-black text-white uppercase tracking-[0.2em]">Align Barcode</span>
-                        </div>
                     </div>
                 </div>
             )}
-            <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
-            <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
-            <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
-            <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.2)_100%)]" />
         </div>
     );
 }
@@ -119,23 +108,9 @@ function MacroMini({ label, val, color }: any) {
     );
 }
 
-function MicroItem({ label, val, icon: Icon }: any) {
-    return (
-        <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md flex items-center justify-center text-slate-400 shrink-0">
-                <Icon className="h-5 w-5" />
-            </div>
-            <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{label}</p>
-                <p className="text-base font-black text-[#1A365D] dark:text-slate-100">{String(val)}</p>
-            </div>
-        </div>
-    );
-}
-
 export default function FoodScannerPage() {
   const [view, setView] = useState<ViewMode>('home');
-  const { userName, userImage } = useUserProfile();
+  const { userName } = useUserProfile();
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [state, formAction, isAnalyzing] = useActionState(analyzeFoodAction, initialAnalysisState);
   
@@ -143,24 +118,38 @@ export default function FoodScannerPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [textLabel, setTextLabel] = useState('');
   
+  // Scan Stats State
+  const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
+
+  // Filter/Profile State
   const [healthMirror, setHealthMirror] = useState('');
-  const [mainGoal, setMainGoal] = useState('Maintain Health');
-  const [workout, setWorkout] = useState('Sedentary');
-  const [protocol, setProtocol] = useState('Clean Eating');
+  const [mainGoal, setMainGoal] = useState('General Health');
+  const [workout, setWorkout] = useState('Moderate');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    const saved = localStorage.getItem('food_scanner_stats');
+    if (saved) setScanStats(JSON.parse(saved));
+  }, []);
+
+  useEffect(() => {
     if (state?.result && !state?.error && state?.timestamp > 0) {
       setCurrentResult(state.result);
+      
+      // Update Stats
+      const newStats = { count: scanStats.count + 1, lastScan: Date.now() };
+      setScanStats(newStats);
+      localStorage.setItem('food_scanner_stats', JSON.stringify(newStats));
+      
       toast({ title: lang === 'en' ? "Product Identified" : "प्रोडक्ट की पहचान हो गई" });
     }
     if (state?.error) {
       toast({ variant: 'destructive', title: lang === 'en' ? "Identification Failed" : "पहचान विफल", description: state.error });
     }
-  }, [state, lang, toast]);
+  }, [state, lang, toast, scanStats.count]);
 
   const resetAll = () => {
     setPreview(null);
@@ -177,29 +166,15 @@ export default function FoodScannerPage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-          setPreview(reader.result as string);
-      };
+      reader.onload = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (view === 'meal' && !textLabel.trim() && !preview) {
-        toast({ variant: 'destructive', title: lang === 'en' ? "Input Required" : "विवरण आवश्यक है" });
-        return;
-    }
-    
-    if (view !== 'meal' && !preview) {
-        toast({ variant: 'destructive', title: lang === 'en' ? "Photo Required" : "फोटो आवश्यक है" });
-        return;
-    }
-
     const formData = new FormData();
     if (preview) {
-        // High quality compression for barcodes
         const optimizedImage = await compressFoodImage(preview, 1200, 0.85);
         formData.set('imageDataUri', optimizedImage);
     }
@@ -209,7 +184,6 @@ export default function FoodScannerPage() {
     formData.set('healthMirrorProfile', healthMirror);
     formData.set('mainGoal', mainGoal);
     formData.set('workoutRegimen', workout);
-    formData.set('dietaryProtocol', protocol);
     
     startTransition(() => { formAction(formData); });
   };
@@ -219,31 +193,39 @@ export default function FoodScannerPage() {
         greeting: `Hi ${userName.split(' ')[0]}`,
         statsTitle: "Nutrition Activity",
         lastScan: "Last Analysis",
-        scans: "Total Meals",
+        scans: "Total Scans",
         status: "Engine Status",
         mealTitle: "Meal Analysis",
         barcodeTitle: "Barcode Vision",
         ocrTitle: "Label Specialist",
-        mealSlogan: "Identify & Quantify",
-        barcodeSlogan: "Packaging & Barcode",
-        ocrSlogan: "Ingredient Specialist",
         startBtn: "Identify Product",
-        noScans: "Ready for scan"
+        noScans: "Ready for scan",
+        filterTitle: "Health Mirror (Filters)",
+        filterDesc: "Set your profile to filter foods based on your health.",
+        medProfile: "Medical History / Allergy",
+        fitnessGoal: "Main Fitness Goal",
+        workout: "Workout Intensity",
+        logicTitle: "Scientific Logic",
+        substitutionTitle: "Healthier Alternatives"
     },
     hi: {
         greeting: `नमस्ते ${userName.split(' ')[0]}`,
         statsTitle: "पोषण गतिविधि",
         lastScan: "पिछला विश्लेषण",
-        scans: "कुल भोजन",
+        scans: "कुल स्कैन",
         status: "इंजन स्थिति",
         mealTitle: "भोजन विश्लेषण",
         barcodeTitle: "बारकोड विजन",
         ocrTitle: "लेबल विशेषज्ञ",
-        mealSlogan: "पहचान और मात्रा",
-        barcodeSlogan: "पैकेट और बारकोड",
-        ocrSlogan: "सामग्री विशेषज्ञ",
         startBtn: "प्रोडक्ट पहचानें",
-        noScans: "स्कैन के लिए तैयार"
+        noScans: "तैयार है",
+        filterTitle: "हेल्थ मिरर (फिल्टर)",
+        filterDesc: "अपने स्वास्थ्य के आधार पर भोजन को फ़िल्टर करने के लिए अपनी प्रोफ़ाइल सेट करें।",
+        medProfile: "पुरानी बीमारी / एलर्जी",
+        fitnessGoal: "फिटनेस का लक्ष्य",
+        workout: "व्यायाम की तीव्रता",
+        logicTitle: "सरल व्याख्या",
+        substitutionTitle: "बेहतर विकल्प"
     }
   }[lang];
 
@@ -259,7 +241,7 @@ export default function FoodScannerPage() {
                             </Button>
                         </Link>
                         <div className="space-y-0.5 min-w-0">
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-pink-50/80 dark:bg-pink-900/20 rounded-full border border-pink-100/50 mb-0.5">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-pink-50/80 rounded-full border border-pink-100/50 mb-0.5">
                                 <Utensils className="w-2.5 h-2.5 text-pink-500" />
                                 <span className="text-[8px] font-black text-pink-600 uppercase tracking-[0.2em]">Nutri-Lens AI</span>
                             </div>
@@ -271,32 +253,41 @@ export default function FoodScannerPage() {
                 <div className="rounded-[2.5rem] border-none shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 overflow-hidden mx-1 p-8">
                     <div className="pb-4">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500/80 flex items-center gap-2">
-                            <Activity className="w-3.5 h-3.5 text-primary" />
+                            <History className="w-3.5 h-3.5 text-primary" />
                             {t.statsTitle}
                         </h4>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center">
                         <div className="space-y-1">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.lastScan}</p>
-                            <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-200 truncate">{t.noScans}</p>
+                            <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-200 truncate">
+                                {scanStats.lastScan ? formatDistanceToNow(scanStats.lastScan, { addSuffix: true }) : t.noScans}
+                            </p>
                         </div>
                         <div className="space-y-1 border-x border-slate-100/50 dark:border-slate-800/50 px-2">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.scans}</p>
-                            <p className="text-sm font-black text-primary">0</p>
+                            <p className="text-sm font-black text-primary">{scanStats.count}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.status}</p>
                             <div className="flex justify-center">
-                                <Badge className="bg-emerald-50 text-emerald-600 text-[9px] font-black border-none px-2.5 py-0.5 rounded-full uppercase">Optimal</Badge>
+                                <Badge className="bg-emerald-50 text-emerald-600 text-[9px] font-black border-none px-2.5 py-0.5 rounded-full uppercase">Active</Badge>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-5 px-1">
-                    <ScannerGridCard title={t.mealTitle} slogan={t.mealSlogan} icon={Utensils} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" btnColor="bg-blue-500" onClick={() => handleModeSwitch('meal')} btnText={t.startBtn} />
-                    <ScannerGridCard title={t.barcodeTitle} slogan={t.barcodeSlogan} icon={Barcode} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" btnColor="bg-pink-500" onClick={() => handleModeSwitch('barcode')} btnText={t.startBtn} />
-                    <ScannerGridCard title={t.ocrTitle} slogan={t.ocrSlogan} icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => handleModeSwitch('ocr')} btnText={t.startBtn} />
+                    <ScannerGridCard title={t.mealTitle} icon={Utensils} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" onClick={() => handleModeSwitch('meal')} btnText="Scan Meal" />
+                    <ScannerGridCard title={t.barcodeTitle} icon={Barcode} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" onClick={() => handleModeSwitch('barcode')} btnText="Scan Barcode" />
+                    <ScannerGridCard title={t.ocrTitle} icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" onClick={() => handleModeSwitch('ocr')} btnText="Scan Label" />
+                </div>
+
+                <div className="flex justify-center pt-4">
+                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setLang('en')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400")}>EN</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setLang('hi')} className={cn("rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all", lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400")}>हिन्दी</Button>
+                    </div>
                 </div>
             </div>
         );
@@ -312,46 +303,42 @@ export default function FoodScannerPage() {
                     <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
                         {view === 'meal' ? t.mealTitle : view === 'barcode' ? t.barcodeTitle : t.ocrTitle}
                     </h2>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{view === 'meal' ? t.mealSlogan : view === 'barcode' ? t.barcodeSlogan : t.ocrSlogan}</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Precision Scanning Enabled</p>
                 </div>
-                {(currentResult || preview || textLabel) && (
-                     <Button variant="ghost" size="icon" onClick={resetAll} className="ml-auto rounded-full h-10 w-10 bg-white/40 shadow-sm border border-white/20">
-                        <RotateCcw className="h-5 w-5 text-primary" />
-                    </Button>
-                )}
             </div>
 
             <div className="space-y-6">
-                {!preview ? (
-                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8">
-                        <div className="flex gap-8 mb-6">
-                            <button 
-                                type="button"
-                                className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
-                                onClick={() => cameraInputRef.current?.click()}
-                            >
-                                <div className="h-20 w-20 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                    <Camera className="w-10 h-10" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Camera</span>
-                            </button>
-                            <button 
-                                type="button"
-                                className="flex flex-col items-center gap-2 group transition-transform active:scale-95"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                <div className="h-20 w-20 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
-                                    <ImageIcon className="w-10 h-10" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Gallery</span>
-                            </button>
+                <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm space-y-5">
+                    <div className="flex items-center gap-3">
+                        <Filter className="w-5 h-5 text-primary" />
+                        <h3 className="text-sm font-black uppercase tracking-widest text-[#1A365D] dark:text-slate-200">{t.filterTitle}</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.medProfile}</Label>
+                            <Input value={healthMirror} onChange={(e) => setHealthMirror(e.target.value)} placeholder="e.g. Diabetes, Peanut Allergy" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner" />
                         </div>
-                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.fitnessGoal}</Label>
+                                <Input value={mainGoal} onChange={(e) => setMainGoal(e.target.value)} placeholder="Weight Loss" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.workout}</Label>
+                                <Input value={workout} onChange={(e) => setWorkout(e.target.value)} placeholder="Sedentary" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {!preview ? (
+                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-64 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-8 cursor-pointer" onClick={() => cameraInputRef.current?.click()}>
+                        <div className="h-16 w-16 bg-white dark:bg-slate-800 rounded-[1.8rem] shadow-xl flex items-center justify-center text-primary mb-4">
+                            <Camera className="w-8 h-8" />
+                        </div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Capture Product Label or Barcode</p>
                         <input type="file" ref={cameraInputRef} hidden onChange={handleFileChange} accept="image/*" capture="environment" />
-                        
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center max-w-[200px]">
-                            {view === 'barcode' ? "Point at barcode or product front" : "Capture a clear photo of the item"}
-                        </p>
                     </div>
                 ) : (
                     <div className={cn(
@@ -359,14 +346,7 @@ export default function FoodScannerPage() {
                         isAnalyzing ? "ring-8 ring-primary/20" : "border-white dark:border-slate-800"
                     )}>
                         <Image src={preview} alt="Input" width={600} height={800} className="w-full h-auto object-contain max-h-[400px]" />
-                        
-                        {isAnalyzing && (
-                            <ScanAnimationOverlay 
-                                color={view === 'meal' ? "text-blue-500" : view === 'barcode' ? "text-pink-500" : "text-emerald-500"} 
-                                isBarcode={view === 'barcode'}
-                            />
-                        )}
-
+                        {isAnalyzing && <ScanAnimationOverlay color="text-primary" isBarcode={view === 'barcode'} />}
                         <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
                         </Button>
@@ -375,27 +355,13 @@ export default function FoodScannerPage() {
 
                 <form onSubmit={onFormSubmit} className="space-y-6">
                     {view === 'meal' && (
-                        <div className="space-y-3 animate-in slide-in-from-top-2">
-                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Identify Your Meal (Or Search Directly)</Label>
-                             <div className="relative">
-                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                                <Input 
-                                    value={textLabel} 
-                                    onChange={(e) => setTextLabel(e.target.value)} 
-                                    placeholder="E.g., Paneer Butter Masala" 
-                                    className="rounded-[2rem] h-16 pl-16 pr-8 bg-white/80 dark:bg-slate-900/80 border border-white/40 shadow-xl text-base font-bold placeholder:text-slate-300 transition-all focus-visible:ring-primary/10" 
-                                />
-                             </div>
+                        <div className="space-y-2">
+                             <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">Meal / Product Name</Label>
+                             <Input value={textLabel} onChange={(e) => setTextLabel(e.target.value)} placeholder="e.g. Marie Biscuits" className="h-14 rounded-2xl bg-white border-none shadow-xl px-6 font-bold" />
                         </div>
                     )}
-
-                    <Button type="submit" disabled={isAnalyzing || (view === 'meal' && !textLabel && !preview) || (view !== 'meal' && !preview)} className="w-full h-16 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                        {isAnalyzing ? (
-                            <div className="flex items-center gap-3">
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                <span className="animate-pulse">Analyzing Product Details...</span>
-                            </div>
-                        ) : t.startBtn}
+                    <Button type="submit" disabled={isAnalyzing || (!preview && !textLabel)} className="w-full h-16 rounded-full bg-primary text-white font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="h-5 w-5 animate-spin mr-3" /> Processing...</> : t.startBtn}
                     </Button>
                 </form>
             </div>
@@ -406,15 +372,15 @@ export default function FoodScannerPage() {
                     
                     <section className="flex flex-col items-center text-center gap-4">
                         <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/10 shadow-inner">
-                            <Activity className="h-8 w-8 text-primary" />
+                            <Zap className="h-8 w-8 text-primary" />
                         </div>
                         <div className="space-y-1.5">
                             <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight">{String(currentResult.name)}</h2>
                             <div className={cn(
-                                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
-                                (lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) ? "bg-rose-50 text-rose-600 shadow-sm" : "bg-emerald-50 text-emerald-600 shadow-sm"
+                                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                                (currentResult.medicalAlertEn || currentResult.medicalAlertHi) ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
                             )}>
-                                {(lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) ? <AlertCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                <CheckCircle2 className="h-3 w-3" />
                                 {lang === 'en' ? String(currentResult.compatibilityTagEn) : String(currentResult.compatibilityTagHi)}
                             </div>
                         </div>
@@ -422,55 +388,42 @@ export default function FoodScannerPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 flex items-center gap-5 shadow-sm">
-                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Zap className="h-6 w-6" /></div>
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Activity className="h-6 w-6" /></div>
                             <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estimated Energy</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Energy Estimate</p>
                                 <p className="text-2xl font-black text-[#1A365D] dark:text-white">{String(currentResult.calories)}</p>
                                 <p className="text-[9px] font-bold text-slate-400">{String(currentResult.portion)}</p>
                             </div>
                         </div>
-
-                        <div className="flex items-center justify-around p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 shadow-sm">
+                        <div className="flex items-center justify-around p-6 rounded-[2rem] bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
                             <MacroMini label="Carbs" val={currentResult.carbs} color="bg-amber-400" />
-                            <div className="h-8 w-px bg-slate-200" />
                             <MacroMini label="Protein" val={currentResult.protein} color="bg-emerald-400" />
-                            <div className="h-8 w-px bg-slate-200" />
                             <MacroMini label="Fats" val={currentResult.fats} color="bg-rose-400" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 px-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Micro-Nutrient Breakdown</h4>
-                        <div className="p-8 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 shadow-sm grid grid-cols-2 gap-8">
-                            <MicroItem label="Calcium" val={currentResult.microNutrients?.calcium} icon={Milk} />
-                            <MicroItem label="Potassium" val={currentResult.microNutrients?.potassium} icon={Activity} />
-                            <MicroItem label="Iron" val={currentResult.microNutrients?.iron} icon={Sparkles} />
-                            <MicroItem label="Sodium" val={currentResult.microNutrients?.sodium} icon={AlertCircle} />
                         </div>
                     </div>
 
                     {(lang === 'en' ? currentResult.medicalAlertEn : currentResult.medicalAlertHi) && (
                         <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
-                            <Ban className="h-10 w-10" />
-                            <h3 className="text-xl font-black uppercase tracking-widest">Safety Advisory</h3>
+                            <ShieldAlert className="h-10 w-10" />
+                            <h3 className="text-xl font-black uppercase tracking-widest">Medical Advisory</h3>
                             <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? String(currentResult.medicalAlertEn) : String(currentResult.medicalAlertHi)}</p>
                         </div>
                     )}
 
                     <div className="space-y-4 px-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Scientific Explanation' : 'सरल व्याख्या'}</h4>
-                        <div className="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100/50 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">{t.logicTitle}</h4>
+                        <div className="p-6 rounded-2xl bg-blue-50/50 border border-blue-100/50 italic text-sm font-bold text-slate-600 leading-relaxed">
                             "{lang === 'en' ? String(currentResult.logicEn) : String(currentResult.logicHi)}"
                         </div>
                     </div>
 
                     <div className="space-y-4 px-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{lang === 'en' ? 'Healthier Substitutions' : 'बेहतर विकल्प'}</h4>
+                        <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">{t.substitutionTitle}</h4>
                         <div className="space-y-3">
                             {(lang === 'en' ? (currentResult.substitutionsEn || []) : (currentResult.substitutionsHi || [])).map((sub: string, i: number) => (
-                                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
-                                    <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary"><Sparkles className="h-4 w-4" /></div>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{String(sub)}</p>
+                                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 border border-white/40 shadow-sm">
+                                    <Sparkles className="h-4 w-4 text-primary" />
+                                    <p className="text-sm font-bold text-slate-700">{String(sub)}</p>
                                 </div>
                             ))}
                         </div>
@@ -501,18 +454,16 @@ export default function FoodScannerPage() {
   );
 }
 
-function ScannerGridCard({ title, slogan, icon: Icon, gradient, iconColor, btnColor, onClick, btnText }: any) {
+function ScannerGridCard({ title, icon: Icon, gradient, iconColor, onClick, btnText }: any) {
     return (
         <div className={cn("rounded-[3rem] border-none shadow-lg group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md", gradient)} onClick={onClick}>
-            <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/20 rounded-full blur-2xl" />
             <div className="p-6 flex flex-col items-center gap-4 text-center relative z-10">
                 <div className="w-16 h-16 rounded-[1.8rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
                    <Icon className={cn("w-8 h-8", iconColor)} />
                 </div>
                 <div className="space-y-1.5 w-full">
                     <h3 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h3>
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{slogan}</p>
-                    <div className={cn("w-full rounded-2xl py-2 mt-3 text-[9px] font-black uppercase tracking-widest text-white shadow-xl transition-all duration-300 group-hover:shadow-primary/20", btnColor)}>
+                    <div className={cn("w-full rounded-2xl py-2 mt-3 text-[9px] font-black uppercase tracking-widest text-white shadow-xl bg-primary")}>
                         {btnText}
                     </div>
                 </div>

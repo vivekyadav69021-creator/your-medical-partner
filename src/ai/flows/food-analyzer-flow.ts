@@ -5,6 +5,7 @@
  * 
  * - analyzeFood - Identifies products via Barcode, OCR, and Visual Cues.
  * - Anti-Hallucination Logic - Prioritizes text-on-packaging over brand-only matching.
+ * - Health Mirroring - Evaluates compatibility based on user's medical profile and goals.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,10 +16,10 @@ const FoodAnalysisInputSchema = z.object({
   textQuery: z.string().describe("Name or description of the food item provided by the user."),
   language: z.enum(['en', 'hi']).default('en'),
   scanType: z.enum(['standard', 'barcode', 'ocr']).default('standard'),
-  healthMirrorProfile: z.string().optional().describe("Custom health conditions or allergies."),
-  mainGoal: z.string().optional().describe("Muscle Gain, Weight Loss, etc."),
-  workoutRegimen: z.string().optional().describe("Workout type."),
-  dietaryProtocol: z.string().optional().describe("Dietary preference."),
+  healthMirrorProfile: z.string().optional().describe("Custom health conditions like Diabetes, Thyroid, or Allergies."),
+  mainGoal: z.string().optional().describe("Muscle Gain, Weight Loss, General Health, etc."),
+  workoutRegimen: z.string().optional().describe("Sedentary, Light, Moderate, or Intense workout."),
+  dietaryProtocol: z.string().optional().describe("Veg, Non-Veg, Keto, etc."),
 });
 export type FoodAnalysisInput = z.infer<typeof FoodAnalysisInputSchema>;
 
@@ -34,12 +35,12 @@ const FoodAnalysisOutputSchema = z.object({
     potassium: z.string().describe('Potassium content range with units.'),
     iron: z.string().describe('Iron content range with units.'),
     sodium: z.string().describe('Sodium content range with units.'),
-    vitamins: z.array(z.string()).describe('Key vitamins found (e.g., ["Vitamin C", "Vitamin B12"]).'),
+    vitamins: z.array(z.string()).describe('Key vitamins found.'),
   }),
-  compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan".'),
-  compatibilityTagHi: z.string().describe('Short tag in Hindi.'),
+  compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan" or "Avoid in Diabetes".'),
+  compatibilityTagHi: z.string().describe('Short tag in simple Hindi.'),
   logicEn: z.string().describe('Extremely simple explanation using home-style analogies. No medical jargon.'),
-  logicHi: z.string().describe('Extremely simple explanation in Hindi using home-style analogies. No medical jargon.'),
+  logicHi: z.string().describe('Extremely simple explanation in simple everyday Hindi (Gharelu bhasha).'),
   substitutionsEn: z.array(z.string()).describe('Simple healthy substitutions.'),
   substitutionsHi: z.array(z.string()).describe('Simple healthy substitutions in Hindi.'),
   medicalAlertEn: z.string().optional().describe('Direct warning in simple English if item conflicts with medical profile.'),
@@ -57,26 +58,21 @@ const prompt = ai.definePrompt({
   output: { schema: FoodAnalysisOutputSchema },
   prompt: `You are the "Google Lens" of Nutrition for "Your Medical Partner".
 
-**PRODUCT IDENTIFICATION PROTOCOL (CRITICAL):**
+**PRODUCT IDENTIFICATION PROTOCOL (STRICT):**
 - Current Mode: {{{scanType}}}
 - You MUST identify the product with 100% accuracy. 
+- Use the actual Nutritional Information table visible on the packet as the PRIMARY source.
+- DO NOT hallucinate. If you see "Biscuit", don't call it "Honey".
 
-**STRICT IDENTIFICATION STEPS:**
-1. **OCR Text Extraction:** Read ALL visible text on the packaging. If it says "Biscuit", "Marie", "Atta Cookies", "Chocolate", or "Snack", then identify it as such.
-2. **Category Consistency:** DO NOT identify a solid snack/biscuit as "Honey", "Ghee", or "Juice" just because the Brand (e.g., Patanjali, Nestle, Amul) is the same. Hallucinating a different product category is a CRITICAL FAILURE.
-3. **Barcode Digits:** If a barcode is visible, extract the GTIN/EAN digits and use them to confirm the product identity.
-4. **Visual Context:** If the package shows a picture of biscuits, it IS biscuits.
+**LANGUAGE & TONE (CRITICAL):**
+- Response Language: {{{language}}}
+- For Hindi (hi): Use VERY SIMPLE, everyday spoken Hindi (Gharelu bhasha). Avoid complex Sanskritized words. 
+- Instead of "चयापचय" use "पाचन (Digestion)". Instead of "प्रतिबंधित" use "बचना चाहिए (Avoid)".
 
-**GROUND TRUTH PROTOCOL:**
-- Use the actual Nutritional Information table visible on the packet as the PRIMARY source for calories, carbs, proteins, and fats.
-- If the table is not visible, use verified global database values for the identified product.
-
-**3-PILLAR DATA CONTEXT:**
-1. **Medical Mirroring:** Cross-reference sodium, sugar, and fats against these conditions: "{{{healthMirrorProfile}}}".
-2. **Fitness Fulfillment:** Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
-
-**NO MEDICAL JARGON POLICY:**
-- Avoid words like "metabolism", "glucogenic", etc. Use simple home-style Hindi/English.
+**HEALTH MIRRORING LOGIC:**
+1. **Medical Profile:** Analyze sodium, sugar, and fats against these conditions: "{{{healthMirrorProfile}}}". If the user has Diabetes and the product is high sugar, generate a 'medicalAlertHi/En'.
+2. **Fitness Goal:** Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
+3. **Compatibility:** Create a 'compatibilityTag' that tells the user if this fits their current lifestyle.
 
 Current Visual/Text Input:
 {{#if imageDataUri}} 
