@@ -3,8 +3,7 @@
  * @fileOverview Advanced Onboarding & Personalization Architect for Skin/Face Scanner.
  * 
  * - analyzeSkinImage - Provides precise, scientific, and personalized dermatological insights.
- * - SkinAnalysisInput - Integrated input with user context and language selection.
- * - SkinAnalysisOutput - Structured JSON response in simple consumer-friendly language.
+ * - Supports multiple images for better diagnostic accuracy.
  */
 
 import { ai } from '@/ai/genkit';
@@ -27,11 +26,7 @@ const CareSuggestionSchema = z.object({
 });
 
 const SkinAnalysisInputSchema = z.object({
-  imageDataUri: z
-    .string()
-    .describe(
-      "A photo of the face/skin as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
+  images: z.array(z.string()).describe("A list of skin/face photos as data URIs."),
   userQuery: z.string().optional().describe("User-reported symptoms like itching, duration, or triggers."),
   language: z.enum(['en', 'hi']).optional().default('en').describe('The language for the entire output.'),
   userProfile: z.object({
@@ -46,12 +41,11 @@ const SkinAnalysisOutputSchema = z.object({
   overallAssessment: z.string().describe('A concise summary of the skin state.'),
   detailedAnalysis: z.string().describe('A very detailed explanation of the visible symptoms and their potential causes.'),
   potentialConditions: z.array(ConditionSchema).describe('Primary possibilities based on visual evidence.'),
-  biologicalLogic: z.string().describe('Simplified "Why" using analogies (e.g., pores like small drains).'),
-  comparativeAnalysis: z.string().describe('How visual data confirms or contradicts user text.'),
-  careRecommendations: z.array(CareSuggestionSchema).describe('Step-by-step care guide including best safe OTC cream suggestions.'),
+  biologicalLogic: z.string().describe('Simplified "Why" using analogies.'),
+  careRecommendations: z.array(CareSuggestionSchema).describe('Step-by-step care guide.'),
   nutritionalSupport: z.array(NutritionalSupportSchema).describe('Vitamins or foods for skin health.'),
-  thingsToAvoid: z.array(z.string()).describe('A list of activities, habits, or products the user must NOT use or do based on the condition.'),
-  interactionPrompt: z.string().optional().describe('Contextual follow-up question if query is missing.'),
+  thingsToAvoid: z.array(z.string()).describe('List of activities or products to avoid.'),
+  interactionPrompt: z.string().optional().describe('Contextual follow-up question.'),
   disclaimer: z.string().describe('Language-bound mandatory disclaimer.'),
 });
 export type SkinAnalysisOutput = z.infer<typeof SkinAnalysisOutputSchema>;
@@ -66,52 +60,30 @@ const prompt = ai.definePrompt({
   output: { schema: SkinAnalysisOutputSchema },
   config: {
     safetySettings: [
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
     ],
   },
-  prompt: `You are the Onboarding & Personalization Architect for the "Your Medical Partner" Skin/Face Scanner.
+  prompt: `You are the Lead Dermatological Architect. 
+Analyze ALL provided images (multiple angles/views) of the skin concern.
 
 **MISSION:**
-Analyze the provided skin image and user context to deliver scientific yet consumer-friendly insights. Provide a very detailed analysis and actionable care steps.
+Correlate the visual evidence from all photos with the user's query: "{{{userQuery}}}".
+Language: {{language}}. If 'hi', use natural and simple Hindi.
 
-**LANGUAGE LOCK (CRITICAL):**
-Your ENTIRE response (all fields, headers, and descriptions) MUST be in: {{language}}.
-If 'hi', use fluent, simple, and natural Hindi.
-If 'en', use simple, clear English.
+**Rules:**
+- Extract details from every photo.
+- suggest safe OTC products (e.g., Calamine, Clotrimazole).
+- Link to Profile: Age {{userProfile.age}}, Lifestyle {{userProfile.lifestyle}}.
 
-**CONTENT RULES:**
-- **DETAILED RESPONSE:** Ensure 'detailedAnalysis' is thorough and informative.
-- **TREATMENT SUGGESTIONS:** In 'careRecommendations', suggest well-known safe OTC products like "Clotrimazole Cream" for fungal issues or "Benzoyl Peroxide" for acne.
-- **NUTRITIONAL SUPPORT:** Provide specific foods or vitamins that help this condition.
-- **THINGS TO AVOID:** List specific precautions (e.g., don't scratch, don't use harsh soap, avoid direct sun).
-- **NO JARGON:** Every clinical term MUST be explained simply.
-- **Biological Logic:** Use simple analogies.
-- **Personalization:** Link advice to Profile: Age {{userProfile.age}}, Lifestyle {{userProfile.lifestyle}}, Diet {{userProfile.dietaryPreference}}.
+Images:
+{{#each images}}
+- Photo {{@index}}: {{media url=this}}
+{{/each}}
 
-**Disclaimer (Use {{language}}):**
-English: "This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment."
-Hindi: "यह विश्लेषण केवल शैक्षिक उद्देश्यों के लिए है। प्रिस्क्रिप्शन-ग्रेड उपचार के लिए किसी त्वचा विशेषज्ञ (Dermatologist) से सलाह लें।"
-
-Current Input:
-Context: {{{userQuery}}}
-Image: {{media url=imageDataUri}}
-
-Respond ONLY in valid JSON matching the output schema. Ensure all fields are unique to this specific case.`,
+Respond ONLY in valid JSON.`,
 });
 
 const skinAnalyzerFlow = ai.defineFlow(
@@ -121,37 +93,11 @@ const skinAnalyzerFlow = ai.defineFlow(
     outputSchema: SkinAnalysisOutputSchema,
   },
   async (input) => {
-    try {
-      console.log("[Skin Flow] Starting analysis...");
-      const response = await prompt({
-        ...input,
-        userProfile: input.userProfile || { age: 'unknown', lifestyle: 'unknown', dietaryPreference: 'unknown' }
-      });
-      
-      const output = response.output; 
-      if (!output) throw new Error('AI failed to generate skin analysis.');
-      
-      console.log("[Skin Flow] Analysis successful.");
-      return output;
-    } catch (e: any) {
-      console.error("Skin Flow Error:", e);
-      const isHindi = input.language === 'hi';
-      return {
-        overallAssessment: isHindi ? "हम इस समय आपकी त्वचा का विश्लेषण करने में असमर्थ हैं।" : "We are unable to analyze your skin at this moment.",
-        detailedAnalysis: isHindi ? "सिस्टम आपकी इमेज को प्रोसेस नहीं कर सका। कृपया बेहतर लाइटिंग में दोबारा प्रयास करें।" : "The system could not process your image. Please try again in better lighting.",
-        potentialConditions: [],
-        biologicalLogic: isHindi ? "कृपया सुनिश्चित करें कि फोटो साफ़ है और पर्याप्त रोशनी में ली गई है।" : "Please ensure the photo is clear and taken in good lighting.",
-        comparativeAnalysis: "",
-        careRecommendations: [],
-        nutritionalSupport: [],
-        thingsToAvoid: [],
-        disclaimer: isHindi 
-          ? "यह विश्लेषण केवल शैक्षिक उद्देश्यों के लिए है। कृपया डॉक्टर से मिलें।" 
-          : "This analysis is for educational purposes. Please see a doctor.",
-        interactionPrompt: isHindi 
-          ? "बेहतर परिणाम के लिए कृपया एक साफ़ फोटो दोबारा अपलोड करने का प्रयास करें।" 
-          : "Please try uploading a clearer photo for better results.",
-      };
-    }
+    const response = await prompt({
+      ...input,
+      userProfile: input.userProfile || { age: 'unknown', lifestyle: 'unknown', dietaryPreference: 'unknown' }
+    });
+    if (!response.output) throw new Error('AI failed to generate skin analysis.');
+    return response.output;
   }
 );
