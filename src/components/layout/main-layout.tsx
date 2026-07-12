@@ -9,24 +9,37 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
-import { HeartPulse, Menu } from 'lucide-react';
+import { HeartPulse, Menu, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/firebase';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useUser();
   
-  // Immersive Pages - Hide global elements for these focused experiences
+  const isAdmin = user?.email === 'yourmedicalpartner07@gmail.com';
+  
+  // Intercept Admin Route
+  useEffect(() => {
+    if (isAdmin && pathname === '/dashboard') {
+        router.replace('/admin');
+    }
+  }, [isAdmin, pathname, router]);
+
+  // Immersive Pages
   const isHealthAssistant = pathname === '/health-assistant';
   const isPsychiatrist = pathname === '/ai-psychiatrist';
   const isDiseaseScanner = pathname === '/disease-scanner';
   const isFoodScanner = pathname === '/food-scanner';
   const isVideoLibrary = pathname === '/video-tutorials';
   const isNearbyHospital = pathname === '/nearby-hospital';
+  const isAdminPanel = pathname === '/admin';
   
-  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary || isNearbyHospital;
-  const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary; 
+  const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary || isNearbyHospital || isAdminPanel;
+  const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary || (isAdminPanel && !isAdmin); 
 
   return (
     <SidebarProvider defaultOpen={!hideSidebar}>
@@ -34,12 +47,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <Sidebar className="border-r border-slate-100 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 transition-colors duration-300">
           <SidebarHeader className="pt-10 px-6 pb-6 bg-white dark:bg-slate-900">
             <div className="flex items-center gap-4 p-2">
-              <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30 rotate-3 transition-transform hover:rotate-0">
-                  <HeartPulse className="w-7 h-7 text-white" />
+              <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg rotate-3 transition-transform hover:rotate-0", isAdmin ? "bg-primary" : "bg-primary")}>
+                  {isAdmin ? <ShieldCheck className="w-7 h-7 text-white" /> : <HeartPulse className="w-7 h-7 text-white" />}
               </div>
               <div className="group-data-[state=collapsed]:hidden">
-                  <h1 className="text-sm font-black font-headline text-[#2D3A5D] dark:text-slate-100 uppercase tracking-tighter leading-none">Your Medical</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.35em] mt-1">Partner</p>
+                  <h1 className="text-sm font-black font-headline text-[#2D3A5D] dark:text-slate-100 uppercase tracking-tighter leading-none">{isAdmin ? 'Admin' : 'Your Medical'}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.35em] mt-1">{isAdmin ? 'Terminal' : 'Partner'}</p>
               </div>
             </div>
           </SidebarHeader>
@@ -47,8 +60,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <SidebarNav />
           </SidebarContent>
           <SidebarFooter className="p-6 border-t border-slate-100 dark:border-slate-800 group-data-[state=collapsed]:hidden bg-white dark:bg-slate-900">
-              <div className="p-4 rounded-3xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100/50 dark:border-slate-700 shadow-inner">
-                  <p className="text-[9px] font-black text-primary uppercase tracking-widest text-center">Version 2.0.1 Stable</p>
+              <div className="p-4 rounded-3xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100/50 dark:border-slate-700 shadow-inner text-center">
+                  <p className="text-[9px] font-black text-primary uppercase tracking-widest">{isAdmin ? 'Root Access' : 'v2.0.1 Stable'}</p>
               </div>
           </SidebarFooter>
         </Sidebar>
@@ -66,7 +79,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           backgroundSize: 'cover'
         }}
       >
-        {/* Only show global header if not on specialized immersive AI pages */}
         {!hideGlobalHeader && (
           <header className="flex h-16 items-center justify-between px-4 sticky top-0 z-40 bg-white/10 backdrop-blur-lg border-b border-white/20 shrink-0 safe-top">
             <div className="flex items-center gap-2">
@@ -74,7 +86,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   <Menu className="w-5 h-5 text-primary" />
               </SidebarTrigger>
               <div className="px-3 hidden md:block">
-                  <span className="text-[11px] font-black tracking-[0.3em] text-primary font-headline uppercase opacity-70">Digital Health Companion</span>
+                  <span className="text-[11px] font-black tracking-[0.3em] text-primary font-headline uppercase opacity-70">
+                    {isAdmin ? 'System Management Mode' : 'Digital Health Companion'}
+                  </span>
               </div>
             </div>
           </header>

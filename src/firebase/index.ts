@@ -3,11 +3,11 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 /**
- * @fileOverview Robust Firebase initialization.
- * Checks for existing apps to prevent double-initialization and handles environment-specific init.
+ * @fileOverview Robust Firebase initialization including Storage for Admin Uploads.
  */
 export function initializeFirebase() {
   if (getApps().length > 0) {
@@ -17,12 +17,8 @@ export function initializeFirebase() {
   let firebaseApp: FirebaseApp;
 
   try {
-    // Attempt to initialize using Firebase App Hosting automatic detection.
-    // This will only work in production environments deployed via App Hosting.
-    firebaseApp = initializeApp();
+    firebaseApp = initializeApp(firebaseConfig);
   } catch (e) {
-    // Silent fallback to config object for local dev or other hosting providers.
-    // No scary console logs unless it's a real failure.
     firebaseApp = initializeApp(firebaseConfig);
   }
 
@@ -33,7 +29,8 @@ export function getSdks(firebaseApp: FirebaseApp) {
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    firestore: getFirestore(firebaseApp),
+    storage: getStorage(firebaseApp)
   };
 }
 
