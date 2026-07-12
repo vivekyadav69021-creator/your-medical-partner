@@ -183,9 +183,10 @@ export default function AdminDashboard() {
             </div>
             <div>
                 <h1 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tighter uppercase leading-none">Admin Terminal</h1>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mt-1.5 flex items-center gap-2">
+                {/* FIXED: Changed parent <p> to <div> to avoid Hydration error (div cannot be descendant of p) */}
+                <div className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mt-1.5 flex items-center gap-2">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> Mission Control Pro v2.0
-                </p>
+                </div>
             </div>
         </div>
         <div className="flex flex-col items-end">
@@ -223,7 +224,7 @@ export default function AdminDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={analyticsData}>
                             <defs>
-                                <linearGradient id="adminPulse" x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient id="adminPulse" x1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#2488E8" stopOpacity={0.3}/>
                                     <stop offset="95%" stopColor="#2488E8" stopOpacity={0}/>
                                 </linearGradient>
