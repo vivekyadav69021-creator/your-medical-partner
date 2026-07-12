@@ -22,14 +22,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   
   const isAdmin = user?.email === 'yourmedicalpartner07@gmail.com';
   
-  // Intercept Admin Route
+  // SECURE GATEWAY & INTERCEPTION
   useEffect(() => {
-    if (isAdmin && pathname === '/dashboard') {
+    if (isAdmin && (pathname === '/dashboard' || pathname === '/')) {
         router.replace('/admin');
+    }
+    // Prevent standard users from entering admin zone
+    if (!isAdmin && pathname === '/admin') {
+        router.replace('/dashboard');
     }
   }, [isAdmin, pathname, router]);
 
-  // Immersive Pages
+  // Immersive Pages (Full Screen)
   const isHealthAssistant = pathname === '/health-assistant';
   const isPsychiatrist = pathname === '/ai-psychiatrist';
   const isDiseaseScanner = pathname === '/disease-scanner';
@@ -37,6 +41,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isVideoLibrary = pathname === '/video-tutorials';
   const isNearbyHospital = pathname === '/nearby-hospital';
   const isAdminPanel = pathname === '/admin';
+  const isProfile = pathname === '/profile';
   
   const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary || isNearbyHospital || isAdminPanel;
   const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary || (isAdminPanel && !isAdmin); 
@@ -61,7 +66,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </SidebarContent>
           <SidebarFooter className="p-6 border-t border-slate-100 dark:border-slate-800 group-data-[state=collapsed]:hidden bg-white dark:bg-slate-900">
               <div className="p-4 rounded-3xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100/50 dark:border-slate-700 shadow-inner text-center">
-                  <p className="text-[9px] font-black text-primary uppercase tracking-widest">{isAdmin ? 'Root Access' : 'v2.0.1 Stable'}</p>
+                  <p className="text-[9px] font-black text-primary uppercase tracking-widest">{isAdmin ? 'Root Access Active' : 'v2.0.1 Stable'}</p>
               </div>
           </SidebarFooter>
         </Sidebar>
@@ -90,6 +95,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     {isAdmin ? 'System Management Mode' : 'Digital Health Companion'}
                   </span>
               </div>
+            </div>
+            {/* Quick Profile/Status in Header */}
+            <div className="flex items-center gap-4">
+                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 overflow-hidden shadow-inner">
+                    {user?.photoURL ? <img src={user.photoURL} alt="P" className="object-cover h-full w-full" /> : <div className="text-[10px] font-black text-primary">{user?.email?.charAt(0).toUpperCase()}</div>}
+                 </div>
             </div>
           </header>
         )}
