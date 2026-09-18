@@ -30,13 +30,6 @@ const FoodAnalysisOutputSchema = z.object({
   carbs: z.string().describe('Estimated carbohydrates range in grams.'),
   protein: z.string().describe('Estimated protein range in grams.'),
   fats: z.string().describe('Estimated fats range in grams.'),
-  microNutrients: z.object({
-    calcium: z.string().describe('Calcium content range with units.'),
-    potassium: z.string().describe('Potassium content range with units.'),
-    iron: z.string().describe('Iron content range with units.'),
-    sodium: z.string().describe('Sodium content range with units.'),
-    vitamins: z.array(z.string()).describe('Key vitamins found.'),
-  }),
   compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan" or "Avoid in Diabetes".'),
   compatibilityTagHi: z.string().describe('Short tag in simple Hindi.'),
   logicEn: z.string().describe('Extremely simple explanation using home-style analogies. No medical jargon.'),
@@ -56,29 +49,31 @@ const prompt = ai.definePrompt({
   name: 'foodAnalyzerPrompt',
   input: { schema: FoodAnalysisInputSchema },
   output: { schema: FoodAnalysisOutputSchema },
-  prompt: `You are the "Google Lens" of Nutrition for "Your Medical Partner".
+  prompt: `You are the "Precision Nutri-Lens AI" for "Your Medical Partner".
 
 **PRODUCT IDENTIFICATION PROTOCOL (STRICT):**
 - Current Mode: {{{scanType}}}
-- You MUST identify the product with 100% accuracy. 
-- Use the actual Nutritional Information table visible on the packet as the PRIMARY source.
-- DO NOT hallucinate. If you see "Biscuit", don't call it "Honey".
+- You MUST identify the product or meal with 100% accuracy. 
+- If scanType is 'barcode', focus strictly on the barcode pattern or numbers.
+- If scanType is 'ocr', analyze the entire nutritional information table.
+- If scanType is 'standard', identify the meal visually.
+- DO NOT hallucinate. If you are unsure, state it clearly.
 
 **LANGUAGE & TONE (CRITICAL):**
 - Response Language: {{{language}}}
-- For Hindi (hi): Use VERY SIMPLE, everyday spoken Hindi (Gharelu bhasha). Avoid complex Sanskritized words. 
-- Instead of "चयापचय" use "पाचन (Digestion)". Instead of "प्रतिबंधित" use "बचना चाहिए (Avoid)".
+- For Hindi (hi): Use VERY SIMPLE, everyday spoken Hindi (Gharelu bhasha). Avoid complex terms.
 
 **HEALTH MIRRORING LOGIC:**
 1. **Medical Profile:** Analyze sodium, sugar, and fats against these conditions: "{{{healthMirrorProfile}}}". If the user has Diabetes and the product is high sugar, generate a 'medicalAlertHi/En'.
 2. **Fitness Goal:** Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
-3. **Compatibility:** Create a 'compatibilityTag' that tells the user if this fits their current lifestyle.
+3. **Scientific Logic:** Explain "Why" this food is good or bad for the user using simple analogies (e.g., "This is like high-grade fuel for your car").
+4. **Substitutions:** Provide 2-3 healthier alternatives that are easily available in India.
 
 Current Visual/Text Input:
 {{#if imageDataUri}} 
 Image Data: {{media url=imageDataUri}} 
 {{/if}}
-User Query: "{{{textQuery}}}"
+User Context: "{{{textQuery}}}"
 
 Identify this item correctly and respond ONLY in the specified JSON format.`,
 });
@@ -91,7 +86,7 @@ const foodAnalyzerFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    if (!output) throw new Error("Could not identify the food item. Please ensure the product name or barcode is clearly visible.");
+    if (!output) throw new Error("Could not identify the food item. Please ensure the product is clearly visible.");
     return output;
   }
 );

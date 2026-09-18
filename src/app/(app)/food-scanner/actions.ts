@@ -1,4 +1,3 @@
-
 'use server';
 
 import { analyzeFood, FoodAnalysisInput } from '@/ai/flows/food-analyzer-flow';
@@ -19,14 +18,14 @@ const foodScannerSchema = z.object({
 
 export async function analyzeFoodAction(prevState: any, formData: FormData) {
   const imageDataUri = formData.get('imageDataUri') as string || undefined;
-  const textQuery = formData.get('textQuery') as string || undefined;
+  const textQuery = formData.get('textQuery') as string || "";
   const language = (formData.get('language') as 'en' | 'hi') || 'en';
   const scanType = (formData.get('scanType') as 'standard' | 'barcode' | 'ocr') || 'standard';
   
-  const healthMirrorProfile = formData.get('healthMirrorProfile') as string || undefined;
-  const mainGoal = formData.get('mainGoal') as string || undefined;
-  const workoutRegimen = formData.get('workoutRegimen') as string || undefined;
-  const dietaryProtocol = formData.get('dietaryProtocol') as string || undefined;
+  const healthMirrorProfile = formData.get('healthMirrorProfile') as string || "None";
+  const mainGoal = formData.get('mainGoal') as string || "General Health";
+  const workoutRegimen = formData.get('workoutRegimen') as string || "Moderate";
+  const dietaryProtocol = formData.get('dietaryProtocol') as string || "Veg";
 
   const validated = foodScannerSchema.safeParse({ 
     imageDataUri, 
@@ -53,6 +52,6 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
     };
   } catch (e: any) {
     console.error("Food Action Error:", e);
-    return { result: null, error: "Analysis failed. The AI model could not identify the food. Please try again with more details.", timestamp: Date.now() };
+    return { result: null, error: "Analysis failed. Please ensure the photo is clear and well-lit.", timestamp: Date.now() };
   }
 }
