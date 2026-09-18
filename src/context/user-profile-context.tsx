@@ -18,12 +18,11 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const [userImage, setUserImageState] = useState('https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop');
 
   useEffect(() => {
-    // Logic to determine the best name and image
     const updateProfile = () => {
       let finalName = 'Guest';
       let finalImage = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop';
 
-      // 1. Check Local Storage First (Fastest, handles fresh signup redirect)
+      // 1. Check Local Storage First (Fastest)
       try {
         const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
         if (savedProfile) {
@@ -35,13 +34,12 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         console.error("Local profile parse error", e);
       }
 
-      // 2. If Auth user exists, use it as the source of truth if local is empty
+      // 2. Auth user sync
       if (user) {
-        // Only override if local name is still default or we are logged in as someone else
         if (finalName === 'Guest' || finalName === 'Guest User') {
-           finalName = user.displayName || (user.isAnonymous ? 'Guest User' : user.email?.split('@')[0] || 'User');
+           finalName = user.displayName || user.email?.split('@')[0] || 'User';
         }
-        if (user.photoURL && (finalImage.includes('unsplash') || finalImage.includes('picsum'))) {
+        if (user.photoURL && (finalImage.includes('unsplash') || finalImage.includes('picsum') || finalImage === '')) {
             finalImage = user.photoURL;
         }
       }
@@ -51,20 +49,14 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     };
 
     updateProfile();
-    
-    // Set a small interval to re-check if name has propagated from Firebase (rare edge case)
-    const timer = setTimeout(updateProfile, 1000);
+    // Watch for potential auth delay
+    const timer = setTimeout(updateProfile, 500);
     return () => clearTimeout(timer);
 
   }, [user]);
 
-  const setUserName = (name: string) => {
-      setUserNameState(name);
-  };
-
-  const setUserImage = (image: string) => {
-    setUserImageState(image);
-  };
+  const setUserName = (name: string) => setUserNameState(name);
+  const setUserImage = (image: string) => setUserImageState(image);
 
   return (
     <UserProfileContext.Provider value={{ userName, userImage, setUserName, setUserImage }}>

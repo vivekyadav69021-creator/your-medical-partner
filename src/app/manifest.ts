@@ -4,21 +4,21 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Your Medical Partner',
     short_name: 'Medical Partner',
-    description: 'Your Digital Health Companion with AI Insights',
-    start_url: '/dashboard',
+    description: 'Your Reliable Digital Health Companion with AI Insights',
+    start_url: '/',
     display: 'standalone',
-    background_color: '#FDFBFF',
+    background_color: '#FFFFFF',
     theme_color: '#2488E8',
     orientation: 'portrait',
     icons: [
       {
-        src: 'https://picsum.photos/seed/medimate-192/192/192',
+        src: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: 'https://picsum.photos/seed/medimate-512/512/512',
+        src: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any'
@@ -29,12 +29,12 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: 'AI Assistant',
         url: '/health-assistant',
-        icons: [{ src: 'https://picsum.photos/seed/shortcut-ai/96/96', sizes: '96x96' }]
+        icons: [{ src: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-192.png', sizes: '192x192' }]
       },
       {
         name: 'Scanner',
         url: '/disease-scanner',
-        icons: [{ src: 'https://picsum.photos/seed/shortcut-scan/96/96', sizes: '96x96' }]
+        icons: [{ src: 'https://storage.googleapis.com/studiopaas-test-assets/project-assets/medical-app-icon-192.png', sizes: '192x192' }]
       }
     ]
   };

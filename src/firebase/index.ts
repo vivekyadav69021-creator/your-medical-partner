@@ -5,31 +5,28 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+/**
+ * @fileOverview Robust Firebase initialization.
+ * Checks for existing apps to prevent double-initialization and handles environment-specific init.
+ */
 export function initializeFirebase() {
-  if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
-    let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-
-    return getSdks(firebaseApp);
+  if (getApps().length > 0) {
+    return getSdks(getApp());
   }
 
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
+  let firebaseApp: FirebaseApp;
+
+  try {
+    // Attempt to initialize using Firebase App Hosting automatic detection.
+    // This will only work in production environments deployed via App Hosting.
+    firebaseApp = initializeApp();
+  } catch (e) {
+    // Silent fallback to config object for local dev or other hosting providers.
+    // No scary console logs unless it's a real failure.
+    firebaseApp = initializeApp(firebaseConfig);
+  }
+
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useSearchParams, useParams, notFound } from 'next/navigation';
@@ -37,7 +36,7 @@ export default function LessonDetailPage() {
                 {lang === 'en' ? 'Back to All Lessons' : 'सभी पाठों पर वापस जाएं'}
             </Link>
          </Button>
-        <h1 className="text-4xl font-bold tracking-tight font-headline mt-2">
+        <h1 className="text-4xl font-bold tracking-tight font-headline mt-2 text-[#2D3A5D] dark:text-slate-100">
           {lang === 'en' ? lesson.title.en : lesson.title.hi}
         </h1>
         <p className="text-lg text-muted-foreground mt-2">
@@ -45,7 +44,7 @@ export default function LessonDetailPage() {
         </p>
       </div>
 
-      <Card>
+      <Card className="rounded-[1.5rem] border-none shadow-sm">
         <CardHeader>
             <CardTitle className="flex items-center gap-3">
                 <BookHeart className="w-6 h-6 text-primary"/>
@@ -57,11 +56,11 @@ export default function LessonDetailPage() {
         </CardContent>
     </Card>
     
-    <Alert>
-      <AlertTitle>{lang === 'en' ? 'End of Lesson' : 'पाठ का अंत'}</AlertTitle>
-      <AlertDescription className="flex justify-between items-center">
-        <span>{lang === 'en' ? 'You have completed this lesson. Take the quiz to test your knowledge!' : 'आपने यह पाठ पूरा कर लिया है। अपने ज्ञान का परीक्षण करने के लिए प्रश्नोत्तरी लें!'}</span>
-        <Button asChild>
+    <Alert className="rounded-[1.5rem] bg-blue-50 border-blue-100">
+      <AlertTitle className="font-bold text-blue-700">{lang === 'en' ? 'End of Lesson' : 'पाठ का अंत'}</AlertTitle>
+      <AlertDescription className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+        <span className="text-blue-600 font-medium">{lang === 'en' ? 'You have completed this lesson. Take the quiz to test your knowledge!' : 'आपने यह पाठ पूरा कर लिया है। अपने ज्ञान का परीक्षण करने के लिए प्रश्नोत्तरी लें!'}</span>
+        <Button asChild className="rounded-full shadow-lg shadow-primary/20 shrink-0">
             <Link href={`/health-lessons/${lesson.id}/quiz?lang=${lang}`}>
                 <Award className="mr-2 h-4 w-4" />
                 {lang === 'en' ? 'Take Quiz' : 'प्रश्नोत्तरी लें'}

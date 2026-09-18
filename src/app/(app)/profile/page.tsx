@@ -14,14 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2 } from 'lucide-react';
+import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2, LogOut, ShieldAlert } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserProfile } from '@/context/user-profile-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 
 const healthGoals = ["Weight Loss", "Muscle Gain", "Improve Fitness", "Boost Immunity", "Manage Stress"];
@@ -127,7 +127,6 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // 1. Sync with Firebase Auth for real-time global availability
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
           displayName: profile.name,
@@ -135,10 +134,8 @@ export default function ProfilePage() {
         });
       }
 
-      // 2. Save complete data to local storage (Source of truth for session)
       localStorage.setItem(`userMedicalProfile_local`, JSON.stringify(profile));
       
-      // 3. Update global context states for immediate reflection
       setUserName(profile.name || 'Guest');
       setUserImage(profile.image);
       
@@ -158,8 +155,18 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+        await signOut(auth);
+        localStorage.removeItem('userMedicalProfile_local');
+        toast({ title: "Signed Out", description: "You have been logged out safely." });
+    } catch (e: any) {
+        toast({ variant: "destructive", title: "Logout Failed", description: e.message });
+    }
+  };
+
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-8 max-w-4xl mx-auto pb-20">
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">
           Profile & Settings
@@ -339,6 +346,28 @@ export default function ProfilePage() {
                 <Switch id="reminders-switch" checked={!hideReminders} onCheckedChange={handleReminderChange} />
              </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Logout Section */}
+      <Card className="border-red-100 dark:border-red-900/30 bg-red-50/10">
+        <CardHeader>
+            <CardTitle className="text-red-500 flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5" /> Account Actions
+            </CardTitle>
+            <CardDescription>Manage your session and account security.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Button 
+                variant="destructive" 
+                onClick={handleLogout}
+                className="w-full md:w-auto rounded-full px-8 h-12 font-bold shadow-lg shadow-red-500/20"
+            >
+                <LogOut className="mr-2 h-5 w-5" /> Sign Out from Device
+            </Button>
+            <p className="mt-4 text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black text-center md:text-left">
+                Your data is synced with Firebase cloud.
+            </p>
         </CardContent>
       </Card>
     </div>

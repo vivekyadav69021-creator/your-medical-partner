@@ -91,7 +91,7 @@ const featureAssistantFlow = ai.defineFlow(
   },
   async (input) => {
     const llmResponse = await prompt(input);
-    const output = llmResponse.output();
+    const output = llmResponse.output; // FIXED: Accessing as property
 
     if (!output) {
       return {

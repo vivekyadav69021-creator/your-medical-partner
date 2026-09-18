@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useActionState, useRef, useState, useEffect } from 'react';
+import React, { useActionState, useRef, useState, useEffect, startTransition } from 'react';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -16,60 +14,1127 @@ import {
   Scan, 
   Loader2, 
   X, 
-  Camera, 
   AlertTriangle, 
   FileText, 
   ImageIcon, 
-  Upload, 
-  Download, 
   BrainCircuit, 
   ArrowLeft,
-  User as UserIcon,
   Bandage,
   Bone,
   Activity,
-  HeartPulse,
-  Sparkles,
-  Info,
-  Navigation,
+  ChevronLeft,
+  CheckCircle2,
+  MessageCircle,
   Siren,
-  Utensils
+  ShieldAlert,
+  Plus,
+  Apple,
+  Pill,
+  ExternalLink,
+  Sparkles,
+  Ban,
+  Utensils,
+  User,
+  Calendar,
+  Stethoscope,
+  HeartPulse,
+  Pencil,
+  Crop,
+  Check,
+  RotateCcw,
+  Eraser,
+  Layers
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from "@/lib/utils";
 import { useUserProfile } from '@/context/user-profile-context';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
-const initialXrayState = { result: null, error: null };
-const initialSkinState = { result: null, error: null };
-const initialLabReportState = { result: null, error: null };
-const initialInjuryState = { result: null, error: null };
+// --- UTILITIES ---
 
-type ScannerView = 'home' | 'skin' | 'injury' | 'xray' | 'lab';
-
-// Helper to track scans in localStorage
 const updateScanStats = () => {
-    const stats = JSON.parse(localStorage.getItem('disease_scanner_stats') || '{"count": 0, "lastScan": null}');
-    const newStats = {
-        count: stats.count + 1,
-        lastScan: Date.now()
-    };
-    localStorage.setItem('disease_scanner_stats', JSON.stringify(newStats));
-    // Dispatch custom event to notify home view
-    window.dispatchEvent(new Event('scan-completed'));
+    if (typeof window === 'undefined') return;
+    try {
+        const stats = JSON.parse(localStorage.getItem('disease_scanner_stats') || '{"count": 0, "lastScan": null}');
+        const newStats = { count: (stats.count || 0) + 1, lastScan: Date.now() };
+        localStorage.setItem('disease_scanner_stats', JSON.stringify(newStats));
+        window.dispatchEvent(new Event('scan-completed'));
+    } catch (e) {
+        console.error("Failed to update scan stats", e);
+    }
 };
+
+const compressImage = (dataUri: string, maxWidth = 800): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new (window as any).Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(dataUri);
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.5);
+            resolve(compressed);
+        };
+        img.onerror = () => reject(new Error("Image failed to load"));
+        img.src = dataUri;
+    });
+};
+
+const initialXrayState = { result: null, error: null, timestamp: 0 };
+const initialSkinState = { result: null, error: null, timestamp: 0 };
+const initialLabReportState = { result: null, error: null, timestamp: 0 };
+const initialInjuryState = { result: null, error: null, timestamp: 0 };
+
+function ScanAnimationOverlay({ color }: { color: string }) {
+    return (
+        <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
+            <div className={cn("absolute inset-0 opacity-[0.08] animate-pulse", color.replace('text-', 'bg-'))} />
+            <div 
+                className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-50", color)} 
+                style={{ 
+                    backgroundColor: 'currentColor',
+                    boxShadow: '0 0 12px 1px currentColor' 
+                }}
+            />
+            <div className="absolute top-6 left-6 w-5 h-5 border-t-2 border-l-2 border-white/40 rounded-tl-sm" />
+            <div className="absolute top-6 right-6 w-5 h-5 border-t-2 border-r-2 border-white/40 rounded-tr-sm" />
+            <div className="absolute bottom-6 left-6 w-5 h-5 border-b-2 border-l-2 border-white/40 rounded-bl-sm" />
+            <div className="absolute bottom-6 right-6 w-5 h-5 border-b-2 border-r-2 border-white/40 rounded-br-sm" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.1)_100%)]" />
+        </div>
+    );
+}
+
+// --- IMAGE EDITOR COMPONENT ---
+
+interface ImageEditorProps {
+    image: string;
+    onSave: (editedImage: string) => void;
+    onCancel: () => void;
+}
+
+function ImageEditor({ image, onSave, onCancel }: ImageEditorProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [tool, setTool] = useState<'pencil' | 'crop'>('pencil');
+    const [cropRect, setCropRect] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const img = new (window as any).Image();
+        img.src = image;
+        img.onload = () => {
+            imgRef.current = img;
+            const containerWidth = Math.min(window.innerWidth - 40, 600);
+            const scale = containerWidth / img.width;
+            canvas.width = containerWidth;
+            canvas.height = img.height * scale;
+            
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+    }, [image]);
+
+    const getPos = (e: React.MouseEvent | React.TouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        const clientX = ('touches' in e) ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = ('touches' in e) ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    };
+
+    const startAction = (e: React.MouseEvent | React.TouchEvent) => {
+        const pos = getPos(e);
+        const ctx = canvasRef.current?.getContext('2d');
+        if (!ctx) return;
+
+        if (tool === 'pencil') {
+            setIsDrawing(true);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.strokeStyle = '#ef4444'; 
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+        } else if (tool === 'crop') {
+            setCropRect({ x: pos.x, y: pos.y, w: 0, h: 0 });
+            setIsDrawing(true);
+        }
+    };
+
+    const doAction = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        const ctx = canvasRef.current?.getContext('2d');
+        if (!ctx) return;
+
+        if (tool === 'pencil') {
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        } else if (tool === 'crop' && cropRect) {
+            setCropRect(prev => prev ? { ...prev, w: pos.x - prev.x, h: pos.y - prev.y } : null);
+        }
+    };
+
+    const stopAction = () => {
+        setIsDrawing(false);
+    };
+
+    const handleReset = () => {
+        const canvas = canvasRef.current;
+        if (!canvas || !imgRef.current) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(imgRef.current, 0, 0, canvas.width, canvas.height);
+        setCropRect(null);
+    };
+
+    const handleSave = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        if (tool === 'crop' && cropRect && Math.abs(cropRect.w) > 10 && Math.abs(cropRect.h) > 10) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            if (!tempCtx) return;
+
+            const finalX = cropRect.w > 0 ? cropRect.x : cropRect.x + cropRect.w;
+            const finalY = cropRect.h > 0 ? cropRect.y : cropRect.y + cropRect.h;
+            const finalW = Math.abs(cropRect.w);
+            const finalH = Math.abs(cropRect.h);
+
+            tempCanvas.width = finalW;
+            tempCanvas.height = finalH;
+            tempCtx.drawImage(canvas, finalX, finalY, finalW, finalH, 0, 0, finalW, finalH);
+            onSave(tempCanvas.toDataURL('image/jpeg', 0.9));
+        } else {
+            onSave(canvas.toDataURL('image/jpeg', 0.9));
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4">
+            <div className="w-full max-w-2xl flex items-center justify-between mb-4">
+                <Button variant="ghost" onClick={onCancel} className="text-white hover:bg-white/10 rounded-full h-12 w-12 p-0">
+                    <X className="h-6 w-6" />
+                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        variant={tool === 'pencil' ? 'default' : 'outline'} 
+                        onClick={() => setTool('pencil')} 
+                        className={cn("rounded-full h-10 px-4", tool === 'pencil' ? "bg-red-500" : "text-white border-white/20")}
+                    >
+                        <Pencil className="h-4 w-4 mr-2" /> Pencil
+                    </Button>
+                    <Button 
+                        variant={tool === 'crop' ? 'default' : 'outline'} 
+                        onClick={() => setTool('crop')} 
+                        className={cn("rounded-full h-10 px-4", tool === 'crop' ? "bg-blue-500" : "text-white border-white/20")}
+                    >
+                        <Crop className="h-4 w-4 mr-2" /> Crop
+                    </Button>
+                </div>
+                <Button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600 rounded-full px-6 h-10 font-bold uppercase tracking-widest">
+                    Done
+                </Button>
+            </div>
+
+            <div className="relative bg-white/5 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <canvas 
+                    ref={canvasRef}
+                    onMouseDown={startAction}
+                    onMouseMove={doAction}
+                    onMouseUp={stopAction}
+                    onMouseLeave={stopAction}
+                    onTouchStart={startAction}
+                    onTouchMove={doAction}
+                    onTouchEnd={stopAction}
+                    className={cn("cursor-crosshair", tool === 'pencil' ? "touch-none" : "")}
+                />
+                {tool === 'crop' && cropRect && (
+                    <div 
+                        className="absolute border-2 border-dashed border-blue-400 bg-blue-400/20 pointer-events-none"
+                        style={{
+                            left: cropRect.w > 0 ? cropRect.x : cropRect.x + cropRect.w,
+                            top: cropRect.h > 0 ? cropRect.y : cropRect.y + cropRect.h,
+                            width: Math.abs(cropRect.w),
+                            height: Math.abs(cropRect.h)
+                        }}
+                    />
+                )}
+            </div>
+
+            <div className="mt-8 flex gap-6">
+                <Button variant="ghost" onClick={handleReset} className="text-white/60 hover:text-white flex flex-col items-center gap-2 h-auto py-2">
+                    <RotateCcw className="h-6 w-6" />
+                    <span className="text-[10px] font-black uppercase">Reset</span>
+                </Button>
+            </div>
+            <p className="mt-6 text-white/40 text-[11px] font-bold uppercase tracking-widest">
+                {tool === 'pencil' ? 'Draw to highlight areas' : 'Drag to select area to crop'}
+            </p>
+        </div>
+    );
+}
+
+// --- SCANNER SUB-COMPONENTS ---
+
+function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
+    const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
+    const [preview, setPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (state?.result && !state?.error && state?.timestamp > 0) {
+            updateScanStats();
+            toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
+        }
+    }, [state, toast, lang]);
+
+    const handleFormAction = async (formData: FormData) => {
+        if (!preview) return;
+        try {
+            const compressed = await compressImage(preview);
+            const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
+            if (savedProfile) formData.set('userProfile', savedProfile);
+            formData.set('imageDataUri', compressed);
+            formData.set('language', lang);
+            startTransition(() => { formAction(formData); });
+        } catch (e) {
+            toast({ variant: 'destructive', title: lang === 'en' ? 'Error' : 'त्रुटि' });
+        }
+    };
+
+    const handleAskAssistant = () => {
+        if (!state?.result) return;
+        sessionStorage.setItem('last_skin_scan_result', JSON.stringify(state.result));
+        router.push('/health-assistant?source=skin-scanner');
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPreview(reader.result as string);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">
+                        {lang === 'en' ? 'Skin Analysis' : 'त्वचा विश्लेषण'}
+                    </h2>
+                    <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest">
+                        Welcome to the Dermatology Digital Clinic
+                    </p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                {!preview ? (
+                    <div className="border-4 border-dashed border-white/60 dark:border-slate-800 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm space-y-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-pink-400">
+                            <ImageIcon className="w-12 h-12" />
+                        </div>
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">
+                            {lang === 'en' ? 'Tap to Upload Photo' : 'फोटो अपलोड करने के लिए टैप करें'}
+                        </p>
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+                    </div>
+                ) : (
+                    <div className={cn(
+                        "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[500px] flex items-center justify-center",
+                        isAnalyzing ? "border-pink-200 ring-8 ring-pink-50/50" : "border-white dark:border-slate-800"
+                    )}>
+                        <Image src={preview} alt="Preview" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
+                        {isAnalyzing && <ScanAnimationOverlay color="text-pink-500" />}
+                        <Button variant="destructive" size="icon" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
+                )}
+
+                <form action={handleFormAction} className="space-y-6">
+                    <div className="space-y-3">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500/80 px-2">
+                            {lang === 'en' ? 'Describe Symptoms' : 'लक्षण बताएं'}
+                        </Label>
+                        <Textarea 
+                            name="userQuery" 
+                            placeholder={lang === 'en' ? "E.g., Itchy red patches since 2 days..." : "उदाहरण: 2 दिनों से खुजली वाले लाल धब्बे..."} 
+                            className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-base font-bold p-6" 
+                        />
+                    </div>
+                    <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-pink-500 to-rose-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> {lang === 'en' ? 'AI Scanning...' : 'AI जांच कर रहा है...'}</> : (lang === 'en' ? "Start Scientific Analysis" : "वैज्ञानिक विश्लेषण शुरू करें")}
+                    </Button>
+                </form>
+            </div>
+
+            {state?.result && (
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    {state.result.interactionPrompt && (
+                        <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100 animate-pulse">
+                            <MessageCircle className="h-5 w-5 text-blue-500" />
+                            <AlertDescription className="font-bold text-blue-700 dark:text-blue-300">
+                                {state.result.interactionPrompt}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    <div className="space-y-4 px-2">
+                        <div className="flex items-center gap-2">
+                            <BrainCircuit className="w-5 h-5 text-pink-500" />
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">
+                                {lang === 'en' ? 'Analysis Verdict' : 'विश्लेषण निष्कर्ष'}
+                            </h4>
+                        </div>
+                        <p className="text-xl font-black text-[#1A365D] dark:text-slate-100 leading-tight">
+                            {state.result.overallAssessment}
+                        </p>
+                        <div className="prose prose-sm dark:prose-invert max-w-full text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                            {state.result.detailedAnalysis}
+                        </div>
+                    </div>
+
+                    <div className="grid gap-8">
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Potential Conditions' : 'संभावित स्थितियां'}
+                            </h4>
+                            <div className="grid gap-3">
+                                {(state.result.potentialConditions || []).map((cond: any, i: number) => (
+                                    <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm">
+                                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100">{cond.name}</p>
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">{cond.simpleDescription}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Care & Treatment Guide' : 'देखभाल और उपचार मार्गदर्शिका'}
+                            </h4>
+                            <div className="grid gap-4">
+                                {(state.result.careRecommendations || []).map((care: any, i: number) => (
+                                    <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2.2rem] border border-white dark:border-slate-800 shadow-xl relative overflow-hidden group transition-all hover:scale-[1.02]">
+                                        <div className="flex items-start gap-4">
+                                            <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
+                                                <Pill className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{care.title}</p>
+                                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{care.description}</p>
+                                                {care.productSuggestion && (
+                                                    <div className="mt-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800">
+                                                        <p className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Recommended OTC Product</p>
+                                                        <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{care.productSuggestion}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {state.result.nutritionalSupport && state.result.nutritionalSupport.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                    {lang === 'en' ? 'Nutritional Support' : 'पोषण संबंधी सुझाव'}
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {(state.result.nutritionalSupport || []).map((item: any, i: number) => (
+                                        <div key={i} className="p-4 bg-emerald-50/40 dark:bg-emerald-950/10 rounded-[1.5rem] border border-emerald-100/50 flex gap-3">
+                                            <Utensils className="h-4 w-4 text-emerald-500 shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-black text-emerald-700 dark:text-emerald-300">{item.item}</p>
+                                                <p className="text-[11px] font-bold text-emerald-600/80 dark:text-emerald-400/80">{item.benefit}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                    {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
+                                </h4>
+                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
+                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3">
+                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                {lang === 'en' ? 'Simplified Biological Logic' : 'सरल जैविक तर्क'}
+                            </h4>
+                            <div className="p-6 rounded-[2rem] bg-pink-50/30 dark:bg-pink-900/10 border border-pink-100/50">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                                    "{state.result.biologicalLogic}"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="px-2 pt-4">
+                         <Card className="rounded-[2.5rem] border-2 border-dashed border-primary/20 bg-primary/5 p-8 flex flex-col items-center text-center gap-6">
+                            <div className="h-16 w-16 bg-white dark:bg-slate-900 rounded-3xl shadow-xl flex items-center justify-center text-primary relative">
+                                <Activity className="w-8 h-8" />
+                                <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Need More Details?</h3>
+                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                                    {lang === 'en' 
+                                        ? "Talk to our AI Health Assistant about this specific analysis for a deeper conversation." 
+                                        : "इस विशेष विश्लेषण के बारे में अधिक बातचीत के लिए हमारे एआई स्वास्थ्य सहायक से बात करें।"}
+                                </p>
+                            </div>
+                            <Button onClick={handleAskAssistant} className="rounded-full h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95">
+                                Ask Assistant <ExternalLink className="ml-2 h-4 w-4" />
+                            </Button>
+                         </Card>
+                    </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                        <ShieldAlert className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                            {state.result.disclaimer}
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
+    const [state, formAction, isAnalyzing] = useActionState(analyzeInjuryAction, initialInjuryState);
+    const [preview, setPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
+    }, [state]);
+
+    const handleFormAction = async (formData: FormData) => {
+        try {
+            if (preview) {
+                const compressed = await compressImage(preview);
+                formData.set('imageDataUri', compressed);
+            }
+            formData.set('language', lang);
+            startTransition(() => { formAction(formData); });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Optimization Error' });
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPreview(reader.result as string);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Injury Specialist</h2>
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Emergency Scan</p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                 <form action={handleFormAction} className="space-y-6">
+                    <div className="space-y-3">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Accident Description</Label>
+                        <Textarea name="userQuery" placeholder={lang === 'en' ? "How did it happen? (e.g., Fell down stairs)" : "यह कैसे हुआ? (जैसे: सीढ़ियों से गिर गया)"} className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[140px] text-base font-bold p-6" />
+                    </div>
+                    
+                    {!preview ? (
+                        <div className="border-4 border-dashed border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] p-8 text-center space-y-4 bg-orange-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="h-14 w-14 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-orange-400 mx-auto">
+                                <ImageIcon className="w-7 h-7" />
+                            </div>
+                            <p className="text-[10px] font-black text-orange-600/80 dark:text-orange-400 uppercase tracking-widest">Add Injury Photo (Optional)</p>
+                        </div>
+                    ) : (
+                        <div className="relative rounded-[3rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-black/5 max-h-[500px] flex items-center justify-center">
+                            <Image src={preview} alt="Injury" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
+                            {isAnalyzing && <ScanAnimationOverlay color="text-orange-500" />}
+                            <Button size="icon" variant="destructive" className={cn("absolute top-6 right-6 rounded-full h-10 w-10 z-[70]", isAnalyzing && "hidden")} onClick={() => setPreview(null)}>
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    )}
+                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+
+                    <Button type="submit" disabled={isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-orange-500 to-red-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> AI Scanning...</> : (lang === 'en' ? "Start Emergency Scan" : "इमरजेंसी स्कैन शुरू करें")}
+                    </Button>
+                </form>
+            </div>
+
+            {state?.result && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    {state.result.interactionPrompt && (
+                        <Alert className="rounded-[2rem] bg-blue-50/50 border-blue-200 border-dashed border-2 p-6">
+                            <MessageCircle className="h-5 w-5 text-blue-500" />
+                            <AlertDescription className="font-bold text-blue-700">{state.result.interactionPrompt}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {state.result.severity === 'high' && (
+                        <Alert variant="destructive" className="rounded-[2.5rem] border-none bg-red-500 text-white p-6 animate-pulse">
+                            <Siren className="h-8 w-8 mb-3" />
+                            <AlertTitle className="text-xl font-black uppercase">CRITICAL ALERT</AlertTitle>
+                            <AlertDescription className="text-sm font-bold">{state.result.actionableAlert}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <div className="space-y-8">
+                        <div className="space-y-3 px-2">
+                             <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Injury Type</h4>
+                             <div className="flex items-center gap-4">
+                                <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100">{state.result.classification}</h3>
+                                <Badge className={cn("uppercase font-black text-[8px] border-none px-3", 
+                                    state.result.severity === 'high' ? "bg-red-100 text-red-600" : 
+                                    state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
+                                )}>
+                                    {state.result.severity}
+                                </Badge>
+                             </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Biological Logic</h4>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">"{state.result.biologicalLogic}"</p>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">First-Aid Steps</h4>
+                            <div className="space-y-3">
+                                {(state.result.firstAidSteps || []).map((step: string, i: number) => (
+                                    <div key={i} className="flex gap-4 p-4 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20">
+                                        <span className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black shrink-0">{i+1}</span>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{step}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                                    {lang === 'en' ? 'What NOT to do' : 'क्या न करें'}
+                                </h4>
+                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
+                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3">
+                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                            <ShieldAlert className="h-5 w-5 text-blue-500" />
+                            <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
+                                {state.result.disclaimer}
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
+    const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
+    const [originalImage, setOriginalImage] = useState<string | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
+    }, [state]);
+
+    const handleFormAction = async (formData: FormData) => {
+        if (!preview) return;
+        try {
+            const compressed = await compressImage(preview);
+            formData.set('photoDataUri', compressed);
+            formData.set('contentType', 'image/jpeg');
+            formData.set('language', lang);
+            startTransition(() => { formAction(formData); });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error processing image' });
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result as string;
+                setOriginalImage(result);
+                setPreview(result);
+                setIsEditing(true); 
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSaveEdit = (edited: string) => {
+        setPreview(edited);
+        setIsEditing(false);
+        toast({ title: lang === 'en' ? "Image Prepared" : "इमेज तैयार है" });
+    };
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+             {isEditing && originalImage && (
+                <ImageEditor 
+                    image={originalImage} 
+                    onSave={handleSaveEdit} 
+                    onCancel={() => { setIsEditing(false); if(!preview) setOriginalImage(null); }} 
+                />
+             )}
+
+             <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Radiology AI</h2>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Structural Scan & Vision</p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <form action={handleFormAction} className="space-y-6">
+                    {!preview ? (
+                        <div className="border-4 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-blue-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-blue-500">
+                                <Bone className="w-12 h-12" />
+                            </div>
+                            <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Upload X-Ray Plate</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Editor will open automatically</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className={cn(
+                                "relative rounded-[3rem] overflow-hidden shadow-2xl border-4 transition-all duration-700 bg-black/5 max-h-[500px] flex items-center justify-center",
+                                isAnalyzing ? "border-blue-200 ring-8 ring-blue-50/50" : "border-white dark:border-slate-800"
+                            )}>
+                                <Image src={preview} alt="X-ray" width={600} height={800} className="w-full h-auto object-contain max-h-[500px]" />
+                                {isAnalyzing && <ScanAnimationOverlay color="text-blue-500" />}
+                                <div className={cn("absolute top-6 right-6 flex gap-2", isAnalyzing && "hidden")}>
+                                    <Button type="button" size="icon" onClick={() => setIsEditing(true)} className="rounded-full h-10 w-10 bg-white/90 text-primary shadow-lg backdrop-blur-md">
+                                        <Pencil className="h-5 w-5" />
+                                    </Button>
+                                    <Button type="button" variant="destructive" size="icon" className="rounded-full h-10 w-10 shadow-lg" onClick={() => { setPreview(null); setOriginalImage(null); }}>
+                                        <X className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                            </div>
+                            {!isAnalyzing && (
+                                <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    Tap pencil icon to highlight fractures or crop
+                                </p>
+                            )}
+                        </div>
+                    )}
+                    <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" />
+
+                    <div className="space-y-3">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Mechanism of Injury</Label>
+                        <Textarea name="userQuery" placeholder="E.g., Fall from height, persistent joint pain..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[120px] text-base font-bold p-6" />
+                    </div>
+
+                    <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-blue-600 to-indigo-700 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Analyzing Structural Data...</> : "Start Radiology Analysis"}
+                    </Button>
+                </form>
+            </div>
+
+            {state?.result && (
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    <div className="space-y-6">
+                        <div className="space-y-2 px-2">
+                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Anatomical Findings</h4>
+                             <p className="text-xl font-black text-[#1A365D] dark:text-slate-100">{state.result.bodyPart}</p>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <div className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-blue-500" />
+                                <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Detailed Observation</h4>
+                            </div>
+                            <div className="p-6 rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 border border-white dark:border-slate-800 shadow-sm">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Clinical Implications</h4>
+                            <div className="p-6 rounded-[2.5rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50">
+                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300 leading-relaxed">{state.result.clinicalImplications}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Biological Reasoning</h4>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed px-2">
+                                {state.result.biologicalReasoning}
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-slate-400">Immediate Care Steps</h4>
+                            <div className="grid gap-3">
+                                {(state.result.suggestedActions || []).map((action: string, i: number) => (
+                                    <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-white/20 shadow-sm">
+                                        <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                                            <Check className="h-4 w-4" />
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{action}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                        <ShieldAlert className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
+                            {state.result.disclaimer}
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
+    const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
+    const [previews, setPreviews] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
+    }, [state]);
+
+    const handleFormAction = async (formData: FormData) => {
+        if (previews.length === 0) return;
+        try {
+            const compressedImages = await Promise.all(previews.map(p => compressImage(p)));
+            formData.set('images', JSON.stringify(compressedImages));
+            formData.set('language', lang);
+            startTransition(() => { formAction(formData); });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error processing images' });
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setPreviews(prev => [...prev, reader.result as string].slice(0, 5)); // Limit to 5 pages
+                };
+                reader.readAsDataURL(file);
+            });
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const removePreview = (index: number) => {
+        setPreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const groupedFindings = (state?.result?.findings || []).reduce((acc: any, item: any) => {
+        const category = item.category || (lang === 'en' ? 'General' : 'सामान्य');
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(item);
+        return acc;
+    }, {});
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32 px-1 safe-top mt-4">
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-12 w-12 bg-white/40 backdrop-blur-xl shadow-md shrink-0 text-foreground">
+                    <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Report Specialist</h2>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Multi-Page Lab OCR</p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                {previews.length === 0 ? (
+                    <div className="border-4 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-[3rem] h-80 flex flex-col items-center justify-center bg-emerald-50/20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl text-emerald-500">
+                            <Layers className="w-12 h-12" />
+                        </div>
+                        <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase">Drop Report Page(s)</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Multiple pages supported</p>
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" multiple />
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {previews.map((src, idx) => (
+                                <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white dark:border-slate-800 shadow-md group">
+                                    <Image src={src} alt={`Page ${idx + 1}`} fill className="object-cover" />
+                                    <div className="absolute top-2 left-2 bg-black/60 text-white text-[8px] font-black px-2 py-0.5 rounded-full backdrop-blur-sm">PAGE {idx+1}</div>
+                                    {!isAnalyzing && (
+                                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 rounded-full h-7 w-7 shadow-lg" onClick={() => removePreview(idx)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                            {previews.length < 5 && !isAnalyzing && (
+                                <button onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-2xl border-2 border-dashed border-emerald-100 dark:border-emerald-900/40 flex flex-col items-center justify-center gap-2 bg-emerald-50/20 text-emerald-500 hover:bg-emerald-50 transition-colors">
+                                    <Plus className="h-6 w-6" />
+                                    <span className="text-[8px] font-black uppercase">Add Page</span>
+                                </button>
+                            )}
+                        </div>
+                        
+                        {isAnalyzing && (
+                            <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div className="absolute inset-0 bg-emerald-500 animate-splash-gradient" />
+                            </div>
+                        )}
+                        <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*" multiple />
+                    </div>
+                )}
+
+                <form action={handleFormAction} className="space-y-6">
+                    <div className="space-y-3">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Additional Context (Optional)</Label>
+                        <Textarea name="userQuery" placeholder="E.g., I have been feeling tired lately..." className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-none shadow-inner min-h-[100px] text-base font-bold p-6" />
+                    </div>
+                    <Button type="submit" disabled={previews.length === 0 || isAnalyzing} className="w-full rounded-[2rem] bg-gradient-to-r from-emerald-500 to-teal-600 text-white h-16 text-sm font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all">
+                        {isAnalyzing ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> {lang === 'en' ? 'Processing all pages...' : 'सभी पन्नों का विश्लेषण हो रहा है...'}</> : (lang === 'en' ? `Analyze ${previews.length} Pages` : `${previews.length} पन्नों का विश्लेषण करें`)}
+                    </Button>
+                </form>
+            </div>
+
+            {state?.result && (
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                    
+                    <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/80 dark:bg-slate-900/80 p-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Patient Name</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><User className="w-3.5 h-3.5 text-primary" /> {state.result.patientDetails?.name || '-'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Age / Gender</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{state.result.patientDetails?.age || '-'} / {state.result.patientDetails?.gender || '-'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Report Date</p>
+                                <p className="text-sm font-black text-[#1A365D] dark:text-white flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-primary" /> {state.result.patientDetails?.date || '-'}</p>
+                            </div>
+                             <div className="col-span-full pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Referring Physician / Clinic</p>
+                                <p className="text-sm font-black text-primary flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5" /> {state.result.patientDetails?.doctorName || 'Not Specified'}</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <div className="space-y-4 px-2">
+                        <div className="flex items-center gap-2">
+                            <HeartPulse className="w-5 h-5 text-emerald-500" />
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Executive Summary</h4>
+                        </div>
+                        <p className="text-lg font-black text-[#1A365D] dark:text-slate-100 leading-tight">
+                            {state.result.summary}
+                        </p>
+                    </div>
+
+                    <div className="space-y-8">
+                        {Object.entries(groupedFindings).map(([category, items]: [string, any]) => (
+                            <div key={category} className="space-y-4 px-2">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">{category}</h4>
+                                    <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1 ml-4" />
+                                </div>
+                                <div className="grid gap-3">
+                                    {(items || []).map((item: any, i: number) => (
+                                        <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-[1.8rem] border border-white/20 shadow-sm group transition-all hover:bg-white hover:shadow-md">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-white">{item.test}</p>
+                                                <Badge className={cn("uppercase text-[8px] font-black border-none px-3", 
+                                                    item.status === 'high' ? "bg-red-50 text-red-500" : 
+                                                    item.status === 'low' ? "bg-orange-50 text-orange-500" : 
+                                                    item.status === 'borderline' ? "bg-yellow-50 text-yellow-600" : "bg-emerald-50 text-emerald-600"
+                                                )}>
+                                                    {item.status}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-xl font-black text-primary">{item.value}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 italic">Ref: {item.range}</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{item.significance}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="space-y-8">
+                        <div className="space-y-4 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Clinical Reasoning</h4>
+                            <div className="p-6 rounded-[2rem] bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                                    "{state.result.biologicalLogic}"
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 px-2">
+                            <h4 className="font-black text-xs uppercase tracking-[0.3em] text-[#1A365D] dark:text-slate-300">Cure & Action Plan</h4>
+                            <div className="grid gap-4">
+                                {(state.result.actionPlan || []).map((plan: any, i: number) => (
+                                    <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2.2rem] border border-white dark:border-slate-800 shadow-xl relative overflow-hidden">
+                                        <div className="flex items-start gap-4">
+                                            <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
+                                                <CheckCircle2 className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <p className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{plan.title}</p>
+                                                <div className="space-y-2">
+                                                    {(plan.steps || []).map((step: string, j: number) => (
+                                                        <div key={j} className="flex gap-2 items-start">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{step}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                            <div className="space-y-4 px-2">
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Precautions (What to Avoid)</h4>
+                                <div className="p-6 bg-red-50/40 dark:bg-red-950/10 rounded-[2.2rem] border border-red-100/50 space-y-3">
+                                    {(state.result.thingsToAvoid || []).map((item: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-3">
+                                            <Ban className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-red-700 dark:text-red-300">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <Alert className="rounded-[2.5rem] border-none bg-blue-50/50 dark:bg-blue-900/10 p-6 border-dashed border-2 border-blue-100">
+                        <ShieldAlert className="h-5 w-5 text-blue-500" />
+                        <AlertDescription className="text-[10px] font-black uppercase text-blue-400 tracking-wider text-center">
+                            {state.result.disclaimer}
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- MAIN PAGE COMPONENT ---
 
 export default function DiseaseScannerPage() {
     const [view, setView] = useState<ScannerView>('home');
-    const { userName } = useUserProfile();
+    const { userName, userImage } = useUserProfile();
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
     
@@ -78,7 +1143,6 @@ export default function DiseaseScannerPage() {
             const saved = localStorage.getItem('disease_scanner_stats');
             if (saved) setScanStats(JSON.parse(saved));
         };
-        
         loadStats();
         window.addEventListener('scan-completed', loadStats);
         return () => window.removeEventListener('scan-completed', loadStats);
@@ -86,36 +1150,30 @@ export default function DiseaseScannerPage() {
 
     const t = {
         en: {
-            greeting: `Hi ${userName.split(' ')[0]} 👋`,
-            subGreeting: "Scan & Check Your Health",
-            statsTitle: "Quick Health Stats",
+            greeting: `Hi ${userName.split(' ')[0]}`,
+            statsTitle: "Diagnostic Activity",
             lastScan: "Last Scan",
-            reports: "Reports",
-            healthScore: "Health Score",
-            skinTitle: "Skin Scanner",
-            injuryTitle: "Injury Scanner",
-            xrayTitle: "X-ray Scanner",
-            reportTitle: "Report Analyse",
-            startBtn: "Start Scan",
-            back: "Back to Home",
-            analyzing: "Analyzing...",
-            noScans: "No scans yet"
+            reports: "Total Scans",
+            healthScore: "Lab Status",
+            skinTitle: "Skin Analysis",
+            injuryTitle: "Injury & SOS",
+            xrayTitle: "X-Ray Vision",
+            reportTitle: "Report Specialist",
+            startBtn: "Analyze Now",
+            noScans: "Ready for scan"
         },
         hi: {
-            greeting: `नमस्ते ${userName.split(' ')[0]} 👋`,
-            subGreeting: "स्कैन करें और अपना स्वास्थ्य जांचें",
-            statsTitle: "त्वरित स्वास्थ्य आँकड़े",
+            greeting: `नमस्ते ${userName.split(' ')[0]}`,
+            statsTitle: "नैदानिक गतिविधियाँ",
             lastScan: "पिछला स्कैन",
-            reports: "रिपोर्ट",
-            healthScore: "हेल्थ स्कोर",
-            skinTitle: "स्किन स्कैनर",
-            injuryTitle: "इंजरी स्कैनर",
-            xrayTitle: "एक्स-रे स्कैनर",
+            reports: "कुल स्कैन",
+            healthScore: "लैब स्थिति",
+            skinTitle: "त्वचा विश्लेषण",
+            injuryTitle: "इंजरी और SOS",
+            xrayTitle: "एक्स-रे विजन",
             reportTitle: "रिपोर्ट विश्लेषण",
-            startBtn: "स्कैन शुरू करें",
-            back: "होम पर वापस जाएं",
-            analyzing: "विश्लेषण हो रहा है...",
-            noScans: "अभी कोई स्कैन नहीं"
+            startBtn: "अभी विश्लेषण करें",
+            noScans: "स्कैन के लिए तैयार"
         }
     }[lang];
 
@@ -126,85 +1184,88 @@ export default function DiseaseScannerPage() {
             case 'xray': return <XRayScanner lang={lang} onBack={() => setView('home')} />;
             case 'lab': return <LabReportAnalyzer lang={lang} onBack={() => setView('home')} />;
             default: return (
-                <div className="space-y-8 px-2">
-                    <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                            <h1 className="text-3xl font-black tracking-tighter text-[#2D3A5D] dark:text-slate-100 font-headline">{t.greeting}</h1>
-                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t.subGreeting}</p>
+                <div className="space-y-8 animate-in fade-in duration-700 pb-32">
+                    <div className="flex items-center justify-between p-6 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm mx-1 safe-top mt-2">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <Link href="/dashboard">
+                                <Button variant="ghost" size="icon" className="rounded-full h-11 w-11 bg-white/50 shadow-sm border border-white/20 shrink-0">
+                                    <ChevronLeft className="h-6 w-6 text-[#1A365D]" />
+                                </Button>
+                            </Link>
+                            <div className="space-y-0.5 min-w-0">
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50/80 dark:bg-blue-900/20 rounded-full border border-blue-100/50 mb-0.5">
+                                    <Scan className="w-2.5 h-2.5 text-primary" />
+                                    <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Diagnostic Lab</span>
+                                </div>
+                                <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight truncate">{t.greeting} 👋</h1>
+                            </div>
                         </div>
+                        <Link href="/profile" className="shrink-0 ml-4">
+                            <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg overflow-hidden shrink-0">
+                                <img src={userImage} alt={userName} className="h-full w-full object-cover" />
+                            </div>
+                        </Link>
                     </div>
 
-                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
+                    <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/20 overflow-hidden mx-1">
                         <CardHeader className="pb-3 pt-6 px-8">
-                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500/80 flex items-center gap-2">
+                                <Activity className="w-3.5 h-3.5 text-primary" />
                                 {t.statsTitle}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-4 px-8 pb-6">
+                        <CardContent className="grid grid-cols-3 gap-2 px-8 pb-8 text-center">
                             <div className="space-y-1">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.lastScan}:</p>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 truncate">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.lastScan}</p>
+                                <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-200 truncate">
                                     {scanStats.lastScan ? formatDistanceToNow(scanStats.lastScan, { addSuffix: true }) : t.noScans}
                                 </p>
                             </div>
-                            <div className="space-y-1 border-x px-4 border-slate-100 dark:border-slate-800 text-center">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.reports}:</p>
-                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{scanStats.count}</p>
+                            <div className="space-y-1 border-x border-slate-100/50 dark:border-slate-800/50 px-2">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.reports}</p>
+                                <p className="text-sm font-black text-primary">{scanStats.count || 0}</p>
                             </div>
-                            <div className="space-y-1 text-right">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">{t.healthScore}:</p>
-                                <div className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-black uppercase">
-                                    Good
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{t.healthScore}</p>
+                                <div className="flex justify-center">
+                                    <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 text-[9px] font-black border-none px-2.5 py-0.5 rounded-full">ACTIVE</Badge>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <div className="grid grid-cols-2 gap-6">
-                        <ScannerCard 
-                            title={t.skinTitle} 
-                            icon={Scan}
-                            gradient="from-[#FFF1F6] to-[#FFE4EC]"
-                            btnColor="bg-pink-500 text-white"
-                            onClick={() => setView('skin')}
-                            btnText={t.startBtn}
-                        />
-                        <ScannerCard 
-                            title={t.injuryTitle} 
-                            icon={Bandage}
-                            gradient="from-[#FFF7ED] to-[#FFEDD5]"
-                            btnColor="bg-orange-500 text-white"
-                            onClick={() => setView('injury')}
-                            btnText={t.startBtn}
-                        />
-                        <ScannerCard 
-                            title={t.xrayTitle} 
-                            icon={Bone}
-                            gradient="from-[#E6F0FF] to-[#D1E4FF]"
-                            btnColor="bg-blue-500 text-white"
-                            onClick={() => setView('xray')}
-                            btnText={t.startBtn}
-                        />
-                        <ScannerCard 
-                            title={t.reportTitle} 
-                            icon={FileText}
-                            gradient="from-[#F0FDF4] to-[#DCFCE7]"
-                            btnColor="bg-green-500 text-white"
-                            onClick={() => setView('lab')}
-                            btnText={t.startBtn}
-                        />
+                    <div className="grid grid-cols-2 gap-5 px-1">
+                        <ScannerCard title={t.skinTitle} slogan="Dermatology" icon={Scan} gradient="from-pink-50 to-pink-100/30" iconColor="text-pink-500" btnColor="bg-pink-500" onClick={() => setView('skin')} btnText={t.startBtn} />
+                        <ScannerCard title={t.injuryTitle} slogan="Emergency" icon={Bandage} gradient="from-orange-50 to-orange-100/30" iconColor="text-orange-500" btnColor="bg-orange-500" onClick={() => setView('injury')} btnText={t.startBtn} />
+                        <ScannerCard title={t.xrayTitle} slogan="Radiology" icon={Bone} gradient="from-blue-50 to-blue-100/30" iconColor="text-blue-500" btnColor="bg-blue-500" onClick={() => setView('xray')} btnText={t.startBtn} />
+                        <ScannerCard title={t.reportTitle} slogan="OCR Lab" icon={FileText} gradient="from-emerald-50 to-emerald-100/30" iconColor="text-emerald-500" btnColor="bg-emerald-500" onClick={() => setView('lab')} btnText={t.startBtn} />
                     </div>
 
-                    <div className="flex justify-center pt-4 pb-12">
-                        <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'hi')}>
-                            <SelectTrigger className="w-[140px] bg-white/60 backdrop-blur-md rounded-full border-white/40 shadow-sm font-black text-[10px] uppercase tracking-widest h-10">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-2xl border-none shadow-xl">
-                                <SelectItem value="en" className="font-bold text-xs">English</SelectItem>
-                                <SelectItem value="hi" className="font-bold text-xs">हिन्दी</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="flex justify-center pt-4">
+                        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-lg rounded-full p-1.5 border border-white/40 dark:border-slate-800 flex items-center gap-1">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setLang('en')} 
+                                className={cn(
+                                    "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
+                                    lang === 'en' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                            >
+                                EN
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setLang('hi')} 
+                                className={cn(
+                                    "rounded-full px-5 h-9 text-[10px] font-black uppercase tracking-widest transition-all duration-300", 
+                                    lang === 'hi' ? "bg-primary text-white shadow-md" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                            >
+                                हिन्दी
+                            </Button>
+                        </div>
                     </div>
                 </div>
             );
@@ -212,747 +1273,34 @@ export default function DiseaseScannerPage() {
     };
 
     return (
-        <div className="animate-in fade-in duration-500 h-full">
-            <div className="max-w-xl mx-auto">
-                {renderContent()}
-            </div>
+        <div className="h-[100dvh] w-full bg-gradient-to-b from-[#f0f4ff] via-[#fdfbff] to-[#fff5f7] dark:from-[#0f172a] dark:via-[#020617] dark:to-[#1e1b4b] fixed inset-0 overflow-hidden font-body">
+            <main className="h-full overflow-y-auto scroll-smooth scrollbar-hide">
+                <div className="max-w-2xl mx-auto p-4 pt-4 min-h-full">
+                    {renderContent()}
+                </div>
+            </main>
         </div>
     );
 }
 
-function ScannerCard({ title, icon: Icon, gradient, btnColor, onClick, btnText }: { title: string, icon: any, gradient: string, btnColor: string, onClick: () => void, btnText: string }) {
+function ScannerCard({ title, slogan, icon: Icon, gradient, iconColor, btnColor, onClick, btnText }: any) {
     return (
-        <Card 
-            className={cn(
-                "rounded-[3rem] border-none shadow-md group hover:scale-[1.03] transition-all duration-500 overflow-hidden cursor-pointer bg-gradient-to-br",
-                gradient
-            )}
-            onClick={onClick}
-        >
-            <div className="p-6 flex flex-col h-full items-center justify-between text-center space-y-4">
-                <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center">
-                   <Icon className="w-16 h-16 text-slate-700 opacity-80 group-hover:scale-110 transition-transform duration-500" />
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
+        <Card className={cn("rounded-[3rem] border-none shadow-lg group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden", gradient)} onClick={onClick}>
+            <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+            <div className="p-6 flex flex-col items-center gap-4 text-center relative z-10">
+                <div className="w-16 h-16 rounded-[1.8rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
+                   <Icon className={cn("w-8 h-8", iconColor)} />
                 </div>
-                <div className="space-y-3 w-full">
-                    <h3 className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight leading-none">{title}</h3>
-                    <Button 
-                        className={cn(
-                            "w-full rounded-2xl h-10 text-[10px] font-black uppercase tracking-widest shadow-lg transition-all border-none hover:brightness-110",
-                            btnColor
-                        )}
-                    >
+                <div className="space-y-1.5 w-full">
+                    <h3 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h3>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{slogan}</p>
+                    <div className={cn("w-full rounded-2xl py-2 mt-3 text-[9px] font-black uppercase tracking-widest text-white shadow-xl transition-all duration-300 group-hover:shadow-primary/20", btnColor)}>
                         {btnText}
-                    </Button>
+                    </div>
                 </div>
             </div>
         </Card>
     );
 }
 
-function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
-    const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
-    const [preview, setPreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-
-    useEffect(() => {
-        if (state.result && !state.error) {
-            updateScanStats();
-        }
-    }, [state]);
-
-    const handleFormAction = (formData: FormData) => {
-        if (preview) {
-            const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
-            if (savedProfile) {
-                formData.set('userProfile', savedProfile);
-            }
-            formData.set('imageDataUri', preview);
-            formAction(formData);
-        }
-    }
-
-    const takePicture = () => {
-        if (videoRef.current && canvasRef.current) {
-          const video = videoRef.current;
-          const canvas = canvasRef.current;
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const context = canvas.getContext('2d');
-          if (context) {
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-            setPreview(dataUrl);
-            setIsCameraOpen(false);
-            if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-          }
-        }
-    };
-
-    return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
-                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
-                </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Personalized Skin Architect</h2>
-            </div>
-
-            <Card className="rounded-[2.5rem] neumorphic-card border-none">
-                <CardHeader>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-pink-100 text-pink-600 hover:bg-pink-100 border-none px-3">Detect & Describe</Badge>
-                    </div>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Intelligent Face Analysis</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-relaxed">
-                        Our architect combines visual morphology with your symptoms to provide biological insights.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <canvas ref={canvasRef} className="hidden"></canvas>
-                    {!isCameraOpen && !preview && (
-                        <div className="border-2 border-dashed border-pink-100 dark:border-pink-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-pink-50/20 space-y-4">
-                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-pink-400">
-                                <ImageIcon className="w-10 h-10" />
-                            </div>
-                            <div className="flex gap-2">
-                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="rounded-full font-bold h-10 px-6">
-                                    <Upload className="mr-2 h-4 w-4" /> Upload
-                                </Button>
-                                <Button onClick={async () => {
-                                    try {
-                                        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                                        setIsCameraOpen(true);
-                                        if (videoRef.current) videoRef.current.srcObject = stream;
-                                        streamRef.current = stream;
-                                    } catch (e) {
-                                        toast({ variant: 'destructive', title: "Camera Error", description: "Could not access camera." });
-                                    }
-                                }} className="rounded-full bg-[#FFEDF2] text-pink-600 hover:bg-pink-100 font-bold border-none h-10 px-6">
-                                    <Camera className="mr-2 h-4 w-4" /> Camera
-                                </Button>
-                            </div>
-                            <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = (re) => setPreview(reader.result as string);
-                                    reader.readAsDataURL(file);
-                                }
-                            }} accept="image/*" />
-                        </div>
-                    )}
-
-                    {isCameraOpen && (
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-lg aspect-square bg-black">
-                            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                            <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4">
-                                <Button onClick={takePicture} size="lg" className="rounded-full h-16 w-16 p-0 bg-white hover:bg-white/90 text-pink-500 border-4 border-pink-200">
-                                    <div className="h-12 w-12 rounded-full border-2 border-pink-500"></div>
-                                </Button>
-                                <Button variant="destructive" size="icon" onClick={() => {
-                                    setIsCameraOpen(false);
-                                    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-                                }} className="rounded-full shadow-lg">
-                                    <X />
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {preview && (
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                            <Image src={preview} alt="Preview" width={500} height={500} className="w-full h-auto object-cover" />
-                            <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    )}
-
-                    <form action={handleFormAction} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Describe symptoms (Itching, duration, triggers...)</Label>
-                            <Textarea 
-                                name="userQuery" 
-                                placeholder="Example: These red spots appeared yesterday and they are itchy after using a new soap..." 
-                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[120px] text-base" 
-                            />
-                        </div>
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-pink-400 to-pink-500 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Analyzing Biological Patterns...</> : "Start Scientific Scan"}
-                        </Button>
-                    </form>
-                </CardContent>
-                
-                {state.result && (
-                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800">
-                        {state.result.interactionPrompt && !state.result.identifiedConditions?.length && (
-                            <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
-                                <Info className="h-4 w-4 text-indigo-500" />
-                                <AlertTitle className="font-black text-indigo-700">Follow-up Required</AlertTitle>
-                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="w-full space-y-6 animate-in slide-in-from-top-4">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-pink-500" />
-                                    <h4 className="font-black text-sm uppercase tracking-widest text-[#2D3A5D] dark:text-slate-100">Clinical Reasoning</h4>
-                                </div>
-                                <div className="p-5 rounded-[2rem] bg-pink-50/30 dark:bg-pink-900/10 border border-pink-100/50 dark:border-pink-900/30">
-                                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">{state.result.overallAssessment}</p>
-                                </div>
-                            </div>
-
-                            {state.result.comparativeAnalysis && (
-                                <div className="p-5 rounded-[2rem] bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Activity className="w-3.5 h-3.5 text-indigo-500" />
-                                        <p className="font-black text-[10px] uppercase tracking-widest text-indigo-600">Cross-Reference Analysis</p>
-                                    </div>
-                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{state.result.comparativeAnalysis}</p>
-                                </div>
-                            )}
-
-                            <div className="grid gap-4">
-                                {state.result.identifiedConditions?.map((c: any, i: number) => (
-                                    <Card key={i} className="rounded-[2rem] border-none shadow-sm bg-white dark:bg-slate-800 border border-slate-50 dark:border-slate-700 overflow-hidden">
-                                        <div className="p-6 space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="font-black text-base text-[#2D3A5D] dark:text-slate-100 tracking-tight">{c.name}</p>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Primary Finding</p>
-                                                </div>
-                                                <Badge className="bg-green-50 text-green-600 border-none font-black">{Math.round(c.confidence * 100)}% Match</Badge>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-pink-400" />
-                                                    <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest">Biological Logic</p>
-                                                </div>
-                                                <p className="text-xs font-bold text-slate-500 leading-relaxed italic">"{c.biologicalLogic}"</p>
-                                            </div>
-                                            <p className="text-xs font-medium text-slate-400 leading-relaxed">{c.description}</p>
-                                        </div>
-                                    </Card>
-                                ))}
-                            </div>
-
-                            {state.result.nutritionalSupport?.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <HeartPulse className="w-4 h-4 text-green-500" />
-                                        <h4 className="font-black text-sm uppercase tracking-widest text-[#2D3A5D] dark:text-slate-100">Physiological Support</h4>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {state.result.nutritionalSupport.map((item: string, idx: number) => (
-                                            <Badge key={idx} variant="outline" className="rounded-full px-4 py-1.5 border-green-100 text-green-600 font-bold text-[10px] bg-green-50/30">
-                                                {item}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] text-center pt-4">
-                                This analysis is for educational purposes. Consult a dermatologist for prescription-grade treatment.
-                            </p>
-                        </div>
-                    </CardFooter>
-                )}
-            </Card>
-        </div>
-    );
-}
-
-function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
-    const [state, formAction, isAnalyzing] = useActionState(analyzeInjuryAction, initialInjuryState);
-    const [preview, setPreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (state.result && !state.error) {
-            updateScanStats();
-        }
-    }, [state]);
-
-    const handleFormAction = (formData: FormData) => {
-        if (preview) formData.set('imageDataUri', preview);
-        formData.set('language', lang);
-        formAction(formData);
-    };
-
-    return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
-                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
-                </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Injury Specialist</h2>
-            </div>
-
-            <Card className="rounded-[2.5rem] neumorphic-card border-none overflow-hidden">
-                <CardHeader className="bg-orange-50/30 dark:bg-orange-900/10 border-b border-orange-100/50">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-orange-100 text-orange-600 border-none">Emergency Response</Badge>
-                    </div>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Traumatic Injury Assessment</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Immediate risk assessment and first-aid guidance.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                    <form action={handleFormAction} className="space-y-6">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Describe how it happened (e.g., "fell on road")</Label>
-                            <Textarea 
-                                name="userQuery" 
-                                placeholder="Tell us about the injury, pain level, or any numbness..." 
-                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[140px] text-base" 
-                                required 
-                            />
-                        </div>
-                        
-                        {!preview ? (
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-orange-200 text-orange-600 bg-white dark:bg-slate-800 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-50 transition-all h-12 shadow-sm">
-                                <ImageIcon className="mr-2 h-4 w-4" /> Add Clear Photo (Optional)
-                            </Button>
-                        ) : (
-                            <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-md aspect-video">
-                                <Image src={preview} alt="Injury" fill className="object-cover" />
-                                <Button size="icon" variant="destructive" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                        <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onload = () => setPreview(reader.result as string);
-                                reader.readAsDataURL(file);
-                            }
-                        }} accept="image/*" />
-
-                        <Button type="submit" disabled={isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all transform active:scale-[0.98]">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Assessing Injury...</> : "Start Emergency Analysis"}
-                        </Button>
-                    </form>
-                </CardContent>
-
-                {state.result && (
-                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
-                        {state.result.interactionPrompt && (
-                             <Alert className="rounded-2xl bg-blue-50 border-blue-100">
-                                <Info className="h-4 w-4 text-blue-500" />
-                                <AlertTitle className="font-black text-blue-700">Additional Context Needed</AlertTitle>
-                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        {state.result.severity === 'high' && state.result.actionableAlert && (
-                            <Alert variant="destructive" className="rounded-2xl border-2 border-red-500 bg-red-50 animate-pulse">
-                                <AlertTriangle className="h-5 w-5" />
-                                <AlertTitle className="font-black uppercase tracking-widest">CRITICAL ALERT</AlertTitle>
-                                <AlertDescription className="font-bold text-sm leading-relaxed">
-                                    {state.result.actionableAlert}
-                                    <div className="mt-4 flex gap-2">
-                                        <Button variant="destructive" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest h-9" asChild>
-                                            <Link href="/nearby-hospital"><Navigation className="w-3 h-3 mr-1" /> Hospital Map</Link>
-                                        </Button>
-                                        <Button variant="outline" size="sm" className="rounded-full font-black text-[10px] uppercase tracking-widest h-9 bg-white border-red-200 text-red-600" onClick={() => window.location.href = 'tel:112'}>
-                                            <Siren className="w-3 h-3 mr-1" /> Call 112
-                                        </Button>
-                                    </div>
-                                </AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="w-full space-y-6">
-                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Classification</p>
-                                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{state.result.classification}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Severity</p>
-                                    <Badge className={cn("font-black uppercase text-[10px] border-none", 
-                                        state.result.severity === 'low' ? "bg-green-100 text-green-600" :
-                                        state.result.severity === 'medium' ? "bg-orange-100 text-orange-600" :
-                                        "bg-red-100 text-red-600"
-                                    )}>
-                                        {state.result.severity}
-                                    </Badge>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <HeartPulse className="w-4 h-4 text-orange-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biological Logic</h4>
-                                </div>
-                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed bg-white/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-white/50">
-                                    {state.result.biologicalLogic}
-                                </p>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-blue-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Immediate First-Aid</h4>
-                                </div>
-                                <div className="space-y-3">
-                                    {state.result.firstAidSteps?.map((step: string, i: number) => (
-                                        <div key={i} className="flex gap-3 items-start bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-50">
-                                            <div className="h-6 w-6 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-xs shrink-0">{i+1}</div>
-                                            <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{step}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            
-                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] text-center pt-4 italic">
-                                "This is an AI-generated first-aid guide for immediate awareness. If the injury is severe, seek professional medical treatment immediately."
-                            </p>
-                        </div>
-                    </CardFooter>
-                )}
-            </Card>
-        </div>
-    );
-}
-
-function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
-    const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
-    const [preview, setPreview] = useState<string | null>(null);
-    const [fileType, setFileType] = useState('');
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (state.result && !state.error) {
-            updateScanStats();
-        }
-    }, [state]);
-
-    const handleFormAction = (formData: FormData) => {
-        if (preview) {
-            formData.set('photoDataUri', preview);
-            formData.set('contentType', fileType);
-            formData.set('language', lang);
-            formAction(formData);
-        }
-    };
-
-    return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
-                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
-                </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Radiology Specialist</h2>
-            </div>
-
-            <Card className="rounded-[2.5rem] neumorphic-card border-none overflow-hidden">
-                <CardHeader className="bg-blue-50/30 dark:bg-blue-900/10 border-b border-blue-100/50">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-blue-100 text-blue-600 border-none">Bone & Chest Analysis</Badge>
-                    </div>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Intelligent X-ray Scanner</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                        Multimodal structural analysis for skeletal anomalies and hairline fractures.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                    <form action={handleFormAction} className="space-y-6">
-                        {!preview ? (
-                            <div className="border-2 border-dashed border-blue-100 dark:border-blue-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-blue-50/20 space-y-4 cursor-pointer hover:bg-blue-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                                <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-blue-400">
-                                    <Bone className="w-10 h-10" />
-                                </div>
-                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Upload X-ray Image</p>
-                            </div>
-                        ) : (
-                            <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                                <Image src={preview} alt="X-ray" width={500} height={500} className="w-full h-auto object-cover" />
-                                <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                        <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                setFileType(file.type);
-                                const reader = new FileReader();
-                                reader.onload = () => setPreview(reader.result as string);
-                                reader.readAsDataURL(file);
-                            }
-                        }} accept="image/*" />
-
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mechanism of Injury / Context</Label>
-                            <Textarea 
-                                name="userQuery" 
-                                placeholder="Example: Severe pain in ankle after landing hard while playing basketball..." 
-                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[120px] text-base" 
-                            />
-                        </div>
-
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Performing Radiographic Scan...</> : "Start Structural Analysis"}
-                        </Button>
-                    </form>
-                </CardContent>
-
-                {state.result && (
-                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
-                        {state.result.interactionPrompt && (
-                             <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
-                                <Info className="h-4 w-4 text-indigo-500" />
-                                <AlertTitle className="font-black text-indigo-700">Follow-up Query</AlertTitle>
-                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="w-full space-y-6">
-                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100">
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Target Body Part</p>
-                                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{state.result.bodyPart}</p>
-                                </div>
-                                <Badge className="bg-blue-50 text-blue-600 border-none font-black uppercase text-[10px]">Pre-clinical</Badge>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-blue-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Radiographic Observation</h4>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-white/50">
-                                    <p className="text-sm font-bold text-slate-600 dark:text-slate-200 leading-relaxed italic">"{state.result.observation}"</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <BrainCircuit className="w-4 h-4 text-indigo-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biological Reasoning</h4>
-                                </div>
-                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed px-1">
-                                    {state.result.biologicalReasoning}
-                                </p>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-green-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Suggested Actions</h4>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {state.result.suggestedActions?.map((action: string, i: number) => (
-                                        <Badge key={i} variant="outline" className="rounded-full px-4 py-1.5 border-green-100 text-green-600 font-bold text-[10px] bg-green-50/30">
-                                            {action}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                            
-                            <Alert className="rounded-2xl bg-amber-50 border-amber-100">
-                                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                                <p className="text-[9px] font-bold text-amber-700 leading-relaxed">
-                                    {state.result.disclaimer}
-                                </p>
-                            </Alert>
-                        </div>
-                    </CardFooter>
-                )}
-            </Card>
-        </div>
-    );
-}
-
-function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }) {
-    const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
-    const [preview, setPreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (state.result && !state.error) {
-            updateScanStats();
-        }
-    }, [state]);
-
-    const handleFormAction = (formData: FormData) => {
-        if (preview) {
-            formData.set('imageDataUri', preview);
-            formData.set('language', lang);
-            formAction(formData);
-        } else {
-            toast({ variant: 'destructive', title: "Image Required", description: "Please upload a lab report image first." });
-        }
-    };
-
-    const downloadPdf = (report: any) => {
-        if (!report || !report.interpretations) return;
-        const doc = new jsPDF();
-        const patientName = report.patientDetails?.name || 'Guest';
-        doc.setFontSize(18);
-        doc.text("Clinical Lab Analysis", 105, 20, { align: 'center' });
-        (doc as any).autoTable({
-            startY: 40,
-            head: [['Biomarker', 'Value', 'Reference Range', 'Status']],
-            body: report.interpretations.map((i: any) => [i.test, i.value, i.range || 'N/A', i.status]),
-        });
-        doc.save(`Analysis-${patientName}.pdf`);
-        toast({ title: "PDF Downloaded" });
-    };
-
-    return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full bg-white/40 backdrop-blur-md shadow-sm border border-white/20">
-                    <ArrowLeft className="h-5 w-5 text-[#2D3A5D]" />
-                </Button>
-                <h2 className="text-2xl font-black text-[#2D3A5D] dark:text-slate-100 font-headline tracking-tight">Clinical Data Analyst</h2>
-            </div>
-
-            <Card className="rounded-[2.5rem] neumorphic-card border-none overflow-hidden">
-                <CardHeader className="bg-green-50/30 dark:bg-green-900/10 border-b border-green-100/50">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-green-100 text-green-600 border-none">Multimodal OCR Interpretation</Badge>
-                    </div>
-                    <CardTitle className="text-lg font-black text-[#2D3A5D] dark:text-slate-100">Lab Report Analysis</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                        Extract biomarkers and identify values outside reference ranges automatically.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                    <form action={handleFormAction} className="space-y-6">
-                        {!preview ? (
-                            <div className="border-2 border-dashed border-green-100 dark:border-green-900/30 rounded-[2rem] h-64 flex flex-col items-center justify-center bg-green-50/20 space-y-4 cursor-pointer hover:bg-green-50/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                                <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm text-green-400">
-                                    <FileText className="w-10 h-10" />
-                                </div>
-                                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Click to Upload Report</p>
-                            </div>
-                        ) : (
-                            <div className="relative rounded-[2rem] overflow-hidden shadow-md border-4 border-white dark:border-slate-800">
-                                <Image src={preview} alt="Report" width={500} height={500} className="w-full h-auto object-cover" />
-                                <Button variant="destructive" size="icon" className="absolute top-4 right-4 rounded-full h-8 w-8" onClick={() => setPreview(null)}>
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                        <input type="file" ref={fileInputRef} hidden onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onload = () => setPreview(reader.result as string);
-                                reader.readAsDataURL(file);
-                            }
-                        }} accept="image/*" />
-
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Describe symptoms (e.g., fatigue, pain, reason for test)</Label>
-                            <Textarea 
-                                name="userQuery" 
-                                placeholder="Example: I've been feeling extremely tired lately and have muscle aches..." 
-                                className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none shadow-inner min-h-[120px] text-base" 
-                            />
-                        </div>
-
-                        <Button type="submit" disabled={!preview || isAnalyzing} className="w-full rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 text-white h-14 text-sm font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                            {isAnalyzing ? <><Loader2 className="mr-2 animate-spin" /> Extracting Data...</> : "Start Clinical Interpretation"}
-                        </Button>
-                    </form>
-                </CardContent>
-
-                {state.result && (
-                    <CardFooter className="flex-col items-start gap-6 pt-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
-                        {state.result.interactionPrompt && !state.result.interpretations?.length && (
-                            <Alert className="rounded-2xl bg-indigo-50 border-indigo-100">
-                                <Info className="h-4 w-4 text-indigo-500" />
-                                <AlertTitle className="font-black text-indigo-700">Additional Data Needed</AlertTitle>
-                                <AlertDescription className="text-xs font-bold text-indigo-600">{state.result.interactionPrompt}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="w-full space-y-6">
-                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Key Findings Summary</p>
-                                    <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 leading-tight">{state.result.summary}</p>
-                                </div>
-                                <Button size="sm" onClick={() => downloadPdf(state.result)} className="rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 h-9 px-4 font-black text-[10px] uppercase">
-                                    <Download className="h-3.5 w-3.5 mr-1.5" /> PDF
-                                </Button>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-emerald-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biomarker Analysis Table</h4>
-                                </div>
-                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-                                    {state.result.interpretations?.map((item: any, idx: number) => (
-                                        <div key={idx} className="p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-50 flex justify-between gap-4 items-center">
-                                            <div className="flex-1">
-                                                <p className="text-xs font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight">{item.test}</p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">Range: {item.range || 'N/A'}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100">{item.value}</p>
-                                                <Badge className={cn("mt-1 text-[8px] font-black uppercase border-none", 
-                                                    item.status === 'normal' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                                                )}>{item.status}</Badge>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <BrainCircuit className="w-4 h-4 text-indigo-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Biological Logic</h4>
-                                </div>
-                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed bg-white/50 dark:bg-slate-800/50 p-5 rounded-2xl border border-white/50">
-                                    {state.result.biologicalLogic}
-                                </p>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <Utensils className="w-4 h-4 text-orange-500" />
-                                    <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-500">Lifestyle Suggestions</h4>
-                                </div>
-                                <div className="grid gap-3">
-                                    {state.result.lifestyleSuggestions?.map((suggestion: string, i: number) => (
-                                        <div key={i} className="flex gap-3 items-start bg-white/40 dark:bg-slate-800/40 p-3 rounded-2xl border border-white/50">
-                                            <div className="h-5 w-5 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-[10px] shrink-0">{i+1}</div>
-                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{suggestion}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            
-                            <Alert className="rounded-2xl bg-amber-50 border-amber-100 mt-6">
-                                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                                <p className="text-[10px] font-bold text-amber-700 leading-relaxed italic">
-                                    {state.result.recommendation}
-                                </p>
-                            </Alert>
-                        </div>
-                    </CardFooter>
-                )}
-            </Card>
-        </div>
-    );
-}
-
+type ScannerView = 'home' | 'skin' | 'injury' | 'xray' | 'lab';

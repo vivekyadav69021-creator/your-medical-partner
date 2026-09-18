@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Share, PlusSquare, Smartphone, Download, X, Sparkles, Loader2, HeartPulse } from 'lucide-react';
+import { Share, PlusSquare, Download, X, Sparkles, Loader2, HeartPulse } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function PWAInstallGuide() {
@@ -45,10 +45,10 @@ export function PWAInstallGuide() {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Show banner anyway after 4 seconds for manual instructions if native prompt not available
+    // Show banner after a slight delay for visibility
     const timer = setTimeout(() => {
       setShowBanner(true);
-    }, 4000);
+    }, 3000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
@@ -58,7 +58,6 @@ export function PWAInstallGuide() {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // ANDROID NATIVE PROMPT
       try {
         setIsPreparing(true);
         deferredPrompt.prompt();
@@ -66,7 +65,7 @@ export function PWAInstallGuide() {
         if (outcome === 'accepted') {
           setDeferredPrompt(null);
           setShowBanner(false);
-          toast({ title: "Installing Your Medical Partner..." });
+          toast({ title: "Starting Installation..." });
         }
         setIsPreparing(false);
       } catch (err) {
@@ -74,7 +73,6 @@ export function PWAInstallGuide() {
         setShowInstructions(true);
       }
     } else {
-      // IOS or Manual Fallback
       setShowInstructions(true);
     }
   };
@@ -83,22 +81,22 @@ export function PWAInstallGuide() {
 
   return (
     <>
-      {/* Premium Glassmorphic Action Banner */}
+      {/* Premium Fixed Banner - Improved positioning for PWA/Mobile */}
       {showBanner && !showInstructions && (
-        <div className="fixed bottom-6 left-4 right-4 z-[100] animate-in slide-in-from-bottom-10 duration-1000 ease-out">
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4 rounded-[2.5rem] shadow-[0_20px_50px_rgba(36,136,232,0.15)] flex items-center justify-between gap-4 border border-white dark:border-slate-800 overflow-hidden relative">
-            {/* Subtle animated background pulse */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50" />
+        <div className="fixed bottom-0 left-0 right-0 z-[100] px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-in slide-in-from-bottom-10 duration-700 ease-out pointer-events-none">
+          <div className="max-w-lg mx-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-4 rounded-[2.5rem] shadow-[0_25px_60px_-12px_rgba(0,0,0,0.3)] flex items-center justify-between gap-4 border border-white dark:border-slate-800 pointer-events-auto relative overflow-hidden group">
+            {/* Soft Ambient Background Pulse */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
             
             <div className="flex items-center gap-3 relative z-10">
-              <div className="bg-primary/10 dark:bg-primary/20 h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner border border-white/50">
+              <div className="bg-primary/10 dark:bg-primary/20 h-11 w-11 rounded-2xl flex items-center justify-center shadow-inner border border-white/50 dark:border-slate-700">
                 <HeartPulse className="w-6 h-6 text-primary animate-pulse" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-black text-[#2D3A5D] dark:text-slate-100 tracking-tight flex items-center gap-1">
-                  Get The App <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                <p className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 tracking-tight flex items-center gap-1">
+                  Install App <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                 </p>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Full Screen • Faster Access</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mt-0.5">Native Experience</p>
               </div>
             </div>
 
@@ -107,13 +105,13 @@ export function PWAInstallGuide() {
                 size="sm" 
                 onClick={handleInstallClick} 
                 disabled={isPreparing}
-                className="rounded-full h-10 px-6 bg-primary text-white hover:bg-primary/90 font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20 border-none"
+                className="rounded-full h-9 px-5 bg-primary text-white hover:bg-primary/90 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20 border-none"
               >
-                {isPreparing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Install Now'}
+                {isPreparing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Get Now'}
               </Button>
               <button 
                 onClick={() => setShowBanner(false)} 
-                className="h-9 w-9 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-500 hover:bg-slate-100/50 transition-all"
+                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -146,7 +144,7 @@ export function PWAInstallGuide() {
                   </div>
                   <div className="space-y-1">
                     <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-200">1. Tap 'Share' Button</p>
-                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-tighter">Located at the bottom of Safari</p>
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-tighter">Bottom of your browser</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-5 p-5 rounded-[2.2rem] bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100/50 dark:border-slate-800">
@@ -155,7 +153,7 @@ export function PWAInstallGuide() {
                   </div>
                   <div className="space-y-1">
                     <p className="font-black text-sm text-[#2D3A5D] dark:text-slate-200">2. 'Add to Home Screen'</p>
-                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-tighter">Scroll down to find this option</p>
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-tighter">Scroll down to find this</p>
                   </div>
                 </div>
               </>
@@ -165,7 +163,7 @@ export function PWAInstallGuide() {
                   <PlusSquare className="h-10 w-10 text-primary" />
                 </div>
                 <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed px-2">
-                  Tap the three dots (⋮) in your browser menu and select <b className="text-primary">"Install App"</b> or <b>"Add to Home Screen"</b> to get the full experience.
+                  Tap the browser menu (⋮) and select <b className="text-primary">"Install App"</b> or <b>"Add to Home Screen"</b>.
                 </p>
               </div>
             )}

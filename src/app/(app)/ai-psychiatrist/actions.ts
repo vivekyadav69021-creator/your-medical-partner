@@ -1,6 +1,6 @@
 'use server';
 
-import { aiPsychiatrist, AIPsychiatristInput } from '@/ai/flows/ai-psychiatrist-flow';
+import { aiPsychiatrist } from '@/ai/flows/ai-psychiatrist-flow';
 import { speechToText } from '@/ai/flows/speech-to-text-flow';
 import { z } from 'zod';
 
@@ -26,24 +26,22 @@ export async function aiPsychiatristAction(
 
   if (!validatedFields.success) {
     return {
-      response: null,
-      error:
-        validatedFields.error.flatten().fieldErrors.query?.[0] ??
-        'Invalid input.',
+      result: null,
+      error: validatedFields.error.flatten().fieldErrors.query?.[0] ?? 'Invalid input.',
     };
   }
 
   try {
     const result = await aiPsychiatrist(validatedFields.data);
     return {
-      response: result.response,
+      result,
       error: null,
     };
   } catch (e: any) {
     console.error(e);
     return {
-      response: null,
-      error: e.message || 'The AI model could not be reached. Please try again later.',
+      result: null,
+      error: e.message || 'Mind Companion is resting. Please try again in a bit.',
     };
   }
 }
