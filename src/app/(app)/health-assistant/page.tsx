@@ -469,60 +469,60 @@ export default function HealthAssistantPage() {
                     </div>
                 </ScrollArea>
             ) : (
-                <ScrollArea className="flex-1 px-4 md:px-8 py-8" ref={scrollAreaRef}>
-                    <div className="max-w-4xl mx-auto space-y-12 pb-80">
+                <ScrollArea className="flex-1 px-4 md:px-6 py-6" ref={scrollAreaRef}>
+                    <div className="max-w-4xl mx-auto space-y-10 pb-80">
                         {activeSession?.messages.map((m, i) => (
-                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-6 duration-700", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
+                            <div key={i} className={cn("animate-in fade-in slide-in-from-bottom-6 duration-700 w-full", m.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start")}>
                                 {m.role === 'user' ? (
-                                    <div className="max-w-[85%] md:max-w-[70%] rounded-[2.5rem] rounded-tr-sm bg-primary text-white px-7 py-5 shadow-xl shadow-primary/10">
+                                    <div className="max-w-[90%] md:max-w-[75%] rounded-[2rem] rounded-tr-sm bg-primary text-white px-6 py-4 shadow-xl shadow-primary/10">
                                         {m.image && (
-                                            <div className="mb-4 rounded-[1.8rem] overflow-hidden border-4 border-white/20 shadow-inner">
-                                                <Image src={m.image} alt="Attachment" width={400} height={400} className="w-full h-auto" />
+                                            <div className="mb-4 rounded-2xl overflow-hidden border-2 border-white/20 shadow-inner">
+                                                <Image src={m.image} alt="Attachment" width={300} height={300} className="w-full h-auto" />
                                             </div>
                                         )}
-                                        <p className="text-[15px] md:text-[17px] font-bold leading-relaxed">{m.content}</p>
+                                        <p className="text-[14px] md:text-[16px] font-bold leading-relaxed">{m.content}</p>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-start w-full group">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="size-11 flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800">
-                                                {activeMode === 'doctor' ? <Stethoscope className="w-5 h-5 text-primary" /> : <ShieldPlus className="w-5 h-5 text-primary" />}
+                                        <div className="flex items-center gap-3 mb-5">
+                                            <div className="size-9 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-100 dark:border-slate-800">
+                                                {activeMode === 'doctor' ? <Stethoscope className="w-4 h-4 text-primary" /> : <ShieldPlus className="w-4 h-4 text-primary" />}
                                             </div>
                                             <div className="flex flex-col -space-y-1">
-                                                <span className="text-[11px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">{activeMode === 'doctor' ? specialty : 'Expert Analysis'}</span>
-                                                <div className="flex items-center gap-1.5 mt-1.5">
-                                                     <CheckCircle2 className="h-3 w-3 text-emerald-500 fill-emerald-500/20" />
-                                                     <span className="text-[8px] font-black uppercase text-emerald-600 tracking-[0.2em]">Medically Vetted</span>
+                                                <span className="text-[10px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-widest">{activeMode === 'doctor' ? specialty : 'Health Expert AI'}</span>
+                                                <div className="flex items-center gap-1 mt-1">
+                                                     <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500 fill-emerald-500/20" />
+                                                     <span className="text-[7px] font-black uppercase text-emerald-600 tracking-[0.2em]">Verified Data</span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex-1 w-full min-w-0">
-                                            <article className="prose prose-sm md:prose-lg dark:prose-invert max-w-full text-slate-800 dark:text-slate-200 leading-relaxed font-medium px-2 selection:bg-primary/10">
+                                            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-full text-slate-800 dark:text-slate-200 leading-relaxed font-medium px-1 overflow-hidden">
                                                 <ReactMarkdown 
                                                     components={{
                                                         a: ({node, ...props}) => <a {...props} className="text-primary font-black underline decoration-2 underline-offset-4 hover:text-primary/80 transition-colors" target="_blank" rel="noopener noreferrer" />,
-                                                        h2: ({node, ...props}) => <h2 {...props} className="text-xl font-black uppercase text-[#1A365D] dark:text-white tracking-tight mt-10 mb-5 border-l-[6px] border-primary pl-5" />,
-                                                        p: ({node, ...props}) => <p {...props} className="mb-5" />,
-                                                        ul: ({node, ...props}) => <ul {...props} className="space-y-2 mb-6 list-none pl-2" />,
-                                                        li: ({node, ...props}) => <li {...props} className="flex gap-3 items-start before:content-[''] before:h-2 before:w-2 before:bg-primary/40 before:rounded-full before:mt-2.5" />,
+                                                        h2: ({node, ...props}) => <h2 {...props} className="text-lg font-black uppercase text-[#1A365D] dark:text-white tracking-tight mt-8 mb-4 border-l-[4px] border-primary pl-4" />,
+                                                        p: ({node, ...props}) => <p {...props} className="mb-4 text-sm md:text-base" />,
+                                                        ul: ({node, ...props}) => <ul {...props} className="space-y-1.5 mb-5 list-none pl-1" />,
+                                                        li: ({node, ...props}) => <li {...props} className="flex gap-2 items-start before:content-[''] before:h-1.5 before:w-1.5 before:bg-primary/40 before:rounded-full before:mt-2 before:shrink-0" />,
                                                         table: ({node, ...props}) => (
-                                                            <div className="w-full overflow-x-auto my-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                                                                <table {...props} className="w-full border-collapse text-left" />
+                                                            <div className="w-full overflow-x-auto my-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm scrollbar-hide">
+                                                                <table {...props} className="w-full border-collapse text-left text-xs md:text-sm min-w-[300px]" />
                                                             </div>
                                                         ),
                                                         thead: ({node, ...props}) => <thead {...props} className="bg-slate-50 dark:bg-slate-900" />,
-                                                        th: ({node, ...props}) => <th {...props} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 dark:border-slate-800" />,
-                                                        td: ({node, ...props}) => <td {...props} className="px-4 py-3 text-xs font-bold border-b border-slate-100 dark:border-slate-800/50" />,
+                                                        th: ({node, ...props}) => <th {...props} className="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 dark:border-slate-800" />,
+                                                        td: ({node, ...props}) => <td {...props} className="px-3 py-2 font-bold border-b border-slate-100 dark:border-slate-800/50" />,
                                                     }}
                                                 >
                                                     {m.content}
                                                 </ReactMarkdown>
                                             </article>
-                                            <div className="mt-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity px-2">
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-slate-50 dark:bg-slate-800" onClick={() => handleToggleSpeech(m.content, i)}>
-                                                    <Volume2 className="w-4.5 h-4.5" />
+                                            <div className="mt-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity px-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 dark:bg-slate-800" onClick={() => handleToggleSpeech(m.content, i)}>
+                                                    <Volume2 className="w-3.5 h-3.5" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-slate-50 dark:bg-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}><Copy className="w-4.5 h-4.5" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 dark:bg-slate-800" onClick={() => { navigator.clipboard.writeText(m.content); toast({title: "Copied"}); }}><Copy className="w-3.5 h-3.5" /></Button>
                                             </div>
                                         </div>
                                     </div>
@@ -533,27 +533,27 @@ export default function HealthAssistantPage() {
                              <div className="flex flex-col items-start gap-6 w-full animate-in fade-in">
                                 <div className="flex items-center justify-between w-full pr-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-12 flex items-center justify-center bg-primary/10 rounded-[1.5rem] animate-pulse">
-                                            {activeMode === 'doctor' ? <Stethoscope className="w-6 h-6 text-primary" /> : <ShieldPlus className="w-6 h-6 text-primary" />}
+                                        <div className="size-10 flex items-center justify-center bg-primary/10 rounded-xl animate-pulse">
+                                            {activeMode === 'doctor' ? <Stethoscope className="w-5 h-5 text-primary" /> : <ShieldPlus className="w-5 h-5 text-primary" />}
                                         </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.25em]">Health AI Thinking...</span>
+                                        <div className="space-y-0.5">
+                                            <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Health Intelligence...</span>
                                             <div className="flex items-center gap-2">
-                                                <div className="h-1 w-12 bg-primary/10 rounded-full overflow-hidden">
+                                                <div className="h-0.5 w-10 bg-primary/10 rounded-full overflow-hidden">
                                                     <div className="h-full bg-primary animate-splash-gradient w-1/2" />
                                                 </div>
-                                                <span className="tabular-nums text-[9px] font-black text-slate-400">{loadingTimer}s</span>
+                                                <span className="tabular-nums text-[8px] font-black text-slate-400">{loadingTimer}s</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <Button variant="outline" size="sm" onClick={() => setIsManuallyStopped(true)} className="rounded-full h-9 px-5 gap-2 border-red-100 dark:border-red-900/50 text-red-500 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest shadow-sm">
-                                        <StopCircle className="w-3.5 h-3.5" /> Stop
+                                    <Button variant="outline" size="sm" onClick={() => setIsManuallyStopped(true)} className="rounded-full h-8 px-4 gap-1.5 border-red-100 dark:border-red-900/50 text-red-500 hover:bg-red-50 font-black text-[9px] uppercase tracking-widest shadow-sm">
+                                        <StopCircle className="w-3 h-3" /> Stop
                                     </Button>
                                 </div>
-                                <div className="h-14 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center px-6 max-w-sm shadow-inner">
-                                    <div key={currentSourceIndex} className="flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300 w-full">
-                                        <Sparkles className="w-4 h-4 text-yellow-500 shrink-0" />
-                                        <p className="text-[9px] font-black uppercase text-slate-500 truncate tracking-[0.15em]">Sourcing: <span className="text-primary">{medicalSources[currentSourceIndex]}</span></p>
+                                <div className="h-10 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center px-5 max-w-[280px] shadow-inner">
+                                    <div key={currentSourceIndex} className="flex items-center gap-2.5 animate-in slide-in-from-bottom-1 duration-300 w-full">
+                                        <Sparkles className="w-3 h-3 text-yellow-500 shrink-0" />
+                                        <p className="text-[8px] font-black uppercase text-slate-500 truncate tracking-[0.1em]">Sourcing: <span className="text-primary">{medicalSources[currentSourceIndex]}</span></p>
                                     </div>
                                 </div>
                             </div>
@@ -564,75 +564,75 @@ export default function HealthAssistantPage() {
         </main>
 
         <div className={cn(
-            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-700 ease-in-out px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
+            "fixed bottom-0 left-0 right-0 z-40 transition-all duration-700 ease-in-out px-4 pb-[calc(1.2rem+env(safe-area-inset-bottom))]",
             (!isInputVisible && hasMessages) || (activeMode === 'doctor' && !activeDoctorId) ? "translate-y-[130%] opacity-0" : "translate-y-0 opacity-100"
         )}>
-            <div className="max-w-3xl mx-auto flex flex-col gap-4">
+            <div className="max-w-3xl mx-auto flex flex-col gap-3">
                 {attachedImage && (
                     <div className="mx-4 mb-1 flex animate-in zoom-in-95 duration-500">
                         <div className="relative">
-                            <Image src={attachedImage} alt="Preview" width={100} height={100} className="rounded-3xl border-[6px] border-white dark:border-slate-800 shadow-2xl object-cover ring-1 ring-slate-100" />
-                            <Button variant="destructive" size="icon" className="absolute -top-3 -right-3 h-8 w-8 rounded-full shadow-lg border-2 border-white" onClick={() => setAttachedImage(null)}><X className="h-4 w-4" /></Button>
+                            <Image src={attachedImage} alt="Preview" width={90} height={90} className="rounded-2xl border-[5px] border-white dark:border-slate-800 shadow-xl object-cover ring-1 ring-slate-100" />
+                            <Button variant="destructive" size="icon" className="absolute -top-2.5 -right-2.5 h-7 w-7 rounded-full shadow-lg border-2 border-white" onClick={() => setAttachedImage(null)}><X className="h-3.5 w-3.5" /></Button>
                         </div>
                     </div>
                 )}
                 
-                <div className="relative flex flex-col rounded-[2.8rem] bg-white/95 dark:bg-[#020617]/95 backdrop-blur-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] p-3 border border-white dark:border-slate-800 focus-within:ring-[8px] focus-within:ring-primary/5 transition-all duration-500">
+                <div className="relative flex flex-col rounded-[2.5rem] bg-white/95 dark:bg-[#020617]/95 backdrop-blur-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] p-2.5 border border-white dark:border-slate-800 focus-within:ring-[6px] focus-within:ring-primary/5 transition-all duration-500">
                     
-                    <div className="flex items-center px-5 py-2 gap-2.5 opacity-60">
-                        <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">HIPAA Secure Session</span>
+                    <div className="flex items-center px-4 py-1.5 gap-2 opacity-50">
+                        <ShieldCheck className="w-3 h-3 text-primary" />
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.3em]">HIPAA Secure Connection</span>
                     </div>
 
                     <div className="flex-1">
                         <Textarea 
                             ref={queryInputRef} 
                             name="query" 
-                            placeholder={activeMode === 'doctor' ? `Inquiry for the ${specialty}...` : "Describe symptoms or upload a medical report..."}
+                            placeholder={activeMode === 'doctor' ? `Consult the ${specialty}...` : "Symptoms or report details..."}
                             className={cn(
-                                "w-full px-5 py-3 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[17px] text-slate-800 dark:text-slate-200 resize-none transition-all duration-500 overflow-y-auto", 
-                                (isFocused || isTyping || attachedImage) ? "min-h-[70px] max-h-[220px]" : "min-h-[48px] max-h-[48px]"
+                                "w-full px-4 py-2 border-none bg-transparent shadow-none focus-visible:ring-0 font-bold text-[16px] text-slate-800 dark:text-slate-200 resize-none transition-all duration-500 overflow-y-auto", 
+                                (isFocused || isTyping || attachedImage) ? "min-h-[60px] max-h-[180px]" : "min-h-[44px] max-h-[44px]"
                             )}
                             rows={1} onFocus={() => setIsFocused(true)}
                             onInput={(e) => { 
                                 const target = e.target as HTMLTextAreaElement; 
                                 target.style.height = 'auto'; 
-                                target.style.height = `${Math.min(target.scrollHeight, 220)}px`; 
+                                target.style.height = `${Math.min(target.scrollHeight, 180)}px`; 
                                 setIsTyping(target.value.length > 0); 
                                 target.scrollTop = target.scrollHeight;
                             }}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onFormAction(queryInputRef.current!.value); } }} />
                     </div>
                     
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100/50 dark:border-slate-800/50">
-                        <div className="flex items-center gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-12 w-12 rounded-full hover:bg-slate-50 transition-colors">
-                                <Plus className="h-6 w-6 text-slate-400" />
+                    <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100/50 dark:border-slate-800/50">
+                        <div className="flex items-center gap-1">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => queryInputRef.current?.closest('body')?.querySelector<HTMLInputElement>('#file-upload')?.click()} className="h-11 w-11 rounded-full hover:bg-slate-50 transition-colors">
+                                <Plus className="h-5 w-5 text-slate-400" />
                             </Button>
                             <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setAttachedImage(ev.target?.result as string); r.readAsDataURL(file); } }} />
                             
                             {activeMode === 'general' ? (
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" className={cn("h-10 px-5 rounded-full gap-3 text-[10px] font-black uppercase tracking-widest transition-all", modeConfig[pulseMode].bg, modeConfig[pulseMode].color, "border border-transparent hover:border-current/20")}>
-                                            {React.createElement(modeConfig[pulseMode].icon, { className: "h-4 w-4" })}
+                                        <Button type="button" variant="ghost" className={cn("h-9 px-4 rounded-full gap-2 text-[9px] font-black uppercase tracking-widest transition-all", modeConfig[pulseMode].bg, modeConfig[pulseMode].color, "border border-transparent hover:border-current/20")}>
+                                            {React.createElement(modeConfig[pulseMode].icon, { className: "h-3.5 w-3.5" })}
                                             <span className="hidden sm:inline">{modeConfig[pulseMode].label}</span>
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-72 rounded-[2.8rem] p-5 mb-8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-none shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)]" side="top" align="start">
-                                        <div className="space-y-5">
-                                            <div className="px-2">
-                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.25em] mb-1">Intelligence Mode</p>
-                                                <p className="text-[8px] font-bold text-slate-300 uppercase">Change AI behavior and data depth</p>
+                                    <PopoverContent className="w-64 rounded-[2.2rem] p-4 mb-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-none shadow-2xl" side="top" align="start">
+                                        <div className="space-y-4">
+                                            <div className="px-1">
+                                                <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] mb-0.5">Brain Mode</p>
+                                                <p className="text-[7px] font-bold text-slate-300 uppercase">Change depth of analysis</p>
                                             </div>
-                                            <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2.5">
+                                            <RadioGroup value={pulseMode} onValueChange={(v) => setPulseMode(v as PulseMode)} className="gap-2">
                                                 {Object.entries(modeConfig).map(([val, cfg]) => (
-                                                    <div key={val} className="flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
+                                                    <div key={val} className="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:bg-primary/10 group cursor-pointer border border-transparent has-[:checked]:border-primary/20">
                                                         <RadioGroupItem value={val} id={val} className="sr-only" />
-                                                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-700 shadow-sm transition-colors">
-                                                            {React.createElement(cfg.icon, { className: cn("w-4 h-4", cfg.color) })}
+                                                        <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 group-has-[:checked]:bg-white dark:group-has-[:checked]:bg-slate-700 shadow-sm">
+                                                            {React.createElement(cfg.icon, { className: cn("w-3.5 h-3.5", cfg.color) })}
                                                         </div>
-                                                        <Label htmlFor={val} className="flex-1 cursor-pointer font-black text-[11px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">{cfg.label}</Label>
+                                                        <Label htmlFor={val} className="flex-1 cursor-pointer font-black text-[10px] text-slate-600 dark:text-[#e3e3e3] uppercase tracking-widest">{cfg.label}</Label>
                                                     </div>
                                                 ))}
                                             </RadioGroup>
@@ -640,20 +640,20 @@ export default function HealthAssistantPage() {
                                     </PopoverContent>
                                 </Popover>
                             ) : (
-                                <div className="flex items-center gap-2 px-4 h-10 rounded-full bg-primary/5 border border-primary/10">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                                    <span className="text-[9px] font-black text-primary uppercase tracking-[0.15em]">{specialty}</span>
+                                <div className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-primary/5 border border-primary/10">
+                                    <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+                                    <span className="text-[8px] font-black text-primary uppercase tracking-[0.1em]">{specialty}</span>
                                 </div>
                             )}
                         </div>
                         
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                              {!isTyping && !isRecording && !attachedImage && (
-                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 transition-all active:scale-90"><Mic className="w-5.5 h-5.5 text-primary" /></Button>
+                                <Button type="button" variant="ghost" size="icon" onClick={startRecording} className="h-11 w-11 rounded-full bg-slate-50 dark:bg-slate-800 transition-all active:scale-90"><Mic className="w-5 h-5 text-primary" /></Button>
                             )}
                             {(isTyping || isRecording || attachedImage) && (
-                                <Button onClick={() => onFormAction(queryInputRef.current!.value)} disabled={isPending} className="h-14 w-14 rounded-full bg-primary text-white shadow-xl shadow-primary/30 active:scale-90 transition-all duration-300">
-                                    {isPending ? <Loader2 className="w-7 h-7 animate-spin" /> : <SendHorizonal className="w-7 h-7" />}
+                                <Button onClick={() => onFormAction(queryInputRef.current!.value)} disabled={isPending} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl shadow-primary/30 active:scale-90 transition-all duration-300">
+                                    {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <SendHorizonal className="w-6 h-6" />}
                                 </Button>
                             )}
                         </div>
