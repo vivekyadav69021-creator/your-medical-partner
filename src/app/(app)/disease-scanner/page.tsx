@@ -34,7 +34,10 @@ import {
   User,
   Stethoscope,
   HeartPulse,
-  Camera
+  Camera,
+  AlertTriangle,
+  Lightbulb,
+  Apple
 } from 'lucide-react';
 import { analyzeXrayAction, analyzeSkinImageAction, analyzeLabReportImageAction, analyzeInjuryAction } from './actions';
 import Image from 'next/image';
@@ -177,7 +180,6 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [previews, setPreviews] = useState<string[]>([]);
     const { toast } = useToast();
-    const router = useRouter();
 
     useEffect(() => {
         if (state?.result && !state?.error && state?.timestamp > 0) {
@@ -224,12 +226,28 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
             {state?.result && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 px-2">
                     <div className="space-y-4">
-                        <p className="text-xl font-black text-[#1A365D] dark:text-slate-100 leading-tight">{String(state.result.overallAssessment)}</p>
+                        <p className="text-xl font-black text-[#1A365D] dark:text-white leading-tight">{String(state.result.overallAssessment)}</p>
                         <div className="prose prose-sm dark:prose-invert text-slate-600 font-medium leading-relaxed">{String(state.result.detailedAnalysis)}</div>
                     </div>
 
+                    {/* Potential Conditions */}
+                    {state.result.potentialConditions && state.result.potentialConditions.length > 0 && (
+                        <div className="space-y-4">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Potential Conditions</h4>
+                            <div className="grid gap-3">
+                                {state.result.potentialConditions.map((cond: any, i: number) => (
+                                    <div key={i} className="p-4 bg-white/40 border border-white/60 rounded-2xl shadow-sm">
+                                        <p className="text-sm font-black text-[#1A365D] dark:text-white uppercase">{cond.name}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1">{cond.simpleDescription}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Care Guide */}
                     <div className="space-y-4">
-                        <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Care Guide</h4>
+                        <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Care Recommendations</h4>
                         <div className="grid gap-4">
                             {(state.result.careRecommendations || []).map((care: any, i: number) => (
                                 <div key={i} className="p-6 bg-white/80 dark:bg-slate-900/80 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
@@ -240,6 +258,43 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                             ))}
                         </div>
                     </div>
+
+                    {/* Nutritional Support */}
+                    {state.result.nutritionalSupport && state.result.nutritionalSupport.length > 0 && (
+                        <div className="space-y-4">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Dietary Support</h4>
+                            <div className="grid grid-cols-1 gap-3">
+                                {state.result.nutritionalSupport.map((nutri: any, i: number) => (
+                                    <div key={i} className="p-4 bg-emerald-50/30 border border-emerald-100 rounded-2xl flex items-center gap-4">
+                                        <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                            <Apple className="w-4 h-4" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-black uppercase text-[#1A365D]">{nutri.item}</p>
+                                            <p className="text-[10px] font-bold text-slate-500">{nutri.benefit}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Things to Avoid */}
+                    {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                        <div className="space-y-4">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Strictly Avoid</h4>
+                            <div className="p-6 rounded-[2rem] bg-rose-50 border-2 border-dashed border-rose-200">
+                                <ul className="space-y-2">
+                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                        <li key={i} className="flex gap-3 items-start">
+                                            <Ban className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                                            <span className="text-xs font-bold text-rose-600 uppercase tracking-tight">{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -304,6 +359,41 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                         </div>
                         <p className="text-sm font-bold text-slate-500 italic leading-relaxed">"{String(state.result.biologicalLogic)}"</p>
                     </div>
+
+                    {/* First Aid Steps */}
+                    {state.result.firstAidSteps && state.result.firstAidSteps.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <HeartPulse className="w-4 h-4 text-orange-500" />
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Emergency First Aid</h4>
+                            </div>
+                            <div className="grid gap-3">
+                                {state.result.firstAidSteps.map((step: string, i: number) => (
+                                    <div key={i} className="flex gap-4 p-5 bg-white/60 dark:bg-slate-900/60 rounded-[1.8rem] border border-white shadow-sm group">
+                                        <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-white transition-colors">{i+1}</div>
+                                        <p className="text-xs font-bold text-slate-600 dark:text-slate-200 leading-relaxed">{step}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Things to Avoid */}
+                    {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                        <div className="space-y-4">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Actions to Avoid</h4>
+                            <div className="p-6 rounded-[2rem] bg-rose-50 border-2 border-dashed border-rose-200">
+                                <ul className="space-y-2">
+                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                        <li key={i} className="flex gap-3 items-start">
+                                            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                                            <span className="text-xs font-bold text-rose-600 uppercase tracking-tight">{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -423,20 +513,72 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                             </div>
                         </div>
                     </Card>
+
+                    {state.result.summary && (
+                        <div className="space-y-3">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Holistic Summary</h4>
+                            <p className="text-sm font-bold text-slate-600 leading-relaxed bg-white/40 p-5 rounded-3xl border border-white/60">{state.result.summary}</p>
+                        </div>
+                    )}
+
                     <div className="space-y-4">
                          {(state.result.findings || []).map((item: any, i: number) => (
                             <div key={i} className="p-5 bg-white/60 dark:bg-slate-800/60 rounded-3xl border border-white/20 shadow-sm flex items-center justify-between">
-                                <div>
+                                <div className="flex-1 pr-4">
                                     <p className="text-xs font-black text-[#1A365D] dark:text-white uppercase">{String(item.test)}</p>
                                     <p className="text-[10px] font-bold text-slate-400 mt-1">{String(item.significance)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-lg font-black text-primary">{String(item.value)}</p>
-                                    <Badge className={cn("uppercase text-[8px] font-black border-none", item.status === 'high' ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500")}>{String(item.status)}</Badge>
+                                    <Badge className={cn("uppercase text-[8px] font-black border-none", (item.status === 'high' || item.status === 'low') ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500")}>{String(item.status)}</Badge>
                                 </div>
                             </div>
                          ))}
                     </div>
+
+                    {/* Action Plan Suggestions */}
+                    {state.result.actionPlan && state.result.actionPlan.length > 0 && (
+                        <div className="space-y-5">
+                            <div className="flex items-center gap-2">
+                                <Lightbulb className="w-5 h-5 text-emerald-500" />
+                                <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Clinical Action Plan</h4>
+                            </div>
+                            <div className="grid gap-4">
+                                {state.result.actionPlan.map((action: any, i: number) => (
+                                    <Card key={i} className="rounded-[2.2rem] border-none shadow-md bg-white p-6 space-y-4">
+                                        <h5 className="text-sm font-black text-[#1A365D] uppercase tracking-tight flex items-center gap-2">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-primary" /> {action.title}
+                                        </h5>
+                                        <ul className="space-y-3">
+                                            {action.steps.map((step: string, j: number) => (
+                                                <li key={j} className="flex gap-3 items-start">
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                    <span className="text-xs font-bold text-slate-500 leading-snug">{step}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Things to Avoid */}
+                    {state.result.thingsToAvoid && state.result.thingsToAvoid.length > 0 && (
+                        <div className="space-y-4">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Strict Restrictions</h4>
+                            <div className="p-8 rounded-[2.5rem] bg-rose-50 border-2 border-dashed border-rose-200">
+                                <div className="grid gap-3">
+                                    {state.result.thingsToAvoid.map((item: string, i: number) => (
+                                        <div key={i} className="flex gap-3 items-center">
+                                            <Ban className="w-4 h-4 text-rose-500 shrink-0" />
+                                            <span className="text-xs font-black text-rose-600 uppercase tracking-tight">{item}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
