@@ -48,7 +48,6 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { useRouter } from 'next/navigation';
 
 // --- UTILITIES ---
 
@@ -103,10 +102,9 @@ function ScanAnimationOverlay({ color }: { color: string }) {
 
 // --- SHARED MULTI-IMAGE UPLOADER ---
 
-function MultiImageUploader({ previews, setPreviews, isAnalyzing, color, lang, label }: any) {
+function MultiImageUploader({ previews, setPreviews, isAnalyzing, color, lang }: any) {
     const cameraRef = useRef<HTMLInputElement>(null);
     const galleryRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -180,9 +178,11 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
     const [state, formAction, isAnalyzing] = useActionState(analyzeSkinImageAction, initialSkinState);
     const [previews, setPreviews] = useState<string[]>([]);
     const { toast } = useToast();
+    const lastProcessedRef = useRef<number>(0);
 
     useEffect(() => {
-        if (state?.result && !state?.error && state?.timestamp > 0) {
+        if (state?.result && !state?.error && state?.timestamp > lastProcessedRef.current) {
+            lastProcessedRef.current = state.timestamp;
             updateScanStats();
             toast({ title: lang === 'en' ? "Analysis Complete" : "विश्लेषण पूरा हुआ" });
         }
@@ -227,7 +227,7 @@ function SkinFaceScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => vo
                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 px-2">
                     <div className="space-y-4">
                         <p className="text-xl font-black text-[#1A365D] dark:text-white leading-tight">{String(state.result.overallAssessment)}</p>
-                        <div className="prose prose-sm dark:prose-invert text-slate-600 font-medium leading-relaxed">{String(state.result.detailedAnalysis)}</div>
+                        <div className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">{String(state.result.detailedAnalysis)}</div>
                     </div>
 
                     {/* Potential Conditions */}
@@ -305,10 +305,15 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
     const [state, formAction, isAnalyzing] = useActionState(analyzeInjuryAction, initialInjuryState);
     const [previews, setPreviews] = useState<string[]>([]);
     const { toast } = useToast();
+    const lastProcessedRef = useRef<number>(0);
 
     useEffect(() => {
-        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
-    }, [state]);
+        if (state?.result && !state?.error && state?.timestamp > lastProcessedRef.current) {
+            lastProcessedRef.current = state.timestamp;
+            updateScanStats();
+            toast({ title: lang === 'en' ? "Emergency Assessment Complete" : "आपातकालीन मूल्यांकन पूरा हुआ" });
+        }
+    }, [state, toast, lang]);
 
     const handleFormAction = async (formData: FormData) => {
         if (previews.length === 0) return;
@@ -357,7 +362,7 @@ function InjuryScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void
                             <h3 className="text-lg font-black text-[#1A365D] dark:text-slate-100 uppercase">{String(state.result.classification)}</h3>
                             <Badge className="bg-orange-50 text-orange-600 border-none uppercase text-[8px] font-black px-3">{String(state.result.severity)}</Badge>
                         </div>
-                        <p className="text-sm font-bold text-slate-500 italic leading-relaxed">"{String(state.result.biologicalLogic)}"</p>
+                        <div className="text-sm font-bold text-slate-500 italic leading-relaxed">"{String(state.result.biologicalLogic)}"</div>
                     </div>
 
                     {/* First Aid Steps */}
@@ -404,10 +409,15 @@ function XRayScanner({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => void }
     const [state, formAction, isAnalyzing] = useActionState(analyzeXrayAction, initialXrayState);
     const [previews, setPreviews] = useState<string[]>([]);
     const { toast } = useToast();
+    const lastProcessedRef = useRef<number>(0);
 
     useEffect(() => {
-        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
-    }, [state]);
+        if (state?.result && !state?.error && state?.timestamp > lastProcessedRef.current) {
+            lastProcessedRef.current = state.timestamp;
+            updateScanStats();
+            toast({ title: lang === 'en' ? "Radiology Report Ready" : "रेडियोलॉजी रिपोर्ट तैयार है" });
+        }
+    }, [state, toast, lang]);
 
     const handleFormAction = async (formData: FormData) => {
         if (previews.length === 0) return;
@@ -461,10 +471,15 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
     const [state, formAction, isAnalyzing] = useActionState(analyzeLabReportImageAction, initialLabReportState);
     const [previews, setPreviews] = useState<string[]>([]);
     const { toast } = useToast();
+    const lastProcessedRef = useRef<number>(0);
 
     useEffect(() => {
-        if (state?.result && !state?.error && state?.timestamp > 0) updateScanStats();
-    }, [state]);
+        if (state?.result && !state?.error && state?.timestamp > lastProcessedRef.current) {
+            lastProcessedRef.current = state.timestamp;
+            updateScanStats();
+            toast({ title: lang === 'en' ? "Full Report Analyzed" : "पूरी रिपोर्ट का विश्लेषण किया गया" });
+        }
+    }, [state, toast, lang]);
 
     const handleFormAction = async (formData: FormData) => {
         if (previews.length === 0) return;
@@ -517,7 +532,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
                     {state.result.summary && (
                         <div className="space-y-3">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Holistic Summary</h4>
-                            <p className="text-sm font-bold text-slate-600 leading-relaxed bg-white/40 p-5 rounded-3xl border border-white/60">{state.result.summary}</p>
+                            <div className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed bg-white/40 p-5 rounded-3xl border border-white/60">{state.result.summary}</div>
                         </div>
                     )}
 
@@ -589,7 +604,7 @@ function LabReportAnalyzer({ lang, onBack }: { lang: 'en' | 'hi', onBack: () => 
 
 export default function DiseaseScannerPage() {
     const [view, setView] = useState<ScannerView>('home');
-    const { userName, userImage } = useUserProfile();
+    const { userName } = useUserProfile();
     const [lang, setLang] = useState<'en' | 'hi'>('en');
     const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
     
