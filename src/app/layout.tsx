@@ -42,8 +42,8 @@ export default function RootLayout({
       <body className="antialiased selection:bg-primary/20 overflow-hidden touch-none h-[100dvh] w-screen fixed inset-0 font-body">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
