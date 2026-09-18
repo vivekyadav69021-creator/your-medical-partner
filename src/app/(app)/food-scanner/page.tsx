@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
+  Card, 
+  CardContent 
+} from '@/components/ui/card';
+import { 
   Camera, 
   Loader2, 
   X, 
@@ -78,7 +82,6 @@ function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isB
                         <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-xl shadow-lg" />
                         <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-xl shadow-lg" />
                         <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-xl shadow-lg" />
-                        {/* Red Laser Line */}
                         <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_10px_red] animate-pulse" />
                     </div>
                 </div>
@@ -108,7 +111,6 @@ export default function FoodScannerPage() {
   const [textLabel, setTextLabel] = useState('');
   const [scanStats, setScanStats] = useState({ count: 0, lastScan: null as number | null });
 
-  // Filters
   const [healthMirror, setHealthMirror] = useState('');
   const [mainGoal, setMainGoal] = useState('General Health');
   const [workout, setWorkout] = useState('Moderate');
@@ -376,7 +378,6 @@ export default function FoodScannerPage() {
                     </div>
                 </section>
 
-                {/* Expiry Intelligence Card */}
                 {view === 'barcode' && state.result.expiryDate && (
                     <Card className={cn(
                         "rounded-[2.5rem] border-none p-8 flex items-center justify-between shadow-xl relative overflow-hidden",
