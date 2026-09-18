@@ -14,16 +14,16 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const [mounted, setMounted] = useState(false);
-  const [showSplash, setShowSplash] = useState(true); // Control splash visibility
+  const [showSplash, setShowSplash] = useState(true); 
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
-    // Optimized splash delay to 2.5 seconds for a snappier yet premium feel
+    // Reduced splash delay from 2.5s to 1.0s for a significantly faster startup
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 2500);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -33,7 +33,7 @@ export default function AppLayout({
     }
   }, [mounted, user, isUserLoading, router]);
 
-  // Show splash if still mounting, checking auth, or during the mandatory period
+  // If still determining auth status or during the branding period, show splash
   if (!mounted || isUserLoading || showSplash) {
     return <SplashScreen />;
   }
