@@ -4,8 +4,8 @@
  * @fileOverview Precision Nutrition Engine with Multi-Stage Visual Verification.
  * 
  * - analyzeFood - Identifies products via Barcode, OCR, and Visual Cues.
- * - Anti-Hallucination Logic - Prioritizes text-on-packaging over brand-only matching.
- * - Health Mirroring - Evaluates compatibility based on user's medical profile and goals.
+ * - Expiry Detection - Specifically scans for EXP, MFG, and Best Before dates.
+ * - Health Mirroring - Evaluates compatibility based on user's medical profile.
  */
 
 import { ai } from '@/ai/genkit';
@@ -20,6 +20,7 @@ const FoodAnalysisInputSchema = z.object({
   mainGoal: z.string().optional().describe("Muscle Gain, Weight Loss, General Health, etc."),
   workoutRegimen: z.string().optional().describe("Sedentary, Light, Moderate, or Intense workout."),
   dietaryProtocol: z.string().optional().describe("Veg, Non-Veg, Keto, etc."),
+  currentDate: z.string().optional().describe("The today's date for expiry calculation."),
 });
 export type FoodAnalysisInput = z.infer<typeof FoodAnalysisInputSchema>;
 
@@ -30,14 +31,16 @@ const FoodAnalysisOutputSchema = z.object({
   carbs: z.string().describe('Estimated carbohydrates range in grams.'),
   protein: z.string().describe('Estimated protein range in grams.'),
   fats: z.string().describe('Estimated fats range in grams.'),
-  compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan" or "Avoid in Diabetes".'),
+  expiryDate: z.string().optional().describe('Detected Expiry Date or Best Before (e.g., "12 Oct 2025").'),
+  expiryStatus: z.enum(['Safe', 'Expired', 'Near Expiry', 'Unknown']).default('Unknown').describe('Safety status based on today: {{currentDate}}.'),
+  compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan".'),
   compatibilityTagHi: z.string().describe('Short tag in simple Hindi.'),
-  logicEn: z.string().describe('Extremely simple explanation using home-style analogies. No medical jargon.'),
-  logicHi: z.string().describe('Extremely simple explanation in simple everyday Hindi (Gharelu bhasha).'),
+  logicEn: z.string().describe('Extremely simple explanation using home-style analogies.'),
+  logicHi: z.string().describe('Extremely simple explanation in simple everyday Hindi.'),
   substitutionsEn: z.array(z.string()).describe('Simple healthy substitutions.'),
   substitutionsHi: z.array(z.string()).describe('Simple healthy substitutions in Hindi.'),
-  medicalAlertEn: z.string().optional().describe('Direct warning in simple English if item conflicts with medical profile.'),
-  medicalAlertHi: z.string().optional().describe('Direct warning in simple Hindi if item conflicts with medical profile.'),
+  medicalAlertEn: z.string().optional().describe('Direct warning in simple English.'),
+  medicalAlertHi: z.string().optional().describe('Direct warning in simple Hindi.'),
 });
 export type FoodAnalysisOutput = z.infer<typeof FoodAnalysisOutputSchema>;
 
@@ -51,31 +54,26 @@ const prompt = ai.definePrompt({
   output: { schema: FoodAnalysisOutputSchema },
   prompt: `You are the "Precision Nutri-Lens AI" for "Your Medical Partner".
 
-**PRODUCT IDENTIFICATION PROTOCOL (STRICT):**
+**CORE PROTOCOL (STRICT):**
+- Today's Date: {{{currentDate}}}
 - Current Mode: {{{scanType}}}
-- You MUST identify the product or meal with 100% accuracy. 
-- If scanType is 'barcode', focus strictly on the barcode pattern or numbers.
-- If scanType is 'ocr', analyze the entire nutritional information table.
-- If scanType is 'standard', identify the meal visually.
-- DO NOT hallucinate. If you are unsure, state it clearly.
 
-**LANGUAGE & TONE (CRITICAL):**
-- Response Language: {{{language}}}
-- For Hindi (hi): Use VERY SIMPLE, everyday spoken Hindi (Gharelu bhasha). Avoid complex terms.
+**1. PRODUCT IDENTIFICATION:**
+- If scanType is 'barcode', identify the product using the barcode pattern or numbers. 
+- If scanType is 'ocr', analyze the nutritional table.
+- If scanType is 'standard', use visual features.
 
-**HEALTH MIRRORING LOGIC:**
-1. **Medical Profile:** Analyze sodium, sugar, and fats against these conditions: "{{{healthMirrorProfile}}}". If the user has Diabetes and the product is high sugar, generate a 'medicalAlertHi/En'.
-2. **Fitness Goal:** Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
-3. **Scientific Logic:** Explain "Why" this food is good or bad for the user using simple analogies (e.g., "This is like high-grade fuel for your car").
-4. **Substitutions:** Provide 2-3 healthier alternatives that are easily available in India.
+**2. EXPIRY DETECTION (PRIORITY):**
+- Locate any text like "EXP", "Expiry", "Best Before", "Use By", or "MFG Date".
+- If "MFG Date" is found with "Best before 6 months", calculate the final date.
+- Compare with today: {{{currentDate}}}.
+- Set 'expiryStatus' to 'Expired' if today is past the date, 'Near Expiry' if within 30 days, or 'Safe'.
 
-Current Visual/Text Input:
-{{#if imageDataUri}} 
-Image Data: {{media url=imageDataUri}} 
-{{/if}}
-User Context: "{{{textQuery}}}"
+**3. HEALTH MIRRORING LOGIC:**
+- Analyze against conditions: "{{{healthMirrorProfile}}}". 
+- Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
 
-Identify this item correctly and respond ONLY in the specified JSON format.`,
+Respond ONLY in the specified JSON format. Ensure name and portions are precise.`,
 });
 
 const foodAnalyzerFlow = ai.defineFlow(

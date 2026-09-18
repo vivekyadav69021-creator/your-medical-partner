@@ -23,7 +23,9 @@ import {
   Filter,
   History,
   Lightbulb,
-  Ban
+  Ban,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -64,18 +66,20 @@ type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
 function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isBarcode?: boolean }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
-            <div className={cn("absolute inset-0 opacity-[0.1] animate-pulse", color.replace('text-', 'bg-'))} />
+            <div className={cn("absolute inset-0 opacity-[0.15] animate-pulse", color.replace('text-', 'bg-'))} />
             <div 
-                className={cn("absolute left-0 right-0 h-0.5 animate-scan-line z-[60] opacity-80", color)} 
-                style={{ backgroundColor: 'currentColor', boxShadow: '0 0 15px 2px currentColor' }}
+                className={cn("absolute left-0 right-0 h-1 animate-scan-line z-[60] opacity-90", color)} 
+                style={{ backgroundColor: 'currentColor', boxShadow: '0 0 20px 4px currentColor' }}
             />
             {isBarcode && (
-                <div className="absolute inset-0 flex items-center justify-center p-12">
-                    <div className="w-full h-48 border-2 border-white/20 rounded-2xl relative bg-white/5 backdrop-blur-[1px] animate-in fade-in zoom-in duration-500">
-                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
-                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
-                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
+                <div className="absolute inset-0 flex items-center justify-center p-8">
+                    <div className="w-full h-32 border-2 border-white/40 rounded-2xl relative bg-white/5 backdrop-blur-[2px] animate-in fade-in zoom-in duration-500 shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-xl shadow-lg" />
+                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-xl shadow-lg" />
+                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-xl shadow-lg" />
+                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-xl shadow-lg" />
+                        {/* Red Laser Line */}
+                        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_10px_red] animate-pulse" />
                     </div>
                 </div>
             )}
@@ -184,7 +188,8 @@ export default function FoodScannerPage() {
         fitnessGoal: "Fitness Goal",
         workout: "Workout Intensity",
         logicTitle: "Scientific Logic",
-        substitutionTitle: "Better Alternatives"
+        substitutionTitle: "Better Alternatives",
+        expiryTitle: "Expiry Intelligence"
     },
     hi: {
         greeting: `नमस्ते ${userName.split(' ')[0]}`,
@@ -202,7 +207,8 @@ export default function FoodScannerPage() {
         fitnessGoal: "फिटनेस का लक्ष्य",
         workout: "व्यायाम तीव्रता",
         logicTitle: "सरल व्याख्या",
-        substitutionTitle: "बेहतर विकल्प"
+        substitutionTitle: "बेहतर विकल्प",
+        expiryTitle: "एक्सपायरी रिपोर्ट"
     }
   }[lang];
 
@@ -369,6 +375,33 @@ export default function FoodScannerPage() {
                         </div>
                     </div>
                 </section>
+
+                {/* Expiry Intelligence Card */}
+                {view === 'barcode' && state.result.expiryDate && (
+                    <Card className={cn(
+                        "rounded-[2.5rem] border-none p-8 flex items-center justify-between shadow-xl relative overflow-hidden",
+                        state.result.expiryStatus === 'Safe' ? "bg-emerald-50/50" : state.result.expiryStatus === 'Expired' ? "bg-rose-50/50" : "bg-amber-50/50"
+                    )}>
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className={cn(
+                                "h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner",
+                                state.result.expiryStatus === 'Safe' ? "bg-emerald-100 text-emerald-600" : state.result.expiryStatus === 'Expired' ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-600"
+                            )}>
+                                {state.result.expiryStatus === 'Safe' ? <CheckCircle2 className="w-6 h-6" /> : state.result.expiryStatus === 'Expired' ? <AlertTriangle className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+                            </div>
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.expiryTitle}</h4>
+                                <p className="text-lg font-black text-[#1A365D] dark:text-white uppercase">{state.result.expiryDate}</p>
+                            </div>
+                        </div>
+                        <Badge className={cn(
+                            "rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border-none",
+                            state.result.expiryStatus === 'Safe' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : state.result.expiryStatus === 'Expired' ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20" : "bg-amber-500 text-white shadow-lg shadow-amber-500/20"
+                        )}>
+                            {state.result.expiryStatus}
+                        </Badge>
+                    </Card>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 flex items-center gap-5 shadow-sm">

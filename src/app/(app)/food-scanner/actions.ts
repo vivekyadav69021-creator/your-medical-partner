@@ -2,6 +2,7 @@
 
 import { analyzeFood, FoodAnalysisInput } from '@/ai/flows/food-analyzer-flow';
 import { z } from 'zod';
+import { format } from 'date-fns';
 
 const foodScannerSchema = z.object({
   imageDataUri: z.string().optional(),
@@ -12,6 +13,7 @@ const foodScannerSchema = z.object({
   mainGoal: z.string().optional(),
   workoutRegimen: z.string().optional(),
   dietaryProtocol: z.string().optional(),
+  currentDate: z.string().optional(),
 }).refine(data => data.imageDataUri || data.textQuery, {
   message: "Please provide either a photo or a name to analyze.",
 });
@@ -26,6 +28,8 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
   const mainGoal = formData.get('mainGoal') as string || "General Health";
   const workoutRegimen = formData.get('workoutRegimen') as string || "Moderate";
   const dietaryProtocol = formData.get('dietaryProtocol') as string || "Veg";
+  
+  const currentDate = format(new Date(), 'dd MMM yyyy');
 
   const validated = foodScannerSchema.safeParse({ 
     imageDataUri, 
@@ -35,7 +39,8 @@ export async function analyzeFoodAction(prevState: any, formData: FormData) {
     healthMirrorProfile,
     mainGoal,
     workoutRegimen,
-    dietaryProtocol
+    dietaryProtocol,
+    currentDate
   });
 
   if (!validated.success) {
