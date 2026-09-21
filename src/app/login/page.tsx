@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
  */
 function PremiumMedicalHero() {
   return (
-    <div className="relative w-full max-w-[240px] h-[260px] flex items-center justify-center overflow-visible select-none">
+    <div className="relative w-full max-w-[220px] h-[240px] flex items-center justify-center overflow-visible select-none mb-2">
       {/* Dynamic Background Glow Orbs */}
       <div className="absolute w-32 h-32 bg-primary/20 rounded-full blur-[50px] animate-pulse" />
       <div className="absolute w-24 h-24 bg-blue-400/10 rounded-full blur-[30px] translate-x-10 -translate-y-10 animate-bounce duration-[5000ms]" />
@@ -37,7 +37,7 @@ function PremiumMedicalHero() {
           
           {/* Floating Heart Icon */}
           <div className="animate-bounce duration-[3000ms] ease-in-out relative z-20 flex justify-center">
-            <HeartPulse className="h-20 w-20 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)]" />
+            <HeartPulse className="h-16 w-16 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)]" />
           </div>
 
           {/* Health Rate / ECG Animation at the Bottom */}
@@ -63,9 +63,9 @@ function PremiumMedicalHero() {
             </svg>
           </div>
 
-          {/* Precision Corner Badge - Positioned inside to avoid overflow */}
-          <div className="absolute top-2 right-2 w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-6 z-30">
-            <Sparkles className="h-4 w-4 text-white animate-pulse" />
+          {/* Precision Corner Badge */}
+          <div className="absolute top-3 right-3 w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-6 z-30">
+            <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
           </div>
         </div>
       </div>
@@ -211,66 +211,60 @@ export default function LoginPage() {
       <div className="absolute top-[-5%] left-[-10%] w-72 h-72 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-5%] right-[-10%] w-80 h-80 bg-blue-400/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-8 overflow-y-auto scrollbar-hide relative z-10">
+      <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-center p-6 relative z-10">
         
-        {/* Header Section with Custom Animation */}
-        <div className="w-full flex flex-col items-center pt-2 animate-in fade-in zoom-in-95 duration-1000">
-          <PremiumMedicalHero />
-          
-          <div className="text-center mt-2 space-y-4">
-             <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-full border border-blue-100/50 dark:border-slate-800 shadow-sm mx-auto">
-                <ShieldCheck className="w-4 h-4 text-primary" />
-                <span className="text-[9px] font-black text-[#1A365D] dark:text-primary uppercase tracking-[0.3em]">Official Health Portal</span>
-             </div>
-             <div className="space-y-1">
-                <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none">
-                  Your <span className="text-primary">Medical</span> Partner
-                </h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Elite Digital Health Ecosystem</p>
-             </div>
-          </div>
-        </div>
+        {/* Welcome Screen: Show Animation & Branding */}
+        {view === 'welcome' && (
+          <div className="w-full flex flex-col items-center animate-in fade-in zoom-in-95 duration-1000">
+            <PremiumMedicalHero />
+            
+            <div className="text-center space-y-4 mb-8">
+               <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-full border border-blue-100/50 dark:border-slate-800 shadow-sm mx-auto">
+                  <ShieldCheck className="w-4 h-4 text-primary" />
+                  <span className="text-[9px] font-black text-[#1A365D] dark:text-primary uppercase tracking-[0.3em]">Official Health Portal</span>
+               </div>
+               <div className="space-y-1">
+                  <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-[#1A365D] dark:text-white uppercase leading-none">
+                    Your <span className="text-primary">Medical</span> Partner
+                  </h1>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Elite Digital Health Ecosystem</p>
+               </div>
+            </div>
 
-        {/* Form Action Section - Optimized Max Width */}
-        <div className="w-full max-w-sm mt-4 relative z-20">
-          {view === 'welcome' ? (
-            <div className="w-full space-y-6 animate-in slide-in-from-bottom-10 fade-in duration-700">
-              <div className="space-y-4 px-2">
-                <Button 
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                    className="w-full h-14 rounded-3xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-xl flex items-center justify-center gap-4 transition-all active:scale-95 group"
-                >
-                    {loading ? <Loader2 className="animate-spin" /> : (
-                        <>
-                            <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.14-4.53z" fill="#EA4335"/></svg>
-                            </div>
-                            <span className="font-black uppercase text-[9px] tracking-widest">Sign in with Google</span>
-                        </>
-                    )}
-                </Button>
+            {/* Actions for Welcome Screen */}
+            <div className="w-full max-w-xs space-y-4">
+              <Button 
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  className="w-full h-14 rounded-3xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-xl flex items-center justify-center gap-4 transition-all active:scale-95 group"
+              >
+                  {loading ? <Loader2 className="animate-spin" /> : (
+                      <>
+                          <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.14-4.53z" fill="#EA4335"/></svg>
+                          </div>
+                          <span className="font-black uppercase text-[9px] tracking-widest">Sign in with Google</span>
+                      </>
+                  )}
+              </Button>
 
-                <Button 
-                  onClick={() => setView('signup')}
-                  className="w-full h-14 rounded-3xl text-[11px] font-black uppercase tracking-[0.25em] bg-primary hover:bg-primary/90 shadow-xl active:scale-95 transition-all duration-500 border-none flex items-center justify-between px-8"
-                >
-                  <span>Start Health Journey</span>
-                  <ChevronRight className="h-5 w-5 opacity-60" />
-                </Button>
-                
-                <div className="pt-1">
-                  <button 
-                    onClick={() => setView('login')}
-                    className="w-full h-10 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
-                  >
-                    Already a partner? Sign In
-                  </button>
-                </div>
-              </div>
+              <Button 
+                onClick={() => setView('signup')}
+                className="w-full h-14 rounded-3xl text-[11px] font-black uppercase tracking-[0.25em] bg-primary hover:bg-primary/90 shadow-xl active:scale-95 transition-all duration-500 border-none flex items-center justify-between px-8"
+              >
+                <span>Start Health Journey</span>
+                <ChevronRight className="h-5 w-5 opacity-60" />
+              </Button>
+              
+              <button 
+                onClick={() => setView('login')}
+                className="w-full h-10 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
+              >
+                Already a partner? Sign In
+              </button>
 
-              <div className="flex flex-col items-center gap-4 pt-0 text-center">
-                <div className="flex items-center w-full gap-4 px-10 opacity-20">
+              <div className="flex flex-col items-center gap-4 pt-4 text-center">
+                <div className="flex items-center w-full gap-4 px-6 opacity-20">
                   <div className="h-px bg-slate-400 flex-1" />
                   <span className="text-[7px] font-black uppercase tracking-[0.3em] whitespace-nowrap">Clinical Access</span>
                   <div className="h-px bg-slate-400 flex-1" />
@@ -284,88 +278,98 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-          ) : (
-            <Card className="w-full rounded-[2.5rem] border-none shadow-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl animate-in slide-in-from-right-8 fade-in duration-500 overflow-hidden">
-              <CardContent className="p-6 md:p-8 space-y-6 md:space-y-8">
-                <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="icon" className="rounded-full bg-slate-100 dark:bg-slate-800 h-10 w-10 hover:bg-primary/10 transition-colors" onClick={() => setView('welcome')} disabled={loading}>
-                    <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:text-white" />
-                  </Button>
-                  <div className="text-right">
-                    <h3 className="text-lg font-black text-[#1A365D] dark:text-white tracking-tight uppercase leading-none">
-                        {view === 'login' ? 'Sign In' : 'Join Partner'}
-                    </h3>
-                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-1">Medical Cloud Sync</p>
-                  </div>
-                </div>
+          </div>
+        )}
 
-                <form onSubmit={handleAuthAction} className="space-y-4">
+        {/* Auth Screen (Login/Signup): Space-Saving Focused Form */}
+        {view !== 'welcome' && (
+          <div className="w-full max-w-sm animate-in slide-in-from-right-10 fade-in duration-500">
+            <div className="flex items-center justify-between mb-8 px-2">
+              <Button variant="ghost" size="icon" className="rounded-full bg-white dark:bg-slate-800 h-11 w-11 shadow-md border border-slate-100 dark:border-slate-700 hover:bg-primary/10" onClick={() => setView('welcome')} disabled={loading}>
+                <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:text-white" />
+              </Button>
+              <div className="text-right">
+                <h3 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase leading-none">
+                    {view === 'login' ? 'Sign In' : 'Join Now'}
+                </h3>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Secure Medical Access</p>
+              </div>
+            </div>
+
+            <Card className="w-full rounded-[2.8rem] border-none shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl overflow-hidden">
+              <CardContent className="p-8 space-y-6">
+                <form onSubmit={handleAuthAction} className="space-y-5">
                   {view === 'signup' && (
-                    <div className="space-y-1.5 px-1">
+                    <div className="space-y-1.5">
                       <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4">Full Name</Label>
                       <Input 
                         placeholder="e.g. Rohan Kumar" 
-                        className="h-12 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-sm px-6 shadow-inner font-bold"
+                        className="h-13 rounded-2xl bg-slate-50/50 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-sm px-6 shadow-inner font-bold"
                         value={name} onChange={(e) => setName(e.target.value)} required disabled={loading}
                       />
                     </div>
                   )}
-                  <div className="space-y-1.5 px-1">
+                  <div className="space-y-1.5">
                     <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4">Email Address</Label>
                     <Input 
                       type="email" placeholder="name@example.com" 
-                      className="h-12 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-sm px-6 shadow-inner font-bold"
+                      className="h-13 rounded-2xl bg-slate-50/50 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-sm px-6 shadow-inner font-bold"
                       value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading}
                     />
                   </div>
-                  <div className="space-y-1.5 px-1">
+                  <div className="space-y-1.5">
                     <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4">Password</Label>
                     <Input 
                       type="password" placeholder="••••••••" 
-                      className="h-12 rounded-2xl bg-white/60 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-sm px-6 shadow-inner font-bold"
+                      className="h-13 rounded-2xl bg-slate-50/50 dark:bg-slate-800/60 border-none focus-visible:ring-2 focus-visible:ring-primary text-sm px-6 shadow-inner font-bold"
                       value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading}
                     />
                   </div>
                   
-                  <Button type="submit" disabled={loading} className="w-full h-14 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] mt-4 shadow-xl active:scale-95 transition-all bg-primary hover:bg-primary/90">
+                  <Button type="submit" disabled={loading} className="w-full h-15 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] mt-4 shadow-xl shadow-primary/20 active:scale-95 transition-all bg-primary hover:bg-primary/90 border-none">
                     {loading ? <Loader2 className="animate-spin" /> : (
                         <span className="flex items-center gap-3">
                             {view === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                            {view === 'login' ? 'Access Dashboard' : 'Confirm Registration'}
+                            {view === 'login' ? 'Access Dashboard' : 'Create Account'}
                         </span>
                     )}
                   </Button>
                 </form>
 
-                <div className="text-center pt-0">
-                    <p className="text-[9px] font-bold text-slate-400">
-                        {view === 'login' ? "Don't have an account?" : "Already a partner?"}{' '}
-                        <button 
-                            type="button" 
-                            onClick={() => setView(view === 'login' ? 'signup' : 'login')}
-                            className="text-primary font-black uppercase tracking-widest hover:underline"
-                        >
+                <div className="text-center pt-2">
+                    <button 
+                        type="button" 
+                        onClick={() => setView(view === 'login' ? 'signup' : 'login')}
+                        className="text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >
+                        {view === 'login' ? "Don't have an account? " : "Already a partner? "}
+                        <span className="text-primary font-black hover:underline ml-1">
                             {view === 'login' ? 'Sign Up' : 'Log In'}
-                        </button>
-                    </p>
+                        </span>
+                    </button>
                 </div>
               </CardContent>
             </Card>
-          )}
-        </div>
 
-        {/* Footer Trust Section */}
-        <div className="mt-6 flex flex-col items-center gap-3 text-slate-400/60">
-           <div className="flex items-center gap-2.5 text-[8px] font-black uppercase tracking-[0.3em]">
-              <ShieldCheck className="w-3.5 h-3.5 text-primary/60" />
-              100% HIPAA Secure Data
-           </div>
+            <div className="mt-8 text-center">
+                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-primary/50" />
+                    100% HIPAA Secure Server
+                 </p>
+            </div>
+          </div>
+        )}
+
+      </div>
+      
+      {/* Absolute Bottom Footer - Static */}
+      {view === 'welcome' && (
+        <div className="pb-8 flex flex-col items-center gap-3 text-slate-400/60">
            <p className="text-[7px] font-bold text-center leading-relaxed max-w-[240px] uppercase tracking-tighter">
              Professional health intelligence with encrypted private storage.
            </p>
         </div>
-
-      </div>
+      )}
     </div>
   );
 }
