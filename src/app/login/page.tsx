@@ -16,7 +16,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, LogIn, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -24,19 +24,23 @@ import { Player } from '@lottiefiles/react-lottie-player';
 
 /**
  * Premium Lottie Hero Animation
+ * Optimized for high visibility and centering.
  */
 function MedicalHeroAnimation() {
   return (
-    <div className="relative w-full max-w-[320px] h-[320px] flex items-center justify-center pointer-events-none select-none">
-      <Player
-        autoplay
-        loop
-        src="https://lottie.host/bf51dd24-6e25-48d0-94fc-168e43827d6a/qduk3jmYak.json"
-        style={{ height: '300px', width: '300px' }}
-        className="relative z-10"
-      />
-      {/* Background Soft Glow */}
-      <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-125 -z-10" />
+    <div className="relative w-full max-w-[320px] min-h-[300px] flex items-center justify-center pointer-events-none select-none overflow-visible">
+      {/* Animated Lottie Asset */}
+      <div className="relative z-10 w-full h-full flex items-center justify-center">
+        <Player
+          autoplay
+          loop
+          src="https://lottie.host/bf51dd24-6e25-48d0-94fc-168e43827d6a/qduk3jmYak.json"
+          style={{ height: '280px', width: '280px' }}
+        />
+      </div>
+      
+      {/* Background Soft Glow to highlight the animation */}
+      <div className="absolute inset-0 bg-primary/10 blur-[60px] rounded-full scale-110 -z-10 animate-pulse" />
     </div>
   );
 }
@@ -74,7 +78,6 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       
-      // If it's a new user, initialize their profile
       if (result.user.metadata.creationTime === result.user.metadata.lastSignInTime) {
           const userProfileRef = doc(firestore, 'users', result.user.uid, 'userProfiles', result.user.uid);
           await setDoc(userProfileRef, {
@@ -167,7 +170,7 @@ export default function LoginPage() {
       <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-12 overflow-y-auto scrollbar-hide">
         
         {/* Header Section */}
-        <div className="w-full flex flex-col items-center pt-8 animate-in fade-in zoom-in-95 duration-1000">
+        <div className="w-full flex flex-col items-center pt-4 animate-in fade-in zoom-in-95 duration-1000">
           <MedicalHeroAnimation />
           
           <div className="text-center mt-2 space-y-4">
@@ -185,7 +188,7 @@ export default function LoginPage() {
         </div>
 
         {/* Action Section */}
-        <div className="w-full max-w-md mt-6">
+        <div className="w-full max-w-md mt-6 relative z-20">
           {view === 'welcome' ? (
             <div className="w-full space-y-8 animate-in slide-in-from-bottom-10 fade-in duration-700">
               <div className="space-y-4 px-2">
@@ -213,13 +216,12 @@ export default function LoginPage() {
                 </Button>
                 
                 <div className="pt-2">
-                  <Button 
+                  <button 
                     onClick={() => setView('login')}
-                    variant="ghost"
-                    className="w-full h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors"
+                    className="w-full h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
                   >
                     Already have an account? Sign In
-                  </Button>
+                  </button>
                 </div>
               </div>
 
