@@ -91,7 +91,6 @@ const AIPrescriptionBanner = () => {
           />
         </div>
       </div>
-      {/* Decorative Elements */}
       <div className="absolute top-0 right-0 h-32 w-32 bg-white/5 rounded-bl-full pointer-events-none" />
       <div className="absolute -bottom-4 -left-4 h-20 w-20 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
     </div>
@@ -134,39 +133,43 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
 
   return (
     <Link href={`/store/${id}`} className="block h-full group">
-      <Card className="rounded-[2.2rem] border-none shadow-xl hover:shadow-2xl transition-all h-full bg-white dark:bg-slate-900 overflow-hidden relative border border-transparent hover:border-primary/10">
-        <CardContent className="p-4 flex flex-col h-full">
-          <div className="aspect-square relative rounded-[1.8rem] bg-slate-50 dark:bg-slate-800 mb-4 flex items-center justify-center overflow-hidden border border-white/50 dark:border-slate-700/50 shadow-inner">
+      <Card className="rounded-[2rem] border-none shadow-lg hover:shadow-xl transition-all h-full bg-white dark:bg-slate-900 overflow-hidden relative border border-transparent hover:border-primary/10">
+        <CardContent className="p-3.5 flex flex-col h-full">
+          {/* Enhanced Image Container with Smaller Footprint */}
+          <div className="aspect-square relative rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 mb-3 flex items-center justify-center overflow-hidden border border-white/50 dark:border-slate-700/50 shadow-inner">
             {image ? (
               <Image
                 src={image.imageUrl}
                 alt={name}
                 fill
-                className="object-contain p-4 group-hover:scale-110 transition-transform duration-700"
+                className="object-contain p-3 group-hover:scale-110 transition-transform duration-700"
                 data-ai-hint={image.imageHint}
                 unoptimized
               />
             ) : (
-              <Pill className="h-10 w-10 text-slate-200" />
+              <Pill className="h-8 w-8 text-slate-200" />
             )}
-            <Badge className="absolute top-2 left-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-[#1A365D] dark:text-slate-100 text-[7px] font-black uppercase border-none px-2 h-4 rounded-lg shadow-sm">
+            <Badge className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-primary text-[6.5px] font-black uppercase border-none px-1.5 h-3.5 rounded-md shadow-sm">
                 {category.split(' ')[0]}
             </Badge>
           </div>
           
-          <div className="space-y-1 mb-4 flex-1 px-1">
-            <h4 className="font-black text-[12px] text-[#1A365D] dark:text-slate-100 line-clamp-1 uppercase tracking-tight">{name}</h4>
-            <div className="flex items-center gap-1.5 opacity-40">
-                <div className="h-1 w-6 rounded-full bg-primary" />
-                <div className="h-1 w-3 rounded-full bg-primary" />
-            </div>
+          {/* Optimized Text Area - No extra length */}
+          <div className="space-y-1 mb-3 flex-1 min-h-[2.5rem]">
+            <h4 className="font-black text-[11px] text-[#1A365D] dark:text-slate-100 line-clamp-2 uppercase tracking-tight leading-[1.2]">
+              {name}
+            </h4>
           </div>
 
-          <div className="flex items-center justify-between mt-auto px-1">
-            <span className="font-black text-sm text-[#1A365D] dark:text-primary tracking-tighter">{price}</span>
+          {/* Price & Action Row */}
+          <div className="flex items-center justify-between mt-auto">
+            <div className="flex flex-col">
+              <span className="text-[12px] font-black text-[#1A365D] dark:text-primary tracking-tighter">{price}</span>
+              <span className="text-[7px] font-bold text-slate-300 uppercase">Per Unit</span>
+            </div>
             <Button 
               size="icon" 
-              className="rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white h-9 w-9 shadow-sm transition-all active:scale-90"
+              className="rounded-xl bg-primary text-white hover:bg-primary/90 h-8 w-8 shadow-md transition-all active:scale-90"
               onClick={handleAdd}
             >
               <Plus className="h-4 w-4" />
@@ -234,7 +237,6 @@ export default function StorePage() {
             </Link>
         </div>
 
-        {/* SEARCH BAR - MODERNIZED */}
         <div className="relative group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
           <Input 
@@ -248,10 +250,8 @@ export default function StorePage() {
 
       <main className="max-w-4xl mx-auto px-5 space-y-10">
         
-        {/* AI BANNER */}
         <AIPrescriptionBanner />
 
-        {/* CATEGORIES - HORIZONTAL SCROLL */}
         <section className="space-y-5">
             <div className="flex items-center gap-3 px-1">
                 <div className="h-4 w-1 bg-primary rounded-full" />
@@ -273,7 +273,6 @@ export default function StorePage() {
             </ScrollArea>
         </section>
 
-        {/* PRODUCT GRID - OPTIMIZED FOR MOBILE */}
         <section className="space-y-6">
             <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-3">
