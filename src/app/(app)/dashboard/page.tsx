@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,7 +25,10 @@ import {
   Apple,
   Hospital,
   UserCheck,
-  Stethoscope
+  Stethoscope,
+  Sparkles,
+  Zap,
+  Target
 } from 'lucide-react';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,6 +36,7 @@ import { AssistantSheet } from '@/components/ai-flow-assistant/assistant-sheet';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/context/user-profile-context';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 // Easy to manage chart data
 const healthChartData = [
@@ -49,12 +54,15 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
+    setCurrentTime(format(new Date(), 'EEEE, dd MMM'));
+    
     const savedAppts = localStorage.getItem('appointments');
     if (savedAppts) setAppointments(JSON.parse(savedAppts).slice(0, 2));
 
-    const savedTasks = localStorage.getItem('guest_planner_tasks');
+    const savedTasks = localStorage.getItem('guest_planner_tasks_v2');
     if (savedTasks) setTasks(JSON.parse(savedTasks).slice(0, 3));
 
     const hasGreeted = sessionStorage.getItem('hasGreeted');
@@ -70,36 +78,62 @@ export default function DashboardPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 space-y-7 pb-32 font-body safe-top overflow-x-hidden">
       
-      {/* Premium Profile Header - Compact Native Style */}
-      <div className="mx-2 p-5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl rounded-[2.5rem] border border-white dark:border-slate-800 shadow-xl flex items-center justify-between gap-4 transition-all hover:shadow-primary/5">
-        <div className="flex items-center gap-4 min-w-0">
-          <Link href="/profile" className="shrink-0 relative group">
-            <div className="relative">
-              <Avatar className="h-14 w-14 border-4 border-primary/20 shadow-lg transition-transform duration-500 group-hover:scale-110">
-                <AvatarImage src={userImage} className="object-cover" />
-                <AvatarFallback className="bg-primary text-white font-black text-xl">
-                  {userName[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-white dark:bg-slate-700 rounded-full shadow-lg flex items-center justify-center border-2 border-primary/10">
-                <UserCheck className="w-3 h-3 text-primary" />
+      {/* PREMIUM UPGRADED WELCOME BANNER */}
+      <div className="mx-2 relative group overflow-hidden">
+        {/* Animated Background Aura */}
+        <div className="absolute -top-12 -right-12 w-64 h-64 bg-primary/20 rounded-full blur-[80px] animate-pulse group-hover:scale-125 transition-transform duration-1000" />
+        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-pink-400/10 rounded-full blur-[60px] animate-pulse" />
+
+        <div className="relative p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-[3rem] border border-white dark:border-slate-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] flex flex-col md:flex-row items-center justify-between gap-6 transition-all hover:shadow-primary/10">
+          
+          <div className="flex items-center gap-5 min-w-0 w-full md:w-auto">
+            <Link href="/profile" className="shrink-0 relative">
+              <div className="relative p-1 rounded-full bg-gradient-to-tr from-primary via-pink-400 to-emerald-400 animate-splash-gradient bg-[length:200%_200%]">
+                <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-white dark:border-slate-900 shadow-2xl transition-transform duration-500 hover:scale-105">
+                  <AvatarImage src={userImage} className="object-cover" />
+                  <AvatarFallback className="bg-primary text-white font-black text-2xl">
+                    {userName[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-white dark:bg-slate-700 rounded-full shadow-xl flex items-center justify-center border-2 border-primary/20 scale-110">
+                  <UserCheck className="w-4 h-4 text-primary" />
+                </div>
+              </div>
+            </Link>
+            
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2">
+                 <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] opacity-70">Control Center</p>
+                 <Sparkles className="w-3 h-3 text-yellow-500 animate-bounce" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-[#1A365D] dark:text-slate-100 tracking-tighter leading-none truncate">
+                {userName.split(' ')[0]}
+              </h1>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3 h-3 text-slate-400" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{currentTime}</p>
               </div>
             </div>
-          </Link>
-          <div className="min-w-0">
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-0.5 opacity-80">Welcome Back,</p>
-            <h1 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tighter leading-none truncate">
-              {userName.split(' ')[0]}
-            </h1>
           </div>
-        </div>
 
-        <div className="flex flex-col items-end gap-1">
-            <div className="h-8 px-4 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-                <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Live Sync</span>
-            </div>
-            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mr-1">v2.0.1 Stable</p>
+          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0 border-slate-100 dark:border-slate-800">
+             <div className="flex flex-col items-end gap-1.5">
+                <div className="h-9 px-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 flex items-center gap-2.5 shadow-sm">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Active Pulse</span>
+                </div>
+                <div className="flex items-center gap-2 mr-2">
+                    <Zap className="w-3 h-3 text-primary fill-primary" />
+                    <span className="text-[9px] font-black text-[#1A365D] dark:text-slate-400 uppercase tracking-widest">v2.0.1 PRO</span>
+                </div>
+             </div>
+             
+             <Link href="/profile">
+                <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner group/btn">
+                    <ChevronRight className="w-6 h-6 text-primary group-hover/btn:translate-x-1 transition-transform" />
+                </Button>
+             </Link>
+          </div>
         </div>
       </div>
 
@@ -222,7 +256,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-        {/* Doctor Consultations (Priority 2 - Moved Down) */}
+        {/* Doctor Consultations (Priority 2) */}
         <div className="space-y-4">
             <div className="flex items-center justify-between px-4">
                 <div className="flex items-center gap-2">
