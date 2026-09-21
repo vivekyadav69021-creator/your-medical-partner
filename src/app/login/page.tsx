@@ -22,24 +22,25 @@ import { cn } from '@/lib/utils';
 
 /**
  * Premium CSS-Based Medical Animation with Bottom ECG/Health Rate
+ * Optimized: Compact width and fixed sparkle positioning.
  */
 function PremiumMedicalHero() {
   return (
-    <div className="relative w-full max-w-[320px] h-[280px] flex items-center justify-center overflow-visible select-none">
+    <div className="relative w-full max-w-[260px] h-[280px] flex items-center justify-center overflow-visible select-none">
       {/* Dynamic Background Glow Orbs */}
-      <div className="absolute w-40 h-40 bg-primary/20 rounded-full blur-[60px] animate-pulse" />
-      <div className="absolute w-32 h-32 bg-blue-400/10 rounded-full blur-[40px] translate-x-10 -translate-y-10 animate-bounce duration-[5000ms]" />
+      <div className="absolute w-32 h-32 bg-primary/20 rounded-full blur-[50px] animate-pulse" />
+      <div className="absolute w-24 h-24 bg-blue-400/10 rounded-full blur-[30px] translate-x-10 -translate-y-10 animate-bounce duration-[5000ms]" />
       
       {/* Main Animated Engine */}
-      <div className="relative z-10 flex items-center justify-center animate-in zoom-in-50 duration-1000">
-        <div className="relative p-7 pb-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white dark:border-slate-800 transform hover:scale-105 transition-transform duration-700 group cursor-default overflow-hidden">
+      <div className="relative z-10 flex items-center justify-center animate-in zoom-in-50 duration-1000 w-full">
+        <div className="relative w-full p-6 pb-12 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white dark:border-slate-800 transform hover:scale-105 transition-transform duration-700 group cursor-default overflow-hidden">
           
           {/* Floating Heart Icon */}
-          <div className="animate-bounce duration-[3000ms] ease-in-out relative z-20">
-            <HeartPulse className="h-24 w-24 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)]" />
+          <div className="animate-bounce duration-[3000ms] ease-in-out relative z-20 flex justify-center">
+            <HeartPulse className="h-20 w-20 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)]" />
           </div>
 
-          {/* New Health Rate / ECG Animation at the Bottom */}
+          {/* Health Rate / ECG Animation at the Bottom */}
           <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none opacity-60">
             <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
               <path 
@@ -62,9 +63,9 @@ function PremiumMedicalHero() {
             </svg>
           </div>
 
-          {/* Precision Corner Badge */}
-          <div className="absolute -top-1 -right-1 w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-2xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-12 z-30">
-            <Sparkles className="h-5 w-5 text-white animate-pulse" />
+          {/* Precision Corner Badge - Positioned inside to avoid overflow */}
+          <div className="absolute top-2 right-2 w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-6 z-30">
+            <Sparkles className="h-4 w-4 text-white animate-pulse" />
           </div>
         </div>
       </div>
