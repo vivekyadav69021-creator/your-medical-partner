@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2, LogOut, ShieldAlert } from 'lucide-react';
+import { Sun, Moon, Laptop, Save, User as UserIcon, Loader2, LogOut, ShieldAlert, Camera } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,7 +22,8 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { updateProfile, signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { useFirebase } from '@/firebase';
 
 const healthGoals = ["Weight Loss", "Muscle Gain", "Improve Fitness", "Boost Immunity", "Manage Stress"];
 
@@ -44,9 +45,10 @@ type UserProfileData = {
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const auth = useAuth();
+  const { auth, storage, user } = useFirebase();
   const { userName, userImage, setUserName, setUserImage } = useUserProfile();
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [hideReminders, setHideReminders] = useState(false);
 
   const [profile, setProfile] = useState<UserProfileData>({
@@ -58,7 +60,7 @@ export default function ProfilePage() {
     bloodGroup: '',
     conditions: '',
     allergies: '',
-    image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop',
+    image: '',
     lifestyle: 'sedentary',
     dietaryPreference: 'non-veg',
     goals: [],
@@ -93,15 +95,37 @@ export default function ProfilePage() {
     setProfile(prev => ({ ...prev, [id]: value }));
   };
   
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-              const result = e.target?.result as string;
-              setProfile(prev => ({ ...prev, image: result }));
-          }
-          reader.readAsDataURL(file);
+      if (!file) return;
+
+      if (!user) {
+          toast({ variant: 'destructive', title: "Access Denied", description: "Please sign in to upload photos." });
+          return;
+      }
+
+      setIsUploading(true);
+      try {
+          const storageRef = ref(storage, `profile_pictures/${user.uid}_${Date.now()}`);
+          const uploadTask = uploadBytesResumable(storageRef, file);
+
+          uploadTask.on('state_changed', 
+              null,
+              (error) => {
+                  console.error(error);
+                  toast({ variant: 'destructive', title: "Upload Failed" });
+                  setIsUploading(false);
+              },
+              async () => {
+                  const url = await getDownloadURL(uploadTask.snapshot.ref);
+                  setProfile(prev => ({ ...prev, image: url }));
+                  setIsUploading(false);
+                  toast({ title: "Photo Updated", description: "Image synced with cloud storage." });
+              }
+          );
+      } catch (e) {
+          setIsUploading(false);
+          toast({ variant: 'destructive', title: "Error during upload" });
       }
   };
   
@@ -127,10 +151,10 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, {
+      if (user) {
+        await updateProfile(user, {
           displayName: profile.name,
-          photoURL: profile.image.startsWith('data:') ? undefined : profile.image
+          photoURL: profile.image
         });
       }
 
@@ -185,24 +209,29 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-8">
             <div className="flex flex-col md:flex-row items-center gap-8 border-b pb-8 border-slate-100 dark:border-slate-800">
-                <Avatar className="h-40 w-40 border-4 border-white dark:border-slate-800 shadow-xl">
-                    <AvatarImage src={profile.image} alt={profile.name} className="object-cover" data-ai-hint="person face" />
-                    <AvatarFallback className="bg-slate-100 dark:bg-slate-800">
-                        <UserIcon className="h-20 w-20 text-slate-400" />
-                    </AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                    <Avatar className="h-40 w-40 border-4 border-white dark:border-slate-800 shadow-xl">
+                        <AvatarImage src={profile.image} alt={profile.name} className="object-cover" />
+                        <AvatarFallback className="bg-slate-100 dark:bg-slate-800">
+                            <UserIcon className="h-20 w-20 text-slate-400" />
+                        </AvatarFallback>
+                    </Avatar>
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute bottom-2 right-2 h-10 w-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all"
+                    >
+                        {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+                    </button>
+                    <input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
+                </div>
                 <div className="flex flex-col items-center md:items-start gap-3">
                     <div className="space-y-1 text-center md:text-left">
                       <h3 className="text-xl font-bold text-[#2D3A5D] dark:text-slate-100">{profile.name || 'Guest User'}</h3>
-                      <p className="text-sm text-slate-400 font-medium">Your profile name is visible on Dashboard</p>
+                      <p className="text-sm text-slate-400 font-medium">Cloud-synced medical identity</p>
                     </div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => fileInputRef.current?.click()} className="rounded-full px-6 font-bold shadow-md">
-                        Change Photo
-                      </Button>
-                      <input type="file" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
-                    </div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Square image recommended (400x400px)</p>
+                    <Badge variant="outline" className="rounded-full px-4 py-1 uppercase text-[9px] font-black tracking-widest border-primary/20 text-primary">
+                        {user?.isAnonymous ? 'Guest Access' : 'Verified Partner'}
+                    </Badge>
                 </div>
             </div>
 

@@ -15,33 +15,29 @@ const UserProfileContext = createContext<UserProfileContextType | undefined>(und
 export function UserProfileProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [userName, setUserNameState] = useState('Guest');
-  const [userImage, setUserImageState] = useState('https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop');
+  const [userImage, setUserImageState] = useState('');
 
   useEffect(() => {
     const updateProfile = () => {
       let finalName = 'Guest';
-      let finalImage = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop';
+      let finalImage = '';
 
-      // 1. Check Local Storage First (Fastest)
+      // 1. Check Auth user sync (Highest Priority)
+      if (user) {
+        finalName = user.displayName || user.email?.split('@')[0] || 'User';
+        finalImage = user.photoURL || '';
+      }
+
+      // 2. Check Local Storage for extended profile data if not in Auth
       try {
         const savedProfile = localStorage.getItem(`userMedicalProfile_local`);
         if (savedProfile) {
           const parsed = JSON.parse(savedProfile);
-          if (parsed.name) finalName = parsed.name;
-          if (parsed.image) finalImage = parsed.image;
+          if (!finalImage && parsed.image) finalImage = parsed.image;
+          if (finalName === 'Guest' && parsed.name) finalName = parsed.name;
         }
       } catch (e) {
         console.error("Local profile parse error", e);
-      }
-
-      // 2. Auth user sync
-      if (user) {
-        if (finalName === 'Guest' || finalName === 'Guest User') {
-           finalName = user.displayName || user.email?.split('@')[0] || 'User';
-        }
-        if (user.photoURL && (finalImage.includes('unsplash') || finalImage.includes('picsum') || finalImage === '')) {
-            finalImage = user.photoURL;
-        }
       }
 
       setUserNameState(finalName);
@@ -49,7 +45,6 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     };
 
     updateProfile();
-    // Watch for potential auth delay
     const timer = setTimeout(updateProfile, 500);
     return () => clearTimeout(timer);
 
