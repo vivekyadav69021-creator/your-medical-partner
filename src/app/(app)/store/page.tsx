@@ -1,42 +1,40 @@
 
 'use client';
 
-import React, { useState, useRef, useActionState, useEffect } from 'react';
+import React, { useState, useRef, useActionState, useEffect, startTransition } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { 
   Search, 
-  Upload, 
   Loader2, 
-  X, 
   Camera, 
-  CameraOff, 
   Plus, 
   ChevronLeft,
   ShoppingCart,
-  Heart,
   LayoutGrid,
-  Stethoscope,
   Pill,
   Baby,
-  Sparkles
+  Sparkles,
+  Stethoscope,
+  Activity,
+  Zap,
+  ShoppingBag
 } from 'lucide-react';
-import { medicines, categories } from '@/lib/medicine-data';
+import { medicines, categories, Medicine } from '@/lib/medicine-data';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { analyzePrescriptionAction } from './actions';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/context/cart-context';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const initialAnalysisState = {
   result: null,
@@ -45,7 +43,6 @@ const initialAnalysisState = {
 
 const AIPrescriptionBanner = () => {
   const [state, formAction] = useActionState(analyzePrescriptionAction, initialAnalysisState);
-  const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { pending } = useFormStatus();
@@ -55,33 +52,35 @@ const AIPrescriptionBanner = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = e => {
-        setPreview(e.target?.result as string);
-        // Automatically submit when image is selected
         const formData = new FormData();
         formData.set('imageDataUri', e.target?.result as string);
-        formAction(formData);
+        startTransition(() => {
+            formAction(formData);
+        });
+        toast({ title: "Analyzing Prescription", description: "AI is identifying medicines..." });
       };
       reader.readAsDataURL(file);
     }
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#6EA8FF] to-[#4A90E2] p-6 text-white shadow-lg mb-8">
-      <div className="flex items-center gap-6 relative z-10">
-        <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-          <Camera className="h-8 w-8 text-white" />
+    <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1A365D] to-primary p-6 text-white shadow-2xl shadow-primary/20 mb-8 group active:scale-[0.98] transition-all">
+      <div className="flex items-center gap-5 relative z-10">
+        <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 shadow-inner group-hover:rotate-6 transition-transform">
+          <Camera className="h-7 w-7 text-white" />
         </div>
-        <div className="flex-1 space-y-1">
-          <h3 className="text-xl font-bold">AI Prescription</h3>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-black uppercase tracking-tight leading-none mb-1">AI Prescription</h3>
+          <p className="text-[8px] font-bold text-blue-200 uppercase tracking-widest mb-3 opacity-80">Instant Order via Photo</p>
           <Button 
             variant="secondary" 
             size="sm" 
-            className="rounded-full bg-white text-primary hover:bg-white/90 font-bold px-6"
+            className="rounded-xl bg-white text-[#1A365D] hover:bg-blue-50 font-black text-[9px] uppercase tracking-widest px-6 h-9 shadow-lg"
             onClick={() => fileInputRef.current?.click()}
             disabled={pending}
           >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Upload Prescription
+            {pending ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
+            Scan Prescription
           </Button>
           <input 
             type="file" 
@@ -92,26 +91,30 @@ const AIPrescriptionBanner = () => {
           />
         </div>
       </div>
-      {/* Decorative blobs */}
-      <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-      <div className="absolute top-0 left-1/2 h-16 w-16 rounded-full bg-white/5 blur-lg" />
+      {/* Decorative Elements */}
+      <div className="absolute top-0 right-0 h-32 w-32 bg-white/5 rounded-bl-full pointer-events-none" />
+      <div className="absolute -bottom-4 -left-4 h-20 w-20 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
     </div>
   );
 };
 
 const CategoryItem = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active?: boolean, onClick: () => void }) => (
-  <div 
-    className="flex flex-col items-center gap-2 cursor-pointer transition-all group"
+  <button 
+    className="flex flex-col items-center gap-2.5 transition-all active:scale-90 shrink-0"
     onClick={onClick}
   >
     <div className={cn(
-      "h-14 w-14 rounded-full flex items-center justify-center border-2 transition-all",
-      active ? "bg-primary border-primary text-white shadow-md" : "bg-white border-blue-50 text-blue-400 hover:border-primary/30"
+      "h-14 w-14 rounded-[1.5rem] flex items-center justify-center border-2 transition-all duration-300 shadow-sm",
+      active 
+        ? "bg-primary border-primary text-white shadow-xl shadow-primary/20 scale-105" 
+        : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-primary/20"
     )}>
-      <Icon className={cn("h-6 w-6", active ? "text-white" : "group-hover:scale-110 transition-transform")} />
+      <Icon className={cn("h-6 w-6", active ? "text-white" : "group-hover:scale-110")} />
     </div>
-    <span className={cn("text-xs font-semibold", active ? "text-primary" : "text-blue-400/80")}>{label}</span>
-  </div>
+    <span className={cn("text-[9px] font-black uppercase tracking-widest", active ? "text-primary" : "text-slate-400")}>
+        {label.split(' ')[0]}
+    </span>
+  </button>
 );
 
 const MedicineCard = ({ id, name, price, category }: { id: string, name: string, price: string, category: string }) => {
@@ -124,43 +127,49 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
     e.stopPropagation();
     const med = medicines.find(m => m.id === id);
     if (med) {
-      addToCart(med);
-      toast({ title: "Added to Cart", description: `${name} has been added.` });
+      addToCart(med as Medicine);
+      toast({ title: "Added to Bag", description: `${name} ready for checkout.` });
     }
   };
 
   return (
-    <Link href={`/store/${id}`}>
-      <Card className="rounded-[2rem] border-none shadow-sm hover:shadow-md transition-all h-full bg-white group overflow-hidden">
+    <Link href={`/store/${id}`} className="block h-full group">
+      <Card className="rounded-[2.2rem] border-none shadow-xl hover:shadow-2xl transition-all h-full bg-white dark:bg-slate-900 overflow-hidden relative border border-transparent hover:border-primary/10">
         <CardContent className="p-4 flex flex-col h-full">
-          <div className="aspect-square relative rounded-2xl bg-[#F8FBFF] mb-4 flex items-center justify-center overflow-hidden">
+          <div className="aspect-square relative rounded-[1.8rem] bg-slate-50 dark:bg-slate-800 mb-4 flex items-center justify-center overflow-hidden border border-white/50 dark:border-slate-700/50 shadow-inner">
             {image ? (
               <Image
                 src={image.imageUrl}
-                alt={image.description}
+                alt={name}
                 fill
-                className="object-contain p-4 group-hover:scale-110 transition-transform"
+                className="object-contain p-4 group-hover:scale-110 transition-transform duration-700"
                 data-ai-hint={image.imageHint}
+                unoptimized
               />
             ) : (
-              <Pill className="h-12 w-12 text-blue-100" />
+              <Pill className="h-10 w-10 text-slate-200" />
             )}
+            <Badge className="absolute top-2 left-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-[#1A365D] dark:text-slate-100 text-[7px] font-black uppercase border-none px-2 h-4 rounded-lg shadow-sm">
+                {category.split(' ')[0]}
+            </Badge>
           </div>
-          <div className="space-y-1 mb-4 flex-1">
-            <h4 className="font-bold text-sm text-gray-800 line-clamp-1">{name}</h4>
-            <div className="flex gap-1">
-              <div className="h-1.5 w-8 rounded-full bg-blue-50" />
-              <div className="h-1.5 w-12 rounded-full bg-blue-50" />
+          
+          <div className="space-y-1 mb-4 flex-1 px-1">
+            <h4 className="font-black text-[12px] text-[#1A365D] dark:text-slate-100 line-clamp-1 uppercase tracking-tight">{name}</h4>
+            <div className="flex items-center gap-1.5 opacity-40">
+                <div className="h-1 w-6 rounded-full bg-primary" />
+                <div className="h-1 w-3 rounded-full bg-primary" />
             </div>
           </div>
-          <div className="flex items-center justify-between mt-auto">
-            <span className="font-bold text-base text-gray-900">{price}</span>
+
+          <div className="flex items-center justify-between mt-auto px-1">
+            <span className="font-black text-sm text-[#1A365D] dark:text-primary tracking-tighter">{price}</span>
             <Button 
-              size="sm" 
-              className="rounded-full bg-[#E6F0FF] text-primary hover:bg-primary hover:text-white px-4 h-8 text-xs font-bold transition-all"
+              size="icon" 
+              className="rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white h-9 w-9 shadow-sm transition-all active:scale-90"
               onClick={handleAdd}
             >
-              <Plus className="h-3 w-3 mr-1" /> Add
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
         </CardContent>
@@ -182,74 +191,123 @@ export default function StorePage() {
   const categoryIcons: Record<string, any> = {
     'All': LayoutGrid,
     'Pain & Fever': Pill,
-    'Hydration & Energy': Sparkles,
+    'Hydration & Energy': Zap,
     'Allergy Relief': Stethoscope,
-    'Skin Care': Baby,
-    'Baby Care': Baby, // Example for UI mapping
+    'Skin Care': Sparkles,
+    'Acidity & Indigestion': Activity,
+    'Vitamins & Supplements': ShoppingBag,
+    'First Aid': Pill,
+    'Cold & Cough': Activity,
+    'Antibiotics': Pill
   };
 
   return (
-    <div className="min-h-full bg-[#F0F7FF] dark:bg-slate-950 pb-20">
-      <div className="max-w-xl mx-auto px-4 pt-6 space-y-6">
-        
-        {/* Top Navigation Row */}
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-40 font-body overflow-x-hidden safe-top">
+      
+      {/* PREMIUM STORE HEADER */}
+      <header className="px-5 pt-8 pb-6 space-y-7">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm border border-blue-50" asChild>
-            <Link href="/dashboard"><ChevronLeft className="h-6 w-6 text-gray-600" /></Link>
-          </Button>
-          <h1 className="text-xl font-bold text-gray-800">Medical Store</h1>
-          <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm border border-blue-50 relative" asChild>
-            <Link href="/store/cart">
-              <ShoppingCart className="h-5 w-5 text-gray-600" />
-              {itemCount > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-[10px] text-white flex items-center justify-center rounded-full font-bold">{itemCount}</span>}
+            <div className="flex items-center gap-4">
+                <Link href="/dashboard">
+                    <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-md active:scale-90 transition-all">
+                        <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
+                    </div>
+                </Link>
+                <div className="space-y-0.5">
+                    <h1 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tighter leading-none">Medical Store</h1>
+                    <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Inventory Online</p>
+                    </div>
+                </div>
+            </div>
+
+            <Link href="/store/cart" className="relative group active:scale-90 transition-all">
+                <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-md">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                </div>
+                {itemCount > 0 && (
+                    <div className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 text-white rounded-full flex items-center justify-center border-2 border-white dark:border-[#020617] shadow-lg animate-in zoom-in duration-300">
+                        <span className="text-[9px] font-black">{itemCount}</span>
+                    </div>
+                )}
             </Link>
-          </Button>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-300" />
+        {/* SEARCH BAR - MODERNIZED */}
+        <div className="relative group">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
           <Input 
-            placeholder="Search for medicines or health products..." 
-            className="pl-12 h-14 rounded-2xl border-none bg-white shadow-sm placeholder:text-blue-200 text-gray-700" 
+            placeholder="Search medicines, supplements..." 
+            className="pl-14 h-16 rounded-full border-none bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/20 dark:shadow-none text-base font-bold placeholder:text-slate-300" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+      </header>
 
-        {/* AI Banner */}
+      <main className="max-w-4xl mx-auto px-5 space-y-10">
+        
+        {/* AI BANNER */}
         <AIPrescriptionBanner />
 
-        {/* Shop by Category */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-gray-800 px-1">Shop by Category</h2>
-          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-            {categories.slice(0, 6).map(cat => (
-              <CategoryItem 
-                key={cat} 
-                label={cat.split(' ')[0]} 
-                icon={categoryIcons[cat] || Pill} 
-                active={selectedCategory === cat}
-                onClick={() => setSelectedCategory(cat)}
-              />
-            ))}
-          </div>
-        </div>
+        {/* CATEGORIES - HORIZONTAL SCROLL */}
+        <section className="space-y-5">
+            <div className="flex items-center gap-3 px-1">
+                <div className="h-4 w-1 bg-primary rounded-full" />
+                <h2 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Shop Categories</h2>
+            </div>
+            <ScrollArea className="w-full whitespace-nowrap pb-2">
+                <div className="flex gap-5 px-1">
+                    {categories.map(cat => (
+                        <CategoryItem 
+                            key={cat} 
+                            label={cat} 
+                            icon={categoryIcons[cat] || Pill} 
+                            active={selectedCategory === cat}
+                            onClick={() => setSelectedCategory(cat)}
+                        />
+                    ))}
+                </div>
+                <ScrollBar orientation="horizontal" className="hidden" />
+            </ScrollArea>
+        </section>
 
-        {/* Popular Medicines */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-gray-800 px-1">Popular Medicines</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {filteredMedicines.map(med => (
-              <MedicineCard key={med.id} {...med} />
-            ))}
-          </div>
-          {filteredMedicines.length === 0 && (
-            <p className="text-center text-blue-300 py-10 italic">No products found in this category.</p>
-          )}
-        </div>
+        {/* PRODUCT GRID - OPTIMIZED FOR MOBILE */}
+        <section className="space-y-6">
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-3">
+                    <div className="h-4 w-1 bg-primary rounded-full" />
+                    <h2 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Top Products</h2>
+                </div>
+                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest rounded-lg opacity-40">
+                    {filteredMedicines.length} Items
+                </Badge>
+            </div>
 
-      </div>
+            <div className="grid grid-cols-2 gap-4">
+                {filteredMedicines.map(med => (
+                    <div key={med.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <MedicineCard {...med} />
+                    </div>
+                ))}
+            </div>
+
+            {filteredMedicines.length === 0 && (
+                <div className="py-24 text-center space-y-4 opacity-30">
+                    <div className="h-20 w-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
+                        <Search className="h-10 w-10 text-slate-400" />
+                    </div>
+                    <p className="font-black uppercase text-[11px] tracking-[0.3em] text-slate-500">No Match Found</p>
+                </div>
+            )}
+        </section>
+      </main>
+
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
