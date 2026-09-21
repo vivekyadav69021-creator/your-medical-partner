@@ -19,40 +19,51 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, LogIn, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Player } from '@lottiefiles/react-lottie-player';
 
 /**
- * Premium Medical Animation Section
- * Centered and optimized for mobile/web.
+ * Premium CSS-Based Medical Animation
+ * Replaces Lottie for 100% reliability and high performance.
  */
-function MedicalHeroAnimation() {
-  const [isLoaded, setIsLoaded] = useState(false);
-
+function PremiumMedicalHero() {
   return (
-    <div className="relative w-full max-w-[320px] h-[300px] flex items-center justify-center overflow-visible">
-      {/* Background Soft Glow */}
-      <div className="absolute inset-0 bg-primary/15 blur-[60px] rounded-full scale-110 -z-10 animate-pulse" />
+    <div className="relative w-full max-w-[320px] h-[280px] flex items-center justify-center overflow-visible select-none">
+      {/* Dynamic Background Glow Orbs */}
+      <div className="absolute w-40 h-40 bg-primary/20 rounded-full blur-[60px] animate-pulse" />
+      <div className="absolute w-32 h-32 bg-blue-400/10 rounded-full blur-[40px] translate-x-10 -translate-y-10 animate-bounce duration-[5000ms]" />
       
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
-        </div>
-      )}
+      {/* Concentric Pulsing Rings */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute w-48 h-48 border border-primary/10 rounded-full animate-ping opacity-20" />
+        <div className="absolute w-64 h-64 border border-primary/5 rounded-full animate-pulse opacity-10" />
+      </div>
 
-      {/* High-Quality Medical Lottie Asset */}
-      <Player
-        autoplay
-        loop
-        src="https://lottie.host/bf51dd24-6e25-48d0-94fc-168e43827d6a/qduk3jmYak.json"
-        style={{ height: '280px', width: '280px' }}
-        className={cn(
-          "relative z-10 drop-shadow-2xl transition-all duration-1000",
-          isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"
-        )}
-        onEvent={event => {
-          if (event === 'load') setIsLoaded(true);
-        }}
-      />
+      {/* Main Animated Engine */}
+      <div className="relative z-10 flex items-center justify-center animate-in zoom-in-50 duration-1000">
+        <div className="relative p-7 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white dark:border-slate-800 transform hover:scale-105 transition-transform duration-700 group cursor-default">
+          
+          {/* Floating Heart Icon */}
+          <div className="animate-bounce duration-[3000ms] ease-in-out">
+            <HeartPulse className="h-24 w-24 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)]" />
+          </div>
+          
+          {/* Life-line Scanning Bar */}
+          <div className="absolute left-0 right-0 h-[2px] bg-primary/30 top-1/2 -translate-y-1/2 overflow-hidden">
+            <div className="h-full w-20 bg-primary shadow-[0_0_15px_#2488E8] animate-[scan-line_2s_linear_infinite]" />
+          </div>
+
+          {/* Precision Corner Badge */}
+          <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-2xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-12">
+            <Sparkles className="h-5 w-5 text-white animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes scan-line {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(320px); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -181,9 +192,9 @@ export default function LoginPage() {
 
       <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-between p-6 pb-8 overflow-y-auto scrollbar-hide relative z-10">
         
-        {/* Header Section with Animation */}
-        <div className="w-full flex flex-col items-center pt-2 animate-in fade-in zoom-in-95 duration-1000">
-          <MedicalHeroAnimation />
+        {/* Header Section with Custom Animation */}
+        <div className="w-full flex flex-col items-center pt-4 animate-in fade-in zoom-in-95 duration-1000">
+          <PremiumMedicalHero />
           
           <div className="text-center mt-4 space-y-4">
              <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-full border border-blue-100/50 dark:border-slate-800 shadow-sm mx-auto">
