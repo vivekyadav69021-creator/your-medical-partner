@@ -20,28 +20,21 @@ import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, Lo
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { Player } from '@lottiefiles/react-lottie-player';
 
 /**
- * Premium Medical Pulse Animation
+ * Premium Lottie Hero Animation
  */
 function MedicalHeroAnimation() {
   return (
-    <div className="relative w-full max-w-[260px] h-[260px] flex items-center justify-center pointer-events-none select-none">
-      {/* Dynamic Radar Ripples */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-32 h-32 bg-primary/20 rounded-full animate-ping [animation-duration:3s]" />
-        <div className="absolute w-48 h-48 bg-primary/10 rounded-full animate-ping [animation-duration:4s]" />
-      </div>
-
-      <div className="relative z-10 p-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[2.8rem] shadow-[0_30px_60px_-15px_rgba(36,136,232,0.3)] border border-white dark:border-slate-800 flex items-center justify-center h-32 w-32">
-        <HeartPulse className="h-16 w-16 text-primary drop-shadow-[0_0_15px_rgba(36,136,232,0.5)] animate-pulse" />
-        
-        {/* Floating Health Bits */}
-        <div className="absolute -top-2 -right-2 bg-emerald-500 p-2 rounded-xl shadow-lg border-4 border-white dark:border-slate-900 rotate-12">
-            <div className="h-2 w-2 bg-white rounded-full animate-pulse" />
-        </div>
-      </div>
-      
+    <div className="relative w-full max-w-[320px] h-[320px] flex items-center justify-center pointer-events-none select-none">
+      <Player
+        autoplay
+        loop
+        src="https://lottie.host/bf51dd24-6e25-48d0-94fc-168e43827d6a/qduk3jmYak.json"
+        style={{ height: '300px', width: '300px' }}
+        className="relative z-10"
+      />
       {/* Background Soft Glow */}
       <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full scale-125 -z-10" />
     </div>
@@ -177,7 +170,7 @@ export default function LoginPage() {
         <div className="w-full flex flex-col items-center pt-8 animate-in fade-in zoom-in-95 duration-1000">
           <MedicalHeroAnimation />
           
-          <div className="text-center mt-6 space-y-4">
+          <div className="text-center mt-2 space-y-4">
              <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-full border border-blue-100/50 dark:border-slate-800 shadow-sm mx-auto">
                 <ShieldCheck className="w-4 h-4 text-primary" />
                 <span className="text-[10px] font-black text-[#1A365D] dark:text-primary uppercase tracking-[0.3em]">Official Health Portal</span>
@@ -192,7 +185,7 @@ export default function LoginPage() {
         </div>
 
         {/* Action Section */}
-        <div className="w-full max-w-md mt-10">
+        <div className="w-full max-w-md mt-6">
           {view === 'welcome' ? (
             <div className="w-full space-y-8 animate-in slide-in-from-bottom-10 fade-in duration-700">
               <div className="space-y-4 px-2">
@@ -230,7 +223,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-6 pt-4 text-center">
+              <div className="flex flex-col items-center gap-6 pt-2 text-center">
                 <div className="flex items-center w-full gap-4 px-12 opacity-30">
                   <div className="h-px bg-slate-400 flex-1" />
                   <span className="text-[8px] font-black uppercase tracking-[0.3em] whitespace-nowrap">Clinical Access</span>
@@ -316,7 +309,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Trust Section */}
-        <div className="mt-12 flex flex-col items-center gap-4 text-slate-400/60">
+        <div className="mt-8 flex flex-col items-center gap-4 text-slate-400/60">
            <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.3em]">
               <ShieldCheck className="w-4 h-4 text-primary/60" />
               100% HIPAA Secure Data
