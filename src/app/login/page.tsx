@@ -19,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, LogIn, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { Player } from '@lottiefiles/react-lottie-player';
 
 /**
@@ -27,18 +26,32 @@ import { Player } from '@lottiefiles/react-lottie-player';
  * Centered and optimized for mobile/web.
  */
 function MedicalHeroAnimation() {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
     <div className="relative w-full max-w-[320px] h-[300px] flex items-center justify-center overflow-visible">
       {/* Background Soft Glow */}
       <div className="absolute inset-0 bg-primary/15 blur-[60px] rounded-full scale-110 -z-10 animate-pulse" />
       
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
+        </div>
+      )}
+
       {/* High-Quality Medical Lottie Asset */}
       <Player
         autoplay
         loop
         src="https://lottie.host/bf51dd24-6e25-48d0-94fc-168e43827d6a/qduk3jmYak.json"
         style={{ height: '280px', width: '280px' }}
-        className="relative z-10 drop-shadow-2xl"
+        className={cn(
+          "relative z-10 drop-shadow-2xl transition-all duration-1000",
+          isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"
+        )}
+        onEvent={event => {
+          if (event === 'load') setIsLoaded(true);
+        }}
       />
     </div>
   );
