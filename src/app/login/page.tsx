@@ -21,8 +21,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 /**
- * Premium CSS-Based Medical Animation
- * Replaces Lottie for 100% reliability and high performance.
+ * Premium CSS-Based Medical Animation with Bottom ECG/Health Rate
  */
 function PremiumMedicalHero() {
   return (
@@ -31,37 +30,60 @@ function PremiumMedicalHero() {
       <div className="absolute w-40 h-40 bg-primary/20 rounded-full blur-[60px] animate-pulse" />
       <div className="absolute w-32 h-32 bg-blue-400/10 rounded-full blur-[40px] translate-x-10 -translate-y-10 animate-bounce duration-[5000ms]" />
       
-      {/* Concentric Pulsing Rings */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-48 h-48 border border-primary/10 rounded-full animate-ping opacity-20" />
-        <div className="absolute w-64 h-64 border border-primary/5 rounded-full animate-pulse opacity-10" />
-      </div>
-
       {/* Main Animated Engine */}
       <div className="relative z-10 flex items-center justify-center animate-in zoom-in-50 duration-1000">
-        <div className="relative p-7 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white dark:border-slate-800 transform hover:scale-105 transition-transform duration-700 group cursor-default">
+        <div className="relative p-7 pb-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white dark:border-slate-800 transform hover:scale-105 transition-transform duration-700 group cursor-default overflow-hidden">
           
           {/* Floating Heart Icon */}
-          <div className="animate-bounce duration-[3000ms] ease-in-out">
+          <div className="animate-bounce duration-[3000ms] ease-in-out relative z-20">
             <HeartPulse className="h-24 w-24 text-primary drop-shadow-[0_0_20px_rgba(36,136,232,0.6)]" />
           </div>
-          
-          {/* Life-line Scanning Bar */}
-          <div className="absolute left-0 right-0 h-[2px] bg-primary/30 top-1/2 -translate-y-1/2 overflow-hidden">
-            <div className="h-full w-20 bg-primary shadow-[0_0_15px_#2488E8] animate-[scan-line_2s_linear_infinite]" />
+
+          {/* New Health Rate / ECG Animation at the Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none opacity-60">
+            <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
+              <path 
+                className="ecg-line"
+                d="M0,20 L20,20 L25,10 L30,30 L35,20 L55,20 L60,5 L65,35 L70,20 L100,20" 
+                fill="transparent" 
+                stroke="currentColor" 
+                strokeWidth="1.5"
+                style={{ color: 'hsl(var(--primary))' }}
+              />
+              <path 
+                className="ecg-line-slow"
+                d="M0,20 L20,20 L25,10 L30,30 L35,20 L55,20 L60,5 L65,35 L70,20 L100,20" 
+                fill="transparent" 
+                stroke="currentColor" 
+                strokeWidth="1"
+                opacity="0.3"
+                style={{ color: 'hsl(var(--primary))' }}
+              />
+            </svg>
           </div>
 
           {/* Precision Corner Badge */}
-          <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-2xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-12">
+          <div className="absolute -top-1 -right-1 w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-2xl border-4 border-white dark:border-slate-950 flex items-center justify-center shadow-xl rotate-12 z-30">
             <Sparkles className="h-5 w-5 text-white animate-pulse" />
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes scan-line {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(320px); }
+        .ecg-line {
+          stroke-dasharray: 100;
+          stroke-dashoffset: 100;
+          animation: ecg-draw 2.5s linear infinite;
+          filter: drop-shadow(0 0 4px #2488E8);
+        }
+        .ecg-line-slow {
+          stroke-dasharray: 100;
+          stroke-dashoffset: 100;
+          animation: ecg-draw 4s linear infinite;
+        }
+        @keyframes ecg-draw {
+          0% { stroke-dashoffset: 200; }
+          100% { stroke-dashoffset: 0; }
         }
       `}</style>
     </div>
