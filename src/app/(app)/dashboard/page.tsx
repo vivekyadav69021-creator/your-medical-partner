@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -21,14 +20,12 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  Plus,
   Apple,
   Hospital,
   UserCheck,
   Stethoscope,
   Sparkles,
-  Zap,
-  Target
+  Zap
 } from 'lucide-react';
 import { Area, AreaChart, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,7 +35,6 @@ import { useUserProfile } from '@/context/user-profile-context';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-// Easy to manage chart data
 const healthChartData = [
   { day: 'Mon', score: 40 },
   { day: 'Tue', score: 60 },
@@ -76,72 +72,63 @@ export default function DashboardPage() {
   }, [userName, toast]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 space-y-7 pb-32 font-body safe-top overflow-x-hidden">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 space-y-9 pb-32 font-body safe-top overflow-x-hidden">
       
-      {/* COMPACT & BALANCED WELCOME BANNER */}
-      <div className="mx-auto max-w-2xl px-2 relative group overflow-hidden">
-        {/* Animated Background Aura - Subtler */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-[60px] animate-pulse" />
-        
-        <div className="relative p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-[1.8rem] border border-white dark:border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.08)] flex flex-col md:flex-row items-center justify-between gap-3 transition-all hover:shadow-primary/5">
+      {/* COMPACT & BALANCED WELCOME BANNER - REDUCED SIZE & WIDTH */}
+      <div className="mx-auto max-w-lg px-4 relative z-10">
+        <div className="relative p-3.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl rounded-[2rem] border border-white dark:border-slate-800 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between gap-4 transition-all hover:shadow-primary/5">
           
-          <div className="flex items-center gap-3.5 min-w-0 w-full md:w-auto px-1">
-            <Link href="/profile" className="shrink-0 relative">
-              <div className="relative p-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-primary/20">
-                <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-900 shadow-md transition-transform duration-500 hover:scale-105">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Link href="/profile" className="shrink-0">
+              <div className="p-0.5 rounded-full border border-primary/20 bg-slate-50 dark:bg-slate-800 shadow-sm transition-all hover:scale-105">
+                <Avatar className="h-11 w-11 border-2 border-white dark:border-slate-900 shadow-inner">
                   <AvatarImage src={userImage} className="object-cover" />
-                  <AvatarFallback className="bg-primary text-white font-black text-lg">
+                  <AvatarFallback className="bg-primary text-white font-black text-sm">
                     {userName[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 bg-white dark:bg-slate-700 rounded-full shadow-lg flex items-center justify-center border border-primary/10 scale-105">
-                  <UserCheck className="w-3 h-3 text-primary" />
-                </div>
               </div>
             </Link>
             
-            <div className="min-w-0 space-y-0">
-              <div className="flex items-center gap-1.5">
-                 <p className="text-[7px] font-black text-primary uppercase tracking-[0.25em] opacity-80">Sync Active</p>
-                 <Sparkles className="w-2 h-2 text-yellow-500 animate-bounce" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                 <p className="text-[7px] font-black text-primary uppercase tracking-[0.2em] opacity-80">Connected</p>
+                 <Sparkles className="w-2 h-2 text-yellow-500" />
               </div>
-              <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tighter leading-tight truncate">
+              <h1 className="text-lg font-black text-[#1A365D] dark:text-slate-100 tracking-tighter truncate leading-none">
                 {userName.split(' ')[0]}
               </h1>
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-2.5 h-2.5 text-slate-400" />
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{currentTime}</p>
-              </div>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">{currentTime}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-2 md:pt-0 border-slate-100 dark:border-slate-800 px-1">
-             <div className="flex flex-col items-end gap-0.5">
-                <div className="h-6 px-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 shadow-sm">
+          <div className="flex items-center gap-3 shrink-0">
+             <div className="flex flex-col items-end gap-1">
+                <div className="h-5 px-2.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 flex items-center gap-1">
                     <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Pulse OK</span>
+                    <span className="text-[7px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">PULSE OK</span>
                 </div>
                 <div className="flex items-center gap-1 mr-1">
                     <Zap className="w-2 h-2 text-primary fill-primary" />
-                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">PRO v2.0.1</span>
+                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">v2.0.1</span>
                 </div>
              </div>
              
              <Link href="/profile">
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner group/btn">
-                    <ChevronRight className="w-4 h-4 text-primary group-hover/btn:translate-x-1 transition-transform" />
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner active:scale-90 transition-transform">
+                    <ChevronRight className="w-4 h-4 text-primary" />
                 </Button>
              </Link>
           </div>
         </div>
       </div>
 
-      {/* Essential Health Services Grid */}
-      <div className="space-y-4 px-2">
+      {/* Services Grid - Added Top Margin to fix overlap */}
+      <div className="space-y-4 px-2 mt-4 relative z-0">
         <div className="flex items-center justify-between px-3">
             <div className="flex items-center gap-2">
                 <div className="h-1.5 w-6 bg-primary rounded-full" />
-                <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-400 uppercase tracking-[0.25em]">Essential Health Services</h3>
+                <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-400 uppercase tracking-[0.25em]">Health Center</h3>
             </div>
         </div>
         
@@ -157,7 +144,7 @@ export default function DashboardPage() {
           />
           <MiniServiceCard 
             title="Food Scan" 
-            slogan="Clinical Nutrition"
+            slogan="Nutrition AI"
             icon={Apple} 
             href="/food-scanner" 
             color="text-pink-500" 
@@ -166,7 +153,7 @@ export default function DashboardPage() {
           />
           <MiniServiceCard 
             title="Disease Scan" 
-            slogan="Deep Diagnostics"
+            slogan="Diagnostics"
             icon={Scan} 
             href="/disease-scanner" 
             color="text-amber-500" 
@@ -184,7 +171,7 @@ export default function DashboardPage() {
           />
           <MiniServiceCard 
             title="AI Psychiatrist" 
-            slogan="Mind Companion"
+            slogan="Mind Guide"
             icon={BrainCircuit} 
             href="/ai-psychiatrist" 
             color="text-teal-500" 
@@ -201,22 +188,15 @@ export default function DashboardPage() {
             delay="delay-300"
           />
         </div>
-
-        {/* Dynamic Theme Wave Animation */}
-        <div className="relative h-1.5 w-full overflow-hidden mt-2 px-2 opacity-60">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-pink-400 to-blue-400 w-[200%] animate-splash-gradient rounded-full blur-[1px]" />
-        </div>
       </div>
 
       {/* Main Agenda Section */}
-      <div className="grid grid-cols-1 gap-8 px-2 pt-2">
-        
-        {/* UPGRADED: Health Pulse Chart (Priority 1) */}
-        <Card className="rounded-[2.8rem] border-none shadow-2xl bg-white dark:bg-slate-900 overflow-hidden border border-slate-50/50 dark:border-slate-800/50 animate-in zoom-in-95 duration-1000">
+      <div className="grid grid-cols-1 gap-8 px-2">
+        <Card className="rounded-[2.8rem] border-none shadow-2xl bg-white dark:bg-slate-900 overflow-hidden animate-in zoom-in-95 duration-1000">
             <CardHeader className="flex flex-row items-center justify-between pb-2 px-7 pt-7">
               <div>
                 <CardTitle className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">Health Pulse</CardTitle>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Activity Diagnostics</p>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Activity Tracking</p>
               </div>
               <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center shadow-inner">
                 <Activity className="w-5 h-5 text-primary animate-pulse" />
@@ -239,7 +219,6 @@ export default function DashboardPage() {
                       strokeWidth={5} 
                       fill="url(#pulseGrad)" 
                       animationDuration={2500}
-                      strokeLinecap="round"
                     />
                     <XAxis dataKey="day" hide />
                     <Tooltip content={<ChartTooltip />} />
@@ -247,7 +226,6 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
               
-              {/* Ready-to-use Health Metrics */}
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <MetricTiny label="Daily Goal" value="86%" progress={86} icon={CheckCircle2} />
                 <MetricTiny label="Wellness" value="92%" progress={92} icon={Activity} />
@@ -255,12 +233,12 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-        {/* Doctor Consultations (Priority 2) */}
+        {/* Doctor Consultations */}
         <div className="space-y-4">
             <div className="flex items-center justify-between px-4">
                 <div className="flex items-center gap-2">
                     <div className="h-4 w-1 bg-primary rounded-full" />
-                    <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-100 uppercase tracking-[0.2em]">Medical Consultations</h3>
+                    <h3 className="font-black text-[11px] text-[#1A365D] dark:text-slate-100 uppercase tracking-[0.2em]">Consultations</h3>
                 </div>
                 <Link href="/consultation" className="text-[9px] font-black uppercase text-primary tracking-widest hover:underline">Manage All</Link>
             </div>
@@ -271,16 +249,13 @@ export default function DashboardPage() {
                         <Link href="/consultation" key={i} className="block active:scale-[0.98] transition-all group">
                             <div className="p-5 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl flex items-center gap-5 relative overflow-hidden">
                                 <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
-                                
                                 <div className="h-14 w-14 rounded-3xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-primary shadow-inner shrink-0 relative">
                                     <Stethoscope className="w-7 h-7" />
                                     <div className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse" />
                                 </div>
-                                
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-black text-[#1A365D] dark:text-slate-100 truncate uppercase tracking-tight">{appt.doctorName}</p>
                                     <p className="text-[9px] font-bold text-slate-400 uppercase mb-2">{appt.specialty}</p>
-                                    
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded-lg">
                                             <Calendar className="w-3 h-3 text-primary" />
@@ -292,7 +267,6 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <div className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:bg-primary group-hover:text-white transition-all">
                                     <ChevronRight className="w-5 h-5" />
                                 </div>
@@ -300,19 +274,16 @@ export default function DashboardPage() {
                         </Link>
                     ))
                 ) : (
-                    <div className="p-8 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 bg-white/30 dark:bg-slate-900/30 text-center animate-in fade-in duration-1000">
+                    <div className="p-8 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 bg-white/30 dark:bg-slate-900/30 text-center">
                         <Calendar className="h-8 w-8 text-slate-200 mx-auto mb-3" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No Sessions Booked</p>
-                        <Link href="/consultation">
-                            <Button variant="link" className="text-[10px] uppercase font-black tracking-widest mt-2 h-auto p-0">Book Doctor Now</Button>
-                        </Link>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No Active Sessions</p>
                     </div>
                 )}
             </div>
         </div>
 
         {/* Daily Routine Planner */}
-        <Card className="rounded-[2.5rem] border-none shadow-2xl bg-white dark:bg-slate-900 mx-1 p-2 animate-in slide-in-from-bottom-4 duration-1000">
+        <Card className="rounded-[2.5rem] border-none shadow-2xl bg-white dark:bg-slate-900 mx-1 p-2">
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -324,16 +295,16 @@ export default function DashboardPage() {
             <div className="space-y-2.5">
               {tasks.length > 0 ? (
                 tasks.map((task, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50/60 dark:bg-slate-800/60 border border-white dark:border-slate-800 shadow-sm transition-all hover:bg-white active:scale-95">
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50/60 dark:bg-slate-800/60 border border-white dark:border-slate-800 shadow-sm">
                     <div className={cn(
-                      "h-6 w-6 rounded-xl flex items-center justify-center border-2 shrink-0 transition-all",
-                      task.completed ? "bg-primary border-primary text-white shadow-md shadow-primary/20" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      "h-6 w-6 rounded-xl flex items-center justify-center border-2 shrink-0",
+                      task.completed ? "bg-primary border-primary text-white" : "border-slate-200 dark:border-slate-700 bg-white"
                     )}>
                       {task.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
                     </div>
                     <p className={cn(
                       "text-xs font-bold flex-1 truncate uppercase tracking-tight",
-                      task.completed ? "text-slate-300 dark:text-slate-600 line-through" : "text-[#1A365D] dark:text-slate-200"
+                      task.completed ? "text-slate-300 line-through" : "text-[#1A365D] dark:text-slate-200"
                     )}>
                       {task.title}
                     </p>
@@ -341,7 +312,7 @@ export default function DashboardPage() {
                 ))
               ) : (
                   <div className="py-4 text-center">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Planner is ready</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Planner Standby</p>
                   </div>
               )}
             </div>
@@ -349,13 +320,13 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Emergency Quick Action Button */}
+      {/* Emergency Quick Action */}
       <div className="px-3 pt-2">
         <Link href="/nearby-hospital" className="block active:scale-[0.96] transition-all duration-300">
           <div className="p-5 rounded-[2.5rem] bg-gradient-to-r from-red-500 to-rose-600 shadow-2xl shadow-red-500/30 flex items-center justify-between group relative overflow-hidden">
             <div className="absolute top-0 right-0 h-full w-32 bg-white/10 skew-x-[-20deg] translate-x-16 group-hover:translate-x-12 transition-transform duration-1000" />
             <div className="flex items-center gap-5 relative z-10">
-              <div className="h-14 w-14 bg-white/20 rounded-[1.8rem] flex items-center justify-center text-white border border-white/30 backdrop-blur-md shadow-lg">
+              <div className="h-14 w-14 bg-white/20 rounded-[1.8rem] flex items-center justify-center text-white border border-white/30 backdrop-blur-md">
                 <PhoneCall className="w-7 h-7 animate-pulse" />
               </div>
               <div className="text-white">
@@ -375,20 +346,19 @@ export default function DashboardPage() {
   );
 }
 
-// Sub-components for clean code management
 function MiniServiceCard({ title, slogan, icon: Icon, href, color, bg, delay }: any) {
   return (
     <Link href={href} className={cn("group active:scale-95 transition-all duration-500 block h-full animate-in fade-in slide-in-from-bottom-2", delay)}>
       <div className={cn(
         "rounded-[2.2rem] border shadow-lg transition-all duration-500 h-full flex flex-col items-center text-center justify-center p-5 relative overflow-hidden",
         bg,
-        "border-white/80 dark:border-slate-800/80 hover:shadow-xl hover:bg-white dark:hover:bg-slate-800"
+        "border-white/80 dark:border-slate-800/80 hover:bg-white dark:hover:bg-slate-800"
       )}>
-        <div className={cn("h-14 w-14 rounded-3xl shadow-xl flex items-center justify-center bg-white dark:bg-slate-900 transition-all duration-700 group-hover:rotate-12 group-hover:scale-110 mb-4", color)}>
+        <div className={cn("h-14 w-14 rounded-3xl shadow-xl flex items-center justify-center bg-white dark:bg-slate-900 transition-all duration-700 group-hover:rotate-12 mb-4", color)}>
           <Icon className="w-7 h-7" />
         </div>
         <div className="w-full">
-          <h4 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-tight mb-1">{title}</h4>
+          <h4 className="text-[12px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-tight mb-1">{title}</h4>
           <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] leading-none opacity-80">{slogan}</p>
         </div>
       </div>

@@ -9,11 +9,12 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
-import { HeartPulse, Menu, ShieldCheck } from 'lucide-react';
+import { HeartPulse, Menu, ShieldCheck, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
+import Link from 'next/link';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -41,7 +42,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isVideoLibrary = pathname === '/video-tutorials';
   const isNearbyHospital = pathname === '/nearby-hospital';
   const isAdminPanel = pathname === '/admin';
-  const isProfile = pathname === '/profile';
   
   const hideGlobalHeader = isHealthAssistant || isPsychiatrist || isDiseaseScanner || isFoodScanner || isVideoLibrary || isNearbyHospital || isAdminPanel;
   const hideSidebar = isDiseaseScanner || isFoodScanner || isVideoLibrary || (isAdminPanel && !isAdmin); 
@@ -96,12 +96,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   </span>
               </div>
             </div>
-            {/* Quick Profile/Status in Header */}
-            <div className="flex items-center gap-4">
-                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 overflow-hidden shadow-inner">
-                    {user?.photoURL ? <img src={user.photoURL} alt="P" className="object-cover h-full w-full" /> : <div className="text-[10px] font-black text-primary">{user?.email?.charAt(0).toUpperCase()}</div>}
-                 </div>
-            </div>
+            
+            {/* Functional Profile Access in Header */}
+            <Link href="/profile">
+              <div className="flex items-center gap-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95 group">
+                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 overflow-hidden shadow-inner group-hover:border-primary/40">
+                      {user?.photoURL ? (
+                        <img src={user.photoURL} alt="User" className="object-cover h-full w-full" />
+                      ) : (
+                        <User className="w-5 h-5 text-primary" />
+                      )}
+                   </div>
+              </div>
+            </Link>
           </header>
         )}
 
