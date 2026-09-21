@@ -497,22 +497,22 @@ export default function HealthAssistantPage() {
                                             </div>
                                         </div>
                                         <div className="flex-1 w-full min-w-0">
-                                            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-full text-slate-800 dark:text-slate-200 leading-relaxed font-medium px-1 overflow-hidden">
+                                            <article className="prose prose-sm md:prose-base dark:prose-invert max-w-full text-slate-800 dark:text-slate-200 leading-relaxed font-medium px-1 overflow-hidden break-words">
                                                 <ReactMarkdown 
                                                     components={{
                                                         a: ({node, ...props}) => <a {...props} className="text-primary font-black underline decoration-2 underline-offset-4 hover:text-primary/80 transition-colors" target="_blank" rel="noopener noreferrer" />,
-                                                        h2: ({node, ...props}) => <h2 {...props} className="text-lg font-black uppercase text-[#1A365D] dark:text-white tracking-tight mt-8 mb-4 border-l-[4px] border-primary pl-4" />,
-                                                        p: ({node, ...props}) => <p {...props} className="mb-4 text-sm md:text-base" />,
-                                                        ul: ({node, ...props}) => <ul {...props} className="space-y-1.5 mb-5 list-none pl-1" />,
-                                                        li: ({node, ...props}) => <li {...props} className="flex gap-2 items-start before:content-[''] before:h-1.5 before:w-1.5 before:bg-primary/40 before:rounded-full before:mt-2 before:shrink-0" />,
+                                                        h2: ({node, ...props}) => <h2 {...props} className="text-base md:text-lg font-black uppercase text-[#1A365D] dark:text-white tracking-tight mt-6 mb-3 border-l-[3px] border-primary pl-3" />,
+                                                        p: ({node, ...props}) => <p {...props} className="mb-3 text-sm md:text-base leading-relaxed" />,
+                                                        ul: ({node, ...props}) => <ul {...props} className="space-y-1.5 mb-4 list-none pl-0" />,
+                                                        li: ({node, ...props}) => <li {...props} className="flex gap-2 items-start text-sm md:text-base" />,
                                                         table: ({node, ...props}) => (
-                                                            <div className="w-full overflow-x-auto my-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm scrollbar-hide">
-                                                                <table {...props} className="w-full border-collapse text-left text-xs md:text-sm min-w-[300px]" />
+                                                            <div className="w-full overflow-x-auto my-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm scrollbar-hide">
+                                                                <table {...props} className="w-full border-collapse text-left text-[11px] md:text-sm min-w-[280px]" />
                                                             </div>
                                                         ),
                                                         thead: ({node, ...props}) => <thead {...props} className="bg-slate-50 dark:bg-slate-900" />,
-                                                        th: ({node, ...props}) => <th {...props} className="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 dark:border-slate-800" />,
-                                                        td: ({node, ...props}) => <td {...props} className="px-3 py-2 font-bold border-b border-slate-100 dark:border-slate-800/50" />,
+                                                        th: ({node, ...props}) => <th {...props} className="px-2 py-2 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 dark:border-slate-800" />,
+                                                        td: ({node, ...props}) => <td {...props} className="px-2 py-2 font-bold border-b border-slate-100 dark:border-slate-800/50" />,
                                                     }}
                                                 >
                                                     {m.content}
