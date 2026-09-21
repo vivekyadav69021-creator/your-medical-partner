@@ -79,57 +79,57 @@ export default function DashboardPage() {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 space-y-7 pb-32 font-body safe-top overflow-x-hidden">
       
       {/* COMPACT & BALANCED WELCOME BANNER */}
-      <div className="mx-2 relative group overflow-hidden">
-        {/* Animated Background Aura */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/10 rounded-full blur-[60px] animate-pulse group-hover:scale-125 transition-transform duration-1000" />
+      <div className="mx-auto max-w-2xl px-2 relative group overflow-hidden">
+        {/* Animated Background Aura - Subtler */}
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-[60px] animate-pulse" />
         
-        <div className="relative p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-[2rem] border border-white dark:border-slate-800 shadow-[0_15px_40px_-12px_rgba(0,0,0,0.1)] flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:shadow-primary/5">
+        <div className="relative p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-[1.8rem] border border-white dark:border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.08)] flex flex-col md:flex-row items-center justify-between gap-3 transition-all hover:shadow-primary/5">
           
-          <div className="flex items-center gap-4 min-w-0 w-full md:w-auto">
+          <div className="flex items-center gap-3.5 min-w-0 w-full md:w-auto px-1">
             <Link href="/profile" className="shrink-0 relative">
-              <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-primary via-pink-400 to-emerald-400 animate-splash-gradient bg-[length:200%_200%]">
-                <Avatar className="h-14 w-14 border-2 border-white dark:border-slate-900 shadow-xl transition-transform duration-500 hover:scale-105">
+              <div className="relative p-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-primary/20">
+                <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-900 shadow-md transition-transform duration-500 hover:scale-105">
                   <AvatarImage src={userImage} className="object-cover" />
-                  <AvatarFallback className="bg-primary text-white font-black text-xl">
+                  <AvatarFallback className="bg-primary text-white font-black text-lg">
                     {userName[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-0.5 -right-0.5 h-6 w-6 bg-white dark:bg-slate-700 rounded-full shadow-lg flex items-center justify-center border border-primary/10 scale-105">
-                  <UserCheck className="w-3.5 h-3.5 text-primary" />
+                <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 bg-white dark:bg-slate-700 rounded-full shadow-lg flex items-center justify-center border border-primary/10 scale-105">
+                  <UserCheck className="w-3 h-3 text-primary" />
                 </div>
               </div>
             </Link>
             
-            <div className="min-w-0 space-y-0.5">
+            <div className="min-w-0 space-y-0">
               <div className="flex items-center gap-1.5">
-                 <p className="text-[8px] font-black text-primary uppercase tracking-[0.3em] opacity-80">Control Center</p>
-                 <Sparkles className="w-2.5 h-2.5 text-yellow-500 animate-bounce" />
+                 <p className="text-[7px] font-black text-primary uppercase tracking-[0.25em] opacity-80">Sync Active</p>
+                 <Sparkles className="w-2 h-2 text-yellow-500 animate-bounce" />
               </div>
-              <h1 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tighter leading-tight truncate">
+              <h1 className="text-xl font-black text-[#1A365D] dark:text-slate-100 tracking-tighter leading-tight truncate">
                 {userName.split(' ')[0]}
               </h1>
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-2.5 h-2.5 text-slate-400" />
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{currentTime}</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{currentTime}</p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 dark:border-slate-800">
-             <div className="flex flex-col items-end gap-1">
-                <div className="h-7 px-3.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 flex items-center gap-1.5 shadow-sm">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                    <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Active Pulse</span>
+          <div className="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-2 md:pt-0 border-slate-100 dark:border-slate-800 px-1">
+             <div className="flex flex-col items-end gap-0.5">
+                <div className="h-6 px-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 shadow-sm">
+                    <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Pulse OK</span>
                 </div>
-                <div className="flex items-center gap-1.5 mr-1">
-                    <Zap className="w-2.5 h-2.5 text-primary fill-primary" />
-                    <span className="text-[8px] font-black text-[#1A365D] dark:text-slate-400 uppercase tracking-widest">v2.0.1 PRO</span>
+                <div className="flex items-center gap-1 mr-1">
+                    <Zap className="w-2 h-2 text-primary fill-primary" />
+                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">PRO v2.0.1</span>
                 </div>
              </div>
              
              <Link href="/profile">
-                <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner group/btn">
-                    <ChevronRight className="w-5 h-5 text-primary group-hover/btn:translate-x-1 transition-transform" />
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner group/btn">
+                    <ChevronRight className="w-4 h-4 text-primary group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
              </Link>
           </div>
