@@ -21,7 +21,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const { user } = useUser();
   
-  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
+  const ADMIN_EMAIL = 'yourmedicalpartner6972@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
   
   // SECURE GATEWAY & INTERCEPTION

@@ -88,7 +88,7 @@ export default function AdminDashboard() {
   const [uploadedUrl, setUploadedUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
+  const ADMIN_EMAIL = 'yourmedicalpartner6972@gmail.com';
 
   useEffect(() => {
     if (user && user.email !== ADMIN_EMAIL) {

@@ -2,7 +2,7 @@
  * Core Philosophy: This ruleset enforces a strict user-ownership model while
  * providing a secure bypass for the verified Administrator.
  *
- * Admin User: yourmedicalpartner07@gmail.com
+ * Admin User: yourmedicalpartner6972@gmail.com
  *
  * Key Security Decisions:
  * - Admin Bypass: The Administrator has broad read/write access to manage the 
@@ -29,7 +29,7 @@ service cloud.firestore {
      * Checks if the authenticated user is the platform Administrator.
      */
     function isAdmin() {
-      return isSignedIn() && request.auth.token.email == 'yourmedicalpartner07@gmail.com';
+      return isSignedIn() && request.auth.token.email == 'yourmedicalpartner6972@gmail.com';
     }
 
     function isOwner(userId) {

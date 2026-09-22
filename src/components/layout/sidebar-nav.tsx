@@ -42,7 +42,7 @@ export function SidebarNav() {
   const { user } = useUser();
   const { toast } = useToast();
   
-  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
+  const ADMIN_EMAIL = 'yourmedicalpartner6972@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const mainNav = isAdmin ? [

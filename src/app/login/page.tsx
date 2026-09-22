@@ -19,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, HeartPulse, ShieldCheck, ChevronRight, UserPlus, LogIn, Sparkles, UserCircle, ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Player } from '@lottiefiles/react-lottie-player';
 
 type AuthView = 'welcome' | 'login' | 'signup';
 
@@ -37,8 +36,8 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
-  const isAdminInput = email.toLowerCase() === ADMIN_EMAIL;
+  const ADMIN_EMAIL = 'yourmedicalpartner6972@gmail.com';
+  const isAdminInput = email.toLowerCase().trim() === ADMIN_EMAIL;
 
   useEffect(() => {
     setIsMounted(true);
@@ -113,15 +112,44 @@ export default function LoginPage() {
       
       {view === 'welcome' && (
         <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-1000">
-           <div className="relative w-full max-w-[280px] h-[280px] flex items-center justify-center mb-6">
-              <div className="absolute inset-0 bg-primary/10 rounded-full blur-[60px] animate-pulse" />
-              <Player
-                autoplay
-                loop
-                src="https://lottie.host/bf51dd24-6e25-48d0-94fc-168e43827d6a/qduk3jmYak.json"
-                style={{ height: '240px', width: '240px' }}
-                className="relative z-10"
-              />
+           
+           <div className="relative mb-12 flex items-center justify-center">
+                <div className="absolute inset-0 bg-primary/10 rounded-full blur-[60px] animate-pulse scale-[2.5] -z-10" />
+                
+                <div className="relative w-[260px] p-7 pb-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white dark:border-slate-800 transform hover:scale-105 transition-transform duration-700 group cursor-default overflow-hidden">
+                    
+                    <div className="absolute bottom-0 left-0 right-0 h-16 opacity-30 pointer-events-none">
+                        <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <path 
+                                d="M0,30 L40,30 L45,10 L55,50 L60,30 L100,30 L105,5 L115,55 L120,30 L160,30 L165,15 L175,45 L180,30 L200,30" 
+                                fill="none" 
+                                stroke="var(--primary)" 
+                                strokeWidth="2"
+                                className="ecg-line"
+                            />
+                        </svg>
+                    </div>
+
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-125 opacity-20" />
+                            <div className="relative h-20 w-20 bg-white dark:bg-slate-800 rounded-3xl shadow-xl flex items-center justify-center animate-bounce duration-3000">
+                                <HeartPulse className="h-12 w-12 text-primary drop-shadow-[0_0_8px_rgba(36,136,232,0.4)]" />
+                            </div>
+                        </div>
+                        
+                        <div className="mt-5 space-y-1">
+                            <div className="h-1.5 w-16 bg-primary/10 rounded-full mx-auto overflow-hidden">
+                                <div className="h-full bg-primary animate-splash-gradient w-1/2" />
+                            </div>
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">AI Engine v2.0</p>
+                        </div>
+                    </div>
+
+                    <div className="absolute top-4 right-4 bg-gradient-to-br from-primary to-accent p-2 rounded-xl shadow-lg rotate-12 border-2 border-white dark:border-slate-900 group-hover:rotate-0 transition-transform">
+                        <Sparkles className="h-3 w-3 text-white fill-white" />
+                    </div>
+                </div>
            </div>
 
            <div className="text-center space-y-4 mb-12">
@@ -150,8 +178,13 @@ export default function LoginPage() {
               
               <div className="grid grid-cols-2 gap-3">
                  <Button variant="outline" onClick={() => setView('login')} className="h-12 rounded-2xl border-slate-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-[9px] font-black uppercase tracking-widest">Sign In</Button>
-                 <Button variant="ghost" onClick={() => auth.signInAnonymously()} className="h-12 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-primary"><UserCircle className="w-3 h-3 mr-2" /> Guest</Button>
+                 <Button variant="ghost" onClick={() => auth.signInAnonymously()} className="h-12 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-primary"><UserCircle className="w-3 h-3 mr-2" /> Explore as Visitor</Button>
               </div>
+            </div>
+
+            <div className="mt-8 flex flex-col items-center gap-2 opacity-40">
+                <div className="h-px w-32 bg-slate-200" />
+                <p className="text-[7px] font-black uppercase tracking-[0.4em] text-slate-400">Clinical Access Portal</p>
             </div>
         </div>
       )}
@@ -160,7 +193,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm flex-1 flex flex-col items-center justify-center p-6 animate-in slide-in-from-right-8 duration-500">
             <div className="flex items-center justify-between w-full mb-8 px-2">
               <Button variant="ghost" size="icon" className="rounded-full bg-white dark:bg-slate-800 h-11 w-11 shadow-md border border-slate-100" onClick={() => setView('welcome')} disabled={loading}>
-                <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:text-white" />
+                <ArrowLeft className="h-5 w-5 text-[#1A365D] dark:white" />
               </Button>
               <div className="text-right">
                 <h3 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tight uppercase leading-none">{view === 'login' ? 'Sign In' : 'Join Now'}</h3>
@@ -168,9 +201,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Card className="w-full rounded-[2.8rem] border-none shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl overflow-hidden relative">
+            <Card className="w-full max-w-md rounded-[2.8rem] border-none shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl overflow-hidden relative">
               {isAdminInput && <div className="absolute top-0 left-0 right-0 h-1 bg-primary animate-pulse" />}
-              <CardContent className="p-8 space-y-6">
+              <CardContent className="p-6 md:p-8 space-y-6">
                 <form onSubmit={handleAuthAction} className="space-y-5">
                   {view === 'signup' && (
                     <div className="space-y-1.5">
@@ -214,6 +247,18 @@ export default function LoginPage() {
             )}
         </div>
       )}
+
+      <style jsx global>{`
+        .duration-3000 { animation-duration: 3s; }
+        .ecg-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: ecg-flow 4s linear infinite;
+        }
+        @keyframes ecg-flow {
+            to { stroke-dashoffset: 0; }
+        }
+      `}</style>
     </div>
   );
 }
