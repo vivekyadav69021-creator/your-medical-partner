@@ -26,7 +26,7 @@ import {
   Zap,
   ShoppingBag
 } from 'lucide-react';
-import { medicines, categories, Medicine } from '@/lib/medicine-data';
+import { medicines as staticMedicines, categories, Medicine } from '@/lib/medicine-data';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { analyzePrescriptionAction } from './actions';
@@ -35,6 +35,8 @@ import { cn } from '@/lib/utils';
 import { useCart } from '@/context/cart-context';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useFirestore } from '@/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 const initialAnalysisState = {
   result: null,
@@ -116,34 +118,31 @@ const CategoryItem = ({ icon: Icon, label, active, onClick }: { icon: any, label
   </button>
 );
 
-const MedicineCard = ({ id, name, price, category }: { id: string, name: string, price: string, category: string }) => {
-  const image = PlaceHolderImages.find(img => img.id === id);
+const MedicineCard = ({ id, name, price, category, imageUrl }: { id: string, name: string, price: string, category: string, imageUrl?: string }) => {
+  const staticImage = PlaceHolderImages.find(img => img.id === id);
   const { addToCart } = useCart();
   const { toast } = useToast();
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const med = medicines.find(m => m.id === id);
-    if (med) {
-      addToCart(med as Medicine);
-      toast({ title: "Added to Bag", description: `${name} ready for checkout.` });
-    }
+    // For now use a dummy medicine object for add to cart if not in static list
+    const med = staticMedicines.find(m => m.id === id) || { id, name, price, category } as Medicine;
+    addToCart(med as Medicine);
+    toast({ title: "Added to Bag", description: `${name} ready for checkout.` });
   };
 
   return (
     <Link href={`/store/${id}`} className="block h-full group">
       <Card className="rounded-[2rem] border-none shadow-lg hover:shadow-xl transition-all h-full bg-white dark:bg-slate-900 overflow-hidden relative border border-transparent hover:border-primary/10">
         <CardContent className="p-3.5 flex flex-col h-full">
-          {/* Enhanced Image Container with Smaller Footprint */}
           <div className="aspect-square relative rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 mb-3 flex items-center justify-center overflow-hidden border border-white/50 dark:border-slate-700/50 shadow-inner">
-            {image ? (
+            {imageUrl || staticImage ? (
               <Image
-                src={image.imageUrl}
+                src={imageUrl || staticImage?.imageUrl || ''}
                 alt={name}
                 fill
                 className="object-contain p-3 group-hover:scale-110 transition-transform duration-700"
-                data-ai-hint={image.imageHint}
                 unoptimized
               />
             ) : (
@@ -154,14 +153,12 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
             </Badge>
           </div>
           
-          {/* Optimized Text Area - No extra length */}
           <div className="space-y-1 mb-3 flex-1 min-h-[2.5rem]">
             <h4 className="font-black text-[11px] text-[#1A365D] dark:text-slate-100 line-clamp-2 uppercase tracking-tight leading-[1.2]">
               {name}
             </h4>
           </div>
 
-          {/* Price & Action Row */}
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col">
               <span className="text-[12px] font-black text-[#1A365D] dark:text-primary tracking-tighter">{price}</span>
@@ -182,12 +179,25 @@ const MedicineCard = ({ id, name, price, category }: { id: string, name: string,
 };
 
 export default function StorePage() {
+  const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [firestoreMedicines, setFirestoreMedicines] = useState<any[]>([]);
   const { cart } = useCart();
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const filteredMedicines = medicines
+  useEffect(() => {
+    const q = query(collection(firestore, 'medicines'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+        setFirestoreMedicines(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, [firestore]);
+
+  // Combine static and firestore medicines
+  const allMeds = [...firestoreMedicines, ...staticMedicines];
+
+  const filteredMedicines = allMeds
     .filter(med => selectedCategory === 'All' || med.category === selectedCategory)
     .filter(med => med.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -207,7 +217,6 @@ export default function StorePage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-40 font-body overflow-x-hidden safe-top">
       
-      {/* PREMIUM STORE HEADER */}
       <header className="px-5 pt-8 pb-6 space-y-7">
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

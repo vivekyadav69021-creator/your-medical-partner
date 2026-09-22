@@ -1,8 +1,9 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { diseases, Disease } from '@/lib/disease-data';
+import { diseases as staticDiseases, Disease } from '@/lib/disease-data';
 import {
   Card,
   CardContent,
@@ -19,14 +20,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BookHeart, Search } from 'lucide-react';
+import { useFirestore } from '@/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 export default function DiseaseLibraryPage() {
+  const firestore = useFirestore();
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [searchTerm, setSearchTerm] = useState('');
+  const [firestoreDiseases, setFirestoreDiseases] = useState<any[]>([]);
 
-  const filteredDiseases = diseases.filter(disease => {
-    const name = language === 'en' ? disease.nameEn : disease.nameHi;
-    return name.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    const q = query(collection(firestore, 'disease_library'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+        setFirestoreDiseases(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, [firestore]);
+
+  const allDiseases = [...firestoreDiseases, ...staticDiseases];
+
+  const filteredDiseases = allDiseases.filter(disease => {
+    const name = language === 'en' ? (disease.nameEn || disease.name) : (disease.nameHi || disease.name);
+    return name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -73,12 +88,12 @@ export default function DiseaseLibraryPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BookHeart className="w-6 h-6 text-primary" />
-                    <span className="flex-1">{language === 'en' ? disease.nameEn : disease.nameHi}</span>
+                    <span className="flex-1">{language === 'en' ? (disease.nameEn || disease.name) : (disease.nameHi || disease.name)}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-3">
-                    {language === 'en' ? disease.overviewEn : disease.overviewHi}
+                    {language === 'en' ? (disease.overviewEn || disease.descriptionEn) : (disease.overviewHi || disease.descriptionHi)}
                   </p>
                 </CardContent>
               </Link>

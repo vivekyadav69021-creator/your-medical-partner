@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -53,22 +54,16 @@ import {
     Layers,
     LogOut,
     ArrowLeft,
-    ShieldAlert
+    ShieldAlert,
+    X,
+    Image as ImageIcon
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Area, AreaChart, ResponsiveContainer, XAxis, Tooltip } from 'recharts';
-import Link from 'next/link';
-
-const analyticsData = [
-  { time: '00:00', users: 40, scans: 12 }, { time: '04:00', users: 20, scans: 5 },
-  { time: '08:00', users: 80, scans: 45 }, { time: '12:00', users: 150, scans: 89 },
-  { time: '16:00', users: 190, scans: 120 }, { time: '20:00', users: 110, scans: 60 },
-  { time: '23:59', users: 60, scans: 30 },
-];
+import Image from 'next/image';
 
 type ContentType = 'video' | 'disease' | 'yoga' | 'store';
 
@@ -148,16 +143,25 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploading(true);
+    setUploadProgress(0);
     try {
         const storageRef = ref(storage, `admin_uploads/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
+        
         uploadTask.on('state_changed', 
-            (snap) => setUploadProgress((snap.bytesTransferred / snap.totalBytes) * 100),
-            (err) => { throw err; },
+            (snap) => {
+                const progress = (snap.bytesTransferred / snap.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (err) => { 
+                console.error("Upload Error:", err);
+                toast({ variant: 'destructive', title: "Upload Failed", description: err.message });
+                setIsUploading(false);
+            },
             async () => {
                 const url = await getDownloadURL(uploadTask.snapshot.ref);
                 setUploadedUrl(url);
-                toast({ title: "Media Cached", description: "Ready for injection." });
+                toast({ title: "Media Uploaded", description: "Image synced to cloud storage." });
                 setIsUploading(false);
             }
         );
@@ -173,11 +177,24 @@ export default function AdminDashboard() {
     const form = e.currentTarget;
     const formData = new FormData(form);
     try {
-        const data: any = { createdAt: serverTimestamp(), imageUrl: uploadedUrl || formData.get('imageUrl') };
-        formData.forEach((value, key) => { if(key !== 'imageUrl') data[key] = value; });
-        const collectionMap: Record<ContentType, string> = { video: 'video_tutorials', disease: 'disease_library', yoga: 'yoga_library', store: 'medicines' };
+        const data: any = { 
+            createdAt: serverTimestamp(), 
+            imageUrl: uploadedUrl || formData.get('imageUrl') 
+        };
+        
+        formData.forEach((value, key) => { 
+            if(key !== 'imageUrl' && value) data[key] = value; 
+        });
+
+        const collectionMap: Record<ContentType, string> = { 
+            video: 'video_tutorials', 
+            disease: 'disease_library', 
+            yoga: 'yoga_library', 
+            store: 'medicines' 
+        };
+
         await addDoc(collection(firestore, collectionMap[contentType]), data);
-        toast({ title: "Injection Successful", description: "Database updated." });
+        toast({ title: "Injection Successful", description: `Added to ${contentType} library.` });
         form.reset();
         setUploadedUrl('');
     } catch (e) {
@@ -261,51 +278,87 @@ export default function AdminDashboard() {
 
                     <form onSubmit={handleContentSubmit} className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-2.5">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Manual URL</Label>
-                                <Input name="imageUrl" defaultValue={uploadedUrl} placeholder="https://..." className="h-16 rounded-3xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8" />
-                            </div>
-                            <div className="space-y-2.5">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Cloud Sync</Label>
-                                <div onClick={() => fileInputRef.current?.click()} className="h-16 rounded-3xl bg-primary/5 border-2 border-dashed border-primary/20 flex items-center justify-center gap-4 cursor-pointer hover:bg-primary/10 transition-all">
-                                    {isUploading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : uploadedUrl ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <UploadCloud className="h-6 w-6 text-primary" />}
-                                    <span className="text-[10px] font-black text-primary uppercase">{isUploading ? `${Math.round(uploadProgress)}%` : 'Open Gallery'}</span>
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Cloud Media Pipeline</Label>
+                                <div 
+                                    onClick={() => !isUploading && fileInputRef.current?.click()} 
+                                    className={cn(
+                                        "h-48 rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all relative overflow-hidden",
+                                        uploadedUrl ? "border-emerald-500 bg-emerald-50/10" : "border-primary/20 bg-primary/5 hover:bg-primary/10",
+                                        isUploading && "opacity-50 cursor-wait"
+                                    )}
+                                >
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                            <span className="text-[11px] font-black text-primary uppercase">{Math.round(uploadProgress)}% Uploading</span>
+                                        </>
+                                    ) : uploadedUrl ? (
+                                        <>
+                                            <Image src={uploadedUrl} alt="Preview" fill className="object-cover opacity-30" />
+                                            <div className="relative z-10 flex flex-col items-center gap-2">
+                                                <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                                                <span className="text-[11px] font-black text-emerald-600 uppercase">Image Cached</span>
+                                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setUploadedUrl(''); }} className="h-7 text-[8px] font-black uppercase text-rose-500">Remove</Button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UploadCloud className="h-12 w-12 text-primary" />
+                                            <span className="text-[11px] font-black text-primary uppercase">Select High-Res Image</span>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase">JPEG, PNG Max 5MB</p>
+                                        </>
+                                    )}
                                 </div>
                                 <input type="file" ref={fileInputRef} hidden onChange={handleFileUpload} accept="image/*" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-6">
-                            {contentType === 'video' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <Input name="title" placeholder="Video Title" className="h-16 rounded-3xl bg-slate-50 border-none px-8 font-bold" required />
-                                    <Input name="youtube_url" placeholder="YouTube Link" className="h-16 rounded-3xl bg-slate-50 border-none px-8 font-bold" required />
+                                
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Manual Media URL (Optional)</Label>
+                                    <Input name="imageUrl" value={uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8" />
                                 </div>
-                            )}
-                            {contentType === 'disease' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            </div>
+
+                            <div className="space-y-6">
+                                {contentType === 'video' && (
+                                    <div className="space-y-4">
+                                        <Input name="titleEn" placeholder="Video Title (English)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Input name="titleHi" placeholder="वीडियो शीर्षक (हिंदी)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Input name="youtube_url" placeholder="YouTube URL (https://...)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Input name="duration" placeholder="Duration (e.g. 05:20)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" />
+                                    </div>
+                                )}
+                                {contentType === 'disease' && (
                                     <div className="space-y-4">
                                         <Input name="nameEn" placeholder="Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Textarea name="overviewEn" placeholder="Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold" required />
-                                    </div>
-                                    <div className="space-y-4">
                                         <Input name="nameHi" placeholder="नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Textarea name="overviewHi" placeholder="अवलोकन (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold" required />
+                                        <Textarea name="overviewEn" placeholder="Detailed Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold min-h-[100px]" required />
+                                        <Textarea name="overviewHi" placeholder="विस्तृत अवलोकन (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold min-h-[100px]" required />
                                     </div>
-                                </div>
-                            )}
-                            {contentType === 'store' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Input name="name" placeholder="Medicine Name" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                    <Input name="price" placeholder="Price (₹)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                    <Input name="category" placeholder="Category" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                    <Input name="stock" type="number" placeholder="Stock" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                </div>
-                            )}
+                                )}
+                                {contentType === 'store' && (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <Input name="name" placeholder="Medicine Name" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Input name="price" placeholder="Price (₹)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                            <Input name="stock" type="number" placeholder="Stock Quantity" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        </div>
+                                        <Input name="category" placeholder="Category (e.g. Pain Relief)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Textarea name="description" placeholder="Brief Description" className="rounded-2xl bg-slate-50 border-none p-6 font-bold" required />
+                                    </div>
+                                )}
+                                {contentType === 'yoga' && (
+                                    <div className="space-y-4">
+                                        <Input name="nameEn" placeholder="Pose Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Input name="nameHi" placeholder="आसन का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Input name="category" placeholder="Category (e.g. Standing)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Textarea name="descriptionEn" placeholder="Description (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold" required />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <Button type="submit" disabled={isSaving || isUploading} className="w-full h-20 rounded-[2.5rem] bg-[#1A365D] text-white font-black uppercase text-xs tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Deploy to ${contentType.toUpperCase()}`}
+                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Commit to ${contentType.toUpperCase()} pipeline`}
                         </Button>
                     </form>
                 </Card>
