@@ -21,18 +21,21 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const { user } = useUser();
   
-  const isAdmin = user?.email === 'yourmedicalpartner07@gmail.com';
+  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
+  const isAdmin = user?.email === ADMIN_EMAIL;
   
   // SECURE GATEWAY & INTERCEPTION
   useEffect(() => {
-    if (isAdmin && (pathname === '/dashboard' || pathname === '/')) {
-        router.replace('/admin');
+    if (user && !user.isAnonymous) {
+      if (isAdmin && (pathname === '/dashboard' || pathname === '/')) {
+          router.replace('/admin');
+      }
+      // Prevent standard users from entering admin zone
+      if (!isAdmin && pathname === '/admin') {
+          router.replace('/dashboard');
+      }
     }
-    // Prevent standard users from entering admin zone
-    if (!isAdmin && pathname === '/admin') {
-        router.replace('/dashboard');
-    }
-  }, [isAdmin, pathname, router]);
+  }, [isAdmin, pathname, router, user]);
 
   // Immersive Pages (Full Screen)
   const isHealthAssistant = pathname === '/health-assistant';
@@ -97,7 +100,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             
-            {/* Functional Profile Access in Header */}
             <Link href="/profile">
               <div className="flex items-center gap-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95 group">
                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 overflow-hidden shadow-inner group-hover:border-primary/40">

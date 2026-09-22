@@ -18,6 +18,7 @@ import {
   uploadBytesResumable, 
   getDownloadURL 
 } from 'firebase/storage';
+import { signOut } from 'firebase/auth';
 import { 
   Card, 
   CardContent, 
@@ -44,15 +45,14 @@ import {
     Stethoscope,
     UploadCloud,
     CheckCircle2,
-    Star,
     BarChart3,
     Cpu,
-    ArrowLeftRight,
     ArrowLeft,
     BookHeart,
     Flower,
     Store,
-    Layers
+    Layers,
+    LogOut
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -60,7 +60,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Area, AreaChart, ResponsiveContainer, XAxis, Tooltip } from 'recharts';
-import Link from 'next/link';
 
 const analyticsData = [
   { time: '00:00', users: 40, scans: 12 }, { time: '04:00', users: 20, scans: 5 },
@@ -72,7 +71,7 @@ const analyticsData = [
 type ContentType = 'video' | 'disease' | 'yoga' | 'store';
 
 export default function AdminDashboard() {
-  const { firestore, storage } = useFirebase();
+  const { firestore, storage, auth } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('controls');
@@ -90,14 +89,26 @@ export default function AdminDashboard() {
   const [uploadedUrl, setUploadedUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Security Check
+  // Security Check: Specific Admin Email
+  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
+
   useEffect(() => {
-    if (user && user.email !== 'yourmedicalpartner07@gmail.com') {
+    if (user && user.email !== ADMIN_EMAIL) {
       window.location.href = '/dashboard';
     }
   }, [user]);
 
-  if (user?.email !== 'yourmedicalpartner07@gmail.com') {
+  const handleExitAdmin = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Exited Admin Panel", description: "Returning to Login Page..." });
+      // Layout logic will redirect to /login automatically
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Exit Failed' });
+    }
+  };
+
+  if (user?.email !== ADMIN_EMAIL) {
     return (
         <div className="h-screen flex items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-950">
             <Card className="rounded-[3rem] border-none shadow-2xl p-10 space-y-6 max-w-sm">
@@ -106,7 +117,7 @@ export default function AdminDashboard() {
                 </div>
                 <h1 className="text-2xl font-black text-[#1A365D] uppercase tracking-tight">Access Restricted</h1>
                 <p className="text-sm font-bold text-slate-400 uppercase leading-relaxed">Admin Credentials Required.</p>
-                <Button className="w-full rounded-2xl h-14 font-black uppercase text-[10px] tracking-[0.2em]" onClick={() => window.location.href = '/dashboard'}>Exit Terminal</Button>
+                <Button className="w-full rounded-2xl h-14 font-black uppercase text-[10px] tracking-[0.2em]" onClick={() => window.location.href = '/login'}>Return to Login</Button>
             </Card>
         </div>
     );
@@ -201,7 +212,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-32 font-body safe-top overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-32 font-body safe-top overflow-x-hidden animate-in fade-in duration-700">
       
       {/* HEADER: TERMINAL STYLE */}
       <header className="px-6 pt-8 pb-4 flex items-center justify-between">
@@ -212,16 +223,18 @@ export default function AdminDashboard() {
             <div>
                 <h1 className="text-2xl font-black text-[#1A365D] dark:text-white tracking-tighter uppercase leading-none">Admin Terminal</h1>
                 <div className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mt-1.5 flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> Mission Control v2.1
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> Root Panel Active
                 </div>
             </div>
         </div>
         <div className="flex items-center gap-3">
-            <Link href="/dashboard">
-                <Button variant="outline" className="rounded-2xl h-11 px-6 gap-2 border-slate-200 dark:border-slate-800 font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-primary hover:text-white transition-all">
-                    <ArrowLeft className="w-3.5 h-3.5" /> Exit Terminal
-                </Button>
-            </Link>
+            <Button 
+                variant="destructive" 
+                onClick={handleExitAdmin}
+                className="rounded-2xl h-11 px-6 gap-2 font-black text-[9px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+            >
+                <LogOut className="w-3.5 h-3.5" /> Exit Terminal
+            </Button>
             <Badge className="bg-emerald-50 text-emerald-600 border-none uppercase text-[9px] font-black px-4 py-2 rounded-xl hidden sm:block">Verified Root</Badge>
         </div>
       </header>

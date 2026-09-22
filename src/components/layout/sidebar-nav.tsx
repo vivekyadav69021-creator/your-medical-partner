@@ -33,14 +33,17 @@ import { cn } from '@/lib/utils';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const auth = useAuth();
   const { user } = useUser();
+  const { toast } = useToast();
   
-  const isAdmin = user?.email === 'yourmedicalpartner07@gmail.com';
+  const ADMIN_EMAIL = 'yourmedicalpartner07@gmail.com';
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const mainNav = isAdmin ? [
     { href: '/admin', label: 'Admin Terminal', icon: ShieldCheck },
@@ -86,6 +89,7 @@ export function SidebarNav() {
     try {
         await signOut(auth);
         localStorage.removeItem('userMedicalProfile_local');
+        toast({ title: "Session Terminated", description: "Logged out successfully." });
     } catch (e) {
         console.error("Logout Error:", e);
     }
