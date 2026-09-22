@@ -52,7 +52,10 @@ import {
     ShieldAlert,
     X,
     ChevronRight,
-    Eye
+    Eye,
+    Pill,
+    AlertTriangle,
+    Info
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -80,6 +83,10 @@ export default function AdminDashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Store Toggles
+  const [isRxRequired, setIsRxRequired] = useState(false);
+  const [isInStock, setIsInStock] = useState(true);
 
   const ADMIN_EMAIL = 'yourmedicalpartner6972@gmail.com';
 
@@ -113,7 +120,6 @@ export default function AdminDashboard() {
             setFeedback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         });
 
-        // Dynamic Inventory Listener
         const collectionMap: Record<ContentType, string> = { 
             video: 'video_tutorials', 
             disease: 'disease_library', 
@@ -172,15 +178,39 @@ export default function AdminDashboard() {
     setIsSaving(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
+    
     try {
         const data: any = { 
             createdAt: serverTimestamp(), 
             imageUrl: uploadedUrl || formData.get('imageUrl') 
         };
         
-        formData.forEach((value, key) => { 
-            if(key !== 'imageUrl' && value) data[key] = value; 
-        });
+        if (contentType === 'store') {
+            data.name = formData.get('name');
+            data.brand = formData.get('brand');
+            data.genericComposition = formData.get('genericComposition');
+            data.category = formData.get('category');
+            data.price = Number(formData.get('price'));
+            data.discountedPrice = Number(formData.get('discountedPrice')) || 0;
+            data.inStock = isInStock;
+            data.prescriptionRequired = isRxRequired;
+            data.dosageInstruction = formData.get('dosageInstruction');
+            data.contraindications = formData.get('contraindications');
+            data.packagingDetails = formData.get('packagingDetails');
+            data.storageAdvice = formData.get('storageAdvice');
+            data.description = formData.get('description');
+
+            // Handle Arrays from Textareas (Comma or Newline separated)
+            const benefitsText = formData.get('benefits') as string;
+            data.benefits = benefitsText ? benefitsText.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
+
+            const sideEffectsText = formData.get('sideEffects') as string;
+            data.sideEffects = sideEffectsText ? sideEffectsText.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
+        } else {
+            formData.forEach((value, key) => { 
+                if(key !== 'imageUrl' && value) data[key] = value; 
+            });
+        }
 
         const collectionMap: Record<ContentType, string> = { 
             video: 'video_tutorials', 
@@ -193,6 +223,8 @@ export default function AdminDashboard() {
         toast({ title: "Injection Successful", description: `Added to ${contentType} library.` });
         form.reset();
         setUploadedUrl('');
+        setIsRxRequired(false);
+        setIsInStock(true);
     } catch (e) {
         toast({ variant: 'destructive', title: "Injection Failed" });
     } finally {
@@ -304,13 +336,14 @@ export default function AdminDashboard() {
                     </div>
 
                     <form onSubmit={handleContentSubmit} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Cloud Media Pipeline</Label>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            {/* Media Section */}
+                            <div className="space-y-6">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Production Asset Control</Label>
                                 <div 
                                     onClick={() => !isUploading && fileInputRef.current?.click()} 
                                     className={cn(
-                                        "h-48 rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all relative overflow-hidden",
+                                        "h-64 rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all relative overflow-hidden",
                                         uploadedUrl ? "border-emerald-500 bg-emerald-50/10" : "border-primary/20 bg-primary/5 hover:bg-primary/10",
                                         isUploading && "opacity-50 cursor-wait"
                                     )}
@@ -318,33 +351,34 @@ export default function AdminDashboard() {
                                     {isUploading ? (
                                         <>
                                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                            <span className="text-[11px] font-black text-primary uppercase">{Math.round(uploadProgress)}% Uploading</span>
+                                            <span className="text-[11px] font-black text-primary uppercase">{Math.round(uploadProgress)}% Cloud Sync</span>
                                         </>
                                     ) : uploadedUrl ? (
                                         <>
-                                            <Image src={uploadedUrl} alt="Preview" fill className="object-cover opacity-30" unoptimized />
+                                            <Image src={uploadedUrl} alt="Preview" fill className="object-cover opacity-40" unoptimized />
                                             <div className="relative z-10 flex flex-col items-center gap-2">
-                                                <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-                                                <span className="text-[11px] font-black text-emerald-600 uppercase">Image Cached</span>
-                                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setUploadedUrl(''); }} className="h-7 text-[8px] font-black uppercase text-rose-500">Remove</Button>
+                                                <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+                                                <span className="text-[11px] font-black text-emerald-600 uppercase">Asset Cached</span>
+                                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setUploadedUrl(''); }} className="h-7 text-[8px] font-black uppercase text-rose-500 bg-white/80 rounded-full px-4">Remove</Button>
                                             </div>
                                         </>
                                     ) : (
                                         <>
-                                            <UploadCloud className="h-12 w-12 text-primary" />
-                                            <span className="text-[11px] font-black text-primary uppercase">Select High-Res Image</span>
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase">JPEG, PNG Max 5MB</p>
+                                            <UploadCloud className="h-14 w-14 text-primary" />
+                                            <span className="text-[11px] font-black text-primary uppercase tracking-widest">Select Visual Data</span>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase">PNG, JPEG, WebP • Max 5MB</p>
                                         </>
                                     )}
                                 </div>
                                 <input type="file" ref={fileInputRef} hidden onChange={handleFileUpload} accept="image/*" />
                                 
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Manual Media URL (Optional)</Label>
-                                    <Input name="imageUrl" value={uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8 text-sm" />
+                                    <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Manual Reference URL</Label>
+                                    <Input name="imageUrl" value={uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://cdn.example.com/asset..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8 text-sm" />
                                 </div>
                             </div>
 
+                            {/* Dynamic Fields Section */}
                             <div className="space-y-6">
                                 {contentType === 'video' && (
                                     <div className="space-y-4">
@@ -352,41 +386,103 @@ export default function AdminDashboard() {
                                         <Input name="titleHi" placeholder="वीडियो शीर्षक (हिंदी)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         <Input name="youtube_url" placeholder="YouTube URL (https://...)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         <Input name="duration" placeholder="Duration (e.g. 05:20)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" />
-                                        <Textarea name="descriptionEn" placeholder="Description (English)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
+                                        <Textarea name="descriptionEn" placeholder="Detailed Metadata (English)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[120px]" required />
                                     </div>
                                 )}
                                 {contentType === 'disease' && (
                                     <div className="space-y-4">
-                                        <Input name="nameEn" placeholder="Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Input name="nameHi" placeholder="नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Textarea name="overviewEn" placeholder="Detailed Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
-                                        <Textarea name="overviewHi" placeholder="विस्तृत अवलोकन (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
-                                    </div>
-                                )}
-                                {contentType === 'store' && (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <Input name="name" placeholder="Medicine Name" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         <div className="grid grid-cols-2 gap-4">
-                                            <Input name="price" placeholder="Price (₹)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                            <Input name="stock" type="number" placeholder="Stock Qty" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            <Input name="nameEn" placeholder="Clinical Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            <Input name="nameHi" placeholder="रोग का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         </div>
-                                        <Input name="category" placeholder="Category (e.g. Pain Relief)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Textarea name="description" placeholder="Brief Description" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm" required />
+                                        <Textarea name="overviewEn" placeholder="Pathology Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
+                                        <Textarea name="overviewHi" placeholder="रोग का विवरण (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
                                     </div>
                                 )}
+                                
+                                {contentType === 'store' && (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Product Name</Label>
+                                                <Input name="name" placeholder="e.g. Paracetamol 650" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Manufacturer / Brand</Label>
+                                                <Input name="brand" placeholder="e.g. Dolo / Micro Labs" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Generic Composition (Formula)</Label>
+                                            <Input name="genericComposition" placeholder="e.g. Paracetamol / Acetaminophen 650mg" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">MRP (₹)</Label>
+                                                <Input name="price" type="number" placeholder="50.00" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Discounted (Affordable) Price</Label>
+                                                <Input name="discountedPrice" type="number" placeholder="42.00" className="h-13 rounded-xl bg-emerald-50/30 border-none px-6 font-bold text-sm" />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-6 p-5 bg-slate-50/50 rounded-2xl">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label className="text-[10px] font-black uppercase">Rx Required</Label>
+                                                    <p className="text-[7px] font-bold text-slate-400">Prescription Lock</p>
+                                                </div>
+                                                <Switch checked={isRxRequired} onCheckedChange={setIsRxRequired} />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label className="text-[10px] font-black uppercase">Unit In Stock</Label>
+                                                    <p className="text-[7px] font-bold text-slate-400">Inventory Status</p>
+                                                </div>
+                                                <Switch checked={isInStock} onCheckedChange={setIsInStock} />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Benefits & Primary Uses</Label>
+                                            <Textarea name="benefits" placeholder="Separate each point by comma or new line..." className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs min-h-[100px]" required />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Side Effects & Hazards</Label>
+                                            <Textarea name="sideEffects" placeholder="Drowsiness, Nausea, etc..." className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs min-h-[100px]" required />
+                                        </div>
+
+                                        <div className="space-y-4 border-t pt-4">
+                                            <Input name="dosageInstruction" placeholder="Dosage (e.g. 1 tab after meal)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                            <Input name="contraindications" placeholder="Contraindications (Who should avoid?)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <Input name="category" placeholder="Category (e.g. Antibiotics)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                                <Input name="packagingDetails" placeholder="Pack (e.g. 15 Tablets)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                            </div>
+                                            <Input name="storageAdvice" placeholder="Storage (e.g. Store in dry place)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                        </div>
+
+                                        <Textarea name="description" placeholder="Short Marketing Description" className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs" required />
+                                    </div>
+                                )}
+
                                 {contentType === 'yoga' && (
                                     <div className="space-y-4">
-                                        <Input name="nameEn" placeholder="Pose Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="nameEn" placeholder="Asana Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         <Input name="nameHi" placeholder="आसन का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         <Input name="category" placeholder="Category (e.g. Standing)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Textarea name="descriptionEn" placeholder="Description (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm" required />
+                                        <Textarea name="descriptionEn" placeholder="Biological Benefits & Instructions (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[120px]" required />
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         <Button type="submit" disabled={isSaving || isUploading} className="w-full h-20 rounded-[2.5rem] bg-[#1A365D] text-white font-black uppercase text-xs tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Commit to Production Library`}
+                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Synchronize with Production Environment`}
                         </Button>
                     </form>
 
@@ -397,19 +493,19 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between px-2">
                              <div className="flex items-center gap-3">
                                 <div className="h-8 w-1.5 bg-emerald-500 rounded-full" />
-                                <h3 className="text-xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Live Inventory</h3>
+                                <h3 className="text-xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Live Pipeline Monitoring</h3>
                              </div>
-                             <Badge className="bg-emerald-50 text-emerald-600 border-none uppercase text-[8px] font-black">{inventory.length} Verified Units</Badge>
+                             <Badge className="bg-emerald-50 text-emerald-600 border-none uppercase text-[8px] font-black px-4 py-1.5">{inventory.length} Active Units</Badge>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {inventory.map((item) => (
                                 <Card key={item.id} className="rounded-[2.2rem] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden group">
                                     <div className="p-5 space-y-4">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="space-y-1 min-w-0">
                                                 <h4 className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase truncate tracking-tight">{item.name || item.titleEn || item.nameEn}</h4>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.category || item.duration || 'Standard Item'}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.brand || item.category || item.duration || 'Standard Asset'}</p>
                                             </div>
                                             <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)} className="rounded-xl h-10 w-10 text-rose-500 hover:bg-rose-50 hover:text-rose-600 shrink-0">
                                                 <Trash2 className="h-5 w-5" />
@@ -418,17 +514,17 @@ export default function AdminDashboard() {
                                         
                                         {item.imageUrl && (
                                             <div className="h-32 relative rounded-2xl overflow-hidden border border-slate-50 dark:border-slate-800">
-                                                <Image src={item.imageUrl} alt="Item" fill className="object-cover" unoptimized />
+                                                <Image src={item.imageUrl} alt="Asset" fill className="object-cover" unoptimized />
                                             </div>
                                         )}
 
                                         <div className="flex items-center justify-between pt-2">
-                                            <Badge variant="outline" className="text-[8px] font-black uppercase border-slate-100 text-slate-400">
-                                                {item.price || 'System Asset'}
+                                            <Badge variant="outline" className="text-[8px] font-black uppercase border-slate-100 text-slate-400 px-3">
+                                                {item.price ? `₹${item.price}` : 'System Identity'}
                                             </Badge>
                                             <div className="flex items-center gap-1.5">
                                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                <span className="text-[8px] font-black text-emerald-600 uppercase">Live</span>
+                                                <span className="text-[8px] font-black text-emerald-600 uppercase">Verified</span>
                                             </div>
                                         </div>
                                     </div>
@@ -437,9 +533,9 @@ export default function AdminDashboard() {
                         </div>
 
                         {inventory.length === 0 && (
-                            <div className="py-20 text-center border-2 border-dashed rounded-[3rem] border-slate-100 opacity-40">
+                            <div className="py-24 text-center border-2 border-dashed rounded-[3rem] border-slate-100 opacity-40">
                                 <Layers className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No custom data detected in this collection</p>
+                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">No custom identities detected in this sector</p>
                             </div>
                         )}
                     </div>
@@ -454,7 +550,7 @@ export default function AdminDashboard() {
                                 <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-400 text-lg shadow-inner">{(u.name?.[0] || 'U')}</div>
                                 <div className="min-w-0">
                                     <h4 className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{u.name || 'Anonymous'}</h4>
-                                    <p className="text-[9px] font-bold text-slate-400 truncate tracking-widest">{u.email || 'No Email'}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 truncate tracking-widest">{u.email || 'Visitor Access'}</p>
                                 </div>
                             </div>
                             <Button variant="ghost" size="icon" className="rounded-2xl h-12 w-12 text-rose-500 hover:bg-rose-50" onClick={async () => { if(confirm("Purge Identity?")) await deleteDoc(doc(firestore!, 'users', u.id)); }}>
@@ -471,7 +567,7 @@ export default function AdminDashboard() {
                         <Card key={f.id} className="rounded-[3rem] border-none bg-white dark:bg-slate-900 p-8 space-y-6 shadow-xl border-l-8 border-l-primary">
                             <p className="text-sm font-bold text-slate-600 dark:text-slate-300 italic border-l-2 border-slate-100 pl-6">"{f.text}"</p>
                             <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">UID: {f.userId?.substring(0, 8)}...</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">ID: {f.userId?.substring(0, 8)}...</p>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{f.createdAt ? format(f.createdAt.toDate(), 'MMM dd') : 'Recent'}</p>
                             </div>
                         </Card>
@@ -508,7 +604,7 @@ function FeatureSwitch({ title, id, current, icon: Icon, onToggle, color }: any)
                 <div>
                     <h4 className="text-base font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{title}</h4>
                     <p className={cn("text-[9px] font-black uppercase tracking-[0.2em]", current ? "text-emerald-500" : "text-rose-500")}>
-                        {current ? 'Patch Active' : 'Offline'}
+                        {current ? 'Operation Active' : 'Module Suspended'}
                     </p>
                 </div>
             </div>
@@ -516,4 +612,3 @@ function FeatureSwitch({ title, id, current, icon: Icon, onToggle, color }: any)
         </Card>
     );
 }
-
