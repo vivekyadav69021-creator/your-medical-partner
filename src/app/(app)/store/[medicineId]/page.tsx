@@ -1,47 +1,57 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useRouter, notFound } from 'next/navigation';
-import { medicines, Medicine } from '@/lib/medicine-data';
+import { useParams, useRouter } from 'next/navigation';
+import { medicines as staticMedicines, Medicine } from '@/lib/medicine-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
 import { 
   ChevronLeft, 
   ShoppingCart, 
   Plus, 
-  Heart, 
   Share2, 
-  Info, 
   AlertCircle,
   CheckCircle2,
   Clock,
   ShieldCheck,
   Star,
-  Sparkles
+  Sparkles,
+  Loader2,
+  Package
 } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
-const SmallMedicineCard = ({ id, name, price }: { id: string, name: string, price: string }) => {
-  const image = PlaceHolderImages.find(img => img.id === id);
+const SmallMedicineCard = ({ id, name, price, imageUrl }: { id: string, name: string, price: string, imageUrl?: string }) => {
+  const staticImage = PlaceHolderImages.find(img => img.id === id);
   return (
-    <Link href={`/store/${id}`} className="min-w-[140px]">
-      <Card className="rounded-[2rem] border-none shadow-sm bg-white p-3 h-full flex flex-col">
-        <div className="aspect-square relative rounded-2xl bg-[#F8FBFF] mb-3 flex items-center justify-center overflow-hidden">
-          {image && <Image src={image.imageUrl} alt={name} fill className="object-contain p-2" data-ai-hint={image.imageHint} />}
+    <Link href={`/store/${id}`} className="min-w-[140px] block group">
+      <div className="rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 h-full flex flex-col shadow-sm transition-all group-hover:shadow-md">
+        <div className="aspect-square relative rounded-2xl bg-slate-50 dark:bg-slate-800 mb-3 flex items-center justify-center overflow-hidden border border-white/50 dark:border-slate-700/50 shadow-inner">
+          {(imageUrl || staticImage) ? (
+            <Image 
+                src={imageUrl || staticImage?.imageUrl || ''} 
+                alt={name} 
+                fill 
+                className="object-contain p-2 group-hover:scale-110 transition-transform" 
+                unoptimized={!!imageUrl}
+            />
+          ) : <Package className="w-6 h-6 text-slate-200" />}
         </div>
-        <h5 className="text-[10px] font-bold text-gray-800 line-clamp-1 mb-2">{name}</h5>
+        <h5 className="text-[10px] font-black text-[#1A365D] dark:text-slate-100 line-clamp-1 mb-2 uppercase tracking-tight">{name}</h5>
         <div className="flex items-center justify-between mt-auto">
-          <span className="font-bold text-[10px]">{price}</span>
-          <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full bg-primary text-white p-0">
+          <span className="font-black text-[10px] text-primary">{price}</span>
+          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             <Plus className="h-3 w-3" />
-          </Button>
+          </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 };
@@ -51,145 +61,206 @@ export default function MedicineDetailPage() {
   const medicineId = params.medicineId as string;
   const { addToCart, cart } = useCart();
   const { toast } = useToast();
-  const medicine = medicines.find(m => m.id === medicineId);
+  const firestore = useFirestore();
+
+  // 1. Try static data first
+  const staticMedicine = staticMedicines.find(m => m.id === medicineId);
+
+  // 2. Setup Firestore query if static not found
+  const medicineDocRef = useMemoFirebase(() => {
+    if (staticMedicine) return null;
+    return doc(firestore, 'medicines', medicineId);
+  }, [firestore, medicineId, staticMedicine]);
+
+  const { data: dbMedicine, isLoading: isDbLoading } = useDoc<any>(medicineDocRef);
+
+  // Determine final medicine data
+  const medicine = staticMedicine || dbMedicine;
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  if (!medicine) {
-    notFound();
-  }
-
   const handleAddToCart = () => {
+    if (!medicine) return;
     addToCart(medicine as Medicine);
     toast({
-      title: "Added to Cart",
-      description: `${medicine.name} has been added.`,
+      title: "Added to Bag",
+      description: `${medicine.name} is ready for checkout.`,
     });
   };
 
-  const image = PlaceHolderImages.find(img => img.id === medicine.id);
-  const popularMeds = medicines.filter(m => m.id !== medicine.id).slice(0, 4);
+  if (isDbLoading) {
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-[#020617]">
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Identifying Product...</p>
+        </div>
+    );
+  }
+
+  if (!medicine) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-[#020617] space-y-6">
+        <div className="h-20 w-20 bg-rose-50 rounded-[2rem] flex items-center justify-center text-rose-500 shadow-inner">
+            <AlertCircle className="h-10 w-10" />
+        </div>
+        <div className="space-y-2">
+            <h1 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Unknown Product</h1>
+            <p className="text-sm font-medium text-slate-400 max-w-xs">The product you are looking for might have been moved or removed from inventory.</p>
+        </div>
+        <Button asChild className="rounded-2xl h-14 px-8 font-black uppercase text-[10px] tracking-widest shadow-xl">
+            <Link href="/store">Return to Inventory</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const staticImage = PlaceHolderImages.find(img => img.id === medicine.id);
+  const imageUrl = medicine.imageUrl || staticImage?.imageUrl;
+  const popularMeds = staticMedicines.filter(m => m.id !== medicine.id).slice(0, 6);
 
   return (
-    <div className="min-h-full bg-[#F0F7FF] dark:bg-slate-950 pb-20">
-      <div className="max-w-xl mx-auto px-4 pt-6 space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-32 font-body safe-top overflow-x-hidden">
+      <div className="max-w-xl mx-auto px-5 pt-8 space-y-8">
         
         {/* Navigation */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm border border-blue-50" asChild>
-            <Link href="/store"><ChevronLeft className="h-6 w-6 text-gray-600" /></Link>
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm border border-blue-50">
-              <Share2 className="h-5 w-5 text-gray-600" />
+          <Link href="/store" className="active:scale-90 transition-transform">
+            <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
+            </div>
+          </Link>
+          <div className="flex gap-3">
+            <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800">
+              <Share2 className="h-5 w-5 text-primary" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm border border-blue-50 relative" asChild>
-              <Link href="/store/cart">
-                <ShoppingCart className="h-5 w-5 text-gray-600" />
-                {itemCount > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-[10px] text-white flex items-center justify-center rounded-full font-bold">{itemCount}</span>}
-              </Link>
-            </Button>
+            <Link href="/store/cart" className="relative active:scale-90 transition-transform">
+              <div className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+              </div>
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 text-white flex items-center justify-center rounded-full text-[9px] font-black border-2 border-white dark:border-[#020617] animate-in zoom-in">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
 
-        {/* Featured Product Horizontal Card Style */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border-none flex items-center gap-6 relative overflow-hidden group">
-          <div className="h-32 w-32 relative flex-shrink-0 bg-[#F8FBFF] rounded-[2rem] flex items-center justify-center overflow-hidden">
-            {image && (
-              <Image 
-                src={image.imageUrl} 
-                alt={medicine.name} 
-                fill 
-                className="object-contain p-4 group-hover:scale-110 transition-transform" 
-                data-ai-hint={image.imageHint}
-              />
-            )}
-          </div>
-          <div className="flex-1 space-y-2">
-            <h2 className="text-xl font-bold text-gray-800">{medicine.name}</h2>
-            <p className="text-xs font-semibold text-blue-400">{medicine.category}</p>
-            <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">{medicine.description}</p>
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-lg font-bold text-gray-900">{medicine.price}</span>
-              <Button size="icon" className="h-8 w-8 rounded-full bg-primary shadow-md hover:scale-110 transition-all" onClick={handleAddToCart}>
-                <Plus className="h-4 w-4" />
-              </Button>
+        {/* Featured Hero Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 shadow-2xl shadow-blue-200/10 border-none relative overflow-hidden group">
+          <div className="absolute top-0 right-0 h-40 w-40 bg-primary/5 rounded-bl-full pointer-events-none" />
+          
+          <div className="flex flex-col items-center gap-8 relative z-10">
+            <div className="h-56 w-full relative bg-slate-50 dark:bg-slate-800/50 rounded-[2.5rem] flex items-center justify-center overflow-hidden shadow-inner border border-white dark:border-slate-800">
+              {imageUrl ? (
+                <Image 
+                  src={imageUrl} 
+                  alt={medicine.name} 
+                  fill 
+                  className="object-contain p-8 group-hover:scale-110 transition-transform duration-1000" 
+                  unoptimized={!!medicine.imageUrl}
+                />
+              ) : <Package className="w-20 h-20 text-slate-200" />}
+              
+              <Badge className="absolute top-6 left-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-primary text-[8px] font-black uppercase border-none px-3 h-6 rounded-lg shadow-sm">
+                {medicine.category}
+              </Badge>
+            </div>
+
+            <div className="w-full space-y-4 text-center">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight leading-none">{medicine.name}</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{medicine.official || 'Clinical Product'}</p>
+              </div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed px-2">{medicine.description}</p>
+              
+              <div className="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800">
+                <div className="text-left">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Market Price</p>
+                  <span className="text-2xl font-black text-[#1A365D] dark:text-primary tracking-tighter">{medicine.price}</span>
+                </div>
+                <Button size="lg" className="rounded-2xl h-16 px-10 bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all font-black uppercase text-[11px] tracking-widest gap-3" onClick={handleAddToCart}>
+                  <Plus className="h-5 w-5" /> Add to Bag
+                </Button>
+              </div>
             </div>
           </div>
-          {/* Decorative star */}
-          <Star className="absolute top-4 right-4 h-4 w-4 text-blue-50" />
         </div>
 
-        {/* Info Tabs/Sections */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold text-gray-800 px-1">Product Details</h3>
+        {/* Product Details Section */}
+        <div className="space-y-4 px-1">
+          <div className="flex items-center gap-3">
+             <div className="h-4 w-1 bg-primary rounded-full" />
+             <h3 className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-widest">Safety Intelligence</h3>
+          </div>
           <div className="grid grid-cols-1 gap-4">
             <InfoBox 
-              icon={<ShieldCheck className="h-5 w-5 text-green-400" />} 
-              title="Official & Safe" 
-              content={medicine.safety_advice} 
+              icon={<ShieldCheck className="h-5 w-5 text-emerald-500" />} 
+              title="Official Advisor" 
+              content={medicine.safety_advice || "Consult your medical professional for specific advice."} 
+              bg="bg-emerald-50/50"
             />
             <InfoBox 
-              icon={<Clock className="h-5 w-5 text-orange-400" />} 
-              title="Usage & Dose" 
-              content={medicine.general_dose} 
+              icon={<Clock className="h-5 w-5 text-orange-500" />} 
+              title="Standard Dosage" 
+              content={medicine.general_dose || "Refer to the product label for exact dosage instructions."} 
+              bg="bg-orange-50/50"
             />
             <InfoBox 
-              icon={<AlertCircle className="h-5 w-5 text-red-400" />} 
-              title="Side Effects" 
-              content={medicine.side_effects} 
+              icon={<AlertCircle className="h-5 w-5 text-rose-500" />} 
+              title="Potential Reactions" 
+              content={medicine.side_effects || "Minor reactions may occur. Stop use if symptoms persist."} 
+              bg="bg-rose-50/50"
             />
           </div>
         </div>
 
-        {/* Popular Medicines Slider */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold text-gray-800 px-1">Popular Medicines</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {popularMeds.map(med => (
-              <SmallMedicineCard key={med.id} id={med.id} name={med.name} price={med.price} />
-            ))}
-          </div>
+        {/* Popular Carousel */}
+        <div className="space-y-5">
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-3">
+                    <div className="h-4 w-1 bg-primary rounded-full" />
+                    <h2 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Compare Similar</h2>
+                </div>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scrollbar-hide">
+                {popularMeds.map(med => (
+                    <SmallMedicineCard key={med.id} id={med.id} name={med.name} price={med.price} />
+                ))}
+            </div>
         </div>
 
-        {/* Top Deals Banner style */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold text-gray-800 px-1">Top Deals</h3>
-          <div className="bg-[#1A1A1A] rounded-[2rem] p-6 text-white flex items-center justify-between relative overflow-hidden">
-            <div className="space-y-1 relative z-10">
-              <p className="text-[10px] font-bold text-primary tracking-widest uppercase">Limited Offer</p>
-              <h4 className="text-xl font-bold">Flat 20% Off</h4>
-              <p className="text-xs text-gray-400">On all health supplements</p>
+        {/* Exclusive Banner */}
+        <div className="bg-[#1A365D] rounded-[2.5rem] p-8 text-white flex items-center justify-between relative overflow-hidden group shadow-2xl shadow-blue-900/20">
+            <div className="space-y-2 relative z-10">
+              <p className="text-[10px] font-black text-blue-300 tracking-[0.25em] uppercase">Trusted Partner</p>
+              <h4 className="text-xl font-black uppercase tracking-tight">Rapid Delivery</h4>
+              <p className="text-[9px] font-bold text-blue-200/60 uppercase">Direct from certified pharmacy</p>
             </div>
-            <div className="h-16 w-16 bg-white/10 rounded-full flex items-center justify-center relative z-10 backdrop-blur-sm border border-white/10">
-              <Sparkles className="h-8 w-8 text-primary" />
+            <div className="h-16 w-16 bg-white/10 rounded-3xl flex items-center justify-center relative z-10 backdrop-blur-md border border-white/20 group-hover:rotate-12 transition-transform">
+              <Sparkles className="h-8 w-8 text-white fill-white animate-pulse" />
             </div>
-            <div className="absolute -top-10 -right-10 h-32 w-32 bg-primary/20 rounded-full blur-3xl" />
-          </div>
+            <div className="absolute -top-10 -right-10 h-40 w-40 bg-primary/20 rounded-full blur-3xl" />
         </div>
 
       </div>
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
 
-function InfoBox({ icon, title, content }: { icon: any, title: string, content: string }) {
+function InfoBox({ icon, title, content, bg }: { icon: any, title: string, content: string, bg: string }) {
   return (
-    <div className="bg-white rounded-[1.5rem] p-4 flex gap-4 items-start shadow-sm border border-blue-50/50">
-      <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+    <div className={cn("rounded-[2rem] p-6 flex gap-5 items-start border border-white dark:border-slate-800 shadow-sm", bg)}>
+      <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm border border-slate-50 dark:border-slate-700">
         {icon}
       </div>
-      <div className="space-y-1">
-        <h4 className="text-sm font-bold text-gray-800">{title}</h4>
-        <p className="text-xs text-gray-500 leading-relaxed">{content}</p>
+      <div className="space-y-1.5">
+        <h4 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{title}</h4>
+        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed uppercase tracking-tighter">{content}</p>
       </div>
-    </div>
-  );
-}
-
-function Card({ children, className, ...props }: any) {
-  return (
-    <div className={cn("bg-white shadow-sm", className)} {...props}>
-      {children}
     </div>
   );
 }
