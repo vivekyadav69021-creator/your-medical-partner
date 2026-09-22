@@ -19,7 +19,6 @@ import {
   ShoppingCart,
   LayoutGrid,
   Pill,
-  Baby,
   Sparkles,
   Stethoscope,
   Activity,
@@ -66,23 +65,23 @@ const AIPrescriptionBanner = () => {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1A365D] to-primary p-6 text-white shadow-2xl shadow-primary/20 mb-8 group active:scale-[0.98] transition-all">
-      <div className="flex items-center gap-5 relative z-10">
-        <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 shadow-inner group-hover:rotate-6 transition-transform">
-          <Camera className="h-7 w-7 text-white" />
+    <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1A365D] to-primary p-5 md:p-8 text-white shadow-2xl shadow-primary/20 mb-8 group active:scale-[0.98] transition-all">
+      <div className="flex items-center gap-4 md:gap-8 relative z-10">
+        <div className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 shadow-inner group-hover:rotate-6 transition-transform">
+          <Camera className="h-6 w-6 md:h-8 md:w-8 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-black uppercase tracking-tight leading-none mb-1">AI Prescription</h3>
-          <p className="text-[8px] font-bold text-blue-200 uppercase tracking-widest mb-3 opacity-80">Instant Order via Photo</p>
+          <h3 className="text-base md:text-xl font-black uppercase tracking-tight leading-none mb-1">AI Prescription</h3>
+          <p className="text-[7px] md:text-[9px] font-bold text-blue-200 uppercase tracking-widest mb-3 md:mb-4 opacity-80">Instant Order via Photo</p>
           <Button 
             variant="secondary" 
             size="sm" 
-            className="rounded-xl bg-white text-[#1A365D] hover:bg-blue-50 font-black text-[9px] uppercase tracking-widest px-6 h-9 shadow-lg"
+            className="rounded-xl bg-white text-[#1A365D] hover:bg-blue-50 font-black text-[9px] uppercase tracking-widest px-5 h-9 shadow-lg"
             onClick={() => fileInputRef.current?.click()}
             disabled={pending}
           >
             {pending ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
-            Scan Prescription
+            Scan Photo
           </Button>
           <input 
             type="file" 
@@ -94,7 +93,6 @@ const AIPrescriptionBanner = () => {
         </div>
       </div>
       <div className="absolute top-0 right-0 h-32 w-32 bg-white/5 rounded-bl-full pointer-events-none" />
-      <div className="absolute -bottom-4 -left-4 h-20 w-20 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
     </div>
   );
 };
@@ -126,7 +124,6 @@ const MedicineCard = ({ id, name, price, category, imageUrl }: { id: string, nam
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // For now use a dummy medicine object for add to cart if not in static list
     const med = staticMedicines.find(m => m.id === id) || { id, name, price, category } as Medicine;
     addToCart(med as Medicine);
     toast({ title: "Added to Bag", description: `${name} ready for checkout.` });
@@ -162,7 +159,7 @@ const MedicineCard = ({ id, name, price, category, imageUrl }: { id: string, nam
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col">
               <span className="text-[12px] font-black text-[#1A365D] dark:text-primary tracking-tighter">{price}</span>
-              <span className="text-[7px] font-bold text-slate-300 uppercase">Per Unit</span>
+              <span className="text-[7px] font-bold text-slate-300 uppercase">Unit</span>
             </div>
             <Button 
               size="icon" 
@@ -187,6 +184,7 @@ export default function StorePage() {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
+    if (!firestore) return;
     const q = query(collection(firestore, 'medicines'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, (snap) => {
         setFirestoreMedicines(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -194,7 +192,6 @@ export default function StorePage() {
     return () => unsub();
   }, [firestore]);
 
-  // Combine static and firestore medicines
   const allMeds = [...firestoreMedicines, ...staticMedicines];
 
   const filteredMedicines = allMeds
@@ -221,26 +218,26 @@ export default function StorePage() {
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
                 <Link href="/dashboard">
-                    <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-md active:scale-90 transition-all">
-                        <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
+                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-md active:scale-90 transition-all">
+                        <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 text-[#1A365D] dark:text-slate-100" />
                     </div>
                 </Link>
                 <div className="space-y-0.5">
-                    <h1 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tighter leading-none">Medical Store</h1>
+                    <h1 className="text-xl md:text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tighter leading-none">Medical Store</h1>
                     <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Inventory Online</p>
+                        <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Inventory Live</p>
                     </div>
                 </div>
             </div>
 
             <Link href="/store/cart" className="relative group active:scale-90 transition-all">
-                <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-md">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shadow-md">
+                    <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
                 {itemCount > 0 && (
-                    <div className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 text-white rounded-full flex items-center justify-center border-2 border-white dark:border-[#020617] shadow-lg animate-in zoom-in duration-300">
-                        <span className="text-[9px] font-black">{itemCount}</span>
+                    <div className="absolute -top-1.5 -right-1.5 h-5 w-5 md:h-6 md:w-6 bg-red-500 text-white rounded-full flex items-center justify-center border-2 border-white dark:border-[#020617] shadow-lg animate-in zoom-in">
+                        <span className="text-[8px] md:text-[9px] font-black">{itemCount}</span>
                     </div>
                 )}
             </Link>
@@ -249,25 +246,25 @@ export default function StorePage() {
         <div className="relative group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
           <Input 
-            placeholder="Search medicines, supplements..." 
-            className="pl-14 h-16 rounded-full border-none bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/20 dark:shadow-none text-base font-bold placeholder:text-slate-300" 
+            placeholder="Search medicines..." 
+            className="pl-14 h-14 md:h-16 rounded-full border-none bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/10 text-sm md:text-base font-bold placeholder:text-slate-300" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-5 space-y-10">
+      <main className="max-w-4xl mx-auto px-4 md:px-5 space-y-10">
         
         <AIPrescriptionBanner />
 
-        <section className="space-y-5">
+        <section className="space-y-4 md:space-y-5">
             <div className="flex items-center gap-3 px-1">
                 <div className="h-4 w-1 bg-primary rounded-full" />
-                <h2 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Shop Categories</h2>
+                <h2 className="text-[11px] md:text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Categories</h2>
             </div>
             <ScrollArea className="w-full whitespace-nowrap pb-2">
-                <div className="flex gap-5 px-1">
+                <div className="flex gap-4 md:gap-5 px-1">
                     {categories.map(cat => (
                         <CategoryItem 
                             key={cat} 
@@ -286,14 +283,14 @@ export default function StorePage() {
             <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-3">
                     <div className="h-4 w-1 bg-primary rounded-full" />
-                    <h2 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Top Products</h2>
+                    <h2 className="text-[11px] md:text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Top Products</h2>
                 </div>
-                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest rounded-lg opacity-40">
-                    {filteredMedicines.length} Items
+                <Badge variant="outline" className="text-[7px] md:text-[8px] font-black uppercase tracking-widest rounded-lg opacity-40">
+                    {filteredMedicines.length} Units
                 </Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
                 {filteredMedicines.map(med => (
                     <div key={med.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <MedicineCard {...med} />
@@ -303,10 +300,10 @@ export default function StorePage() {
 
             {filteredMedicines.length === 0 && (
                 <div className="py-24 text-center space-y-4 opacity-30">
-                    <div className="h-20 w-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
+                    <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
                         <Search className="h-10 w-10 text-slate-400" />
                     </div>
-                    <p className="font-black uppercase text-[11px] tracking-[0.3em] text-slate-500">No Match Found</p>
+                    <p className="font-black uppercase text-[10px] md:text-[11px] tracking-[0.3em] text-slate-500">No Match Found</p>
                 </div>
             )}
         </section>

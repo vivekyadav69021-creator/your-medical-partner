@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -13,13 +14,10 @@ import {
   Plus, 
   Share2, 
   AlertCircle,
-  CheckCircle2,
-  Clock,
   ShieldCheck,
-  Star,
-  Sparkles,
   Loader2,
-  Package
+  Package,
+  Clock
 } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +38,7 @@ const SmallMedicineCard = ({ id, name, price, imageUrl }: { id: string, name: st
                 alt={name} 
                 fill 
                 className="object-contain p-2 group-hover:scale-110 transition-transform" 
-                unoptimized={!!imageUrl}
+                unoptimized
             />
           ) : <Package className="w-6 h-6 text-slate-200" />}
         </div>
@@ -63,18 +61,15 @@ export default function MedicineDetailPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  // 1. Try static data first
   const staticMedicine = staticMedicines.find(m => m.id === medicineId);
 
-  // 2. Setup Firestore query if static not found
   const medicineDocRef = useMemoFirebase(() => {
-    if (staticMedicine) return null;
+    if (staticMedicine || !firestore) return null;
     return doc(firestore, 'medicines', medicineId);
   }, [firestore, medicineId, staticMedicine]);
 
   const { data: dbMedicine, isLoading: isDbLoading } = useDoc<any>(medicineDocRef);
 
-  // Determine final medicine data
   const medicine = staticMedicine || dbMedicine;
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -91,7 +86,7 @@ export default function MedicineDetailPage() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-[#020617]">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
-            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Identifying Product...</p>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Identifying Unit...</p>
         </div>
     );
   }
@@ -103,11 +98,11 @@ export default function MedicineDetailPage() {
             <AlertCircle className="h-10 w-10" />
         </div>
         <div className="space-y-2">
-            <h1 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Unknown Product</h1>
-            <p className="text-sm font-medium text-slate-400 max-w-xs">The product you are looking for might have been moved or removed from inventory.</p>
+            <h1 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Access Denied</h1>
+            <p className="text-sm font-medium text-slate-400 max-w-xs uppercase">Product restricted or removed from production inventory.</p>
         </div>
         <Button asChild className="rounded-2xl h-14 px-8 font-black uppercase text-[10px] tracking-widest shadow-xl">
-            <Link href="/store">Return to Inventory</Link>
+            <Link href="/store">Back to Store</Link>
         </Button>
       </div>
     );
@@ -118,26 +113,25 @@ export default function MedicineDetailPage() {
   const popularMeds = staticMedicines.filter(m => m.id !== medicine.id).slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-32 font-body safe-top overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-40 font-body safe-top overflow-x-hidden">
       <div className="max-w-xl mx-auto px-5 pt-8 space-y-8">
         
-        {/* Navigation */}
         <div className="flex items-center justify-between">
           <Link href="/store" className="active:scale-90 transition-transform">
-            <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+            <div className="h-11 w-11 md:h-12 md:w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 flex items-center justify-center">
                 <ChevronLeft className="h-6 w-6 text-[#1A365D] dark:text-slate-100" />
             </div>
           </Link>
-          <div className="flex gap-3">
-            <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800">
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" className="rounded-2xl h-10 w-10 md:h-11 md:w-11 bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800">
               <Share2 className="h-5 w-5 text-primary" />
             </Button>
             <Link href="/store/cart" className="relative active:scale-90 transition-transform">
-              <div className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+              <div className="h-10 w-10 md:h-11 md:w-11 rounded-2xl bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 flex items-center justify-center">
                 <ShoppingCart className="h-5 w-5 text-primary" />
               </div>
               {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 text-white flex items-center justify-center rounded-full text-[9px] font-black border-2 border-white dark:border-[#020617] animate-in zoom-in">
+                <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-red-500 text-white flex items-center justify-center rounded-full text-[8px] font-black border-2 border-white dark:border-[#020617] animate-in zoom-in">
                   {itemCount}
                 </span>
               )}
@@ -145,40 +139,39 @@ export default function MedicineDetailPage() {
           </div>
         </div>
 
-        {/* Featured Hero Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 shadow-2xl shadow-blue-200/10 border-none relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-6 md:p-8 shadow-2xl border-none relative overflow-hidden group">
           <div className="absolute top-0 right-0 h-40 w-40 bg-primary/5 rounded-bl-full pointer-events-none" />
           
-          <div className="flex flex-col items-center gap-8 relative z-10">
-            <div className="h-56 w-full relative bg-slate-50 dark:bg-slate-800/50 rounded-[2.5rem] flex items-center justify-center overflow-hidden shadow-inner border border-white dark:border-slate-800">
+          <div className="flex flex-col items-center gap-6 md:gap-8 relative z-10">
+            <div className="h-48 md:h-64 w-full relative bg-slate-50 dark:bg-slate-800/50 rounded-[2.5rem] flex items-center justify-center overflow-hidden shadow-inner border border-white dark:border-slate-800">
               {imageUrl ? (
                 <Image 
                   src={imageUrl} 
                   alt={medicine.name} 
                   fill 
-                  className="object-contain p-8 group-hover:scale-110 transition-transform duration-1000" 
-                  unoptimized={!!medicine.imageUrl}
+                  className="object-contain p-6 md:p-8 group-hover:scale-110 transition-transform duration-1000" 
+                  unoptimized
                 />
-              ) : <Package className="w-20 h-20 text-slate-200" />}
+              ) : <Package className="w-16 h-16 text-slate-200" />}
               
-              <Badge className="absolute top-6 left-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-primary text-[8px] font-black uppercase border-none px-3 h-6 rounded-lg shadow-sm">
+              <Badge className="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-primary text-[7px] md:text-[8px] font-black uppercase border-none px-3 h-6 rounded-lg shadow-sm">
                 {medicine.category}
               </Badge>
             </div>
 
             <div className="w-full space-y-4 text-center">
               <div className="space-y-1">
-                <h2 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight leading-none">{medicine.name}</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{medicine.official || 'Clinical Product'}</p>
+                <h2 className="text-xl md:text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight leading-tight">{medicine.name}</h2>
+                <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{medicine.official || 'Clinical Approved Asset'}</p>
               </div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed px-2">{medicine.description}</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed px-1">{medicine.description}</p>
               
-              <div className="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800">
-                <div className="text-left">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Market Price</p>
+              <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800 gap-4">
+                <div className="text-center md:text-left w-full md:w-auto">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Market Cost</p>
                   <span className="text-2xl font-black text-[#1A365D] dark:text-primary tracking-tighter">{medicine.price}</span>
                 </div>
-                <Button size="lg" className="rounded-2xl h-16 px-10 bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all font-black uppercase text-[11px] tracking-widest gap-3" onClick={handleAddToCart}>
+                <Button size="lg" className="w-full md:w-auto rounded-2xl h-14 md:h-16 px-8 bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] md:text-[11px] tracking-widest gap-3" onClick={handleAddToCart}>
                   <Plus className="h-5 w-5" /> Add to Bag
                 </Button>
               </div>
@@ -186,41 +179,31 @@ export default function MedicineDetailPage() {
           </div>
         </div>
 
-        {/* Product Details Section */}
         <div className="space-y-4 px-1">
           <div className="flex items-center gap-3">
              <div className="h-4 w-1 bg-primary rounded-full" />
-             <h3 className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-widest">Safety Intelligence</h3>
+             <h3 className="text-[11px] md:text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-widest">Intelligence Report</h3>
           </div>
           <div className="grid grid-cols-1 gap-4">
             <InfoBox 
               icon={<ShieldCheck className="h-5 w-5 text-emerald-500" />} 
               title="Official Advisor" 
-              content={medicine.safety_advice || "Consult your medical professional for specific advice."} 
+              content={medicine.safety_advice || "Professional consultation recommended before usage."} 
               bg="bg-emerald-50/50"
             />
             <InfoBox 
               icon={<Clock className="h-5 w-5 text-orange-500" />} 
-              title="Standard Dosage" 
-              content={medicine.general_dose || "Refer to the product label for exact dosage instructions."} 
+              title="Standard Cycle" 
+              content={medicine.general_dose || "Refer to the digital or physical label for cycle info."} 
               bg="bg-orange-50/50"
-            />
-            <InfoBox 
-              icon={<AlertCircle className="h-5 w-5 text-rose-500" />} 
-              title="Potential Reactions" 
-              content={medicine.side_effects || "Minor reactions may occur. Stop use if symptoms persist."} 
-              bg="bg-rose-50/50"
             />
           </div>
         </div>
 
-        {/* Popular Carousel */}
         <div className="space-y-5">
-            <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-3">
-                    <div className="h-4 w-1 bg-primary rounded-full" />
-                    <h2 className="text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Compare Similar</h2>
-                </div>
+            <div className="flex items-center gap-3 px-1">
+                <div className="h-4 w-1 bg-primary rounded-full" />
+                <h2 className="text-[11px] md:text-sm font-black uppercase text-[#1A365D] dark:text-slate-100 tracking-widest">Similar Units</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scrollbar-hide">
                 {popularMeds.map(med => (
@@ -228,20 +211,6 @@ export default function MedicineDetailPage() {
                 ))}
             </div>
         </div>
-
-        {/* Exclusive Banner */}
-        <div className="bg-[#1A365D] rounded-[2.5rem] p-8 text-white flex items-center justify-between relative overflow-hidden group shadow-2xl shadow-blue-900/20">
-            <div className="space-y-2 relative z-10">
-              <p className="text-[10px] font-black text-blue-300 tracking-[0.25em] uppercase">Trusted Partner</p>
-              <h4 className="text-xl font-black uppercase tracking-tight">Rapid Delivery</h4>
-              <p className="text-[9px] font-bold text-blue-200/60 uppercase">Direct from certified pharmacy</p>
-            </div>
-            <div className="h-16 w-16 bg-white/10 rounded-3xl flex items-center justify-center relative z-10 backdrop-blur-md border border-white/20 group-hover:rotate-12 transition-transform">
-              <Sparkles className="h-8 w-8 text-white fill-white animate-pulse" />
-            </div>
-            <div className="absolute -top-10 -right-10 h-40 w-40 bg-primary/20 rounded-full blur-3xl" />
-        </div>
-
       </div>
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -253,13 +222,13 @@ export default function MedicineDetailPage() {
 
 function InfoBox({ icon, title, content, bg }: { icon: any, title: string, content: string, bg: string }) {
   return (
-    <div className={cn("rounded-[2rem] p-6 flex gap-5 items-start border border-white dark:border-slate-800 shadow-sm", bg)}>
-      <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm border border-slate-50 dark:border-slate-700">
+    <div className={cn("rounded-[2rem] p-5 md:p-6 flex gap-4 md:gap-5 items-start border border-white dark:border-slate-800 shadow-sm", bg)}>
+      <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm border border-slate-50 dark:border-slate-700">
         {icon}
       </div>
-      <div className="space-y-1.5">
-        <h4 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight">{title}</h4>
-        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed uppercase tracking-tighter">{content}</p>
+      <div className="space-y-1">
+        <h4 className="text-[12px] md:text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h4>
+        <p className="text-[10px] md:text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed uppercase tracking-tighter">{content}</p>
       </div>
     </div>
   );

@@ -23,9 +23,6 @@ import { signOut } from 'firebase/auth';
 import { 
   Card, 
   CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -46,17 +43,16 @@ import {
     Stethoscope,
     UploadCloud,
     CheckCircle2,
-    BarChart3,
     Cpu,
     BookHeart,
     Flower,
     Store,
     Layers,
     LogOut,
-    ArrowLeft,
     ShieldAlert,
     X,
-    Image as ImageIcon
+    ChevronRight,
+    Eye
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -77,6 +73,8 @@ export default function AdminDashboard() {
   const [featureFlags, setFeatureFlags] = useState<any>({});
   const [users, setUsers] = useState<any[]>([]);
   const [feedback, setFeedback] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
+  
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -100,22 +98,8 @@ export default function AdminDashboard() {
     }
   };
 
-  if (user?.email !== ADMIN_EMAIL) {
-    return (
-        <div className="h-screen flex items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-950">
-            <Card className="rounded-[3rem] border-none shadow-2xl p-10 space-y-6 max-w-sm">
-                <div className="h-20 w-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-rose-500 shadow-inner">
-                    <ShieldAlert className="h-10 w-10" />
-                </div>
-                <h1 className="text-2xl font-black text-[#1A365D] uppercase tracking-tight">Terminal Locked</h1>
-                <p className="text-sm font-bold text-slate-400 uppercase leading-relaxed">Admin Credentials Required.</p>
-                <Button className="w-full rounded-2xl h-14 font-black uppercase text-[10px] tracking-[0.2em]" onClick={() => window.location.href = '/login'}>Return to Portal</Button>
-            </Card>
-        </div>
-    );
-  }
-
   useEffect(() => {
+    if (!firestore) return;
     try {
         const unsubFeatures = onSnapshot(doc(firestore, 'system_settings', 'features'), (docSnap) => {
             if (docSnap.exists()) setFeatureFlags(docSnap.data());
@@ -128,13 +112,26 @@ export default function AdminDashboard() {
         const unsubFeedback = onSnapshot(qFeedback, (snap) => {
             setFeedback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         });
-        return () => { unsubFeatures(); unsubUsers(); unsubFeedback(); };
+
+        // Dynamic Inventory Listener
+        const collectionMap: Record<ContentType, string> = { 
+            video: 'video_tutorials', 
+            disease: 'disease_library', 
+            yoga: 'yoga_library', 
+            store: 'medicines' 
+        };
+        const qInventory = query(collection(firestore, collectionMap[contentType]), orderBy('createdAt', 'desc'));
+        const unsubInventory = onSnapshot(qInventory, (snap) => {
+            setInventory(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
+
+        return () => { unsubFeatures(); unsubUsers(); unsubFeedback(); unsubInventory(); };
     } catch (e) { console.error("Admin Listener Error", e); }
-  }, [firestore]);
+  }, [firestore, contentType]);
 
   const toggleFeature = async (id: string, current: boolean) => {
     try {
-        await updateDoc(doc(firestore, 'system_settings', 'features'), { [id]: !current });
+        await updateDoc(doc(firestore!, 'system_settings', 'features'), { [id]: !current });
         toast({ title: `Module ${!current ? 'Online' : 'Offline'}` });
     } catch (e) { toast({ variant: 'destructive', title: 'Action Failed' }); }
   };
@@ -145,7 +142,7 @@ export default function AdminDashboard() {
     setIsUploading(true);
     setUploadProgress(0);
     try {
-        const storageRef = ref(storage, `admin_uploads/${Date.now()}_${file.name}`);
+        const storageRef = ref(storage!, `admin_uploads/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
         
         uploadTask.on('state_changed', 
@@ -154,7 +151,6 @@ export default function AdminDashboard() {
                 setUploadProgress(progress);
             },
             (err) => { 
-                console.error("Upload Error:", err);
                 toast({ variant: 'destructive', title: "Upload Failed", description: err.message });
                 setIsUploading(false);
             },
@@ -193,7 +189,7 @@ export default function AdminDashboard() {
             store: 'medicines' 
         };
 
-        await addDoc(collection(firestore, collectionMap[contentType]), data);
+        await addDoc(collection(firestore!, collectionMap[contentType]), data);
         toast({ title: "Injection Successful", description: `Added to ${contentType} library.` });
         form.reset();
         setUploadedUrl('');
@@ -203,6 +199,37 @@ export default function AdminDashboard() {
         setIsSaving(false);
     }
   };
+
+  const deleteItem = async (id: string) => {
+      if(!confirm("Purge this item from production?")) return;
+      try {
+        const collectionMap: Record<ContentType, string> = { 
+            video: 'video_tutorials', 
+            disease: 'disease_library', 
+            yoga: 'yoga_library', 
+            store: 'medicines' 
+        };
+        await deleteDoc(doc(firestore!, collectionMap[contentType], id));
+        toast({ title: "Item Purged", description: "Removed from live environment." });
+      } catch (e) {
+          toast({ variant: 'destructive', title: "Purge Failed" });
+      }
+  };
+
+  if (user?.email !== ADMIN_EMAIL) {
+    return (
+        <div className="h-screen flex items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-950">
+            <Card className="rounded-[3rem] border-none shadow-2xl p-10 space-y-6 max-w-sm">
+                <div className="h-20 w-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-rose-500 shadow-inner">
+                    <ShieldAlert className="h-10 w-10" />
+                </div>
+                <h1 className="text-2xl font-black text-[#1A365D] uppercase tracking-tight">Terminal Locked</h1>
+                <p className="text-sm font-bold text-slate-400 uppercase leading-relaxed">Admin Credentials Required.</p>
+                <Button className="w-full rounded-2xl h-14 font-black uppercase text-[10px] tracking-[0.2em]" onClick={() => window.location.href = '/login'}>Return to Portal</Button>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pb-32 font-body safe-top overflow-x-hidden animate-in fade-in duration-700">
@@ -227,7 +254,7 @@ export default function AdminDashboard() {
       <main className="max-w-6xl mx-auto p-4 space-y-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-1">
             <StatCard label="Identities" value={users.length} icon={Users} color="text-blue-500" bg="bg-blue-50/50" />
-            <StatCard label="Live Units" value="156" icon={Activity} color="text-emerald-500" bg="bg-emerald-50/50" />
+            <StatCard label="Live Units" value={inventory.length} icon={Layers} color="text-emerald-500" bg="bg-emerald-50/50" />
             <StatCard label="System Load" value="24%" icon={Cpu} color="text-purple-500" bg="bg-purple-50/50" />
             <StatCard label="Core Status" value="SAFE" icon={CheckCircle2} color="text-orange-500" bg="bg-orange-50/50" />
         </div>
@@ -252,13 +279,13 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="content" className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-8 md:p-12">
+                <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-6 md:p-12">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                         <div className="flex items-center gap-5">
                             <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner"><Layers className="h-6 w-6" /></div>
                             <div>
                                 <h3 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Injection Engine</h3>
-                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Injecting new data to production</p>
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Live Production Pipeline</p>
                             </div>
                         </div>
                         <div className="w-full md:w-64">
@@ -314,53 +341,108 @@ export default function AdminDashboard() {
                                 
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Manual Media URL (Optional)</Label>
-                                    <Input name="imageUrl" value={uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8" />
+                                    <Input name="imageUrl" value={uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8 text-sm" />
                                 </div>
                             </div>
 
                             <div className="space-y-6">
                                 {contentType === 'video' && (
                                     <div className="space-y-4">
-                                        <Input name="titleEn" placeholder="Video Title (English)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Input name="titleHi" placeholder="वीडियो शीर्षक (हिंदी)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Input name="youtube_url" placeholder="YouTube URL (https://...)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Input name="duration" placeholder="Duration (e.g. 05:20)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" />
+                                        <Input name="titleEn" placeholder="Video Title (English)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="titleHi" placeholder="वीडियो शीर्षक (हिंदी)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="youtube_url" placeholder="YouTube URL (https://...)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="duration" placeholder="Duration (e.g. 05:20)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                        <Textarea name="descriptionEn" placeholder="Description (English)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
                                     </div>
                                 )}
                                 {contentType === 'disease' && (
                                     <div className="space-y-4">
-                                        <Input name="nameEn" placeholder="Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Input name="nameHi" placeholder="नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Textarea name="overviewEn" placeholder="Detailed Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold min-h-[100px]" required />
-                                        <Textarea name="overviewHi" placeholder="विस्तृत अवलोकन (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold min-h-[100px]" required />
+                                        <Input name="nameEn" placeholder="Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="nameHi" placeholder="नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Textarea name="overviewEn" placeholder="Detailed Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
+                                        <Textarea name="overviewHi" placeholder="विस्तृत अवलोकन (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
                                     </div>
                                 )}
                                 {contentType === 'store' && (
                                     <div className="grid grid-cols-1 gap-4">
-                                        <Input name="name" placeholder="Medicine Name" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                        <Input name="name" placeholder="Medicine Name" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         <div className="grid grid-cols-2 gap-4">
-                                            <Input name="price" placeholder="Price (₹)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                            <Input name="stock" type="number" placeholder="Stock Quantity" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
+                                            <Input name="price" placeholder="Price (₹)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            <Input name="stock" type="number" placeholder="Stock Qty" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         </div>
-                                        <Input name="category" placeholder="Category (e.g. Pain Relief)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Textarea name="description" placeholder="Brief Description" className="rounded-2xl bg-slate-50 border-none p-6 font-bold" required />
+                                        <Input name="category" placeholder="Category (e.g. Pain Relief)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Textarea name="description" placeholder="Brief Description" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm" required />
                                     </div>
                                 )}
                                 {contentType === 'yoga' && (
                                     <div className="space-y-4">
-                                        <Input name="nameEn" placeholder="Pose Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Input name="nameHi" placeholder="आसन का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Input name="category" placeholder="Category (e.g. Standing)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold" required />
-                                        <Textarea name="descriptionEn" placeholder="Description (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold" required />
+                                        <Input name="nameEn" placeholder="Pose Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="nameHi" placeholder="आसन का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="category" placeholder="Category (e.g. Standing)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Textarea name="descriptionEn" placeholder="Description (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm" required />
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         <Button type="submit" disabled={isSaving || isUploading} className="w-full h-20 rounded-[2.5rem] bg-[#1A365D] text-white font-black uppercase text-xs tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Commit to ${contentType.toUpperCase()} pipeline`}
+                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Commit to Production Library`}
                         </Button>
                     </form>
+
+                    <div className="h-px bg-slate-100 my-16" />
+
+                    {/* LIVE INVENTORY MANAGEMENT */}
+                    <div className="space-y-8">
+                        <div className="flex items-center justify-between px-2">
+                             <div className="flex items-center gap-3">
+                                <div className="h-8 w-1.5 bg-emerald-500 rounded-full" />
+                                <h3 className="text-xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Live Inventory</h3>
+                             </div>
+                             <Badge className="bg-emerald-50 text-emerald-600 border-none uppercase text-[8px] font-black">{inventory.length} Verified Units</Badge>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {inventory.map((item) => (
+                                <Card key={item.id} className="rounded-[2.2rem] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden group">
+                                    <div className="p-5 space-y-4">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="space-y-1 min-w-0">
+                                                <h4 className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase truncate tracking-tight">{item.name || item.titleEn || item.nameEn}</h4>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.category || item.duration || 'Standard Item'}</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)} className="rounded-xl h-10 w-10 text-rose-500 hover:bg-rose-50 hover:text-rose-600 shrink-0">
+                                                <Trash2 className="h-5 w-5" />
+                                            </Button>
+                                        </div>
+                                        
+                                        {item.imageUrl && (
+                                            <div className="h-32 relative rounded-2xl overflow-hidden border border-slate-50 dark:border-slate-800">
+                                                <Image src={item.imageUrl} alt="Item" fill className="object-cover" unoptimized />
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between pt-2">
+                                            <Badge variant="outline" className="text-[8px] font-black uppercase border-slate-100 text-slate-400">
+                                                {item.price || 'System Asset'}
+                                            </Badge>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="text-[8px] font-black text-emerald-600 uppercase">Live</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {inventory.length === 0 && (
+                            <div className="py-20 text-center border-2 border-dashed rounded-[3rem] border-slate-100 opacity-40">
+                                <Layers className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No custom data detected in this collection</p>
+                            </div>
+                        )}
+                    </div>
                 </Card>
             </TabsContent>
 
@@ -370,12 +452,12 @@ export default function AdminDashboard() {
                         <Card key={u.id} className="rounded-[2.8rem] border-none bg-white dark:bg-slate-900 p-6 flex items-center justify-between shadow-xl">
                             <div className="flex items-center gap-5">
                                 <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-400 text-lg shadow-inner">{(u.name?.[0] || 'U')}</div>
-                                <div>
-                                    <h4 className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight">{u.name || 'Anonymous'}</h4>
+                                <div className="min-w-0">
+                                    <h4 className="text-sm font-black text-[#1A365D] dark:text-white uppercase tracking-tight truncate">{u.name || 'Anonymous'}</h4>
                                     <p className="text-[9px] font-bold text-slate-400 truncate tracking-widest">{u.email || 'No Email'}</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="rounded-2xl h-12 w-12 text-rose-500 hover:bg-rose-50" onClick={async () => { if(confirm("Purge Identity?")) await deleteDoc(doc(firestore, 'users', u.id)); }}>
+                            <Button variant="ghost" size="icon" className="rounded-2xl h-12 w-12 text-rose-500 hover:bg-rose-50" onClick={async () => { if(confirm("Purge Identity?")) await deleteDoc(doc(firestore!, 'users', u.id)); }}>
                                 <Trash2 className="h-5 w-5" />
                             </Button>
                         </Card>
@@ -434,3 +516,4 @@ function FeatureSwitch({ title, id, current, icon: Icon, onToggle, color }: any)
         </Card>
     );
 }
+
