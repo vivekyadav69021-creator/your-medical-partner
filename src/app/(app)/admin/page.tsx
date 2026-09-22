@@ -295,7 +295,7 @@ export default function AdminDashboard() {
                                         </>
                                     ) : uploadedUrl ? (
                                         <>
-                                            <Image src={uploadedUrl} alt="Preview" fill className="object-cover opacity-30" />
+                                            <Image src={uploadedUrl} alt="Preview" fill className="object-cover opacity-30" unoptimized />
                                             <div className="relative z-10 flex flex-col items-center gap-2">
                                                 <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                                                 <span className="text-[11px] font-black text-emerald-600 uppercase">Image Cached</span>
