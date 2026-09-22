@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { medicines as staticMedicines, Medicine } from '@/lib/medicine-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { 
   ChevronLeft, 
   ShoppingCart, 
