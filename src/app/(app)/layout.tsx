@@ -23,18 +23,18 @@ export default function AppLayout({
   }, []);
 
   useEffect(() => {
-    if (mounted && !isUserLoading && !user && pathname !== '/login') {
+    if (mounted && !isUserLoading && !user) {
       router.replace('/login');
     }
-  }, [mounted, user, isUserLoading, router, pathname]);
+  }, [mounted, user, isUserLoading, router]);
 
   // Show splash only during initial load or while waiting for auth
   if (!mounted || isUserLoading) {
     return <SplashScreen />;
   }
 
-  // Prevent flicker before redirect
-  if (!user && pathname !== '/login') {
+  // Prevent UI flash for unauthorized users
+  if (!user) {
     return <SplashScreen />;
   }
   

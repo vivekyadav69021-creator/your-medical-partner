@@ -31,7 +31,7 @@ export default function LoginPage() {
   
   const auth = useAuth();
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -42,15 +42,16 @@ export default function LoginPage() {
     setIsMounted(true);
   }, []);
 
+  // Handle automatic redirection if user is already logged in
   useEffect(() => {
-    if (isMounted && user) {
+    if (isMounted && !isUserLoading && user) {
       if (user.email === ADMIN_EMAIL) {
         router.replace('/admin');
       } else {
         router.replace('/dashboard');
       }
     }
-  }, [user, isMounted, router]);
+  }, [user, isUserLoading, isMounted, router]);
 
   const handleGoogleSignIn = async () => {
     if (loading) return;
@@ -69,9 +70,9 @@ export default function LoginPage() {
             createdAt: serverTimestamp(),
           });
       }
+      toast({ title: 'Authentication Successful' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Sign-in Failed' });
-    } finally {
       setLoading(false);
     }
   };
@@ -99,7 +100,6 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } finally {
       setLoading(false);
     }
   };
@@ -113,12 +113,10 @@ export default function LoginPage() {
         <div className="w-full max-w-lg flex-1 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-1000">
            
            <div className="relative mb-12 flex items-center justify-center">
-                {/* Background Glow */}
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-[80px] animate-pulse scale-[2] -z-10" />
                 
                 <div className="relative w-[240px] md:w-[280px] p-7 pb-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white dark:border-slate-800 transform transition-all duration-700 overflow-hidden">
                     
-                    {/* ECG Path Container */}
                     <div className="absolute bottom-4 left-0 right-0 h-20 opacity-40 pointer-events-none">
                         <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
                             <path 
@@ -148,7 +146,6 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    {/* Floating Sparkle Badge */}
                     <div className="absolute top-4 right-4 bg-gradient-to-br from-primary to-accent p-2 rounded-xl shadow-lg border-2 border-white dark:border-slate-900 animate-pulse">
                         <Sparkles className="h-3 w-3 text-white fill-white" />
                     </div>

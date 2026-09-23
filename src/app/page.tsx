@@ -16,7 +16,6 @@ export default function HomePage() {
   useEffect(() => {
     if (mounted && !isUserLoading) {
       if (user) {
-        // Master Admin Redirection
         if (user.email === 'yourmedicalpartner6972@gmail.com') {
           router.replace('/admin');
         } else {
