@@ -26,6 +26,7 @@ export type FoodAnalysisInput = z.infer<typeof FoodAnalysisInputSchema>;
 
 const FoodAnalysisOutputSchema = z.object({
   name: z.string().describe('Precise name of the food item or product confirmed.'),
+  brand: z.string().optional().describe('Confirmed brand name of the product.'),
   portion: z.string().describe('Estimated portion size (e.g., "1 packet", "100g").'),
   calories: z.string().describe('Estimated calorie range (e.g., "250 - 300 kcal").'),
   carbs: z.string().describe('Estimated carbohydrates range in grams.'),
@@ -35,6 +36,11 @@ const FoodAnalysisOutputSchema = z.object({
   expiryStatus: z.enum(['Safe', 'Expired', 'Near Expiry', 'Unknown']).default('Unknown').describe('Safety status based on today: {{currentDate}}.'),
   compatibilityTagEn: z.string().describe('Short tag: e.g., "Highly Compatible with Gym Plan".'),
   compatibilityTagHi: z.string().describe('Short tag in simple Hindi.'),
+  ingredientSafety: z.array(z.object({
+    item: z.string(),
+    status: z.enum(['Safe', 'Caution', 'Danger']),
+    reason: z.string()
+  })).describe('Analysis of ingredients like sugar levels, additives, or allergens.'),
   logicEn: z.string().describe('Extremely simple explanation using home-style analogies.'),
   logicHi: z.string().describe('Extremely simple explanation in simple everyday Hindi.'),
   substitutionsEn: z.array(z.string()).describe('Simple healthy substitutions.'),
@@ -52,28 +58,31 @@ const prompt = ai.definePrompt({
   name: 'foodAnalyzerPrompt',
   input: { schema: FoodAnalysisInputSchema },
   output: { schema: FoodAnalysisOutputSchema },
-  prompt: `You are the "Precision Nutri-Lens AI" for "Your Medical Partner".
+  prompt: `You are the "Master Precision Nutri-Lens AI" for "Your Medical Partner".
 
-**CORE PROTOCOL (STRICT):**
+**STRICT IDENTIFICATION PROTOCOL (DO NOT HALLUCINATE):**
 - Today's Date: {{{currentDate}}}
 - Current Mode: {{{scanType}}}
 
-**1. PRODUCT IDENTIFICATION:**
-- If scanType is 'barcode', identify the product using the barcode pattern or numbers. 
-- If scanType is 'ocr', analyze the nutritional table.
-- If scanType is 'standard', use visual features.
+1. **OCR & BRAND DETECTION FIRST:**
+   - Look at the provided image: {{media url=imageDataUri}}
+   - You MUST extract the exact BRAND and PRODUCT name from the text visible on the packaging.
+   - **MANDATORY**: If the package says "Chocolate" or has a chocolate brand logo, DO NOT identify it as "Almonds" or anything else. Be 100% literal with what is visible.
 
-**2. EXPIRY DETECTION (PRIORITY):**
-- Locate any text like "EXP", "Expiry", "Best Before", "Use By", or "MFG Date".
-- If "MFG Date" is found with "Best before 6 months", calculate the final date.
-- Compare with today: {{{currentDate}}}.
-- Set 'expiryStatus' to 'Expired' if today is past the date, 'Near Expiry' if within 30 days, or 'Safe'.
+2. **INGREDIENT & ADDITIVE ANALYSIS:**
+   - Scan for the "Ingredients List" and "Nutrition Table".
+   - Evaluate high fructose corn syrup, palm oil, artificial colors, and sodium.
+   - Set 'ingredientSafety' based on these findings.
 
-**3. HEALTH MIRRORING LOGIC:**
-- Analyze against conditions: "{{{healthMirrorProfile}}}". 
-- Align with Goal: "{{mainGoal}}", Workout: "{{workoutRegimen}}".
+3. **EXPIRY CHECK:**
+   - Locate "EXP", "Best Before", or "MFG Date". 
+   - Calculate safety based on today's date: {{{currentDate}}}.
 
-Respond ONLY in the specified JSON format. Ensure name and portions are precise.`,
+4. **PERSONALIZED MIRRORING:**
+   - Check against user conditions: "{{{healthMirrorProfile}}}". 
+   - Align with Goal: "{{mainGoal}}".
+
+Respond ONLY in valid JSON format. Be extremely precise with product names.`,
 });
 
 const foodAnalyzerFlow = ai.defineFlow(
@@ -84,7 +93,7 @@ const foodAnalyzerFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    if (!output) throw new Error("Could not identify the food item. Please ensure the product is clearly visible.");
+    if (!output) throw new Error("Product identification failed. Please ensure the brand label is clearly visible.");
     return output;
   }
 );

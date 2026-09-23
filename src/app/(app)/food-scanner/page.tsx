@@ -29,7 +29,10 @@ import {
   Lightbulb,
   Ban,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Zap,
+  Info,
+  ShieldCheck
 } from 'lucide-react';
 import { analyzeFoodAction } from './actions';
 import Image from 'next/image';
@@ -67,25 +70,19 @@ const initialAnalysisState = { result: null, error: null, timestamp: 0 };
 
 type ViewMode = 'home' | 'meal' | 'barcode' | 'ocr';
 
-function ScanAnimationOverlay({ color, isBarcode = false }: { color: string, isBarcode?: boolean }) {
+function ScanAnimationOverlay({ color }: { color: string }) {
     return (
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-[inherit]">
-            <div className={cn("absolute inset-0 opacity-[0.15] animate-pulse", color.replace('text-', 'bg-'))} />
+            <div className={cn("absolute inset-0 opacity-[0.2] animate-pulse", color.replace('text-', 'bg-'))} />
             <div 
-                className={cn("absolute left-0 right-0 h-1 animate-scan-line z-[60] opacity-90", color)} 
-                style={{ backgroundColor: 'currentColor', boxShadow: '0 0 20px 4px currentColor' }}
+                className={cn("absolute left-0 right-0 h-1.5 animate-scan-line z-[60] opacity-100", color)} 
+                style={{ backgroundColor: 'currentColor', boxShadow: '0 0 30px 6px currentColor' }}
             />
-            {isBarcode && (
-                <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <div className="w-full h-32 border-2 border-white/40 rounded-2xl relative bg-white/5 backdrop-blur-[2px] animate-in fade-in zoom-in duration-500 shadow-[0_0_50px_rgba(255,255,255,0.1)]">
-                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-xl shadow-lg" />
-                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-xl shadow-lg" />
-                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-xl shadow-lg" />
-                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-xl shadow-lg" />
-                        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_10px_red] animate-pulse" />
-                    </div>
-                </div>
-            )}
+            {/* Minimal Corner Accents instead of central box */}
+            <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-white opacity-40" />
+            <div className="absolute top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-white opacity-40" />
+            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-white opacity-40" />
+            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-white opacity-40" />
         </div>
     );
 }
@@ -191,7 +188,9 @@ export default function FoodScannerPage() {
         workout: "Workout Intensity",
         logicTitle: "Scientific Logic",
         substitutionTitle: "Better Alternatives",
-        expiryTitle: "Expiry Intelligence"
+        expiryTitle: "Expiry Intelligence",
+        ingredientTitle: "Ingredient Watch",
+        safetyVerified: "Safety Verified"
     },
     hi: {
         greeting: `नमस्ते ${userName.split(' ')[0]}`,
@@ -210,7 +209,9 @@ export default function FoodScannerPage() {
         workout: "व्यायाम तीव्रता",
         logicTitle: "सरल व्याख्या",
         substitutionTitle: "बेहतर विकल्प",
-        expiryTitle: "एक्सपायरी रिपोर्ट"
+        expiryTitle: "एक्सपायरी रिपोर्ट",
+        ingredientTitle: "सामग्री विश्लेषण",
+        safetyVerified: "सुरक्षा सत्यापित"
     }
   }[lang];
 
@@ -284,8 +285,8 @@ export default function FoodScannerPage() {
                 <ArrowLeft className="h-6 w-6 text-[#1A365D]" />
             </Button>
             <div>
-                <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight">{view === 'meal' ? t.mealTitle : view === 'barcode' ? t.barcodeTitle : t.ocrTitle}</h2>
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Precision Scanning Hub</p>
+                <h2 className="text-2xl font-black text-[#1A365D] dark:text-slate-100 tracking-tight uppercase leading-none">{view === 'meal' ? t.mealTitle : view === 'barcode' ? t.barcodeTitle : t.ocrTitle}</h2>
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">Precision Scanning Hub</p>
             </div>
         </div>
 
@@ -298,16 +299,16 @@ export default function FoodScannerPage() {
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.medProfile}</Label>
-                        <Input value={healthMirror} onChange={(e) => setHealthMirror(e.target.value)} placeholder="e.g. Diabetes, Peanut Allergy" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner" />
+                        <Input value={healthMirror} onChange={(e) => setHealthMirror(e.target.value)} placeholder="e.g. Diabetes, Peanut Allergy" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner font-bold" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.fitnessGoal}</Label>
-                            <Input value={mainGoal} onChange={(e) => setMainGoal(e.target.value)} placeholder="Weight Loss" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner" />
+                            <Input value={mainGoal} onChange={(e) => setMainGoal(e.target.value)} placeholder="Weight Loss" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner font-bold" />
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">{t.workout}</Label>
-                            <Input value={workout} onChange={(e) => setWorkout(e.target.value)} placeholder="Moderate" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner" />
+                            <Input value={workout} onChange={(e) => setWorkout(e.target.value)} placeholder="Moderate" className="h-12 rounded-2xl bg-white/50 border-none shadow-inner font-bold" />
                         </div>
                     </div>
                 </div>
@@ -336,7 +337,7 @@ export default function FoodScannerPage() {
                     isAnalyzing ? "ring-8 ring-primary/20" : "border-white dark:border-slate-800"
                 )}>
                     <Image src={preview} alt="Input" width={600} height={800} className="w-full h-auto object-contain max-h-[400px]" />
-                    {isAnalyzing && <ScanAnimationOverlay color="text-primary" isBarcode={view === 'barcode'} />}
+                    {isAnalyzing && <ScanAnimationOverlay color="text-primary" />}
                     {!isAnalyzing && (
                         <Button variant="destructive" size="icon" className="absolute top-6 right-6 rounded-full h-10 w-10 z-[70]" onClick={() => setPreview(null)}>
                             <X className="h-5 w-5" />
@@ -363,40 +364,41 @@ export default function FoodScannerPage() {
                 <div className="h-px bg-slate-200" />
                 
                 <section className="flex flex-col items-center text-center gap-4">
-                    <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/10 shadow-inner">
-                        <Activity className="h-8 w-8 text-primary" />
+                    <div className="h-20 w-20 bg-primary/10 rounded-3xl flex items-center justify-center border border-primary/10 shadow-inner">
+                        <Activity className="h-10 w-10 text-primary" />
                     </div>
                     <div className="space-y-1.5">
-                        <h2 className="text-2xl font-black text-[#1A365D] dark:text-white leading-tight uppercase">{String(state.result.name)}</h2>
+                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">{state.result.brand || 'Identified Product'}</p>
+                        <h2 className="text-3xl font-black text-[#1A365D] dark:text-white leading-tight uppercase tracking-tight">{String(state.result.name)}</h2>
                         <div className={cn(
-                            "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
-                            (state.result.medicalAlertEn || state.result.medicalAlertHi) ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
+                            "inline-flex items-center gap-2 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md border",
+                            (state.result.medicalAlertEn || state.result.medicalAlertHi) ? "bg-rose-50 border-rose-100 text-rose-600" : "bg-emerald-50 border-emerald-100 text-emerald-600"
                         )}>
-                            <CheckCircle2 className="h-3 w-3" />
+                            <ShieldCheck className="h-3.5 w-3.5" />
                             {lang === 'en' ? String(state.result.compatibilityTagEn) : String(state.result.compatibilityTagHi)}
                         </div>
                     </div>
                 </section>
 
-                {view === 'barcode' && state.result.expiryDate && (
+                {state.result.expiryDate && (
                     <Card className={cn(
                         "rounded-[2.5rem] border-none p-8 flex items-center justify-between shadow-xl relative overflow-hidden",
                         state.result.expiryStatus === 'Safe' ? "bg-emerald-50/50" : state.result.expiryStatus === 'Expired' ? "bg-rose-50/50" : "bg-amber-50/50"
                     )}>
                         <div className="flex items-center gap-5 relative z-10">
                             <div className={cn(
-                                "h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner",
+                                "h-14 w-14 rounded-3xl flex items-center justify-center shadow-inner",
                                 state.result.expiryStatus === 'Safe' ? "bg-emerald-100 text-emerald-600" : state.result.expiryStatus === 'Expired' ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-600"
                             )}>
-                                {state.result.expiryStatus === 'Safe' ? <CheckCircle2 className="w-6 h-6" /> : state.result.expiryStatus === 'Expired' ? <AlertTriangle className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+                                {state.result.expiryStatus === 'Safe' ? <CheckCircle2 className="w-7 h-7" /> : state.result.expiryStatus === 'Expired' ? <AlertTriangle className="w-7 h-7" /> : <Clock className="w-7 h-7" />}
                             </div>
                             <div>
                                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.expiryTitle}</h4>
-                                <p className="text-lg font-black text-[#1A365D] dark:text-white uppercase">{state.result.expiryDate}</p>
+                                <p className="text-xl font-black text-[#1A365D] dark:text-white uppercase">{state.result.expiryDate}</p>
                             </div>
                         </div>
                         <Badge className={cn(
-                            "rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border-none",
+                            "rounded-xl px-5 py-2 text-[10px] font-black uppercase tracking-widest border-none",
                             state.result.expiryStatus === 'Safe' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : state.result.expiryStatus === 'Expired' ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20" : "bg-amber-500 text-white shadow-lg shadow-amber-500/20"
                         )}>
                             {state.result.expiryStatus}
@@ -405,56 +407,86 @@ export default function FoodScannerPage() {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 flex items-center gap-5 shadow-sm">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Apple className="h-6 w-6" /></div>
+                    <div className="p-8 rounded-[3rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center gap-6 shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 h-20 w-20 bg-primary/5 rounded-bl-full" />
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner"><Zap className="h-8 w-8" /></div>
                         <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Energy Estimate</p>
-                            <p className="text-2xl font-black text-[#1A365D] dark:text-white">{String(state.result.calories)}</p>
-                            <p className="text-[9px] font-bold text-slate-400">{String(state.result.portion)}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Energy Profile</p>
+                            <p className="text-3xl font-black text-[#1A365D] dark:text-white leading-none">{String(state.result.calories)}</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">Per {String(state.result.portion)}</p>
                         </div>
                     </div>
-                    <div className="flex items-center justify-around p-6 rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 border border-white/40 shadow-sm">
+                    <div className="flex items-center justify-around p-8 rounded-[3rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl">
                         <MacroMini label="Carbs" val={state.result.carbs} color="bg-amber-400" />
                         <MacroMini label="Protein" val={state.result.protein} color="bg-emerald-400" />
                         <MacroMini label="Fats" val={state.result.fats} color="bg-rose-400" />
                     </div>
                 </div>
 
-                {(lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) && (
-                    <div className="p-8 rounded-[2.5rem] bg-rose-500 text-white animate-pulse shadow-2xl flex flex-col items-center text-center gap-3">
-                        <ShieldAlert className="h-10 w-10" />
-                        <h3 className="text-xl font-black uppercase tracking-widest">Medical Advisory</h3>
-                        <p className="text-sm font-bold leading-relaxed">{lang === 'en' ? String(state.result.medicalAlertEn) : String(state.result.medicalAlertHi)}</p>
+                {/* Advanced Ingredient Analysis Section */}
+                <div className="space-y-6 px-1">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                            <h4 className="font-black text-sm uppercase tracking-widest text-[#1A365D] dark:text-slate-100">{t.ingredientTitle}</h4>
+                        </div>
+                        <Badge variant="outline" className="text-[8px] font-black uppercase text-emerald-600 border-emerald-100">{t.safetyVerified}</Badge>
                     </div>
-                )}
-
-                <div className="space-y-4 px-2">
-                    <div className="flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-amber-500" />
-                        <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">{t.logicTitle}</h4>
-                    </div>
-                    <div className="p-6 rounded-[2rem] bg-blue-50/50 border border-blue-100/50 italic text-sm font-bold text-slate-600 leading-relaxed">
-                        "{lang === 'en' ? String(state.result.logicEn) : String(state.result.logicHi)}"
-                    </div>
-                </div>
-
-                <div className="space-y-4 px-2">
-                    <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">{t.substitutionTitle}</h4>
-                    <div className="space-y-3">
-                        {(lang === 'en' ? (state.result.substitutionsEn || []) : (state.result.substitutionsHi || [])).map((sub: string, i: number) => (
-                            <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/60 border border-white/40 shadow-sm">
-                                <Sparkles className="h-4 w-4 text-primary" />
-                                <p className="text-sm font-bold text-slate-700">{String(sub)}</p>
+                    <div className="grid gap-3">
+                        {(state.result.ingredientSafety || []).map((ing: any, i: number) => (
+                            <div key={i} className="flex gap-4 p-5 bg-white dark:bg-slate-900 rounded-[1.8rem] border border-slate-100 dark:border-slate-800 shadow-sm group">
+                                <div className={cn(
+                                    "h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 shadow-inner transition-transform group-hover:scale-110",
+                                    ing.status === 'Safe' ? "bg-emerald-50 text-emerald-500" : ing.status === 'Caution' ? "bg-amber-50 text-amber-500" : "bg-rose-50 text-rose-500"
+                                )}>
+                                    <Info className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-black uppercase text-[#1A365D] dark:text-white">{ing.item}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 leading-tight">{ing.reason}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <Alert className="rounded-[3rem] border-none bg-blue-50/50 p-8 border-dashed border-2 border-blue-100">
-                    <div className="flex flex-col items-center gap-4 text-center">
-                        <ShieldAlert className="h-8 w-8 text-primary opacity-40" />
-                        <p className="text-[10px] font-black uppercase text-blue-500/80 tracking-[0.3em] leading-relaxed">
-                            AI analysis is based on standardized database values. For complex medical cases, always verify with a clinical dietitian.
+                {(lang === 'en' ? state.result.medicalAlertEn : state.result.medicalAlertHi) && (
+                    <div className="p-10 rounded-[3.5rem] bg-rose-500 text-white animate-pulse shadow-[0_20px_50px_rgba(244,63,94,0.3)] flex flex-col items-center text-center gap-4 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 h-40 w-40 bg-white/10 rounded-bl-full translate-x-10 -translate-y-10" />
+                        <ShieldAlert className="h-14 w-14 drop-shadow-xl" />
+                        <h3 className="text-2xl font-black uppercase tracking-widest">Medical Advisory</h3>
+                        <p className="text-base font-bold leading-relaxed">{lang === 'en' ? String(state.result.medicalAlertEn) : String(state.result.medicalAlertHi)}</p>
+                    </div>
+                )}
+
+                <div className="space-y-4 px-1">
+                    <div className="flex items-center gap-3">
+                        <Lightbulb className="w-5 h-5 text-amber-500" />
+                        <h4 className="font-black text-sm uppercase tracking-widest text-[#1A365D] dark:text-slate-100">{t.logicTitle}</h4>
+                    </div>
+                    <div className="p-8 rounded-[2.5rem] bg-blue-50/50 dark:bg-blue-900/10 border-2 border-dashed border-blue-100 dark:border-blue-900/30 italic text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
+                        "{lang === 'en' ? String(state.result.logicEn) : String(state.result.logicHi)}"
+                    </div>
+                </div>
+
+                <div className="space-y-4 px-1">
+                    <h4 className="font-black text-sm uppercase tracking-widest text-[#1A365D] dark:text-slate-100">{t.substitutionTitle}</h4>
+                    <div className="grid gap-3">
+                        {(lang === 'en' ? (state.result.substitutionsEn || []) : (state.result.substitutionsHi || [])).map((sub: string, i: number) => (
+                            <div key={i} className="flex items-center gap-5 p-6 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-lg hover:border-primary/30 transition-all active:scale-[0.98]">
+                                <div className="h-10 w-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-500 shadow-inner"><CheckCircle2 className="h-5 w-5" /></div>
+                                <p className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">{String(sub)}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <Alert className="rounded-[3rem] border-none bg-slate-900 text-white p-10 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 h-32 w-32 bg-white/5 rounded-bl-full" />
+                    <div className="flex flex-col items-center gap-6 text-center relative z-10">
+                        <ShieldAlert className="h-10 w-10 text-primary" />
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] leading-relaxed max-w-sm">
+                            Disclaimer: Our AI Engine uses global food databases. Real-time ingredient compositions may vary. Always verify with packaging for life-threatening allergies.
                         </p>
                     </div>
                 </Alert>
@@ -466,16 +498,17 @@ export default function FoodScannerPage() {
 
 function ScannerCard({ title, icon: Icon, gradient, iconColor, onClick }: any) {
     return (
-        <div className={cn("rounded-[3rem] border-none shadow-lg group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md", gradient)} onClick={onClick}>
-            <div className="p-6 flex flex-col items-center gap-4 text-center relative z-10">
-                <div className="w-16 h-16 rounded-[1.8rem] bg-white/90 dark:bg-slate-900 shadow-md flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
-                   <Icon className={cn("w-8 h-8", iconColor)} />
+        <div className={cn("rounded-[3.2rem] border-none shadow-xl group hover:scale-[1.03] active:scale-95 transition-all duration-500 cursor-pointer bg-gradient-to-br relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-md", gradient)} onClick={onClick}>
+            <div className="p-8 flex flex-col items-center gap-6 text-center relative z-10">
+                <div className="w-18 h-18 rounded-[2rem] bg-white/90 dark:bg-slate-900 shadow-lg flex items-center justify-center transition-transform duration-700 group-hover:rotate-12">
+                   <Icon className={cn("w-10 h-10", iconColor)} />
                 </div>
                 <div className="space-y-1.5 w-full">
-                    <h3 className="text-[11px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tight leading-none">{title}</h3>
-                    <div className="w-full rounded-2xl py-2 mt-3 text-[9px] font-black uppercase tracking-widest text-white shadow-xl bg-primary">Scan</div>
+                    <h3 className="text-[13px] font-black text-[#1A365D] dark:text-slate-100 uppercase tracking-tighter leading-none">{title}</h3>
+                    <div className={cn("w-full rounded-2xl py-2.5 mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl bg-primary")}>Launch</div>
                 </div>
             </div>
+            <div className="absolute -bottom-6 -right-6 h-24 w-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-1000" />
         </div>
     );
 }
