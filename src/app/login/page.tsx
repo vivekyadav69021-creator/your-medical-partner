@@ -9,6 +9,7 @@ import { useAuth, useFirestore, useUser } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup
@@ -104,6 +105,18 @@ export default function LoginPage() {
     }
   };
 
+  const handleGuestSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+        await signInAnonymously(auth);
+        toast({ title: 'Guest Session Active' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Guest Login Failed', description: error.message });
+        setLoading(false);
+    }
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -178,7 +191,7 @@ export default function LoginPage() {
               
               <div className="grid grid-cols-2 gap-3">
                  <Button variant="outline" onClick={() => setView('login')} className="h-13 rounded-2xl border-slate-100 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 text-[10px] font-black uppercase tracking-widest">Login</Button>
-                 <Button variant="ghost" onClick={() => auth.signInAnonymously()} className="h-13 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary"><UserCircle className="w-4 h-4 mr-2" /> Guest</Button>
+                 <Button variant="ghost" onClick={handleGuestSignIn} disabled={loading} className="h-13 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary"><UserCircle className="w-4 h-4 mr-2" /> Guest</Button>
               </div>
             </div>
 
