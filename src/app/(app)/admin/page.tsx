@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -293,6 +292,16 @@ export default function AdminDashboard() {
       }
   };
 
+  const isValidUrl = (url: string) => {
+    if (!url) return false;
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return url.startsWith('data:image/');
+    }
+  };
+
   if (user?.email !== ADMIN_EMAIL) {
     return (
         <div className="h-screen flex items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-950">
@@ -401,7 +410,7 @@ export default function AdminDashboard() {
                                     onClick={() => !isUploading && fileInputRef.current?.click()} 
                                     className={cn(
                                         "h-64 rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all relative overflow-hidden",
-                                        uploadedUrl ? "border-emerald-500 bg-emerald-50/10" : "border-primary/20 bg-primary/5 hover:bg-primary/10",
+                                        isValidUrl(uploadedUrl) ? "border-emerald-500 bg-emerald-50/10" : "border-primary/20 bg-primary/5 hover:bg-primary/10",
                                         isUploading && "opacity-50 cursor-wait"
                                     )}
                                 >
@@ -410,9 +419,10 @@ export default function AdminDashboard() {
                                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                                             <span className="text-[11px] font-black text-primary uppercase">{Math.round(uploadProgress)}% Cloud Sync</span>
                                         </>
-                                    ) : uploadedUrl ? (
+                                    ) : isValidUrl(uploadedUrl) ? (
                                         <>
-                                            <Image src={uploadedUrl} alt="Preview" fill className="object-cover opacity-40" unoptimized />
+                                            {/* Safety: Use standard img for admin preview to avoid URL construction crash in Next Image */}
+                                            <img src={uploadedUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none" />
                                             <div className="relative z-10 flex flex-col items-center gap-2">
                                                 <CheckCircle2 className="h-12 w-12 text-emerald-500" />
                                                 <span className="text-[11px] font-black text-emerald-600 uppercase">Asset Cached</span>
@@ -583,7 +593,7 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
                                         
-                                        {item.imageUrl && (
+                                        {isValidUrl(item.imageUrl) && (
                                             <div className="h-32 relative rounded-2xl overflow-hidden border border-slate-50 dark:border-slate-800">
                                                 <Image src={item.imageUrl} alt="Asset" fill className="object-cover" unoptimized />
                                             </div>
