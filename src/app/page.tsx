@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { SplashScreen } from '@/components/splash-screen';
@@ -7,16 +7,26 @@ import { SplashScreen } from '@/components/splash-screen';
 export default function HomePage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!isUserLoading) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isUserLoading) {
       if (user) {
-        router.replace('/dashboard');
+        // Master Admin Redirection
+        if (user.email === 'yourmedicalpartner6972@gmail.com') {
+          router.replace('/admin');
+        } else {
+          router.replace('/dashboard');
+        }
       } else {
         router.replace('/login');
       }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, mounted]);
 
   return <SplashScreen />;
 }

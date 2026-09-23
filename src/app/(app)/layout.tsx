@@ -6,7 +6,7 @@ import { UserProfileProvider } from '@/context/user-profile-context';
 import { SplashScreen } from '@/components/splash-screen';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function AppLayout({
   children,
@@ -14,32 +14,28 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const [mounted, setMounted] = useState(false);
-  const [showSplash, setShowSplash] = useState(true); 
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
-    // Reduced splash delay from 2.5s to 1.0s for a significantly faster startup
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1000);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (mounted && !isUserLoading && !user) {
+    if (mounted && !isUserLoading && !user && pathname !== '/login') {
       router.replace('/login');
     }
-  }, [mounted, user, isUserLoading, router]);
+  }, [mounted, user, isUserLoading, router, pathname]);
 
-  // If still determining auth status or during the branding period, show splash
-  if (!mounted || isUserLoading || showSplash) {
+  // Show splash only during initial load or while waiting for auth
+  if (!mounted || isUserLoading) {
     return <SplashScreen />;
   }
 
-  if (!user) {
-    return null;
+  // Prevent flicker before redirect
+  if (!user && pathname !== '/login') {
+    return <SplashScreen />;
   }
   
   return (

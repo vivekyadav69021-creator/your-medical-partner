@@ -2,35 +2,39 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 /**
- * @fileOverview Robust Firebase initialization including Storage for Admin Uploads.
+ * Robust Firebase initialization logic.
  */
+let firebaseApp: FirebaseApp;
+let auth: Auth;
+let firestore: Firestore;
+let storage: FirebaseStorage;
+
 export function initializeFirebase() {
   if (getApps().length > 0) {
-    return getSdks(getApp());
+    const app = getApp();
+    return {
+      firebaseApp: app,
+      auth: getAuth(app),
+      firestore: getFirestore(app),
+      storage: getStorage(app)
+    };
   }
 
-  let firebaseApp: FirebaseApp;
+  firebaseApp = initializeApp(firebaseConfig);
+  auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
+  storage = getStorage(firebaseApp);
 
-  try {
-    firebaseApp = initializeApp(firebaseConfig);
-  } catch (e) {
-    firebaseApp = initializeApp(firebaseConfig);
-  }
-
-  return getSdks(firebaseApp);
-}
-
-export function getSdks(firebaseApp: FirebaseApp) {
   return {
     firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp)
+    auth,
+    firestore,
+    storage
   };
 }
 
