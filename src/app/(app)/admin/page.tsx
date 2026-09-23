@@ -55,7 +55,9 @@ import {
     Eye,
     Pill,
     AlertTriangle,
-    Info
+    Info,
+    Pencil,
+    RotateCcw
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -83,6 +85,10 @@ export default function AdminDashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Edit State
+  const [editingItem, setEditingItem] = useState<any | null>(null);
 
   // Store Toggles
   const [isRxRequired, setIsRxRequired] = useState(false);
@@ -173,6 +179,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleEditClick = (item: any) => {
+      setEditingItem(item);
+      setUploadedUrl(item.imageUrl || '');
+      if (contentType === 'store') {
+          setIsRxRequired(item.prescriptionRequired || false);
+          setIsInStock(item.inStock !== false);
+      }
+      // Scroll to form
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toast({ title: "Entering Edit Mode", description: `Updating ${item.name || item.titleEn || 'item'}...` });
+  };
+
+  const cancelEdit = () => {
+      setEditingItem(null);
+      setUploadedUrl('');
+      setIsRxRequired(false);
+      setIsInStock(true);
+      if (formRef.current) formRef.current.reset();
+  };
+
   const handleContentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
@@ -181,9 +207,13 @@ export default function AdminDashboard() {
     
     try {
         const data: any = { 
-            createdAt: serverTimestamp(), 
+            updatedAt: serverTimestamp(), 
             imageUrl: uploadedUrl || formData.get('imageUrl') 
         };
+        
+        if (!editingItem) {
+            data.createdAt = serverTimestamp();
+        }
         
         if (contentType === 'store') {
             data.name = formData.get('name');
@@ -200,16 +230,27 @@ export default function AdminDashboard() {
             data.storageAdvice = formData.get('storageAdvice');
             data.description = formData.get('description');
 
-            // Handle Arrays from Textareas (Comma or Newline separated)
             const benefitsText = formData.get('benefits') as string;
             data.benefits = benefitsText ? benefitsText.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
 
             const sideEffectsText = formData.get('sideEffects') as string;
             data.sideEffects = sideEffectsText ? sideEffectsText.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
-        } else {
-            formData.forEach((value, key) => { 
-                if(key !== 'imageUrl' && value) data[key] = value; 
-            });
+        } else if (contentType === 'video') {
+            data.titleEn = formData.get('titleEn');
+            data.titleHi = formData.get('titleHi');
+            data.youtube_url = formData.get('youtube_url');
+            data.duration = formData.get('duration');
+            data.descriptionEn = formData.get('descriptionEn');
+        } else if (contentType === 'disease') {
+            data.nameEn = formData.get('nameEn');
+            data.nameHi = formData.get('nameHi');
+            data.overviewEn = formData.get('overviewEn');
+            data.overviewHi = formData.get('overviewHi');
+        } else if (contentType === 'yoga') {
+            data.nameEn = formData.get('nameEn');
+            data.nameHi = formData.get('nameHi');
+            data.category = formData.get('category');
+            data.descriptionEn = formData.get('descriptionEn');
         }
 
         const collectionMap: Record<ContentType, string> = { 
@@ -219,14 +260,17 @@ export default function AdminDashboard() {
             store: 'medicines' 
         };
 
-        await addDoc(collection(firestore!, collectionMap[contentType]), data);
-        toast({ title: "Injection Successful", description: `Added to ${contentType} library.` });
-        form.reset();
-        setUploadedUrl('');
-        setIsRxRequired(false);
-        setIsInStock(true);
+        if (editingItem) {
+            await updateDoc(doc(firestore!, collectionMap[contentType], editingItem.id), data);
+            toast({ title: "Update Successful", description: `Record updated in ${contentType} library.` });
+        } else {
+            await addDoc(collection(firestore!, collectionMap[contentType]), data);
+            toast({ title: "Injection Successful", description: `Added to ${contentType} library.` });
+        }
+
+        cancelEdit();
     } catch (e) {
-        toast({ variant: 'destructive', title: "Injection Failed" });
+        toast({ variant: 'destructive', title: editingItem ? "Update Failed" : "Injection Failed" });
     } finally {
         setIsSaving(false);
     }
@@ -243,6 +287,7 @@ export default function AdminDashboard() {
         };
         await deleteDoc(doc(firestore!, collectionMap[contentType], id));
         toast({ title: "Item Purged", description: "Removed from live environment." });
+        if (editingItem?.id === id) cancelEdit();
       } catch (e) {
           toast({ variant: 'destructive', title: "Purge Failed" });
       }
@@ -314,30 +359,42 @@ export default function AdminDashboard() {
                 <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 p-6 md:p-12">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                         <div className="flex items-center gap-5">
-                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner"><Layers className="h-6 w-6" /></div>
+                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                                {editingItem ? <Pencil className="h-6 w-6" /> : <Layers className="h-6 w-6" />}
+                            </div>
                             <div>
-                                <h3 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">Injection Engine</h3>
-                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Live Production Pipeline</p>
+                                <h3 className="text-2xl font-black text-[#1A365D] dark:text-white uppercase tracking-tight">
+                                    {editingItem ? 'Modification Node' : 'Injection Engine'}
+                                </h3>
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                                    {editingItem ? `Editing ID: ${editingItem.id}` : 'Live Production Pipeline'}
+                                </p>
                             </div>
                         </div>
-                        <div className="w-full md:w-64">
-                             <Select value={contentType} onValueChange={(v) => { setContentType(v as any); setUploadedUrl(''); }}>
-                                <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none font-black text-[10px] uppercase tracking-widest px-6 shadow-inner">
-                                    <SelectValue placeholder="Collection" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-none shadow-2xl">
-                                    <SelectItem value="video" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><Video className="w-3 h-3"/> Video Library</div></SelectItem>
-                                    <SelectItem value="disease" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><BookHeart className="w-3 h-3"/> Disease Library</div></SelectItem>
-                                    <SelectItem value="yoga" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><Flower className="w-3 h-3"/> Yoga Library</div></SelectItem>
-                                    <SelectItem value="store" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><Store className="w-3 h-3"/> Medical Store</div></SelectItem>
-                                </SelectContent>
-                             </Select>
+                        <div className="flex items-center gap-4">
+                            {editingItem && (
+                                <Button variant="outline" onClick={cancelEdit} className="rounded-2xl h-14 px-6 border-slate-200 text-slate-400 font-black text-[10px] uppercase tracking-widest shadow-sm">
+                                    <X className="w-4 h-4 mr-2" /> Cancel
+                                </Button>
+                            )}
+                            <div className="w-full md:w-64">
+                                <Select value={contentType} onValueChange={(v) => { if(!editingItem) setContentType(v as any); }}>
+                                    <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none font-black text-[10px] uppercase tracking-widest px-6 shadow-inner" disabled={!!editingItem}>
+                                        <SelectValue placeholder="Collection" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-none shadow-2xl">
+                                        <SelectItem value="video" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><Video className="w-3 h-3"/> Video Library</div></SelectItem>
+                                        <SelectItem value="disease" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><BookHeart className="w-3 h-3"/> Disease Library</div></SelectItem>
+                                        <SelectItem value="yoga" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><Flower className="w-3 h-3"/> Yoga Library</div></SelectItem>
+                                        <SelectItem value="store" className="font-bold text-[10px] uppercase tracking-widest"><div className="flex items-center gap-2"><Store className="w-3 h-3"/> Medical Store</div></SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
 
-                    <form onSubmit={handleContentSubmit} className="space-y-8">
+                    <form ref={formRef} onSubmit={handleContentSubmit} className="space-y-8">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                            {/* Media Section */}
                             <div className="space-y-6">
                                 <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Production Asset Control</Label>
                                 <div 
@@ -374,29 +431,28 @@ export default function AdminDashboard() {
                                 
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase text-slate-400 ml-5">Manual Reference URL</Label>
-                                    <Input name="imageUrl" value={uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://cdn.example.com/asset..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8 text-sm" />
+                                    <Input name="imageUrl" defaultValue={editingItem?.imageUrl || uploadedUrl} onChange={(e) => setUploadedUrl(e.target.value)} placeholder="https://cdn.example.com/asset..." className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none shadow-inner font-bold px-8 text-sm" />
                                 </div>
                             </div>
 
-                            {/* Dynamic Fields Section */}
                             <div className="space-y-6">
                                 {contentType === 'video' && (
                                     <div className="space-y-4">
-                                        <Input name="titleEn" placeholder="Video Title (English)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Input name="titleHi" placeholder="वीडियो शीर्षक (हिंदी)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Input name="youtube_url" placeholder="YouTube URL (https://...)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Input name="duration" placeholder="Duration (e.g. 05:20)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" />
-                                        <Textarea name="descriptionEn" placeholder="Detailed Metadata (English)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[120px]" required />
+                                        <Input name="titleEn" defaultValue={editingItem?.titleEn || ''} placeholder="Video Title (English)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="titleHi" defaultValue={editingItem?.titleHi || ''} placeholder="वीडियो शीर्षक (हिंदी)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="youtube_url" defaultValue={editingItem?.youtube_url || ''} placeholder="YouTube URL (https://...)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="duration" defaultValue={editingItem?.duration || ''} placeholder="Duration (e.g. 05:20)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                        <Textarea name="descriptionEn" defaultValue={editingItem?.descriptionEn || ''} placeholder="Detailed Metadata (English)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[120px]" required />
                                     </div>
                                 )}
                                 {contentType === 'disease' && (
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
-                                            <Input name="nameEn" placeholder="Clinical Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                            <Input name="nameHi" placeholder="रोग का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            <Input name="nameEn" defaultValue={editingItem?.nameEn || ''} placeholder="Clinical Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            <Input name="nameHi" defaultValue={editingItem?.nameHi || ''} placeholder="रोग का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         </div>
-                                        <Textarea name="overviewEn" placeholder="Pathology Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
-                                        <Textarea name="overviewHi" placeholder="रोग का विवरण (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
+                                        <Textarea name="overviewEn" defaultValue={editingItem?.overviewEn || ''} placeholder="Pathology Overview (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
+                                        <Textarea name="overviewHi" defaultValue={editingItem?.overviewHi || ''} placeholder="रोग का विवरण (HI)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[100px]" required />
                                     </div>
                                 )}
                                 
@@ -405,27 +461,27 @@ export default function AdminDashboard() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Product Name</Label>
-                                                <Input name="name" placeholder="e.g. Paracetamol 650" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                                <Input name="name" defaultValue={editingItem?.name || ''} placeholder="e.g. Paracetamol 650" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Manufacturer / Brand</Label>
-                                                <Input name="brand" placeholder="e.g. Dolo / Micro Labs" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                                <Input name="brand" defaultValue={editingItem?.brand || ''} placeholder="e.g. Dolo / Micro Labs" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Generic Composition (Formula)</Label>
-                                            <Input name="genericComposition" placeholder="e.g. Paracetamol / Acetaminophen 650mg" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                            <Input name="genericComposition" defaultValue={editingItem?.genericComposition || ''} placeholder="e.g. Paracetamol / Acetaminophen 650mg" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">MRP (₹)</Label>
-                                                <Input name="price" type="number" placeholder="50.00" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                                <Input name="price" type="number" defaultValue={editingItem?.price || ''} placeholder="50.00" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Discounted (Affordable) Price</Label>
-                                                <Input name="discountedPrice" type="number" placeholder="42.00" className="h-13 rounded-xl bg-emerald-50/30 border-none px-6 font-bold text-sm" />
+                                                <Input name="discountedPrice" type="number" defaultValue={editingItem?.discountedPrice || ''} placeholder="42.00" className="h-13 rounded-xl bg-emerald-50/30 border-none px-6 font-bold text-sm" />
                                             </div>
                                         </div>
 
@@ -448,42 +504,49 @@ export default function AdminDashboard() {
 
                                         <div className="space-y-2">
                                             <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Benefits & Primary Uses</Label>
-                                            <Textarea name="benefits" placeholder="Separate each point by comma or new line..." className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs min-h-[100px]" required />
+                                            <Textarea name="benefits" defaultValue={editingItem?.benefits?.join('\n') || ''} placeholder="Separate each point by comma or new line..." className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs min-h-[100px]" required />
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label className="text-[9px] font-black uppercase text-slate-400 ml-3">Side Effects & Hazards</Label>
-                                            <Textarea name="sideEffects" placeholder="Drowsiness, Nausea, etc..." className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs min-h-[100px]" required />
+                                            <Textarea name="sideEffects" defaultValue={editingItem?.sideEffects?.join('\n') || ''} placeholder="Drowsiness, Nausea, etc..." className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs min-h-[100px]" required />
                                         </div>
 
                                         <div className="space-y-4 border-t pt-4">
-                                            <Input name="dosageInstruction" placeholder="Dosage (e.g. 1 tab after meal)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
-                                            <Input name="contraindications" placeholder="Contraindications (Who should avoid?)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                            <Input name="dosageInstruction" defaultValue={editingItem?.dosageInstruction || ''} placeholder="Dosage (e.g. 1 tab after meal)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                            <Input name="contraindications" defaultValue={editingItem?.contraindications || ''} placeholder="Contraindications (Who should avoid?)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
                                             <div className="grid grid-cols-2 gap-4">
-                                                <Input name="category" placeholder="Category (e.g. Antibiotics)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                                <Input name="packagingDetails" placeholder="Pack (e.g. 15 Tablets)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                                <Input name="category" defaultValue={editingItem?.category || ''} placeholder="Category (e.g. Antibiotics)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                                <Input name="packagingDetails" defaultValue={editingItem?.packagingDetails || ''} placeholder="Pack (e.g. 15 Tablets)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
                                             </div>
-                                            <Input name="storageAdvice" placeholder="Storage (e.g. Store in dry place)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
+                                            <Input name="storageAdvice" defaultValue={editingItem?.storageAdvice || ''} placeholder="Storage (e.g. Store in dry place)" className="h-13 rounded-xl bg-slate-50 border-none px-6 font-bold text-sm" />
                                         </div>
 
-                                        <Textarea name="description" placeholder="Short Marketing Description" className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs" required />
+                                        <Textarea name="description" defaultValue={editingItem?.description || ''} placeholder="Short Marketing Description" className="rounded-xl bg-slate-50 border-none p-5 font-bold text-xs" required />
                                     </div>
                                 )}
 
                                 {contentType === 'yoga' && (
                                     <div className="space-y-4">
-                                        <Input name="nameEn" placeholder="Asana Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Input name="nameHi" placeholder="आसन का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Input name="category" placeholder="Category (e.g. Standing)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
-                                        <Textarea name="descriptionEn" placeholder="Biological Benefits & Instructions (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[120px]" required />
+                                        <Input name="nameEn" defaultValue={editingItem?.nameEn || ''} placeholder="Asana Name (EN)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="nameHi" defaultValue={editingItem?.nameHi || ''} placeholder="आसन का नाम (HI)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Input name="category" defaultValue={editingItem?.category || ''} placeholder="Category (e.g. Standing)" className="h-14 rounded-2xl bg-slate-50 border-none px-6 font-bold text-sm" required />
+                                        <Textarea name="descriptionEn" defaultValue={editingItem?.descriptionEn || ''} placeholder="Biological Benefits & Instructions (EN)" className="rounded-2xl bg-slate-50 border-none p-6 font-bold text-sm min-h-[120px]" required />
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <Button type="submit" disabled={isSaving || isUploading} className="w-full h-20 rounded-[2.5rem] bg-[#1A365D] text-white font-black uppercase text-xs tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
-                            {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : `Synchronize with Production Environment`}
-                        </Button>
+                        <div className="flex gap-4">
+                             {editingItem && (
+                                <Button type="button" onClick={cancelEdit} variant="outline" className="flex-1 h-20 rounded-[2.5rem] border-slate-200 text-slate-400 font-black uppercase text-xs tracking-widest shadow-sm">
+                                    <RotateCcw className="w-5 h-5 mr-3" /> Discard Changes
+                                </Button>
+                             )}
+                             <Button type="submit" disabled={isSaving || isUploading} className="flex-[2] h-20 rounded-[2.5rem] bg-[#1A365D] text-white font-black uppercase text-xs tracking-[0.25em] shadow-2xl active:scale-95 transition-all">
+                                {isSaving ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : (editingItem ? 'Update Live Record' : 'Synchronize with Production Environment')}
+                            </Button>
+                        </div>
                     </form>
 
                     <div className="h-px bg-slate-100 my-16" />
@@ -500,16 +563,24 @@ export default function AdminDashboard() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {inventory.map((item) => (
-                                <Card key={item.id} className="rounded-[2.2rem] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden group">
+                                <Card key={item.id} className={cn(
+                                    "rounded-[2.2rem] border transition-all overflow-hidden group",
+                                    editingItem?.id === item.id ? "border-primary ring-2 ring-primary/20" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+                                )}>
                                     <div className="p-5 space-y-4">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="space-y-1 min-w-0">
                                                 <h4 className="text-sm font-black text-[#1A365D] dark:text-slate-100 uppercase truncate tracking-tight">{item.name || item.titleEn || item.nameEn}</h4>
                                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.brand || item.category || item.duration || 'Standard Asset'}</p>
                                             </div>
-                                            <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)} className="rounded-xl h-10 w-10 text-rose-500 hover:bg-rose-50 hover:text-rose-600 shrink-0">
-                                                <Trash2 className="h-5 w-5" />
-                                            </Button>
+                                            <div className="flex gap-2 shrink-0">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)} className="rounded-xl h-10 w-10 text-primary hover:bg-primary/5">
+                                                    <Pencil className="h-4.5 w-4.5" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)} className="rounded-xl h-10 w-10 text-rose-500 hover:bg-rose-50">
+                                                    <Trash2 className="h-4.5 w-4.5" />
+                                                </Button>
+                                            </div>
                                         </div>
                                         
                                         {item.imageUrl && (
